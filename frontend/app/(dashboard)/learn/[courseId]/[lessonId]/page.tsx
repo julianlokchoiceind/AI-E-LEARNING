@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { VideoPlayer } from '@/components/feature/VideoPlayer';
+import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
+import { QuizComponent } from '@/components/feature/QuizComponent';
 import { toast } from 'react-hot-toast';
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
+import { quizAPI } from '@/lib/api/quizzes';
 
 interface Lesson {
   _id: string;
@@ -49,11 +52,15 @@ export default function LessonPlayerPage() {
   const [nextLesson, setNextLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [progressUpdateInterval, setProgressUpdateInterval] = useState<NodeJS.Timeout | null>(null);
+  const [hasQuiz, setHasQuiz] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [quizPassed, setQuizPassed] = useState(false);
 
   useEffect(() => {
     fetchLessonData();
     startLesson();
     fetchCourseStructure();
+    checkForQuiz();
 
     return () => {
       if (progressUpdateInterval) {
@@ -150,6 +157,28 @@ export default function LessonPlayerPage() {
     }
   };
 
+  const checkForQuiz = async () => {
+    try {
+      const quiz = await quizAPI.getLessonQuiz(lessonId);
+      if (quiz) {
+        setHasQuiz(true);
+        
+        // Check if quiz is already passed
+        try {
+          const progress = await quizAPI.getQuizProgress(quiz._id);
+          if (progress.is_passed) {
+            setQuizPassed(true);
+          }
+        } catch (error) {
+          // No progress yet, that's okay
+        }
+      }
+    } catch (error) {
+      // No quiz for this lesson, that's okay
+      console.log('No quiz for this lesson');
+    }
+  };
+
   const handleVideoProgress = async (percentage: number) => {
     try {
       const response = await fetch(`${API_ENDPOINTS.BASE_URL}/progress/lessons/${lessonId}/progress`, {
@@ -174,6 +203,14 @@ export default function LessonPlayerPage() {
   };
 
   const handleVideoComplete = async () => {
+    // If there's a quiz and it hasn't been passed yet, show it
+    if (hasQuiz && !quizPassed) {
+      setShowQuiz(true);
+      toast.info('Great job! Now complete the quiz to finish this lesson.');
+      return;
+    }
+
+    // Otherwise, complete the lesson
     try {
       const response = await fetch(`${API_ENDPOINTS.BASE_URL}/progress/lessons/${lessonId}/complete`, {
         method: 'POST',
@@ -197,6 +234,40 @@ export default function LessonPlayerPage() {
       }
     } catch (error) {
       console.error('Error completing lesson:', error);
+    }
+  };
+
+  const handleQuizComplete = async (passed: boolean) => {
+    if (passed) {
+      setQuizPassed(true);
+      
+      // Now complete the lesson
+      try {
+        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/progress/lessons/${lessonId}/complete`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          toast.success('Quiz passed! Lesson completed! 🎉');
+          
+          // Update local progress state
+          if (progress) {
+            setProgress({
+              ...progress,
+              is_completed: true,
+              video_progress: {
+                ...progress.video_progress,
+                is_completed: true,
+              },
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error completing lesson:', error);
+      }
+    } else {
+      toast.error('Quiz not passed. Please try again.');
     }
   };
 
@@ -315,6 +386,16 @@ export default function LessonPlayerPage() {
               </div>
             </div>
 
+            {/* Quiz Section */}
+            {hasQuiz && (showQuiz || (progress?.video_progress.watch_percentage >= 80 && !quizPassed)) && (
+              <div className="mt-8">
+                <QuizComponent
+                  lessonId={lessonId}
+                  onComplete={handleQuizComplete}
+                />
+              </div>
+            )}
+
             {/* Completion Status */}
             {progress?.is_completed && (
               <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -325,7 +406,7 @@ export default function LessonPlayerPage() {
             )}
 
             {/* Next Lesson Button */}
-            {nextLesson && progress?.video_progress.watch_percentage >= 80 && (
+            {nextLesson && progress?.video_progress.watch_percentage >= 80 && (!hasQuiz || quizPassed) && (
               <div className="mt-8 text-center">
                 <button
                   onClick={() => navigateToLesson(nextLesson._id)}
@@ -338,6 +419,14 @@ export default function LessonPlayerPage() {
           </div>
         </main>
       </div>
+
+      {/* AI Assistant Widget */}
+      <SimpleChatWidget
+        courseId={courseId}
+        lessonId={lessonId}
+        userLevel="beginner" // TODO: Get from user profile
+        position="bottom-right"
+      />
     </div>
   );
 }

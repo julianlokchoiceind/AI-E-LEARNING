@@ -103,6 +103,38 @@ const CourseBuilderPage = () => {
     }
   };
 
+  const handleCreateLesson = async (chapterId: string) => {
+    try {
+      const { createLesson } = await import('@/lib/api/lessons');
+      const response = await createLesson({ 
+        chapter_id: chapterId,
+        title: `Untitled Lesson ${new Date().toLocaleDateString()}`
+      });
+      
+      // Update local state - add lesson to the chapter
+      setChapters(prevChapters => {
+        return prevChapters.map(chapter => {
+          if (chapter._id === chapterId) {
+            const updatedLessons = [...(chapter.lessons || []), response];
+            return {
+              ...chapter,
+              lessons: updatedLessons,
+              total_lessons: updatedLessons.length
+            };
+          }
+          return chapter;
+        });
+      });
+      
+      // Redirect to lesson editor
+      router.push(`/creator/courses/${courseId}/lessons/${response._id}/edit`);
+      toast.success('Lesson created successfully');
+    } catch (error) {
+      console.error('Failed to create lesson:', error);
+      toast.error('Failed to create lesson');
+    }
+  };
+
   const handleChapterEdit = (chapterId: string) => {
     router.push(`/creator/courses/${courseId}/chapters/${chapterId}/edit`);
   };
@@ -117,6 +149,37 @@ const CourseBuilderPage = () => {
     } catch (error) {
       console.error('Failed to delete chapter:', error);
       toast.error('Failed to delete chapter');
+    }
+  };
+
+  const handleLessonEdit = (lessonId: string) => {
+    router.push(`/creator/courses/${courseId}/lessons/${lessonId}/edit`);
+  };
+
+  const handleLessonDelete = async (lessonId: string) => {
+    if (!confirm('Are you sure you want to delete this lesson?')) return;
+
+    try {
+      // Import deleteLesson from lessons API
+      const { deleteLesson } = await import('@/lib/api/lessons');
+      await deleteLesson(lessonId);
+      
+      // Update local state - remove lesson from the chapter
+      setChapters(prevChapters => {
+        return prevChapters.map(chapter => {
+          const updatedLessons = chapter.lessons.filter(l => l._id !== lessonId);
+          return {
+            ...chapter,
+            lessons: updatedLessons,
+            total_lessons: updatedLessons.length
+          };
+        });
+      });
+      
+      toast.success('Lesson deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete lesson:', error);
+      toast.error('Failed to delete lesson');
     }
   };
 
@@ -473,6 +536,9 @@ const CourseBuilderPage = () => {
                             onDelete={handleChapterDelete}
                             onReorder={handleChapterReorder}
                             onLessonReorder={handleLessonReorder}
+                            onLessonEdit={handleLessonEdit}
+                            onLessonDelete={handleLessonDelete}
+                            onCreateLesson={handleCreateLesson}
                           />
                         ))}
                     </div>

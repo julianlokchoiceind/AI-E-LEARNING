@@ -3,9 +3,12 @@ Course management endpoints.
 Based on CLAUDE.md course workflows.
 """
 from typing import Optional
+from datetime import datetime, timezone
+from bson import ObjectId
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 import logging
 from app.core.deps import get_current_user, get_current_user_optional
+from app.core.database import db
 from app.models.user import User
 from app.models.course import CourseCategory, CourseLevel, CourseStatus
 from app.schemas.course import (
@@ -16,7 +19,9 @@ from app.schemas.course import (
     CourseCreateResponse
 )
 from app.services.course_service import CourseService
+from app.services.analytics_service import AnalyticsService
 from app.core.exceptions import NotFoundException, ForbiddenException, BadRequestException
+from app.schemas.analytics import CreatorAnalytics, CourseAnalytics
 
 
 router = APIRouter()
@@ -211,3 +216,178 @@ async def delete_course(
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to delete course")
+
+
+@router.post("/{course_id}/submit-for-review")
+async def submit_course_for_review(
+    course_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Submit course for admin review before publishing.
+    
+    Course must be:
+    - In draft status
+    - Have at least one chapter with lessons
+    - Have required fields filled
+    
+    Only course creator can submit.
+    """
+    try:
+        # Check permissions
+        course = await CourseService.get_course(course_id, current_user)
+        
+        if str(course.creator_id) != str(current_user.id) and current_user.role != "admin":
+            raise ForbiddenException("Only the course creator can submit for review")
+        
+        # Validate course is ready
+        if course.status != CourseStatus.DRAFT:
+            return {
+                "success": False,
+                "message": f"Course must be in draft status to submit for review. Current status: {course.status}"
+            }
+        
+        # Check if course has content
+        chapters_count = await db.chapters.count_documents({"course_id": ObjectId(course_id)})
+        if chapters_count == 0:
+            return {
+                "success": False,
+                "message": "Course must have at least one chapter before submitting for review"
+            }
+        
+        # Check if chapters have lessons
+        lessons_count = await db.lessons.count_documents({"course_id": ObjectId(course_id)})
+        if lessons_count == 0:
+            return {
+                "success": False,
+                "message": "Course must have at least one lesson before submitting for review"
+            }
+        
+        # Update status to review
+        result = await CourseService.update_course(
+            course_id,
+            CourseUpdate(status=CourseStatus.REVIEW),
+            current_user
+        )
+        
+        # TODO: Send notification to admins about new course for review
+        
+        return {
+            "success": True,
+            "message": "Course submitted for review successfully",
+            "course_id": course_id,
+            "status": CourseStatus.REVIEW
+        }
+        
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ForbiddenException as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error submitting course for review: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to submit course for review")
+
+
+@router.post("/{course_id}/publish")
+async def publish_course(
+    course_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Directly publish a course (admin only).
+    
+    Skips the review process.
+    """
+    try:
+        if current_user.role != "admin":
+            raise ForbiddenException("Only admins can directly publish courses")
+        
+        # Update status to published
+        result = await CourseService.update_course(
+            course_id,
+            CourseUpdate(
+                status=CourseStatus.PUBLISHED,
+                published_at=datetime.now(timezone.utc)
+            ),
+            current_user
+        )
+        
+        return {
+            "success": True,
+            "message": "Course published successfully",
+            "course_id": course_id,
+            "status": CourseStatus.PUBLISHED
+        }
+        
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ForbiddenException as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error publishing course: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to publish course")
+
+
+@router.get("/creator/analytics", response_model=CreatorAnalytics)
+async def get_creator_analytics(
+    time_range: str = Query("30days", regex="^(7days|30days|90days|all)$"),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get analytics for content creator.
+    
+    Time ranges:
+    - 7days: Last 7 days
+    - 30days: Last 30 days (default)
+    - 90days: Last 90 days
+    - all: All time
+    
+    Only content creators and admins can access.
+    """
+    try:
+        if current_user.role not in ["creator", "admin"]:
+            raise ForbiddenException("Only creators can access analytics")
+            
+        analytics = await AnalyticsService.get_creator_analytics(
+            creator_id=str(current_user.id),
+            time_range=time_range
+        )
+        return analytics
+    except ForbiddenException as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error fetching creator analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch analytics")
+
+
+@router.get("/{course_id}/analytics", response_model=CourseAnalytics)
+async def get_course_analytics(
+    course_id: str,
+    time_range: str = Query("30days", regex="^(7days|30days|90days|all)$"),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get analytics for a specific course.
+    
+    Only course creator or admin can access.
+    """
+    try:
+        # Verify course exists and user has permission
+        course = await CourseService.get_course(course_id, current_user)
+        
+        # Check permission
+        if current_user.role != "admin" and str(course.creator_id) != str(current_user.id):
+            raise ForbiddenException("You don't have permission to view analytics for this course")
+        
+        analytics = await AnalyticsService.get_course_analytics(
+            course_id=course_id,
+            time_range=time_range
+        )
+        return analytics
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ForbiddenException as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error fetching course analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch analytics")

@@ -6,6 +6,7 @@ import { Clock, Users, BookOpen, PlayCircle, Check, Lock, Star } from 'lucide-re
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
 import { getCourseById, enrollInCourse } from '@/lib/api/courses';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
@@ -480,6 +481,13 @@ const CourseDetailPage = () => {
           </div>
         )}
       </div>
+
+      {/* AI Assistant Widget */}
+      <SimpleChatWidget
+        courseId={courseId}
+        userLevel={course?.level || 'beginner'}
+        position="bottom-right"
+      />
     </div>
   );
 };

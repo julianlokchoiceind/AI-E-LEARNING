@@ -37,7 +37,7 @@ async def connect_to_mongo():
         from app.models.chapter import Chapter
         from app.models.lesson import Lesson
         from app.models.progress import Progress
-        from app.models.quiz import Quiz
+        from app.models.quiz import Quiz, QuizProgress
         from app.models.enrollment import Enrollment
         from app.models.payment import Payment
         
@@ -51,6 +51,7 @@ async def connect_to_mongo():
                 Lesson,
                 Progress,
                 Quiz,
+                QuizProgress,
                 Enrollment,
                 Payment
             ]

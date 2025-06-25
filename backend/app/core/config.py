@@ -65,6 +65,19 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str
     ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20240620"
     
+    # AI Settings
+    @property
+    def anthropic_api_key(self) -> str:
+        return self.ANTHROPIC_API_KEY
+    
+    @property
+    def anthropic_model(self) -> str:
+        return self.ANTHROPIC_MODEL
+    
+    @property
+    def debug(self) -> bool:
+        return self.DEBUG
+    
     # Payment
     STRIPE_SECRET_KEY: str
     STRIPE_WEBHOOK_SECRET: str
@@ -85,3 +98,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+def get_settings() -> Settings:
+    """Get application settings"""
+    return settings

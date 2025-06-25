@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/Card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { InlineChatComponent } from '@/components/feature/InlineChatComponent';
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
 import { formatDistanceToNow } from '@/lib/utils/formatters';
 import toast from 'react-hot-toast';
@@ -275,6 +276,20 @@ export default function DashboardPage() {
               </Link>
             </div>
           </div>
+        </div>
+
+        {/* AI Study Assistant */}
+        <div className="mt-8">
+          <InlineChatComponent
+            title="Ask Your AI Study Buddy"
+            placeholder="What would you like to learn today? Ask me anything about your courses!"
+            suggestions={[
+              "What should I study next?",
+              "Help me review my progress",
+              "Explain a concept I'm struggling with",
+              "Suggest a learning plan for this week"
+            ]}
+          />
         </div>
       </div>
     </div>

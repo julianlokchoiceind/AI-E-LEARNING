@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Clock, BookOpen, Lock, CheckCircle, GripVertical } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clock, BookOpen, Lock, CheckCircle, GripVertical, Plus } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -58,6 +58,9 @@ interface ChapterCardProps {
   onDelete?: (chapterId: string) => void;
   onReorder?: (chapterId: string, direction: 'up' | 'down') => void;
   onLessonReorder?: (chapterId: string, lessonId: string, newOrder: number) => void;
+  onLessonEdit?: (lessonId: string) => void;
+  onLessonDelete?: (lessonId: string) => void;
+  onCreateLesson?: (chapterId: string) => void;
 }
 
 // Draggable Lesson Component
@@ -68,7 +71,9 @@ const DraggableLessonCard: React.FC<{
   onLessonClick?: (chapterId: string, lessonId: string) => void;
   onPreviewClick?: (lessonId: string) => void;
   isEditable?: boolean;
-}> = ({ lesson, chapterId, isEnrolled, onLessonClick, onPreviewClick, isEditable }) => {
+  onLessonEdit?: (lessonId: string) => void;
+  onLessonDelete?: (lessonId: string) => void;
+}> = ({ lesson, chapterId, isEnrolled, onLessonClick, onPreviewClick, isEditable, onLessonEdit, onLessonDelete }) => {
   const {
     attributes,
     listeners,
@@ -103,7 +108,9 @@ const DraggableLessonCard: React.FC<{
             isEnrolled={isEnrolled}
             onLessonClick={onLessonClick}
             onPreviewClick={onPreviewClick}
-            isEditable={false} // Don't show edit controls in LessonCard when draggable
+            isEditable={isEditable}
+            onEdit={onLessonEdit}
+            onDelete={onLessonDelete}
           />
         </div>
       </div>
@@ -121,6 +128,9 @@ const DraggableChapterCard: React.FC<ChapterCardProps> = ({
   onDelete,
   onReorder,
   onLessonReorder,
+  onLessonEdit,
+  onLessonDelete,
+  onCreateLesson,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [lessons, setLessons] = useState(chapter.lessons || []);
@@ -294,18 +304,33 @@ const DraggableChapterCard: React.FC<ChapterCardProps> = ({
       {/* Lessons List with Drag and Drop */}
       {isExpanded && (
         <div className="border-t">
+          {/* Add Lesson Button */}
+          {isEditable && onCreateLesson && (
+            <div className="p-4 border-b bg-gray-50">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => onCreateLesson(chapter._id)}
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Lesson
+              </Button>
+            </div>
+          )}
+          
           {lessons.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-300" />
               <p>No lessons in this chapter yet</p>
-              {isEditable && (
+              {isEditable && onCreateLesson && (
                 <Button
                   variant="primary"
                   size="sm"
                   className="mt-3"
-                  onClick={() => onEdit && onEdit(chapter._id)}
+                  onClick={() => onCreateLesson(chapter._id)}
                 >
-                  Add Lessons
+                  Create First Lesson
                 </Button>
               )}
             </div>
@@ -331,6 +356,8 @@ const DraggableChapterCard: React.FC<ChapterCardProps> = ({
                         onLessonClick={onLessonClick}
                         onPreviewClick={onPreviewClick}
                         isEditable={isEditable}
+                        onLessonEdit={onLessonEdit}
+                        onLessonDelete={onLessonDelete}
                       />
                     ))}
                 </div>
