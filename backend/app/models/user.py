@@ -4,7 +4,7 @@ Based on CLAUDE.md specifications.
 """
 from typing import Optional, List, Dict
 from datetime import datetime
-from pydantic import EmailStr, Field
+from pydantic import EmailStr, Field, BaseModel
 from beanie import Document, Indexed
 from enum import Enum
 
@@ -27,7 +27,7 @@ class SubscriptionStatus(str, Enum):
     PAST_DUE = "past_due"
 
 
-class Subscription(Document):
+class Subscription(BaseModel):
     type: SubscriptionType = SubscriptionType.FREE
     status: SubscriptionStatus = SubscriptionStatus.INACTIVE
     stripe_customer_id: Optional[str] = None
@@ -37,7 +37,7 @@ class Subscription(Document):
     cancel_at_period_end: bool = False
 
 
-class Profile(Document):
+class Profile(BaseModel):
     avatar: Optional[str] = None
     bio: Optional[str] = None
     location: Optional[str] = None
@@ -49,7 +49,7 @@ class Profile(Document):
     learning_goals: List[str] = Field(default_factory=list)
 
 
-class Stats(Document):
+class Stats(BaseModel):
     courses_enrolled: int = 0
     courses_completed: int = 0
     total_hours_learned: float = 0
@@ -59,7 +59,7 @@ class Stats(Document):
     last_active: Optional[datetime] = None
 
 
-class Preferences(Document):
+class Preferences(BaseModel):
     language: str = "vi"
     timezone: str = "Asia/Ho_Chi_Minh"
     email_notifications: bool = True

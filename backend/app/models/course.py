@@ -4,7 +4,7 @@ Based on CLAUDE.md specifications.
 """
 from typing import Optional, List
 from datetime import datetime
-from pydantic import Field
+from pydantic import Field, BaseModel
 from beanie import Document, Indexed, PydanticObjectId
 from enum import Enum
 
@@ -30,7 +30,7 @@ class CourseStatus(str, Enum):
     ARCHIVED = "archived"
 
 
-class Pricing(Document):
+class Pricing(BaseModel):
     is_free: bool = False
     price: float = 0
     currency: str = "USD"
@@ -38,7 +38,7 @@ class Pricing(Document):
     discount_expires: Optional[datetime] = None
 
 
-class CourseStats(Document):
+class CourseStats(BaseModel):
     total_enrollments: int = 0
     active_students: int = 0
     completion_rate: float = 0
@@ -47,7 +47,7 @@ class CourseStats(Document):
     total_revenue: float = 0
 
 
-class SEO(Document):
+class SEO(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     keywords: List[str] = Field(default_factory=list)

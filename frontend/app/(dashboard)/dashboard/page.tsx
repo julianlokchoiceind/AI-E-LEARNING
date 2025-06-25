@@ -1,139 +1,282 @@
-'use client'
+'use client';
 
-import { useAuth } from '@/hooks/useAuth'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
-import Link from 'next/link'
-import { BookOpen, Clock, Award, TrendingUp } from 'lucide-react'
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
+import { Card } from '@/components/ui/Card';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
+import { formatDistanceToNow } from '@/lib/utils/formatters';
+import toast from 'react-hot-toast';
+
+interface DashboardData {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+    role: string;
+    premium_status: boolean;
+  };
+  stats: {
+    total_courses: number;
+    completed_courses: number;
+    in_progress_courses: number;
+    total_hours_learned: number;
+    current_streak: number;
+    longest_streak: number;
+  };
+  recent_courses: Array<{
+    id: string;
+    title: string;
+    thumbnail?: string;
+    progress: number;
+    last_accessed?: string;
+  }>;
+  upcoming_lessons: Array<{
+    course_id: string;
+    course_title: string;
+    lesson_title: string;
+    estimated_time: number;
+  }>;
+  certificates_earned: number;
+}
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth()
+  const { user, loading: authLoading } = useAuth();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/users/dashboard`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setDashboardData(result.data);
+      }
+    } catch (error) {
+      console.error('Dashboard fetch error:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authLoading || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
-    )
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <p className="text-center text-gray-500">No dashboard data available</p>
+      </div>
+    );
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      
-      <main className="flex-1 bg-gray-50 py-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.name || user?.email?.split('@')[0]}!</h1>
-            <p className="mt-2 text-gray-600">Continue your learning journey</p>
+    <div className="container mx-auto px-4 py-8">
+      {/* Welcome Section */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">
+          Welcome back, {dashboardData.user.name}!
+        </h1>
+        <p className="text-gray-600">
+          Continue your learning journey and track your progress
+        </p>
+      </div>
+
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Enrolled Courses</p>
+              <p className="text-2xl font-bold">{dashboardData.stats.total_courses}</p>
+            </div>
+            <div className="text-4xl">📚</div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Completed</p>
+              <p className="text-2xl font-bold">{dashboardData.stats.completed_courses}</p>
+            </div>
+            <div className="text-4xl">✅</div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Hours Learned</p>
+              <p className="text-2xl font-bold">{dashboardData.stats.total_hours_learned}</p>
+            </div>
+            <div className="text-4xl">⏱️</div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Current Streak</p>
+              <p className="text-2xl font-bold">{dashboardData.stats.current_streak} days</p>
+            </div>
+            <div className="text-4xl">🔥</div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Recent Courses */}
+        <div className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">Continue Learning</h2>
+            <Link 
+              href="/my-courses" 
+              className="text-primary hover:underline text-sm"
+            >
+              View all courses →
+            </Link>
           </div>
 
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <BookOpen className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Enrolled Courses</dt>
-                      <dd className="text-lg font-semibold text-gray-900">0</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Clock className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Hours Learned</dt>
-                      <dd className="text-lg font-semibold text-gray-900">0</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Award className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Certificates</dt>
-                      <dd className="text-lg font-semibold text-gray-900">0</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <TrendingUp className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Current Streak</dt>
-                      <dd className="text-lg font-semibold text-gray-900">0 days</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Continue Learning Section */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Continue Learning</h2>
-            <div className="bg-white shadow rounded-lg p-8 text-center">
-              <p className="text-gray-500 mb-4">You haven't enrolled in any courses yet.</p>
-              <Link href="/courses" className="btn-primary">
+          {dashboardData.recent_courses.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-gray-500 mb-4">You haven't enrolled in any courses yet</p>
+              <Link 
+                href="/courses"
+                className="inline-block bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors"
+              >
                 Browse Courses
+              </Link>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {dashboardData.recent_courses.map((course) => (
+                <Card key={course.id} className="p-4">
+                  <div className="flex items-center gap-4">
+                    {course.thumbnail ? (
+                      <img
+                        src={course.thumbnail}
+                        alt={course.title}
+                        className="w-24 h-16 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="w-24 h-16 bg-gray-200 rounded flex items-center justify-center">
+                        <span className="text-gray-400">📚</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">{course.title}</h3>
+                      <div className="mb-2">
+                        <ProgressBar progress={course.progress} />
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {course.progress}% complete
+                        {course.last_accessed && (
+                          <span> • Last accessed {formatDistanceToNow(new Date(course.last_accessed))}</span>
+                        )}
+                      </p>
+                    </div>
+                    
+                    <Link
+                      href={`/learn/${course.id}`}
+                      className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors"
+                    >
+                      Continue
+                    </Link>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Upcoming Lessons */}
+          <div>
+            <h3 className="text-lg font-bold mb-3">Upcoming Lessons</h3>
+            {dashboardData.upcoming_lessons.length === 0 ? (
+              <Card className="p-4">
+                <p className="text-sm text-gray-500">No upcoming lessons</p>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {dashboardData.upcoming_lessons.map((lesson, index) => (
+                  <Card key={index} className="p-4">
+                    <p className="font-medium text-sm">{lesson.lesson_title}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {lesson.course_title} • {lesson.estimated_time} min
+                    </p>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Achievements */}
+          <div>
+            <h3 className="text-lg font-bold mb-3">Achievements</h3>
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm">Certificates Earned</span>
+                <span className="font-bold">{dashboardData.certificates_earned}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Longest Streak</span>
+                <span className="font-bold">{dashboardData.stats.longest_streak} days</span>
+              </div>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <div>
+            <h3 className="text-lg font-bold mb-3">Quick Actions</h3>
+            <div className="space-y-2">
+              <Link
+                href="/courses"
+                className="block w-full text-center bg-gray-100 hover:bg-gray-200 py-2 rounded transition-colors"
+              >
+                Browse New Courses
+              </Link>
+              <Link
+                href="/certificates"
+                className="block w-full text-center bg-gray-100 hover:bg-gray-200 py-2 rounded transition-colors"
+              >
+                View Certificates
+              </Link>
+              <Link
+                href="/profile"
+                className="block w-full text-center bg-gray-100 hover:bg-gray-200 py-2 rounded transition-colors"
+              >
+                Edit Profile
               </Link>
             </div>
           </div>
-
-          {/* Recommended Courses */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recommended for You</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white shadow rounded-lg overflow-hidden">
-                  <div className="h-48 bg-gray-200"></div>
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Programming Fundamentals</h3>
-                    <p className="text-gray-600 text-sm mb-4">Learn the basics of AI programming with Python</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-primary font-semibold">$49.99</span>
-                      <Link href={`/courses/${i}`} className="text-primary hover:text-primary/80 font-medium">
-                        View Course →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
-      </main>
-      
-      <Footer />
+      </div>
     </div>
-  )
+  );
 }

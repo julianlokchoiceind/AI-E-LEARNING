@@ -183,9 +183,9 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     # Create access token and refresh token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        subject=user["email"], expires_delta=access_token_expires
+        subject=str(user["_id"]), expires_delta=access_token_expires
     )
-    refresh_token = create_refresh_jwt(subject=user["email"])
+    refresh_token = create_refresh_jwt(subject=str(user["_id"]))
     
     return {
         "access_token": access_token,
@@ -281,9 +281,9 @@ async def oauth_login(request: Request, oauth_data: OAuthUserCreate) -> Any:
     # Create tokens
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        subject=user["email"], expires_delta=access_token_expires
+        subject=str(user["_id"]), expires_delta=access_token_expires
     )
-    refresh_token = create_refresh_jwt(subject=user["email"])
+    refresh_token = create_refresh_jwt(subject=str(user["_id"]))
     
     return {
         "access_token": access_token,
@@ -475,30 +475,4 @@ async def resend_verification(request: Request, email_request: EmailVerification
     return {
         "message": "Verification email sent successfully",
         "email": user["email"]
-    }
-
-
-@router.get("/debug/users")  # TODO: Remove in production
-async def debug_users() -> Any:
-    """
-    Debug endpoint to view all users (for testing only).
-    """
-    db = get_database()
-    
-    users = await db.users.find({}, {
-        "password": 0  # Exclude password field
-    }).to_list(length=100)
-    
-    return {
-        "users": [
-            {
-                "id": str(user["_id"]),
-                "email": user["email"],
-                "name": user["name"],
-                "is_verified": user["is_verified"],
-                "verification_token": user.get("verification_token"),
-                "created_at": user["created_at"]
-            }
-            for user in users
-        ]
     }

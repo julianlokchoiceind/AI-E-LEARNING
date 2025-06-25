@@ -3,7 +3,7 @@ Security utilities for authentication and authorization.
 Handles password hashing and JWT token management.
 """
 from datetime import datetime, timedelta
-from typing import Optional, Any
+from typing import Optional, Any, Union
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 
@@ -24,7 +24,7 @@ def get_password_hash(password: str) -> str:
 
 
 def create_access_token(
-    subject: str | Any,
+    subject: Union[str, Any],
     expires_delta: Optional[timedelta] = None
 ) -> str:
     """
@@ -59,7 +59,7 @@ def create_access_token(
 
 
 def create_refresh_token(
-    subject: str | Any,
+    subject: Union[str, Any],
     expires_delta: Optional[timedelta] = None
 ) -> str:
     """
