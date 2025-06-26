@@ -16,7 +16,7 @@ from app.schemas.admin import (
     CreatorStats,
     BulkApprovalResult
 )
-from app.services.email_service import EmailService
+from app.core.email import email_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -271,11 +271,13 @@ class AdminService:
             creator = await db.users.find_one({"_id": course["creator_id"]})
             if creator:
                 try:
-                    await EmailService.send_course_approved(
-                        creator["email"],
-                        creator["name"],
-                        course["title"]
+                    await email_service.send_course_approval_email(
+                        to_email=creator["email"],
+                        creator_name=creator["name"],
+                        course_title=course["title"],
+                        course_id=course_id
                     )
+                    logger.info(f"Course approval email sent to: {creator['email']}")
                 except Exception as e:
                     logger.error(f"Failed to send approval email: {str(e)}")
             
@@ -331,12 +333,14 @@ class AdminService:
             creator = await db.users.find_one({"_id": course["creator_id"]})
             if creator:
                 try:
-                    await EmailService.send_course_rejected(
-                        creator["email"],
-                        creator["name"],
-                        course["title"],
-                        feedback
+                    await email_service.send_course_rejection_email(
+                        to_email=creator["email"],
+                        creator_name=creator["name"],
+                        course_title=course["title"],
+                        reason=feedback,
+                        course_id=course_id
                     )
+                    logger.info(f"Course rejection email sent to: {creator['email']}")
                 except Exception as e:
                     logger.error(f"Failed to send rejection email: {str(e)}")
             

@@ -14,6 +14,7 @@ from app.core.exceptions import (
     ForbiddenException,
     BadRequestException
 )
+from app.core.performance import measure_performance, timed_lru_cache
 
 
 class CourseService:
@@ -258,6 +259,48 @@ class CourseService:
             "has_access": False,
             "is_enrolled": False
         }
+    
+    @staticmethod
+    @measure_performance("course.batch_check_access")
+    async def batch_check_course_access(courses: List[Course], user: Optional[User] = None) -> Dict[str, Dict[str, bool]]:
+        """
+        Check access for multiple courses at once to avoid N+1 queries.
+        Returns a dictionary mapping course_id to access info.
+        """
+        result = {}
+        
+        for course in courses:
+            # If no user, return basic access info based on pricing
+            if not user:
+                result[str(course.id)] = {
+                    "has_access": course.pricing.is_free,
+                    "is_enrolled": False
+                }
+                continue
+            
+            # Check various access conditions
+            if course.pricing.is_free:
+                # Free course
+                access_info = {"has_access": True, "is_enrolled": False}
+            elif user.premium_status:
+                # Premium user has access to all courses
+                access_info = {"has_access": True, "is_enrolled": True}
+            elif str(course.creator_id) == str(user.id):
+                # Creator has access to their own course
+                access_info = {"has_access": True, "is_enrolled": True}
+            elif user.role == "admin":
+                # Admin has access to all courses
+                access_info = {"has_access": True, "is_enrolled": True}
+            elif user.subscription and user.subscription.get("type") == "pro":
+                # Pro subscription
+                access_info = {"has_access": True, "is_enrolled": True}
+            else:
+                # TODO: Check enrollments when implemented
+                access_info = {"has_access": False, "is_enrolled": False}
+            
+            result[str(course.id)] = access_info
+        
+        return result
     
     @staticmethod
     async def delete_course(course_id: str, user: User) -> Dict[str, str]:

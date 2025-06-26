@@ -53,6 +53,11 @@ const navigationItems = [
     icon: HelpCircle,
   },
   {
+    name: 'FAQ Management',
+    href: '/admin/faq',
+    icon: HelpCircle,
+  },
+  {
     name: 'System Logs',
     href: '/admin/logs',
     icon: FileText,

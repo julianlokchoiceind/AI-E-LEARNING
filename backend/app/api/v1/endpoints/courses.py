@@ -2,27 +2,33 @@
 Course management endpoints.
 Based on CLAUDE.md course workflows.
 """
-from typing import Optional
-from datetime import datetime, timezone
-from bson import ObjectId
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+# Standard library imports
 import logging
-from app.core.deps import get_current_user, get_current_user_optional
+from datetime import datetime, timezone
+from typing import Optional
+
+# Third-party imports
+from bson import ObjectId
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
+# Local application imports
 from app.core.database import db
-from app.models.user import User
+from app.core.deps import get_current_user, get_current_user_optional
+from app.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
+from app.core.performance import cache_response, measure_performance
 from app.models.course import CourseCategory, CourseLevel, CourseStatus
+from app.models.user import User
+from app.schemas.analytics import CourseAnalytics, CreatorAnalytics
+from app.schemas.base import StandardResponse
 from app.schemas.course import (
     CourseCreate,
-    CourseUpdate,
-    CourseResponse,
+    CourseCreateResponse,
     CourseListResponse,
-    CourseCreateResponse
+    CourseResponse,
+    CourseUpdate,
 )
-from app.services.course_service import CourseService
 from app.services.analytics_service import AnalyticsService
-from app.core.exceptions import NotFoundException, ForbiddenException, BadRequestException
-from app.schemas.analytics import CreatorAnalytics, CourseAnalytics
-from app.schemas.base import StandardResponse
+from app.services.course_service import CourseService
 
 
 router = APIRouter()
@@ -57,6 +63,7 @@ async def create_course(
 
 
 @router.get("", response_model=StandardResponse[CourseListResponse])
+@measure_performance("api.courses.list")
 async def list_courses(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -104,6 +111,9 @@ async def list_courses(
             is_free=is_free
         )
         
+        # Batch check access for all courses at once (avoid N+1 queries)
+        access_info_map = await CourseService.batch_check_course_access(result["courses"], current_user)
+        
         # Convert courses to response format with access info
         courses_with_access = []
         for course in result["courses"]:
@@ -113,8 +123,8 @@ async def list_courses(
             course_dict["id"] = str(course_dict.get("id", ""))
             course_dict["creator_id"] = str(course_dict.get("creator_id", ""))
             
-            # Check access for each course
-            access_info = await CourseService.check_course_access(course, current_user)
+            # Get access info from batch result
+            access_info = access_info_map.get(str(course.id), {"has_access": False, "is_enrolled": False})
             course_dict.update(access_info)
             
             courses_with_access.append(CourseResponse(**course_dict))
@@ -136,6 +146,7 @@ async def list_courses(
 
 
 @router.get("/{course_id}", response_model=StandardResponse[CourseResponse])
+@measure_performance("api.courses.get")
 async def get_course(
     course_id: str,
     current_user: Optional[User] = Depends(get_current_user_optional)
@@ -427,3 +438,63 @@ async def get_course_analytics(
     except Exception as e:
         logger.error(f"Error fetching course analytics: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch analytics")
+
+
+@router.get("/{course_id}/preview/{lesson_id}", response_model=StandardResponse[dict])
+async def get_preview_lesson(
+    course_id: str,
+    lesson_id: str,
+    current_user: Optional[User] = Depends(get_current_user_optional)
+) -> StandardResponse[dict]:
+    """
+    Get a lesson for preview (no authentication required).
+    
+    Only lessons marked as is_free_preview=True can be accessed.
+    Used for the preview functionality in /preview/{courseId}/{lessonId} route.
+    """
+    try:
+        # Check if course exists and is published
+        course = await db.courses.find_one({
+            "_id": ObjectId(course_id),
+            "status": CourseStatus.PUBLISHED
+        })
+        
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found or not published")
+        
+        # Get lesson
+        lesson = await db.lessons.find_one({
+            "_id": ObjectId(lesson_id),
+            "course_id": ObjectId(course_id),
+            "status": "published"
+        })
+        
+        if not lesson:
+            raise HTTPException(status_code=404, detail="Lesson not found")
+        
+        # Check if lesson is available for preview
+        if not lesson.get("is_free_preview", False):
+            raise HTTPException(status_code=403, detail="This lesson is not available for preview")
+        
+        # Convert ObjectIds to strings for JSON serialization
+        lesson["_id"] = str(lesson["_id"])
+        lesson["course_id"] = str(lesson["course_id"])
+        lesson["chapter_id"] = str(lesson["chapter_id"])
+        
+        # Convert datetime objects to ISO strings
+        if lesson.get("created_at"):
+            lesson["created_at"] = lesson["created_at"].isoformat()
+        if lesson.get("updated_at"):
+            lesson["updated_at"] = lesson["updated_at"].isoformat()
+        
+        return StandardResponse(
+            success=True,
+            data=lesson,
+            message="Preview lesson retrieved successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching preview lesson: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch preview lesson")

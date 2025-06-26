@@ -8,8 +8,10 @@ import { Card } from '@/components/ui/Card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { InlineChatComponent } from '@/components/feature/InlineChatComponent';
 import { AccessDenied } from '@/components/feature/AccessDenied';
-import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
+import { api } from '@/lib/api/api-client';
 import { formatDistanceToNow } from '@/lib/utils/formatters';
+import { LoadingSpinner, EmptyState, CourseCardSkeleton } from '@/components/ui/LoadingStates';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import toast from 'react-hot-toast';
 
 interface DashboardData {
@@ -52,6 +54,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const accessError = searchParams.get('error');
+  
+  const { handleError } = useErrorHandler();
 
   useEffect(() => {
     // Show access denied message if redirected from unauthorized route
@@ -65,34 +69,26 @@ export default function DashboardPage() {
   }, [accessError, router]);
 
   const fetchDashboardData = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/users/dashboard`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch dashboard data');
-      }
-
-      const result = await response.json();
+    setLoading(true);
+    
+    await handleError(async () => {
+      const result = await api.get<{ success: boolean; data: DashboardData }>(
+        '/users/dashboard',
+        { requireAuth: true }
+      );
+      
       if (result.success) {
         setDashboardData(result.data);
       }
-    } catch (error) {
-      console.error('Dashboard fetch error:', error);
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
-    }
+    });
+    
+    setLoading(false);
   };
 
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <LoadingSpinner size="lg" message="Loading your dashboard..." />
       </div>
     );
   }
@@ -100,7 +96,14 @@ export default function DashboardPage() {
   if (!dashboardData) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <p className="text-center text-gray-500">No dashboard data available</p>
+        <EmptyState
+          title="Unable to load dashboard"
+          description="There was a problem loading your dashboard data. Please try again."
+          action={{
+            label: 'Retry',
+            onClick: fetchDashboardData
+          }}
+        />
       </div>
     );
   }
@@ -174,14 +177,15 @@ export default function DashboardPage() {
           </div>
 
           {dashboardData.recent_courses.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-gray-500 mb-4">You haven't enrolled in any courses yet</p>
-              <Link 
-                href="/courses"
-                className="inline-block bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors"
-              >
-                Browse Courses
-              </Link>
+            <Card className="p-8">
+              <EmptyState
+                title="No courses yet"
+                description="You haven't enrolled in any courses yet. Start learning today!"
+                action={{
+                  label: 'Browse Courses',
+                  onClick: () => router.push('/courses')
+                }}
+              />
             </Card>
           ) : (
             <div className="space-y-4">

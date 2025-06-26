@@ -12,6 +12,8 @@ from app.schemas.enrollment import EnrollmentListResponse
 from app.schemas.base import StandardResponse
 from datetime import datetime, timedelta
 from beanie import PydanticObjectId
+from app.core.performance import measure_performance
+from app.services.db_optimization import db_optimizer
 
 router = APIRouter()
 
@@ -114,6 +116,7 @@ async def update_my_profile(
         )
 
 @router.get("/dashboard", response_model=StandardResponse[DashboardData], status_code=status.HTTP_200_OK)
+@measure_performance("api.users.dashboard")
 async def get_dashboard_data(
     current_user: User = Depends(get_current_user)
 ) -> StandardResponse[DashboardData]:

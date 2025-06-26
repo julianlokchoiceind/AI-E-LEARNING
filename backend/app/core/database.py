@@ -40,6 +40,10 @@ async def connect_to_mongo():
         from app.models.quiz import Quiz, QuizProgress
         from app.models.enrollment import Enrollment
         from app.models.payment import Payment
+        from app.models.faq import FAQ
+        from app.models.support_ticket import SupportTicket, TicketMessage
+        from app.models.review import Review, ReviewVote, ReviewReport
+        from app.models.certificate import Certificate
         
         # Initialize Beanie with all document models
         await init_beanie(
@@ -53,7 +57,14 @@ async def connect_to_mongo():
                 Quiz,
                 QuizProgress,
                 Enrollment,
-                Payment
+                Payment,
+                FAQ,
+                SupportTicket,
+                TicketMessage,
+                Review,
+                ReviewVote,
+                ReviewReport,
+                Certificate
             ]
         )
         

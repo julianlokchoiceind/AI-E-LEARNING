@@ -6,6 +6,7 @@ import { Clock, Users, BarChart, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import { CourseRatingMini } from '@/components/feature/CourseRating';
 
 interface CourseCardProps {
   course: {
@@ -81,11 +82,11 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll }) => {
 
   return (
     <Card 
-      className="cursor-pointer hover:shadow-lg transition-shadow duration-300"
+      className="cursor-pointer hover:shadow-lg transition-shadow duration-300 active:scale-95 active:shadow-md"
       onClick={handleClick}
     >
       {/* Course Thumbnail */}
-      <div className="relative h-48 bg-gray-200 rounded-t-lg overflow-hidden">
+      <div className="relative h-40 sm:h-48 bg-gray-200 rounded-t-lg overflow-hidden">
         {course.thumbnail ? (
           <img
             src={course.thumbnail}
@@ -94,16 +95,16 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll }) => {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
-            <BookOpen className="w-16 h-16 text-white" />
+            <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
           </div>
         )}
         
         {/* Pricing Badge */}
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
           {course.pricing.is_free ? (
-            <Badge className="bg-green-500 text-white">Free</Badge>
+            <Badge className="bg-green-500 text-white text-xs sm:text-sm">Free</Badge>
           ) : (
-            <Badge className="bg-blue-600 text-white">
+            <Badge className="bg-blue-600 text-white text-xs sm:text-sm">
               {course.pricing.discount_price ? (
                 <>
                   <span className="line-through mr-1">${course.pricing.price}</span>
@@ -117,73 +118,57 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll }) => {
         </div>
 
         {/* Level Badge */}
-        <div className="absolute top-4 left-4">
-          <Badge className={getLevelColor(course.level)}>
+        <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
+          <Badge className={`${getLevelColor(course.level)} text-xs sm:text-sm`}>
             {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
           </Badge>
         </div>
       </div>
 
       {/* Course Content */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Category */}
-        <p className="text-sm text-gray-500 mb-2">{getCategoryDisplay(course.category)}</p>
+        <p className="text-xs sm:text-sm text-gray-500 mb-2">{getCategoryDisplay(course.category)}</p>
 
         {/* Title */}
-        <h3 className="text-xl font-semibold mb-2 line-clamp-2">{course.title}</h3>
+        <h3 className="text-lg sm:text-xl font-semibold mb-2 line-clamp-2 leading-tight">{course.title}</h3>
 
         {/* Description */}
-        <p className="text-gray-600 mb-4 line-clamp-2">
+        <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 line-clamp-2">
           {course.short_description || course.description}
         </p>
 
         {/* Instructor */}
-        <p className="text-sm text-gray-500 mb-4">by {course.creator_name}</p>
+        <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">by {course.creator_name}</p>
 
-        {/* Course Stats */}
-        <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
+        {/* Course Stats - Mobile: Stack vertically, Desktop: Horizontal */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm text-gray-600">
           <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
+            <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
             <span>{formatDuration(course.total_duration)}</span>
           </div>
           <div className="flex items-center gap-1">
-            <BookOpen className="w-4 h-4" />
+            <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
             <span>{course.total_lessons} lessons</span>
           </div>
           <div className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
+            <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
             <span>{course.stats.total_enrollments} students</span>
           </div>
         </div>
 
         {/* Rating */}
-        {course.stats.average_rating > 0 && (
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <svg
-                  key={star}
-                  className={`w-4 h-4 ${
-                    star <= course.stats.average_rating
-                      ? 'text-yellow-400 fill-current'
-                      : 'text-gray-300'
-                  }`}
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              ))}
-            </div>
-            <span className="text-sm text-gray-600">
-              {course.stats.average_rating.toFixed(1)} ({course.stats.total_reviews} reviews)
-            </span>
-          </div>
-        )}
+        <div className="mb-4">
+          <CourseRatingMini
+            averageRating={course.stats.average_rating}
+            totalReviews={course.stats.total_reviews}
+          />
+        </div>
 
-        {/* Enroll Button */}
+        {/* Enroll Button - Larger touch target on mobile */}
         <Button
           onClick={handleEnroll}
-          className="w-full"
+          className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium touch-manipulation"
           variant={course.pricing.is_free ? 'primary' : 'secondary'}
         >
           {course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now'}

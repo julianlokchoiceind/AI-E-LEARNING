@@ -7,31 +7,13 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
+import { PreviewVideoPlayer } from '@/components/feature/PreviewVideoPlayer';
+import { CourseReviews } from '@/components/feature/CourseReviews';
+import { CourseRating } from '@/components/feature/CourseRating';
 import { getCourseById, enrollInCourse } from '@/lib/api/courses';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
-
-interface Chapter {
-  _id: string;
-  title: string;
-  description: string;
-  order: number;
-  total_lessons: number;
-  total_duration: number;
-  lessons: Lesson[];
-}
-
-interface Lesson {
-  _id: string;
-  title: string;
-  description: string;
-  order: number;
-  video_duration: number;
-  has_quiz: boolean;
-  is_free_preview: boolean;
-  is_completed?: boolean;
-  is_locked?: boolean;
-}
+import { Course, Chapter, Lesson } from '@/lib/types/course';
 
 const CourseDetailPage = () => {
   const params = useParams();
@@ -39,7 +21,7 @@ const CourseDetailPage = () => {
   const { user } = useAuth();
   const courseId = params.id as string;
 
-  const [course, setCourse] = useState<any>(null);
+  const [course, setCourse] = useState<Course | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
@@ -82,44 +64,102 @@ const CourseDetailPage = () => {
       setChapters([
         {
           _id: '1',
+          course_id: courseId,
           title: 'Getting Started',
           description: 'Introduction to the course',
           order: 1,
           total_lessons: 3,
           total_duration: 45,
+          status: 'published',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           lessons: [
             {
               _id: '1-1',
+              course_id: courseId,
+              chapter_id: '1',
               title: 'Course Introduction',
               description: 'Welcome to the course',
               order: 1,
-              video_duration: 10,
+              video: {
+                duration: 600, // 10 minutes in seconds
+                url: '',
+                youtube_id: '',
+                transcript: '',
+                captions: '',
+                thumbnail: ''
+              },
               has_quiz: false,
+              quiz_required: false,
+              unlock_conditions: {
+                previous_lesson_required: false,
+                quiz_pass_required: false,
+                minimum_watch_percentage: 80
+              },
+              status: 'published',
               is_free_preview: true,
               is_completed: false,
-              is_locked: false
+              is_locked: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             },
             {
               _id: '1-2',
+              course_id: courseId,
+              chapter_id: '1',
               title: 'Setting Up Your Environment',
               description: 'Install required tools',
               order: 2,
-              video_duration: 20,
+              video: {
+                duration: 1200, // 20 minutes in seconds
+                url: '',
+                youtube_id: '',
+                transcript: '',
+                captions: '',
+                thumbnail: ''
+              },
               has_quiz: true,
+              quiz_required: true,
+              unlock_conditions: {
+                previous_lesson_required: true,
+                quiz_pass_required: false,
+                minimum_watch_percentage: 80
+              },
+              status: 'published',
               is_free_preview: false,
               is_completed: false,
-              is_locked: !hasAccess
+              is_locked: !hasAccess,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             },
             {
               _id: '1-3',
+              course_id: courseId,
+              chapter_id: '1',
               title: 'Your First Project',
               description: 'Build a simple project',
               order: 3,
-              video_duration: 15,
+              video: {
+                duration: 900, // 15 minutes in seconds
+                url: '',
+                youtube_id: '',
+                transcript: '',
+                captions: '',
+                thumbnail: ''
+              },
               has_quiz: true,
+              quiz_required: true,
+              unlock_conditions: {
+                previous_lesson_required: true,
+                quiz_pass_required: true,
+                minimum_watch_percentage: 80
+              },
+              status: 'published',
               is_free_preview: false,
               is_completed: false,
-              is_locked: !hasAccess
+              is_locked: !hasAccess,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             }
           ]
         }
@@ -265,13 +305,26 @@ const CourseDetailPage = () => {
             {/* Enrollment Card - Right Side */}
             <div className="lg:col-span-1">
               <Card className="bg-white text-gray-900 p-6">
-                {/* Course Thumbnail */}
-                {course.thumbnail && (
+                {/* Course Preview Video or Thumbnail */}
+                {course.preview_video ? (
+                  <PreviewVideoPlayer
+                    videoUrl={course.preview_video}
+                    title={course.title}
+                    className="mb-6"
+                  />
+                ) : course.thumbnail ? (
                   <img
                     src={course.thumbnail}
                     alt={course.title}
                     className="w-full h-48 object-cover rounded-lg mb-6"
                   />
+                ) : (
+                  <div className="w-full h-48 bg-gray-200 rounded-lg mb-6 flex items-center justify-center">
+                    <div className="text-center text-gray-500">
+                      <PlayCircle className="w-12 h-12 mx-auto mb-2" />
+                      <p className="text-sm">No preview available</p>
+                    </div>
+                  </div>
                 )}
 
                 {/* Price */}
@@ -427,7 +480,7 @@ const CourseDetailPage = () => {
                           <div>
                             <h4 className="font-medium">{lesson.title}</h4>
                             <div className="flex items-center gap-3 text-sm text-gray-600">
-                              <span>{lesson.video_duration} min</span>
+                              <span>{formatDuration(Math.floor(lesson.video.duration / 60))}</span>
                               {lesson.has_quiz && <span>• Quiz</span>}
                               {lesson.is_free_preview && (
                                 <Badge variant="outline" className="text-xs">
@@ -476,8 +529,11 @@ const CourseDetailPage = () => {
 
         {activeTab === 'reviews' && (
           <div className="max-w-4xl">
-            <h2 className="text-2xl font-bold mb-6">Student Reviews</h2>
-            <p className="text-gray-600">Reviews coming soon...</p>
+            <CourseReviews 
+              courseId={courseId} 
+              isEnrolled={isEnrolled}
+              isCreator={user?.id === course.creator_id}
+            />
           </div>
         )}
       </div>

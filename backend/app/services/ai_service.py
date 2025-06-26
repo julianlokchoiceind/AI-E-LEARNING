@@ -2,25 +2,25 @@
 AI Service for PydanticAI integration with Claude 3.5 Sonnet
 Handles chat functionality, context management, and AI responses
 """
-
-import os
+# Standard library imports
 import asyncio
-from typing import Dict, List, Any, Optional
+import json
+import logging
+import os
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+# Third-party imports
+from anthropic import Anthropic
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
-from anthropic import Anthropic
-import logging
-import json
+
+# Local application imports
 from app.core.config import get_settings
-from app.models.user import User
 from app.models.course import Course
 from app.models.lesson import Lesson
-from app.schemas.ai import (
-    GeneratedQuizQuestion,
-    QuizOption,
-    QuestionDifficulty
-)
+from app.models.user import User
+from app.schemas.ai import GeneratedQuizQuestion, QuestionDifficulty, QuizOption
 
 # Configure logging
 logger = logging.getLogger(__name__)

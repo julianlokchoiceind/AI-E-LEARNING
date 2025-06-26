@@ -5,9 +5,9 @@ import { toast } from 'react-hot-toast';
 import { Clock, CheckCircle, XCircle, RotateCcw, Trophy } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
+import { Label } from '@/components/ui/Label';
+import { Progress } from '@/components/ui/Progress';
 import { quizAPI, Quiz, QuizProgress, QuizAnswerSubmit, QuizAttemptResult } from '@/lib/api/quizzes';
 
 interface QuizComponentProps {

@@ -1,15 +1,18 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from app.models.user import User
 from app.models.progress import Progress
+from app.models.enrollment import Enrollment
 from app.core.deps import get_current_user
 from app.services.progress_service import progress_service
+from app.services.certificate_service import CertificateService
 from app.schemas.progress import (
     ProgressResponse,
     ProgressListResponse,
     VideoProgressUpdate,
     MessageResponse
 )
+from app.schemas.certificate import CertificateStandardResponse
 
 router = APIRouter()
 
@@ -114,3 +117,58 @@ async def get_course_progress(
         data=progress_list,
         message="Course progress retrieved successfully"
     )
+
+
+@router.post("/courses/{course_id}/check-completion", response_model=CertificateStandardResponse)
+async def check_course_completion(
+    course_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Check if course is completed and issue certificate if eligible.
+    This endpoint is called when a user completes the final lesson of a course.
+    """
+    try:
+        # Find user's enrollment for this course
+        enrollment = await Enrollment.find_one({
+            "user_id": str(current_user.id),
+            "course_id": course_id,
+            "is_active": True
+        })
+        
+        if not enrollment:
+            raise HTTPException(
+                status_code=404,
+                detail="Enrollment not found"
+            )
+        
+        # Check and issue certificate if eligible
+        certificate = await CertificateService.check_course_completion_and_issue_certificate(
+            user_id=str(current_user.id),
+            course_id=course_id,
+            enrollment_id=str(enrollment.id)
+        )
+        
+        if certificate:
+            # Get detailed certificate
+            details = await CertificateService.get_certificate_with_details(str(certificate.id))
+            
+            return CertificateStandardResponse(
+                success=True,
+                data=details,
+                message="Congratulations! Your course completion certificate has been issued."
+            )
+        else:
+            return CertificateStandardResponse(
+                success=False,
+                data=None,
+                message="Course not yet completed or certificate already issued."
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to check course completion: {str(e)}"
+        )

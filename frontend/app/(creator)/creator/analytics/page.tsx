@@ -8,13 +8,31 @@ import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
 import { AnalyticsChart } from '@/components/feature/AnalyticsChart';
+import { 
+  getCreatorOverview, 
+  getCourseAnalytics, 
+  getStudentAnalytics, 
+  getRevenueAnalytics,
+  exportAnalytics 
+} from '@/lib/api/analytics';
+import type { 
+  AnalyticsOverview, 
+  CourseAnalytics, 
+  StudentAnalytics, 
+  RevenueAnalytics 
+} from '@/lib/api/analytics';
 
 const CreatorAnalyticsPage = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
+  const [revenue, setRevenue] = useState<RevenueAnalytics | null>(null);
+  const [students, setStudents] = useState<StudentAnalytics | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const [courseAnalytics, setCourseAnalytics] = useState<CourseAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30days');
+  const [activeTab, setActiveTab] = useState<'overview' | 'courses' | 'students' | 'revenue'>('overview');
 
   useEffect(() => {
     if (user?.role !== 'creator' && user?.role !== 'admin') {
@@ -29,29 +47,33 @@ const CreatorAnalyticsPage = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
       
-      const response = await fetch(
-        `/api/v1/courses/creator/analytics?time_range=${timeRange}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      // Fetch all analytics data in parallel
+      const [overviewData, revenueData, studentsData] = await Promise.all([
+        getCreatorOverview(timeRange),
+        getRevenueAnalytics(timeRange),
+        getStudentAnalytics(20, 0)
+      ]);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch analytics');
-      }
-
-      const data = await response.json();
-      setAnalytics(data);
+      setOverview(overviewData);
+      setRevenue(revenueData);
+      setStudents(studentsData);
+      
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
       toast.error('Failed to load analytics');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExport = async (reportType: string) => {
+    try {
+      const result = await exportAnalytics(reportType, timeRange, 'csv');
+      toast.success(`Export generated! Download from: ${result.download_url}`);
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export analytics');
     }
   };
 
@@ -63,7 +85,7 @@ const CreatorAnalyticsPage = () => {
     );
   }
 
-  if (!analytics) {
+  if (!overview) {
     return (
       <div className="text-center py-16">
         <p className="text-gray-600 text-lg">No analytics data available</p>
@@ -77,10 +99,14 @@ const CreatorAnalyticsPage = () => {
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+            <div>
+              <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+              <p className="text-gray-600">Track your course performance and student engagement</p>
+            </div>
             
-            {/* Time Range Selector */}
-            <div className="flex gap-2">
+            {/* Time Range Selector and Export */}
+            <div className="flex items-center gap-4">
+              <div className="flex gap-2">
               <Button
                 variant={timeRange === '7days' ? 'primary' : 'outline'}
                 size="sm"
@@ -109,208 +135,262 @@ const CreatorAnalyticsPage = () => {
               >
                 All Time
               </Button>
+              </div>
+              
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handleExport('overview')}
+              >
+                Export Report
+              </Button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4">
+          <div className="flex space-x-8">
+            <button
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'overview'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('overview')}
+            >
+              Overview
+            </button>
+            <button
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'revenue'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('revenue')}
+            >
+              Revenue
+            </button>
+            <button
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'students'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('students')}
+            >
+              Students
+            </button>
           </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold">${analytics.total_revenue?.toFixed(2) || 0}</p>
-                <p className="text-sm text-green-600">
-                  +${analytics.revenue_this_period?.toFixed(2) || 0} this period
-                </p>
-              </div>
-              <DollarSign className="w-8 h-8 text-green-500" />
-            </div>
-          </Card>
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <>
+            {/* Overview Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Total Revenue</p>
+                    <p className="text-2xl font-bold">${overview.overview.total_revenue?.toFixed(2) || 0}</p>
+                    <p className="text-sm text-green-600">
+                      {revenue && revenue.summary.growth_rate > 0 
+                        ? `+${revenue.summary.growth_rate.toFixed(1)}% growth`
+                        : 'Calculate growth'}
+                    </p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-green-500" />
+                </div>
+              </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm text-gray-600">Total Students</p>
-                <p className="text-2xl font-bold">{analytics.total_students || 0}</p>
-                <p className="text-sm text-blue-600">
-                  {analytics.active_students || 0} active
-                </p>
-              </div>
-              <Users className="w-8 h-8 text-blue-500" />
-            </div>
-          </Card>
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Total Students</p>
+                    <p className="text-2xl font-bold">{overview.overview.total_students || 0}</p>
+                    <p className="text-sm text-blue-600">
+                      {overview.overview.active_students || 0} active
+                    </p>
+                  </div>
+                  <Users className="w-8 h-8 text-blue-500" />
+                </div>
+              </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm text-gray-600">Completion Rate</p>
-                <p className="text-2xl font-bold">{analytics.completion_rate?.toFixed(1) || 0}%</p>
-                <p className="text-sm text-indigo-600">
-                  {analytics.lessons_completed || 0} lessons
-                </p>
-              </div>
-              <Award className="w-8 h-8 text-indigo-500" />
-            </div>
-          </Card>
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Completion Rate</p>
+                    <p className="text-2xl font-bold">{overview.overview.completion_rate?.toFixed(1) || 0}%</p>
+                    <p className="text-sm text-indigo-600">
+                      {overview.overview.total_courses || 0} courses
+                    </p>
+                  </div>
+                  <Award className="w-8 h-8 text-indigo-500" />
+                </div>
+              </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm text-gray-600">Avg Rating</p>
-                <p className="text-2xl font-bold">{analytics.average_rating?.toFixed(1) || 0} ⭐</p>
-                <p className="text-sm text-yellow-600">
-                  {analytics.total_courses || 0} courses
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-yellow-500" />
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Avg Rating</p>
+                    <p className="text-2xl font-bold">{overview.overview.average_rating?.toFixed(1) || 0} ⭐</p>
+                    <p className="text-sm text-yellow-600">
+                      {overview.overview.total_courses || 0} courses
+                    </p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-yellow-500" />
+                </div>
+              </Card>
             </div>
-          </Card>
-        </div>
 
-        {/* Top Courses */}
-        <Card className="p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Top Performing Courses</h2>
-          {analytics.top_courses?.length > 0 ? (
-            <div className="space-y-4">
-              {analytics.top_courses.map((course: any, index: number) => (
-                <div
-                  key={course.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl font-bold text-gray-400">#{index + 1}</span>
-                    <div>
-                      <h3 className="font-semibold">{course.title}</h3>
-                      <p className="text-sm text-gray-600">
-                        {course.students} students • ${course.revenue?.toFixed(2)} revenue
+            {/* Recent Activity */}
+            <Card className="p-6 mb-8">
+              <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+              {overview.recent_activity?.length > 0 ? (
+                <div className="space-y-3">
+                  {overview.recent_activity.map((activity, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{activity.user_name}</p>
+                        <p className="text-sm text-gray-600">
+                          Enrolled in {activity.course_title}
+                        </p>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {new Date(activity.timestamp).toLocaleDateString()}
                       </p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{course.rating?.toFixed(1)} ⭐</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/creator/courses/${course.id}/analytics`)}
-                    >
-                      View Details
-                    </Button>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <p className="text-gray-600">No recent activity</p>
+              )}
+            </Card>
+
+          </>
+        )}
+
+        {/* Revenue Tab */}
+        {activeTab === 'revenue' && revenue && (
+          <>
+            {/* Revenue Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card className="p-6">
+                <div>
+                  <p className="text-sm text-gray-600">Total Revenue</p>
+                  <p className="text-2xl font-bold">${revenue.summary.total_revenue.toFixed(2)}</p>
+                </div>
+              </Card>
+              
+              <Card className="p-6">
+                <div>
+                  <p className="text-sm text-gray-600">Total Transactions</p>
+                  <p className="text-2xl font-bold">{revenue.summary.total_transactions}</p>
+                </div>
+              </Card>
+              
+              <Card className="p-6">
+                <div>
+                  <p className="text-sm text-gray-600">Average Transaction</p>
+                  <p className="text-2xl font-bold">${revenue.summary.average_transaction.toFixed(2)}</p>
+                </div>
+              </Card>
+              
+              <Card className="p-6">
+                <div>
+                  <p className="text-sm text-gray-600">Growth Rate</p>
+                  <p className="text-2xl font-bold">{revenue.summary.growth_rate.toFixed(1)}%</p>
+                </div>
+              </Card>
             </div>
-          ) : (
-            <p className="text-gray-600">No course data available for this period</p>
-          )}
-        </Card>
 
-        {/* Engagement Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Student Engagement</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Average Watch Time</span>
-                <span className="font-medium">
-                  {Math.floor(analytics.average_watch_time || 0)} min/student
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Total Watch Time</span>
-                <span className="font-medium">
-                  {Math.floor((analytics.total_watch_time || 0) / 60)} hours
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Lessons Completed</span>
-                <span className="font-medium">{analytics.lessons_completed || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Quizzes Passed</span>
-                <span className="font-medium">{analytics.quizzes_passed || 0}</span>
-              </div>
+            {/* Revenue Charts */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <AnalyticsChart
+                title="Revenue Trends"
+                type="line"
+                data={revenue.revenue_trends}
+                dataKey="revenue"
+                xKey="date"
+              />
+              
+              <AnalyticsChart
+                title="Revenue by Course"
+                type="bar"
+                data={revenue.revenue_by_course.slice(0, 5)}
+                dataKey="revenue"
+                xKey="course"
+              />
             </div>
-          </Card>
 
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Period Performance</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">New Enrollments</span>
-                <span className="font-medium">{analytics.enrollments_this_period || 0}</span>
+            {/* Payment Types */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Payment Types</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <p className="text-3xl font-bold">{revenue.payment_types.course_purchase}</p>
+                  <p className="text-gray-600">One-time Purchases</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold">{revenue.payment_types.subscription}</p>
+                  <p className="text-gray-600">Subscriptions</p>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Active Students</span>
-                <span className="font-medium">{analytics.students_this_period || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Period Revenue</span>
-                <span className="font-medium">
-                  ${analytics.revenue_this_period?.toFixed(2) || 0}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Published Courses</span>
-                <span className="font-medium">{analytics.published_courses || 0}</span>
-              </div>
-            </div>
-          </Card>
-        </div>
+            </Card>
+          </>
+        )}
 
-        {/* Analytics Visualizations */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          <Card>
-            <AnalyticsChart
-              title="Revenue by Course"
-              type="bar"
-              data={
-                analytics.top_courses?.slice(0, 5).map((course: any) => ({
-                  label: course.title.substring(0, 20) + '...',
-                  value: course.revenue || 0,
-                  color: '#10B981'
-                })) || []
-              }
-            />
-          </Card>
-
-          <Card>
-            <AnalyticsChart
-              title="Students by Course"
-              type="bar"
-              data={
-                analytics.top_courses?.slice(0, 5).map((course: any) => ({
-                  label: course.title.substring(0, 20) + '...',
-                  value: course.students || 0,
-                  color: '#3B82F6'
-                })) || []
-              }
-            />
-          </Card>
-        </div>
-
-        {/* Course Status Distribution */}
-        <Card className="mt-8">
-          <AnalyticsChart
-            title="Course Status Distribution"
-            type="pie"
-            data={[
-              {
-                label: 'Published',
-                value: analytics.published_courses || 0,
-                color: '#10B981'
-              },
-              {
-                label: 'Draft',
-                value: (analytics.total_courses || 0) - (analytics.published_courses || 0),
-                color: '#6B7280'
-              }
-            ]}
-          />
-        </Card>
+        {/* Students Tab */}
+        {activeTab === 'students' && students && (
+          <>
+            <Card className="p-6 mb-8">
+              <h2 className="text-xl font-semibold mb-4">Student Analytics</h2>
+              <div className="space-y-4">
+                {students.students.map((student) => (
+                  <div key={student.student.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <h3 className="font-semibold">{student.student.name}</h3>
+                        <p className="text-sm text-gray-600">{student.student.email}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{student.metrics.courses_enrolled} courses</p>
+                        <p className="text-sm text-gray-600">
+                          {student.metrics.average_progress.toFixed(1)}% avg progress
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-2 pt-2 border-t">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Completed: {student.metrics.courses_completed}</span>
+                        <span className="text-gray-600">
+                          Last active: {student.metrics.last_activity 
+                            ? new Date(student.metrics.last_activity).toLocaleDateString()
+                            : 'Never'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {students.pagination.has_more && (
+                <div className="mt-4 text-center">
+                  <Button variant="outline" size="sm">
+                    Load More Students
+                  </Button>
+                </div>
+              )}
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );

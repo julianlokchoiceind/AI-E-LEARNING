@@ -1,8 +1,10 @@
+import logging
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from app.models.user import User
 from app.models.enrollment import Enrollment, EnrollmentType
 from app.core.deps import get_current_user
+from app.core.email import email_service
 from app.services.enrollment_service import enrollment_service
 from app.schemas.enrollment import (
     EnrollmentResponse,
@@ -10,6 +12,8 @@ from app.schemas.enrollment import (
     EnrollmentCreate,
     MessageResponse
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -27,6 +31,25 @@ async def enroll_in_course(
             enrollment_type=enrollment_data.enrollment_type or EnrollmentType.FREE,
             payment_id=enrollment_data.payment_id
         )
+        
+        # Send enrollment confirmation email
+        try:
+            # Get course details for email
+            from app.core.database import get_database
+            db = get_database()
+            course = await db.courses.find_one({"_id": course_id})
+            
+            if course:
+                await email_service.send_enrollment_confirmation_email(
+                    to_email=current_user.email,
+                    name=current_user.name,
+                    course_title=course.get("title", "Course"),
+                    course_id=course_id
+                )
+                logger.info(f"Enrollment confirmation email sent to: {current_user.email}")
+        except Exception as e:
+            logger.error(f"Failed to send enrollment confirmation email: {str(e)}")
+            # Don't fail enrollment if email fails
         
         return EnrollmentResponse(
             success=True,

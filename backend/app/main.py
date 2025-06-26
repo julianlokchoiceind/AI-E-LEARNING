@@ -2,18 +2,27 @@
 Main FastAPI application entry point.
 Configures middleware, routes, and event handlers.
 """
+# Standard library imports
+import logging
+from contextlib import asynccontextmanager
+
+# Third-party imports
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-import logging
-import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
-
-from app.core.config import settings
-from app.core.database import connect_to_mongo, close_mongo_connection
-from app.core.rate_limit import limiter
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+
+# Local application imports
+from app.core.config import settings
+from app.core.database import close_mongo_connection, connect_to_mongo
+from app.core.rate_limit import limiter
+from app.middleware.input_validation import InputValidationMiddleware
+from app.middleware.rate_limiter import RateLimitMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.services.db_optimization import db_optimizer
+from app.services.security_monitoring import security_monitor
 
 # Configure logging
 logging.basicConfig(
@@ -42,8 +51,17 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up AI E-Learning Platform API...")
     try:
-        await connect_to_mongo()
+        db_client = await connect_to_mongo()
         logger.info("MongoDB connection established successfully")
+        
+        # Initialize security monitor with database
+        if db_client:
+            await security_monitor.init_db(db_client)
+            logger.info("Security monitoring initialized")
+            
+            # Initialize database optimizer
+            await db_optimizer.init_db(db_client)
+            logger.info("Database optimizer initialized")
     except Exception as e:
         logger.error(f"MongoDB connection failed: {e}")
         logger.info("Running without MongoDB connection - in-memory mode")
@@ -83,6 +101,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add security middleware
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(InputValidationMiddleware)
 
 
 # Health check endpoint

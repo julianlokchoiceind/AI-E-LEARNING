@@ -1,22 +1,108 @@
 import { withAuth } from 'next-auth/middleware'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { 
+  SUPPORTED_LOCALES,
+  DEFAULT_LOCALE,
+  isValidLocale,
+  getLocaleFromPath,
+  getPathnameWithoutLocale,
+  getLocalizedPath
+} from './lib/i18n/config'
+
+// Combined middleware for both i18n and authentication
+function createMiddleware(req: NextRequest) {
+  const { pathname } = req.nextUrl
+  
+  // Skip middleware for API routes, static files, and Next.js internals
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/static/') ||
+    pathname.includes('.') // files with extensions
+  ) {
+    return NextResponse.next()
+  }
+
+  // Handle i18n routing first
+  const currentLocale = getLocaleFromPath(pathname)
+  const pathnameWithoutLocale = getPathnameWithoutLocale(pathname)
+  
+  // Check if the current locale is valid
+  if (!isValidLocale(currentLocale)) {
+    // Get preferred locale from headers, cookies, or default
+    const preferredLocale = getPreferredLocale(req)
+    const localizedPath = getLocalizedPath(pathnameWithoutLocale, preferredLocale)
+    
+    return NextResponse.redirect(new URL(localizedPath, req.url))
+  }
+  
+  // If default locale in URL, redirect to clean URL (optional)
+  if (currentLocale === DEFAULT_LOCALE && pathname.startsWith(`/${DEFAULT_LOCALE}/`)) {
+    return NextResponse.redirect(new URL(pathnameWithoutLocale, req.url))
+  }
+  
+  // Add locale to headers for pages to access
+  const response = NextResponse.next()
+  response.headers.set('x-locale', currentLocale)
+  
+  return response
+}
+
+/**
+ * Get preferred locale from request headers and cookies
+ */
+function getPreferredLocale(request: NextRequest): string {
+  // 1. Check cookie preference
+  const cookieLocale = request.cookies.get('locale')?.value
+  if (cookieLocale && isValidLocale(cookieLocale)) {
+    return cookieLocale
+  }
+  
+  // 2. Check Accept-Language header
+  const acceptLanguage = request.headers.get('accept-language')
+  if (acceptLanguage) {
+    const browserLocales = acceptLanguage
+      .split(',')
+      .map(lang => lang.split(';')[0].split('-')[0].trim())
+      .filter(lang => isValidLocale(lang))
+    
+    if (browserLocales.length > 0) {
+      return browserLocales[0]
+    }
+  }
+  
+  // 3. Fallback to default locale
+  return DEFAULT_LOCALE
+}
 
 export default withAuth(
   function middleware(req) {
+    // First handle i18n routing
+    const i18nResponse = createMiddleware(req)
+    if (i18nResponse?.status !== 200) {
+      return i18nResponse // Redirect or other response
+    }
+    
+    // Then handle authentication
     const token = req.nextauth.token
     const isAuth = !!token
     const userRole = token?.role as string
     const pathname = req.nextUrl.pathname
     
-    // Define role-based route protection
-    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register')
-    const isAdminRoute = pathname.startsWith('/admin')
-    const isCreatorRoute = pathname.startsWith('/creator')
+    // Get pathname without locale for route matching
+    const pathnameWithoutLocale = getPathnameWithoutLocale(pathname)
+    
+    // Define role-based route protection (check against clean pathname)
+    const isAuthPage = pathnameWithoutLocale.startsWith('/login') || pathnameWithoutLocale.startsWith('/register')
+    const isAdminRoute = pathnameWithoutLocale.startsWith('/admin')
+    const isCreatorRoute = pathnameWithoutLocale.startsWith('/creator')
     
     // Redirect authenticated users away from auth pages
     if (isAuthPage) {
       if (isAuth) {
-        return NextResponse.redirect(new URL('/dashboard', req.url))
+        const currentLocale = getLocaleFromPath(pathname)
+        const dashboardPath = getLocalizedPath('/dashboard', currentLocale)
+        return NextResponse.redirect(new URL(dashboardPath, req.url))
       }
       return null
     }
@@ -27,29 +113,35 @@ export default withAuth(
       if (req.nextUrl.search) {
         from += req.nextUrl.search
       }
-
+      
+      const currentLocale = getLocaleFromPath(pathname)
+      const loginPath = getLocalizedPath('/login', currentLocale)
       return NextResponse.redirect(
-        new URL(`/login?from=${encodeURIComponent(from)}`, req.url)
+        new URL(`${loginPath}?from=${encodeURIComponent(from)}`, req.url)
       )
     }
 
     // Role-based access control
     if (isAdminRoute) {
       if (userRole !== 'admin') {
-        // Non-admin users trying to access admin routes
-        return NextResponse.redirect(new URL('/dashboard?error=access_denied', req.url))
+        const currentLocale = getLocaleFromPath(pathname)
+        const dashboardPath = getLocalizedPath('/dashboard', currentLocale)
+        return NextResponse.redirect(new URL(`${dashboardPath}?error=access_denied`, req.url))
       }
     }
     
     if (isCreatorRoute) {
       if (userRole !== 'creator' && userRole !== 'admin') {
-        // Non-creator/admin users trying to access creator routes
-        return NextResponse.redirect(new URL('/dashboard?error=access_denied', req.url))
+        const currentLocale = getLocaleFromPath(pathname)
+        const dashboardPath = getLocalizedPath('/dashboard', currentLocale)
+        return NextResponse.redirect(new URL(`${dashboardPath}?error=access_denied`, req.url))
       }
     }
 
-    // Allow access for authorized users
-    return null
+    // Allow access for authorized users and add locale header
+    const response = NextResponse.next()
+    response.headers.set('x-locale', getLocaleFromPath(pathname))
+    return response
   },
   {
     callbacks: {
@@ -60,15 +152,14 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/learn/:path*',
-    '/my-courses/:path*',
-    '/profile/:path*',
-    '/certificates/:path*',
-    '/billing/:path*',
-    '/creator/:path*',
-    '/admin/:path*',
-    '/login',
-    '/register',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (public folder)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
   ],
 }

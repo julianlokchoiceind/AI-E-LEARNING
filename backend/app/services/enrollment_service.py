@@ -6,6 +6,8 @@ from app.models.user import User
 from app.models.progress import Progress
 from app.models.lesson import Lesson
 from app.core.exceptions import NotFoundError, BadRequestError, ForbiddenError
+from app.core.performance import measure_performance
+from app.services.db_optimization import db_optimizer
 
 class EnrollmentService:
     
@@ -83,17 +85,27 @@ class EnrollmentService:
         
         return enrollments
     
+    @measure_performance("enrollment.get_user_courses")
     async def get_user_enrollments_with_courses(self, user_id: str) -> List[dict]:
-        """Get all courses a user is enrolled in with course details."""
+        """Get all courses a user is enrolled in with course details - optimized version."""
         enrollments = await Enrollment.find({
             "user_id": user_id,
             "is_active": True
         }).sort(-Enrollment.enrolled_at).to_list()
         
-        # Fetch course details for each enrollment
+        # Extract course IDs for batch fetching
+        course_ids = [enrollment.course_id for enrollment in enrollments]
+        
+        # Batch fetch all courses at once (avoid N+1 queries)
+        courses = await db_optimizer.batch_get_courses(course_ids)
+        
+        # Create course lookup dictionary
+        course_lookup = {str(course.id): course for course in courses}
+        
+        # Build result with course details
         result = []
         for enrollment in enrollments:
-            course = await Course.get(enrollment.course_id)
+            course = course_lookup.get(str(enrollment.course_id))
             if course:
                 enrollment_dict = enrollment.dict()
                 enrollment_dict['course'] = {

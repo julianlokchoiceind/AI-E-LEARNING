@@ -16,6 +16,14 @@ interface ChatContext {
   course_id?: string;
   lesson_id?: string;
   user_level?: string;
+  chapter_id?: string;
+  lesson_progress?: number;
+  course_progress?: number;
+  current_video_time?: number;
+  previous_questions?: string[];
+  learning_goals?: string[];
+  difficulty_preference?: 'simple' | 'detailed' | 'technical';
+  language_preference?: 'en' | 'vi';
 }
 
 interface ChatResponse {
@@ -34,8 +42,12 @@ interface ChatError {
 interface UseAIChatParams {
   courseId?: string;
   lessonId?: string;
+  chapterId?: string;
   userLevel?: string;
   onError?: (error: string) => void;
+  enableContextTracking?: boolean;
+  enableLearningAnalytics?: boolean;
+  maxContextHistory?: number;
 }
 
 interface UseAIChatReturn {
@@ -47,17 +59,37 @@ interface UseAIChatReturn {
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
   getConversationHistory: () => Promise<void>;
   clearConversationHistory: () => Promise<void>;
+  // Enhanced features
+  contextHistory: string[];
+  learningGoals: string[];
+  difficultyPreference: 'simple' | 'detailed' | 'technical';
+  languagePreference: 'en' | 'vi';
+  setDifficulty: (difficulty: 'simple' | 'detailed' | 'technical') => void;
+  setLanguage: (language: 'en' | 'vi') => void;
+  addLearningGoal: (goal: string) => void;
+  removeLearningGoal: (goal: string) => void;
+  // Analytics
+  totalQuestions: number;
+  hasContext: boolean;
 }
 
 export const useAIChat = ({
   courseId,
   lessonId,
+  chapterId,
   userLevel,
-  onError
+  onError,
+  enableContextTracking = true,
+  enableLearningAnalytics = true,
+  maxContextHistory = 10
 }: UseAIChatParams = {}): UseAIChatReturn => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [contextHistory, setContextHistory] = useState<string[]>([]);
+  const [learningGoals, setLearningGoals] = useState<string[]>([]);
+  const [difficultyPreference, setDifficultyPreference] = useState<'simple' | 'detailed' | 'technical'>('detailed');
+  const [languagePreference, setLanguagePreference] = useState<'en' | 'vi'>('en');
 
   // Add a message to the conversation
   const addMessage = useCallback((message: Omit<Message, 'id' | 'timestamp'>) => {
@@ -86,11 +118,35 @@ export const useAIChat = ({
     setIsTyping(true);
 
     try {
-      // Prepare context for AI
+      // Prepare enhanced context for AI
       const context: ChatContext = {};
       if (courseId) context.course_id = courseId;
       if (lessonId) context.lesson_id = lessonId;
+      if (chapterId) context.chapter_id = chapterId;
       if (userLevel) context.user_level = userLevel;
+      
+      // Add learning context
+      if (enableContextTracking) {
+        context.previous_questions = contextHistory.slice(-5); // Last 5 questions for context
+        context.difficulty_preference = difficultyPreference;
+        context.language_preference = languagePreference;
+        
+        if (learningGoals.length > 0) {
+          context.learning_goals = learningGoals;
+        }
+        
+        // Get progress data if available
+        try {
+          const progressData = await getProgressData(courseId, lessonId);
+          if (progressData) {
+            context.lesson_progress = progressData.lessonProgress;
+            context.course_progress = progressData.courseProgress;
+            context.current_video_time = progressData.currentVideoTime;
+          }
+        } catch (error) {
+          console.warn('Could not fetch progress data:', error);
+        }
+      }
 
       // Call AI API
       const response = await fetch('/api/v1/ai/chat', {
@@ -131,6 +187,19 @@ export const useAIChat = ({
       };
 
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Update context history for better future responses
+      if (enableContextTracking) {
+        setContextHistory(prev => {
+          const updated = [...prev, content];
+          return updated.slice(-maxContextHistory); // Keep only recent context
+        });
+        
+        // Extract learning goals from AI response if mentioned
+        if (enableLearningAnalytics) {
+          extractLearningGoalsFromResponse(data.data.response);
+        }
+      }
 
     } catch (error: any) {
       console.error('AI chat error:', error);
@@ -167,7 +236,83 @@ export const useAIChat = ({
       setIsLoading(false);
       setIsTyping(false);
     }
-  }, [isLoading, courseId, lessonId, userLevel, onError]);
+  }, [isLoading, courseId, lessonId, chapterId, userLevel, onError, enableContextTracking, enableLearningAnalytics, maxContextHistory, contextHistory, difficultyPreference, languagePreference, learningGoals]);
+  
+  // Helper function to get progress data
+  const getProgressData = useCallback(async (courseId?: string, lessonId?: string) => {
+    if (!courseId || !lessonId) return null;
+    
+    try {
+      const response = await fetch(`/api/v1/progress/${courseId}/${lessonId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.warn('Failed to fetch progress data:', error);
+    }
+    
+    return null;
+  }, []);
+  
+  // Extract learning goals from AI responses
+  const extractLearningGoalsFromResponse = useCallback((aiResponse: string) => {
+    // Simple keyword extraction for learning goals
+    const goalKeywords = [
+      'should learn', 'need to understand', 'focus on', 'important to know',
+      'key concept', 'main objective', 'learning goal', 'should practice'
+    ];
+    
+    const extractedGoals: string[] = [];
+    
+    goalKeywords.forEach(keyword => {
+      const regex = new RegExp(`${keyword}\\s+([^.!?]+)[.!?]`, 'gi');
+      const matches = aiResponse.match(regex);
+      
+      if (matches) {
+        matches.forEach(match => {
+          const goal = match.replace(new RegExp(keyword, 'gi'), '').trim().replace(/[.!?]$/, '');
+          if (goal.length > 10 && goal.length < 100) {
+            extractedGoals.push(goal);
+          }
+        });
+      }
+    });
+    
+    if (extractedGoals.length > 0) {
+      setLearningGoals(prev => {
+        const combined = [...prev, ...extractedGoals];
+        const unique = combined.filter((goal, index) => combined.indexOf(goal) === index);
+        return unique.slice(-10); // Keep max 10 goals
+      });
+    }
+  }, []);
+  
+  // Set difficulty preference
+  const setDifficulty = useCallback((difficulty: 'simple' | 'detailed' | 'technical') => {
+    setDifficultyPreference(difficulty);
+  }, []);
+  
+  // Set language preference
+  const setLanguage = useCallback((language: 'en' | 'vi') => {
+    setLanguagePreference(language);
+  }, []);
+  
+  // Add learning goal manually
+  const addLearningGoal = useCallback((goal: string) => {
+    if (goal.trim() && !learningGoals.includes(goal.trim())) {
+      setLearningGoals(prev => [...prev, goal.trim()].slice(-10));
+    }
+  }, [learningGoals]);
+  
+  // Remove learning goal
+  const removeLearningGoal = useCallback((goal: string) => {
+    setLearningGoals(prev => prev.filter(g => g !== goal));
+  }, []);
 
   // Clear messages
   const clearMessages = useCallback(() => {
@@ -245,7 +390,19 @@ export const useAIChat = ({
     clearMessages,
     addMessage,
     getConversationHistory,
-    clearConversationHistory
+    clearConversationHistory,
+    // Enhanced features
+    contextHistory,
+    learningGoals,
+    difficultyPreference,
+    languagePreference,
+    setDifficulty,
+    setLanguage,
+    addLearningGoal,
+    removeLearningGoal,
+    // Analytics
+    totalQuestions: contextHistory.length,
+    hasContext: Boolean(courseId || lessonId)
   };
 };
 

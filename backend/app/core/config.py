@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     SMTP_PASS: str
     EMAILS_FROM_EMAIL: Optional[str] = None
     EMAILS_FROM_NAME: Optional[str] = None
+    SECURITY_TEAM_EMAIL: str = "security@ai-elearning.com"
     
     @validator("EMAILS_FROM_EMAIL", pre=True)
     def get_emails_from(cls, v: Optional[str], values: dict) -> str:

@@ -4,10 +4,15 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { Menu, X, User, LogOut } from 'lucide-react'
 import { useState } from 'react'
+import { useNavigationTranslations } from '@/lib/i18n/hooks'
+import { LanguageSwitcherCompact } from '@/components/ui/LanguageSwitcher'
+import { useLocalizedRouter } from '@/lib/i18n/context'
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { navItems, t } = useNavigationTranslations()
+  const router = useLocalizedRouter()
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -20,49 +25,83 @@ export function Header() {
             
             {/* Desktop Navigation */}
             <div className="hidden md:ml-10 md:flex md:space-x-8">
-              <Link href="/courses" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">
-                Courses
-              </Link>
+              <button
+                onClick={() => router.push('/courses')}
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+              >
+                {navItems.courses}
+              </button>
               {isAuthenticated && (
                 <>
-                  <Link href="/dashboard" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">
-                    Dashboard
-                  </Link>
-                  <Link href="/my-courses" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">
-                    My Learning
-                  </Link>
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+                  >
+                    {navItems.dashboard}
+                  </button>
+                  <button
+                    onClick={() => router.push('/my-courses')}
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+                  >
+                    {navItems.myCourses}
+                  </button>
+                  <button
+                    onClick={() => router.push('/support')}
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+                  >
+                    {t('nav.support')}
+                  </button>
                 </>
               )}
-              <Link href="/about" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">
-                About
-              </Link>
+              <button
+                onClick={() => router.push('/about')}
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+              >
+                {navItems.about}
+              </button>
+              <button
+                onClick={() => router.push('/faq')}
+                className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+              >
+                {navItems.faq}
+              </button>
             </div>
           </div>
 
           {/* Desktop Auth Section */}
           <div className="hidden md:flex md:items-center md:space-x-4">
+            <LanguageSwitcherCompact className="mr-2" />
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <Link href="/profile" className="flex items-center text-sm text-gray-700 hover:text-gray-900">
+                <button
+                  onClick={() => router.push('/profile')}
+                  className="flex items-center text-sm text-gray-700 hover:text-gray-900"
+                >
                   <User className="h-5 w-5 mr-1" />
                   {user?.email?.split('@')[0]}
-                </Link>
+                </button>
                 <button
                   onClick={() => logout()}
                   className="flex items-center text-sm text-gray-700 hover:text-gray-900"
                 >
                   <LogOut className="h-5 w-5 mr-1" />
-                  Logout
+                  {t('auth.logout')}
                 </button>
               </div>
             ) : (
               <>
-                <Link href="/login" className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">
-                  Sign In
-                </Link>
-                <Link href="/register" className="btn-primary text-sm">
-                  Get Started
-                </Link>
+                <button
+                  onClick={() => router.push('/login')}
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+                >
+                  {t('auth.signIn')}
+                </button>
+                <button
+                  onClick={() => router.push('/register')}
+                  className="btn-primary text-sm"
+                >
+                  {t('auth.getStarted')}
+                </button>
               </>
             )}
           </div>
@@ -88,44 +127,80 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <Link href="/courses" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                Courses
-              </Link>
+              <button
+                onClick={() => router.push('/courses')}
+                className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+              >
+                {navItems.courses}
+              </button>
               {isAuthenticated && (
                 <>
-                  <Link href="/dashboard" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                    Dashboard
-                  </Link>
-                  <Link href="/my-courses" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                    My Learning
-                  </Link>
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    {navItems.dashboard}
+                  </button>
+                  <button
+                    onClick={() => router.push('/my-courses')}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    {navItems.myCourses}
+                  </button>
+                  <button
+                    onClick={() => router.push('/support')}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    {t('nav.support')}
+                  </button>
                 </>
               )}
-              <Link href="/about" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                About
-              </Link>
+              <button
+                onClick={() => router.push('/about')}
+                className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+              >
+                {navItems.about}
+              </button>
+              <button
+                onClick={() => router.push('/faq')}
+                className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+              >
+                {navItems.faq}
+              </button>
             </div>
             <div className="pt-4 pb-3 border-t border-gray-200">
+              <div className="px-2 mb-3">
+                <LanguageSwitcherCompact />
+              </div>
               {isAuthenticated ? (
                 <div className="px-2 space-y-1">
-                  <Link href="/profile" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                    Profile ({user?.email?.split('@')[0]})
-                  </Link>
+                  <button
+                    onClick={() => router.push('/profile')}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    {navItems.profile} ({user?.email?.split('@')[0]})
+                  </button>
                   <button
                     onClick={() => logout()}
                     className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                   >
-                    Logout
+                    {t('auth.logout')}
                   </button>
                 </div>
               ) : (
                 <div className="px-2 space-y-1">
-                  <Link href="/login" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                    Sign In
-                  </Link>
-                  <Link href="/register" className="block px-3 py-2 text-base font-medium text-white bg-primary hover:bg-primary/90 text-center">
-                    Get Started
-                  </Link>
+                  <button
+                    onClick={() => router.push('/login')}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    {t('auth.signIn')}
+                  </button>
+                  <button
+                    onClick={() => router.push('/register')}
+                    className="block w-full px-3 py-2 text-base font-medium text-white bg-primary hover:bg-primary/90 text-center"
+                  >
+                    {t('auth.getStarted')}
+                  </button>
                 </div>
               )}
             </div>

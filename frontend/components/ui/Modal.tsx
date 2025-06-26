@@ -50,7 +50,7 @@ export function Modal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center p-2 sm:p-4">
         {/* Backdrop */}
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
@@ -60,25 +60,26 @@ export function Modal({
         {/* Modal */}
         <div
           ref={modalRef}
-          className={`relative bg-white rounded-lg shadow-xl transform transition-all w-full ${sizeClasses[size]}`}
+          className={`relative bg-white rounded-lg sm:rounded-xl shadow-xl transform transition-all w-full ${sizeClasses[size]} mx-2 sm:mx-0 my-4 sm:my-8 max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col`}
         >
           {/* Header */}
           {title && (
-            <div className="border-b px-6 py-4">
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="border-b px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 pr-8">
                 {title}
               </h3>
               <button
                 onClick={onClose}
-                className="absolute right-4 top-4 text-gray-400 hover:text-gray-500"
+                className="absolute right-3 sm:right-4 top-3 sm:top-4 text-gray-400 hover:text-gray-500 touch-manipulation p-1 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="Close modal"
               >
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
             </div>
           )}
           
           {/* Content */}
-          <div className="px-6 py-4">
+          <div className="px-4 sm:px-6 py-4 overflow-y-auto flex-1">
             {children}
           </div>
         </div>

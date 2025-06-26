@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize, Settings, X } from 'lucide-react';
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -36,9 +37,31 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [duration, setDuration] = useState(0);
   const [watchPercentage, setWatchPercentage] = useState(initialProgress);
   const [hasCompletedOnce, setHasCompletedOnce] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [showControls, setShowControls] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const playerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
+  
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Extract YouTube video ID from URL
   const getYouTubeVideoId = (url: string): string | null => {
@@ -116,10 +139,21 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   const onPlayerStateChange = (event: any) => {
-    if (event.data === window.YT.PlayerState.PLAYING) {
+    const state = event.data;
+    
+    if (state === window.YT.PlayerState.PLAYING) {
+      setIsPlaying(true);
       startProgressTracking();
-    } else {
+      startHideControlsTimer();
+    } else if (state === window.YT.PlayerState.PAUSED) {
+      setIsPlaying(false);
       stopProgressTracking();
+      clearHideControlsTimer();
+      setShowControls(true);
+    } else if (state === window.YT.PlayerState.ENDED) {
+      setIsPlaying(false);
+      stopProgressTracking();
+      setShowControls(true);
     }
   };
 
@@ -168,6 +202,30 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   };
 
+  // Auto-hide controls
+  const startHideControlsTimer = () => {
+    clearHideControlsTimer();
+    hideControlsTimeoutRef.current = setTimeout(() => {
+      if (isPlaying) {
+        setShowControls(false);
+      }
+    }, 3000);
+  };
+  
+  const clearHideControlsTimer = () => {
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current);
+      hideControlsTimeoutRef.current = null;
+    }
+  };
+  
+  const handleMouseMove = () => {
+    setShowControls(true);
+    if (isPlaying) {
+      startHideControlsTimer();
+    }
+  };
+
   // Custom controls
   const handlePlayPause = () => {
     if (!player) return;
@@ -195,7 +253,53 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const handleSpeedChange = (speed: number) => {
     if (!player) return;
     player.setPlaybackRate(speed);
+    setPlaybackRate(speed);
+    setShowSettings(false);
   };
+  
+  const handleVolumeChange = (newVolume: number) => {
+    if (!player) return;
+    player.setVolume(newVolume * 100);
+    setVolume(newVolume);
+    setIsMuted(newVolume === 0);
+  };
+  
+  const handleMute = () => {
+    if (!player) return;
+    
+    if (isMuted) {
+      player.unMute();
+      setIsMuted(false);
+      if (volume === 0) setVolume(0.5);
+    } else {
+      player.mute();
+      setIsMuted(true);
+    }
+  };
+  
+  const handleFullscreen = () => {
+    if (!containerRef.current) return;
+    
+    if (!isFullscreen) {
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+  
+  // Fullscreen change event
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -219,94 +323,277 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   return (
     <div className="video-player-container">
-      <div className="relative bg-black rounded-lg overflow-hidden">
+      <div 
+        ref={containerRef}
+        className={`relative bg-black overflow-hidden transition-all duration-300 ${
+          isFullscreen ? 'fixed inset-0 z-50' : 'rounded-lg'
+        }`}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => {
+          if (isPlaying) startHideControlsTimer();
+        }}
+      >
         {/* YouTube Player */}
         <div ref={playerRef} className="w-full aspect-video" />
         
         {/* Custom Control Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-          {/* Progress Bar */}
-          <div className="mb-4">
-            <div className="flex items-center text-white text-sm mb-1">
-              <span>{formatTime(currentTime)}</span>
-              <span className="mx-2">/</span>
-              <span>{formatTime(duration)}</span>
-              <span className="ml-auto">{Math.round(watchPercentage)}% watched</span>
+        <div className={`absolute inset-0 transition-opacity duration-300 ${
+          showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}>
+          {/* Top Controls (Mobile) */}
+          {isMobile && (
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent p-4">
+              <div className="flex items-center justify-between text-white">
+                <button
+                  onClick={() => router.back()}
+                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                  aria-label="Go back"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                <div className="text-sm text-center flex-1 mx-4">
+                  <span>{Math.round(watchPercentage)}% watched</span>
+                </div>
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                  aria-label="Settings"
+                >
+                  <Settings className="w-6 h-6" />
+                </button>
+              </div>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${watchPercentage}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Control Buttons */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+          )}
+          
+          {/* Center Play/Pause Button */}
+          {!isPlaying && (
+            <div className="absolute inset-0 flex items-center justify-center">
               <button
                 onClick={handlePlayPause}
-                className="text-white hover:text-blue-400 transition-colors"
-                aria-label="Play/Pause"
+                className="bg-white/90 hover:bg-white rounded-full p-6 transition-all duration-200 transform hover:scale-110"
+                aria-label="Play video"
               >
-                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                </svg>
-              </button>
-              
-              <button
-                onClick={handleRewind}
-                className="text-white hover:text-blue-400 transition-colors"
-                aria-label="Rewind 10s"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
-                </svg>
-              </button>
-
-              <button
-                onClick={handleForward}
-                className="text-white hover:text-blue-400 transition-colors"
-                aria-label="Forward 10s"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z" />
-                </svg>
+                <Play className="w-12 h-12 text-gray-900 ml-1" />
               </button>
             </div>
+          )}
+          
+          {/* Bottom Controls */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent">
+            {/* Progress Bar */}
+            <div className={`px-4 ${isMobile ? 'pt-4 pb-2' : 'pt-6 pb-4'}`}>
+              <div className={`flex items-center text-white text-sm mb-2 ${isMobile ? 'text-xs' : ''}`}>
+                <span>{formatTime(currentTime)}</span>
+                <span className="mx-2">/</span>
+                <span>{formatTime(duration)}</span>
+                {!isMobile && (
+                  <span className="ml-auto">{Math.round(watchPercentage)}% watched</span>
+                )}
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2 cursor-pointer hover:h-3 transition-all">
+                <div 
+                  className="bg-blue-600 h-full rounded-full transition-all duration-300"
+                  style={{ width: `${watchPercentage}%` }}
+                />
+              </div>
+            </div>
 
-            <div className="flex items-center space-x-4">
-              {/* Speed Control */}
-              <select
-                onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
-                className="bg-gray-800 text-white text-sm rounded px-2 py-1"
-                defaultValue="1"
-              >
-                <option value="0.5">0.5x</option>
-                <option value="0.75">0.75x</option>
-                <option value="1">1x</option>
-                <option value="1.25">1.25x</option>
-                <option value="1.5">1.5x</option>
-                <option value="2">2x</option>
-              </select>
-
-              {/* Next Lesson Button */}
-              {nextLessonId && watchPercentage >= 80 && (
+            {/* Control Buttons */}
+            <div className={`flex items-center justify-between px-4 ${isMobile ? 'pb-2' : 'pb-4'}`}>
+              <div className="flex items-center space-x-2 md:space-x-4">
                 <button
-                  onClick={handleNextLesson}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                  onClick={handlePlayPause}
+                  className="text-white hover:text-blue-400 transition-colors p-2"
+                  aria-label="Play/Pause"
                 >
-                  Next Lesson →
+                  {isPlaying ? (
+                    <Pause className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'}`} />
+                  ) : (
+                    <Play className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} ml-1`} />
+                  )}
                 </button>
-              )}
+                
+                <button
+                  onClick={handleRewind}
+                  className="text-white hover:text-blue-400 transition-colors p-2"
+                  aria-label="Rewind 10s"
+                >
+                  <SkipBack className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
+                </button>
+
+                <button
+                  onClick={handleForward}
+                  className="text-white hover:text-blue-400 transition-colors p-2"
+                  aria-label="Forward 10s"
+                >
+                  <SkipForward className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
+                </button>
+                
+                {/* Volume Control (Desktop) */}
+                {!isMobile && (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={handleMute}
+                      className="text-white hover:text-blue-400 transition-colors p-2"
+                      aria-label={isMuted ? 'Unmute' : 'Mute'}
+                    >
+                      {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={isMuted ? 0 : volume}
+                      onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                      className="w-20 accent-blue-600"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center space-x-2 md:space-x-4">
+                {/* Settings Button */}
+                {!isMobile && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowSettings(!showSettings)}
+                      className="text-white hover:text-blue-400 transition-colors p-2"
+                      aria-label="Settings"
+                    >
+                      <Settings className="w-6 h-6" />
+                    </button>
+                    
+                    {/* Settings Dropdown */}
+                    {showSettings && (
+                      <div className="absolute bottom-full right-0 mb-2 bg-gray-900 border border-gray-700 rounded-lg p-4 min-w-[200px]">
+                        <div className="text-white text-sm space-y-3">
+                          <div>
+                            <label className="block mb-2">Playback Speed</label>
+                            <div className="grid grid-cols-3 gap-2">
+                              {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
+                                <button
+                                  key={speed}
+                                  onClick={() => handleSpeedChange(speed)}
+                                  className={`px-2 py-1 rounded text-xs transition-colors ${
+                                    playbackRate === speed
+                                      ? 'bg-blue-600 text-white'
+                                      : 'bg-gray-700 hover:bg-gray-600'
+                                  }`}
+                                >
+                                  {speed}x
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Fullscreen Button (Desktop) */}
+                {!isMobile && (
+                  <button
+                    onClick={handleFullscreen}
+                    className="text-white hover:text-blue-400 transition-colors p-2"
+                    aria-label="Fullscreen"
+                  >
+                    <Maximize className="w-6 h-6" />
+                  </button>
+                )}
+
+                {/* Next Lesson Button */}
+                {nextLessonId && watchPercentage >= 80 && (
+                  <button
+                    onClick={handleNextLesson}
+                    className={`bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors ${
+                      isMobile ? 'px-3 py-2 text-sm' : 'px-4 py-2'
+                    }`}
+                  >
+                    {isMobile ? 'Next →' : 'Next Lesson →'}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+          
+          {/* Mobile Settings Panel */}
+          {isMobile && showSettings && (
+            <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
+              <div className="bg-gray-900 rounded-lg p-6 max-w-sm w-full mx-4">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-white text-lg font-semibold">Settings</h3>
+                  <button
+                    onClick={() => setShowSettings(false)}
+                    className="text-white hover:text-gray-400 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  {/* Playback Speed */}
+                  <div>
+                    <label className="block text-white text-sm mb-3">Playback Speed</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
+                        <button
+                          key={speed}
+                          onClick={() => handleSpeedChange(speed)}
+                          className={`px-3 py-2 rounded text-sm transition-colors ${
+                            playbackRate === speed
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-700 text-white hover:bg-gray-600'
+                          }`}
+                        >
+                          {speed}x
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Volume */}
+                  <div>
+                    <label className="block text-white text-sm mb-3">Volume</label>
+                    <div className="flex items-center space-x-3">
+                      <button
+                        onClick={handleMute}
+                        className="text-white hover:text-blue-400 transition-colors"
+                      >
+                        {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                      </button>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={isMuted ? 0 : volume}
+                        onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                        className="flex-1 accent-blue-600"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sequential Learning Notice */}
-        {watchPercentage < 80 && (
+        {watchPercentage < 80 && !isMobile && (
           <div className="absolute top-4 right-4 bg-yellow-500/90 text-black px-3 py-1 rounded-lg text-sm">
             Watch 80% to unlock next lesson
+          </div>
+        )}
+        
+        {/* Loading Indicator */}
+        {!isReady && (
+          <div className="absolute inset-0 bg-black flex items-center justify-center">
+            <div className="text-white text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+              <p className="text-lg">Loading video...</p>
+            </div>
           </div>
         )}
       </div>

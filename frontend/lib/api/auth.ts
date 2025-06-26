@@ -3,9 +3,7 @@
  */
 
 import { StandardResponse } from '@/lib/types/api'
-import { toast } from 'react-hot-toast'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+import { api } from '@/lib/api/api-client'
 
 export interface RegisterData {
   name: string
@@ -42,22 +40,7 @@ export interface UserResponse {
  * Register a new user
  */
 export async function registerUser(data: RegisterData): Promise<UserResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  })
-
-  const result: StandardResponse<UserResponse> = await response.json()
-
-  if (!response.ok || !result.success) {
-    toast.error(result.message || 'Registration failed')
-    throw new Error(result.message || 'Registration failed')
-  }
-
-  toast.success(result.message)
+  const result = await api.post<StandardResponse<UserResponse>>('/auth/register', data)
   return result.data!
 }
 
@@ -70,22 +53,16 @@ export async function loginUser(data: LoginData): Promise<AuthResponse> {
   formData.append('username', data.email) // OAuth2 uses 'username' field
   formData.append('password', data.password)
 
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: formData.toString(),
-  })
-
-  const result: StandardResponse<AuthResponse> = await response.json()
-
-  if (!response.ok || !result.success) {
-    toast.error(result.message || 'Login failed')
-    throw new Error(result.message || 'Login failed')
-  }
-
-  toast.success(result.message)
+  const result = await api.post<StandardResponse<AuthResponse>>(
+    '/auth/login',
+    formData.toString(),
+    {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    }
+  )
+  
   return result.data!
 }
 
@@ -93,18 +70,9 @@ export async function loginUser(data: LoginData): Promise<AuthResponse> {
  * Verify email with token
  */
 export async function verifyEmail(token: string): Promise<{ message: string; email: string }> {
-  const response = await fetch(`${API_BASE_URL}/auth/verify-email?token=${encodeURIComponent(token)}`, {
-    method: 'GET',
-  })
-
-  const result: StandardResponse<{ message: string; email: string }> = await response.json()
-
-  if (!response.ok || !result.success) {
-    toast.error(result.message || 'Email verification failed')
-    throw new Error(result.message || 'Email verification failed')
-  }
-
-  toast.success(result.message)
+  const result = await api.get<StandardResponse<{ message: string; email: string }>>(
+    `/auth/verify-email?token=${encodeURIComponent(token)}`
+  )
   return result.data!
 }
 
@@ -112,20 +80,13 @@ export async function verifyEmail(token: string): Promise<{ message: string; ema
  * Refresh access token
  */
 export async function refreshToken(token: string): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  })
-
-  const result: StandardResponse<AuthResponse> = await response.json()
-
-  if (!response.ok || !result.success) {
-    // Don't show toast for token refresh failures
-    throw new Error(result.message || 'Token refresh failed')
-  }
-
+  const result = await api.post<StandardResponse<AuthResponse>>(
+    '/auth/refresh',
+    null,
+    {
+      requireAuth: true
+    }
+  )
   return result.data!
 }
 
@@ -133,18 +94,7 @@ export async function refreshToken(token: string): Promise<AuthResponse> {
  * Logout user
  */
 export async function logoutUser(): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/auth/logout`, {
-    method: 'POST',
-  })
-
-  const result: StandardResponse<{ message: string }> = await response.json()
-
-  if (!response.ok || !result.success) {
-    toast.error(result.message || 'Logout failed')
-    throw new Error(result.message || 'Logout failed')
-  }
-
-  toast.success(result.message)
+  const result = await api.post<StandardResponse<{ message: string }>>('/auth/logout')
   return result.data!
 }
 
@@ -152,22 +102,10 @@ export async function logoutUser(): Promise<{ message: string }> {
  * Request password reset email
  */
 export async function forgotPassword(email: string): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email }),
-  })
-
-  const result: StandardResponse<{ message: string }> = await response.json()
-
-  if (!response.ok || !result.success) {
-    toast.error(result.message || 'Failed to send reset email')
-    throw new Error(result.message || 'Failed to send reset email')
-  }
-
-  toast.success(result.message)
+  const result = await api.post<StandardResponse<{ message: string }>>(
+    '/auth/forgot-password',
+    { email }
+  )
   return result.data!
 }
 
@@ -175,25 +113,13 @@ export async function forgotPassword(email: string): Promise<{ message: string }
  * Reset password with token
  */
 export async function resetPassword(token: string, newPassword: string): Promise<{ message: string; email: string }> {
-  const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ 
+  const result = await api.post<StandardResponse<{ message: string; email: string }>>(
+    '/auth/reset-password',
+    {
       token,
-      new_password: newPassword 
-    }),
-  })
-
-  const result: StandardResponse<{ message: string; email: string }> = await response.json()
-
-  if (!response.ok || !result.success) {
-    toast.error(result.message || 'Failed to reset password')
-    throw new Error(result.message || 'Failed to reset password')
-  }
-
-  toast.success(result.message)
+      new_password: newPassword
+    }
+  )
   return result.data!
 }
 
@@ -201,21 +127,9 @@ export async function resetPassword(token: string, newPassword: string): Promise
  * Resend verification email
  */
 export async function resendVerificationEmail(email: string): Promise<{ message: string; email: string }> {
-  const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email }),
-  })
-
-  const result: StandardResponse<{ message: string; email: string }> = await response.json()
-
-  if (!response.ok || !result.success) {
-    toast.error(result.message || 'Failed to resend verification email')
-    throw new Error(result.message || 'Failed to resend verification email')
-  }
-
-  toast.success(result.message)
+  const result = await api.post<StandardResponse<{ message: string; email: string }>>(
+    '/auth/resend-verification',
+    { email }
+  )
   return result.data!
 }

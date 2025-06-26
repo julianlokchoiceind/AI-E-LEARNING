@@ -495,3 +495,55 @@ async def resend_verification(request: Request, email_request: EmailVerification
         data={"email": user["email"]},
         message="Verification email sent successfully"
     )
+
+
+@router.get("/verify-email", response_model=StandardResponse[dict])
+async def verify_email(token: str) -> StandardResponse[dict]:
+    """
+    Verify email address with token.
+    """
+    db = get_database()
+    
+    # Find user with verification token
+    user = await db.users.find_one({"verification_token": token})
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid verification token"
+        )
+    
+    if user["is_verified"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already verified"
+        )
+    
+    # Update user as verified
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {
+                "is_verified": True,
+                "verification_token": None,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Send welcome email after successful verification
+    try:
+        await email_service.send_welcome_email(
+            to_email=user["email"],
+            name=user["name"]
+        )
+        logger.info(f"Welcome email sent to: {user['email']}")
+    except Exception as e:
+        logger.error(f"Failed to send welcome email: {str(e)}")
+        # Don't fail the verification if email fails
+    
+    return StandardResponse(
+        success=True,
+        data={"email": user["email"]},
+        message="Email verified successfully! Welcome to AI E-Learning Platform."
+    )

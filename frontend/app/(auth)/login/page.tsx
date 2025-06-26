@@ -4,14 +4,22 @@ import { signIn } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { LoadingButton } from '@/components/ui/LoadingStates'
+import { useErrorHandler } from '@/hooks/useErrorHandler'
+import { AlertCircle, CheckCircle } from 'lucide-react'
 
 export default function LoginPage() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [localError, setLocalError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  
+  const { handleError } = useErrorHandler({
+    redirectOnAuth: false,
+    showToast: false
+  })
 
   useEffect(() => {
     // Check for success messages in URL params
@@ -29,27 +37,29 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')
+    setLocalError('')
     
-    try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
-      
-      if (result?.error) {
-        setError('Invalid email or password. Please try again.')
-      } else if (result?.ok) {
-        // Redirect to dashboard on successful login
-        window.location.href = '/dashboard'
+    await handleError(
+      async () => {
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        })
+        
+        if (result?.error) {
+          throw new Error('Invalid email or password. Please try again.')
+        } else if (result?.ok) {
+          // Redirect to dashboard on successful login
+          window.location.href = '/dashboard'
+        }
+      },
+      (error) => {
+        setLocalError(error.message)
       }
-    } catch (error) {
-      console.error('Login error:', error)
-      setError('Something went wrong. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
+    )
+    
+    setIsLoading(false)
   }
 
   const handleSocialLogin = (provider: string) => {
@@ -73,14 +83,16 @@ export default function LoginPage() {
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{error}</p>
+          {localError && (
+            <div className="rounded-md bg-red-50 p-4 flex items-start">
+              <AlertCircle className="h-5 w-5 text-red-400 mt-0.5 mr-2 flex-shrink-0" />
+              <p className="text-sm text-red-800">{localError}</p>
             </div>
           )}
           
           {successMessage && (
-            <div className="rounded-md bg-green-50 p-4">
+            <div className="rounded-md bg-green-50 p-4 flex items-start">
+              <CheckCircle className="h-5 w-5 text-green-400 mt-0.5 mr-2 flex-shrink-0" />
               <p className="text-sm text-green-800">{successMessage}</p>
             </div>
           )}
@@ -140,13 +152,13 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <button
-              type="submit"
-              disabled={isLoading}
+            <LoadingButton
+              loading={isLoading}
+              loadingText="Signing in..."
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
-            </button>
+              Sign in
+            </LoadingButton>
           </div>
 
           <div className="mt-6">

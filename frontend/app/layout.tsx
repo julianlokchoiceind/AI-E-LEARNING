@@ -1,35 +1,105 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { SessionProvider } from '@/components/providers/session-provider'
+import { headers } from 'next/headers'
+import { Toaster } from 'react-hot-toast'
+import { SessionProvider } from '@/components/providers/SessionProvider'
+import { I18nProvider } from '@/lib/i18n/context'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { getLocaleFromPath, isValidLocale, DEFAULT_LOCALE, getTextDirection } from '@/lib/i18n/config'
+import { generateMetadata as generateSEOMetadata } from '@/lib/seo/metadata'
+import { OrganizationStructuredData, WebsiteStructuredData } from '@/components/seo/StructuredData'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata: Metadata = {
-  title: 'AI E-Learning Platform',
-  description: 'Master AI/ML through high-quality video courses with intelligent AI assistants',
-  keywords: 'AI, Machine Learning, E-Learning, Online Courses, Programming, Vietnamese',
-  authors: [{ name: 'AI E-Learning Team' }],
-  openGraph: {
-    title: 'AI E-Learning Platform',
-    description: 'Master AI/ML through high-quality video courses with intelligent AI assistants',
-    type: 'website',
-    locale: 'vi_VN',
-    alternateLocale: 'en_US',
-  },
-}
+export const metadata: Metadata = generateSEOMetadata({
+  title: 'AI E-Learning Platform - Master AI/ML Programming',
+  description: 'Learn AI and Machine Learning through high-quality video courses with intelligent AI assistants. Vietnamese AI programming education platform.',
+  keywords: [
+    'AI programming',
+    'Machine Learning',
+    'E-Learning',
+    'Online Courses',
+    'Vietnamese education',
+    'Programming tutorials',
+    'AI assistant'
+  ],
+  canonical: '/',
+  locale: 'vi',
+  alternateLocales: ['en', 'vi']
+})
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Get locale from headers set by middleware
+  const headersList = headers()
+  const localeFromHeaders = headersList.get('x-locale')
+  const locale = isValidLocale(localeFromHeaders) ? localeFromHeaders : DEFAULT_LOCALE
+  const direction = getTextDirection(locale)
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} dir={direction} suppressHydrationWarning>
+      <head>
+        {/* Core Organization Schema */}
+        <OrganizationStructuredData
+          name="AI E-Learning Platform"
+          url={process.env.NEXT_PUBLIC_APP_URL || 'https://ai-elearning.com'}
+          logo={`${process.env.NEXT_PUBLIC_APP_URL || 'https://ai-elearning.com'}/logo.png`}
+          description="Vietnam's leading AI programming education platform"
+          contactPoint={{
+            email: 'info@ai-elearning.com',
+            contactType: 'customer service'
+          }}
+          socialMedia={[
+            'https://facebook.com/aielearning',
+            'https://twitter.com/aielearning',
+            'https://linkedin.com/company/aielearning'
+          ]}
+        />
+        
+        {/* Website Schema with Search */}
+        <WebsiteStructuredData
+          name="AI E-Learning Platform"
+          url={process.env.NEXT_PUBLIC_APP_URL || 'https://ai-elearning.com'}
+          description="Master AI/ML through high-quality video courses with intelligent AI assistants"
+          searchAction={{
+            target: `${process.env.NEXT_PUBLIC_APP_URL || 'https://ai-elearning.com'}/courses?q={search_term_string}`,
+            queryInput: 'required name=search_term_string'
+          }}
+        />
+      </head>
+      
       <body className={inter.className}>
-        <SessionProvider>
-          {children}
-        </SessionProvider>
+        <ErrorBoundary>
+          <I18nProvider initialLocale={locale}>
+            <SessionProvider>
+              <Toaster 
+                position="top-right"
+                toastOptions={{
+                  duration: 5000,
+                  style: {
+                    background: '#363636',
+                    color: '#fff',
+                  },
+                  success: {
+                    style: {
+                      background: '#10b981',
+                    },
+                  },
+                  error: {
+                    style: {
+                      background: '#ef4444',
+                    },
+                  },
+                }}
+              />
+              {children}
+            </SessionProvider>
+          </I18nProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

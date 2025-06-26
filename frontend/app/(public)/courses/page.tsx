@@ -5,6 +5,8 @@ import { Search, Filter, ChevronDown } from 'lucide-react';
 import CourseCard from '@/components/feature/CourseCard';
 import { Button } from '@/components/ui/Button';
 import { getCourses } from '@/lib/api/courses';
+import { CourseCardSkeleton, EmptyState, LoadingSpinner } from '@/components/ui/LoadingStates';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { toast } from 'react-hot-toast';
 
 const CourseCatalogPage = () => {
@@ -16,6 +18,8 @@ const CourseCatalogPage = () => {
   const [priceFilter, setPriceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [showFilters, setShowFilters] = useState(false);
+  
+  const { handleError } = useErrorHandler();
 
   const categories = [
     { value: '', label: 'All Categories' },
@@ -52,8 +56,9 @@ const CourseCatalogPage = () => {
   }, [searchQuery, selectedCategory, selectedLevel, priceFilter, sortBy]);
 
   const fetchCourses = async () => {
-    try {
-      setLoading(true);
+    setLoading(true);
+    
+    await handleError(async () => {
       const params = new URLSearchParams();
       
       if (searchQuery) params.append('search', searchQuery);
@@ -82,13 +87,10 @@ const CourseCatalogPage = () => {
       }
 
       const response = await getCourses(params.toString());
-      setCourses(response.data || []);
-    } catch (error) {
-      console.error('Failed to fetch courses:', error);
-      toast.error('Failed to load courses');
-    } finally {
-      setLoading(false);
-    }
+      setCourses(response.courses || []);
+    });
+    
+    setLoading(false);
   };
 
   const handleEnroll = async (courseId: string) => {
@@ -209,13 +211,26 @@ const CourseCatalogPage = () => {
 
         {/* Course Grid */}
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, index) => (
+              <CourseCardSkeleton key={index} />
+            ))}
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-gray-600 text-lg">No courses found. Try adjusting your filters.</p>
-          </div>
+          <EmptyState
+            title="No courses found"
+            description="Try adjusting your filters or search query"
+            action={{
+              label: 'Clear filters',
+              onClick: () => {
+                setSearchQuery('');
+                setSelectedCategory('');
+                setSelectedLevel('');
+                setPriceFilter('all');
+                setSortBy('newest');
+              }
+            }}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {courses.map((course) => (

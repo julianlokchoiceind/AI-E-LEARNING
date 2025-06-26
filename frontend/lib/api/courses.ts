@@ -1,6 +1,5 @@
-import { API_BASE_URL } from '@/lib/constants/api-endpoints';
 import { StandardResponse } from '@/lib/types/api';
-import { toast } from 'react-hot-toast';
+import { api } from '@/lib/api/api-client';
 
 interface CourseResponse {
   _id: string;
@@ -60,181 +59,54 @@ interface CreateCourseData {
 
 // Get courses list with filters
 export const getCourses = async (queryParams?: string): Promise<CoursesListData> => {
-  try {
-    const url = queryParams 
-      ? `${API_BASE_URL}/courses?${queryParams}`
-      : `${API_BASE_URL}/courses`;
-      
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const result: StandardResponse<CoursesListData> = await response.json();
-
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return result.data!;
-  } catch (error) {
-    console.error('Failed to fetch courses:', error);
-    throw error;
-  }
+  const url = queryParams ? `/courses?${queryParams}` : '/courses';
+  const result = await api.get<StandardResponse<CoursesListData>>(url);
+  return result.data!;
 };
 
 // Get course details
 export const getCourseById = async (courseId: string): Promise<CourseDetailData> => {
-  try {
-    const token = localStorage.getItem('access_token');
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
-      method: 'GET',
-      headers,
-    });
-
-    const result: StandardResponse<CourseDetailData> = await response.json();
-
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return result.data!;
-  } catch (error) {
-    console.error('Failed to fetch course details:', error);
-    throw error;
-  }
+  const result = await api.get<StandardResponse<CourseDetailData>>(
+    `/courses/${courseId}`,
+    { requireAuth: false } // Auth optional for course details
+  );
+  return result.data!;
 };
 
 // Create new course (for creators/admin)
 export const createCourse = async (): Promise<CreateCourseData> => {
-  try {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/courses`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({}), // Empty body for quick creation
-    });
-
-    const result: StandardResponse<CreateCourseData> = await response.json();
-
-    if (!response.ok || !result.success) {
-      toast.error(result.message || 'Failed to create course');
-      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    toast.success(result.message);
-    return result.data!;
-  } catch (error) {
-    console.error('Failed to create course:', error);
-    throw error;
-  }
+  const result = await api.post<StandardResponse<CreateCourseData>>(
+    '/courses',
+    {}, // Empty body for quick creation
+    { requireAuth: true }
+  );
+  return result.data!;
 };
 
 // Update course
 export const updateCourse = async (courseId: string, data: Partial<CourseResponse>): Promise<CourseDetailData> => {
-  try {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
-
-    const result: StandardResponse<CourseDetailData> = await response.json();
-
-    if (!response.ok || !result.success) {
-      toast.error(result.message || 'Failed to update course');
-      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    toast.success(result.message);
-    return result.data!;
-  } catch (error) {
-    console.error('Failed to update course:', error);
-    throw error;
-  }
+  const result = await api.put<StandardResponse<CourseDetailData>>(
+    `/courses/${courseId}`,
+    data,
+    { requireAuth: true }
+  );
+  return result.data!;
 };
 
 // Delete course
 export const deleteCourse = async (courseId: string): Promise<void> => {
-  try {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    const result: StandardResponse<any> = await response.json();
-
-    if (!response.ok || !result.success) {
-      toast.error(result.message || 'Failed to delete course');
-      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    toast.success(result.message);
-  } catch (error) {
-    console.error('Failed to delete course:', error);
-    throw error;
-  }
+  await api.delete<StandardResponse<any>>(
+    `/courses/${courseId}`,
+    { requireAuth: true }
+  );
 };
 
 // Enroll in course
 export const enrollInCourse = async (courseId: string): Promise<any> => {
-  try {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/courses/${courseId}/enroll`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    const result: StandardResponse<any> = await response.json();
-
-    if (!response.ok || !result.success) {
-      toast.error(result.message || 'Failed to enroll in course');
-      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    toast.success(result.message);
-    return result.data!;
-  } catch (error) {
-    console.error('Failed to enroll in course:', error);
-    throw error;
-  }
+  const result = await api.post<StandardResponse<any>>(
+    `/courses/${courseId}/enroll`,
+    null,
+    { requireAuth: true }
+  );
+  return result.data!;
 };

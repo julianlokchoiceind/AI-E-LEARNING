@@ -3,7 +3,10 @@
  * Centralized API endpoint definitions
  */
 
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
 export const API_ENDPOINTS = {
+  BASE_URL: API_BASE_URL,
   // Authentication
   AUTH: {
     LOGIN: '/api/v1/auth/login',
@@ -34,6 +37,7 @@ export const API_ENDPOINTS = {
     ENROLL: (id: string) => `/api/v1/courses/${id}/enroll`,
     CHAPTERS: (id: string) => `/api/v1/courses/${id}/chapters`,
     LESSONS: (id: string) => `/api/v1/courses/${id}/lessons`,
+    PREVIEW_LESSON: (courseId: string, lessonId: string) => `/api/v1/courses/${courseId}/preview/${lessonId}`,
   },
 
   // Chapters

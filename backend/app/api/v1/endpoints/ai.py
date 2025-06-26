@@ -369,6 +369,85 @@ async def get_contextual_suggestions(
         )
 
 
+@router.post("/enhanced-suggestions", response_model=StandardResponse[dict])
+async def get_enhanced_contextual_suggestions(
+    request: Dict[str, Any],
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """
+    Get enhanced contextual suggestions with learning progress and goals
+    
+    This endpoint provides more sophisticated suggestions based on:
+    - Current course and lesson context
+    - Learning progress and video watch time
+    - User's learning goals and preferences
+    - Previous question history
+    """
+    try:
+        course_id = request.get("course_id")
+        lesson_id = request.get("lesson_id")
+        user_level = request.get("user_level", "intermediate")
+        lesson_progress = request.get("lesson_progress", 0)
+        learning_goals = request.get("learning_goals", [])
+        previous_questions = request.get("previous_questions", [])
+        difficulty_preference = request.get("difficulty_preference", "detailed")
+        
+        # Generate basic suggestions
+        suggestions = await ai_service.generate_contextual_suggestions(
+            course_id=course_id,
+            lesson_id=lesson_id,
+            user_level=user_level
+        )
+        
+        # Enhance suggestions based on progress
+        enhanced_suggestions = []
+        
+        # Add progress-based suggestions
+        if lesson_progress < 25:
+            enhanced_suggestions.append("What should I focus on first in this lesson?")
+        elif lesson_progress < 75:
+            enhanced_suggestions.append("Can you explain the current topic in more detail?")
+        else:
+            enhanced_suggestions.append("What are the key takeaways from this lesson?")
+        
+        # Add goal-based suggestions
+        if learning_goals:
+            goal_suggestion = f"How does this lesson help with my goal: {learning_goals[0]}?"
+            enhanced_suggestions.append(goal_suggestion)
+        
+        # Add difficulty-appropriate suggestions
+        if difficulty_preference == "simple":
+            enhanced_suggestions.append("Explain this in simple terms")
+        elif difficulty_preference == "technical":
+            enhanced_suggestions.append("Give me the technical details and implementation")
+        
+        # Combine with AI-generated suggestions, removing duplicates
+        all_suggestions = list(dict.fromkeys(enhanced_suggestions + suggestions))
+        
+        return StandardResponse(
+            success=True,
+            data={
+                "suggestions": all_suggestions[:6],  # Return top 6 suggestions
+                "context": {
+                    "course_id": course_id,
+                    "lesson_id": lesson_id,
+                    "progress": lesson_progress,
+                    "goals_count": len(learning_goals),
+                    "preference": difficulty_preference
+                },
+                "generated_at": datetime.utcnow().isoformat()
+            },
+            message="Enhanced suggestions generated successfully"
+        )
+        
+    except Exception as e:
+        logger.error(f"Enhanced suggestions error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate enhanced suggestions"
+        )
+
+
 # Additional utility endpoints
 
 @router.post("/context", response_model=StandardResponse[dict])

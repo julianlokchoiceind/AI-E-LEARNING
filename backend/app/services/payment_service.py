@@ -19,7 +19,7 @@ from app.schemas.payment import (
     SubscriptionStatus, SubscriptionType
 )
 from app.services.enrollment_service import EnrollmentService
-from app.services.email_service import EmailService
+from app.core.email import email_service
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -162,18 +162,19 @@ class PaymentService:
                     payment_id=str(payment.id)
                 )
                 
-                # Send confirmation email
+                # Send payment confirmation email
                 user = await User.get(payment.user_id)
                 course = await Course.get(payment.course_id)
                 
                 if user and course:
-                    await EmailService.send_purchase_confirmation(
-                        user.email,
-                        user.name,
-                        course.title,
-                        payment.amount,
-                        payment.currency
+                    await email_service.send_payment_confirmation_email(
+                        to_email=user.email,
+                        name=user.name,
+                        course_title=course.title,
+                        amount=payment.amount,
+                        currency=payment.currency
                     )
+                    logger.info(f"Payment confirmation email sent to: {user.email}")
             
             return True
             

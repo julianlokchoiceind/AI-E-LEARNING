@@ -1,24 +1,7 @@
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
 import { getSession } from 'next-auth/react';
-
-export interface Lesson {
-  _id: string;
-  course_id: string;
-  chapter_id: string;
-  title: string;
-  description: string;
-  order: number;
-  video: {
-    youtube_url: string;
-    duration: number;
-    thumbnail?: string;
-  };
-  has_quiz: boolean;
-  quiz_required: boolean;
-  status: 'draft' | 'published';
-  created_at: string;
-  updated_at: string;
-}
+import { Lesson } from '@/lib/types/course';
+import { StandardResponse } from '@/lib/types/api';
 
 export interface LessonCreateData {
   chapter_id: string;
@@ -82,6 +65,27 @@ export const getLesson = async (lessonId: string): Promise<Lesson> => {
     return data;
   } catch (error) {
     console.error('Get lesson failed:', error);
+    throw error;
+  }
+};
+
+// Get lesson for preview (no authentication required)
+export const getPreviewLesson = async (courseId: string, lessonId: string): Promise<StandardResponse<Lesson>> => {
+  try {
+    const response = await fetch(API_ENDPOINTS.COURSES.PREVIEW_LESSON(courseId, lessonId), {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Get preview lesson failed:', error);
     throw error;
   }
 };
