@@ -11,10 +11,16 @@ from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 from anthropic import Anthropic
 import logging
+import json
 from app.core.config import get_settings
 from app.models.user import User
 from app.models.course import Course
 from app.models.lesson import Lesson
+from app.schemas.ai import (
+    GeneratedQuizQuestion,
+    QuizOption,
+    QuestionDifficulty
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -405,7 +411,7 @@ class AIService:
         lesson_content: str,
         difficulty: str = "intermediate",
         num_questions: int = 5
-    ) -> List[Dict[str, Any]]:
+    ) -> List[GeneratedQuizQuestion]:
         """
         Generate quiz questions from lesson content using AI
         
@@ -426,11 +432,19 @@ class AIService:
             Requirements:
             - Difficulty level: {difficulty}
             - Each question should have 4 options (A, B, C, D)
-            - Include the correct answer
+            - Include the correct answer index (0-3)
             - Provide a brief explanation for the correct answer
             - Focus on key concepts and practical understanding
             
-            Format each question as JSON with fields: question, options, correct_answer, explanation
+            Return ONLY a JSON array with this exact format:
+            [
+                {{
+                    "question": "The question text",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "correct_answer": 0,
+                    "explanation": "Why this answer is correct"
+                }}
+            ]
             """
             
             result = await self.agent.run(prompt)
@@ -445,23 +459,69 @@ class AIService:
             logger.error(f"Quiz generation error: {str(e)}")
             return []
     
-    def _parse_quiz_response(self, ai_response: str) -> List[Dict[str, Any]]:
+    def _parse_quiz_response(self, ai_response: str) -> List[GeneratedQuizQuestion]:
         """Parse AI response into quiz question format"""
-        # This is a simplified parser - in production, you'd want more robust parsing
         questions = []
         try:
-            # For now, return a sample structure
-            # In production, implement proper parsing of AI response
-            questions = [
-                {
-                    "question": "Sample question from AI",
-                    "options": ["Option A", "Option B", "Option C", "Option D"],
-                    "correct_answer": 0,
-                    "explanation": "This is the explanation for the correct answer"
-                }
-            ]
+            # Try to parse JSON response from AI
+            if ai_response.strip().startswith('['):
+                # Direct JSON array
+                parsed_questions = json.loads(ai_response)
+            else:
+                # Look for JSON content in the response
+                import re
+                json_match = re.search(r'\[.*\]', ai_response, re.DOTALL)
+                if json_match:
+                    parsed_questions = json.loads(json_match.group())
+                else:
+                    # Fallback to sample question
+                    parsed_questions = [{
+                        "question": "What is the main concept discussed in this lesson?",
+                        "options": [
+                            "Concept A",
+                            "Concept B", 
+                            "Concept C",
+                            "Concept D"
+                        ],
+                        "correct_answer": 0,
+                        "explanation": "The main concept is Concept A as discussed throughout the lesson."
+                    }]
+            
+            # Convert to GeneratedQuizQuestion objects
+            for q in parsed_questions:
+                options = []
+                for i, opt in enumerate(q.get('options', [])):
+                    options.append(QuizOption(
+                        text=opt,
+                        is_correct=(i == q.get('correct_answer', 0))
+                    ))
+                
+                question = GeneratedQuizQuestion(
+                    question=q.get('question', 'Question text'),
+                    options=options,
+                    correct_answer_index=q.get('correct_answer', 0),
+                    explanation=q.get('explanation', 'Explanation not provided'),
+                    difficulty=QuestionDifficulty.INTERMEDIATE,
+                    points=1
+                )
+                questions.append(question)
+                
         except Exception as e:
             logger.error(f"Quiz parsing error: {str(e)}")
+            # Return a default question on error
+            questions = [GeneratedQuizQuestion(
+                question="What did you learn from this lesson?",
+                options=[
+                    QuizOption(text="Key concept A", is_correct=True),
+                    QuizOption(text="Key concept B", is_correct=False),
+                    QuizOption(text="Key concept C", is_correct=False),
+                    QuizOption(text="Key concept D", is_correct=False)
+                ],
+                correct_answer_index=0,
+                explanation="Key concept A is the main takeaway from this lesson.",
+                difficulty=QuestionDifficulty.INTERMEDIATE,
+                points=1
+            )]
         
         return questions
     

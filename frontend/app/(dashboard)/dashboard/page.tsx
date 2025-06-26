@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/Card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { InlineChatComponent } from '@/components/feature/InlineChatComponent';
+import { AccessDenied } from '@/components/feature/AccessDenied';
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
 import { formatDistanceToNow } from '@/lib/utils/formatters';
 import toast from 'react-hot-toast';
@@ -47,10 +49,20 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const accessError = searchParams.get('error');
 
   useEffect(() => {
+    // Show access denied message if redirected from unauthorized route
+    if (accessError === 'access_denied') {
+      toast.error('Access denied: You do not have permission to access that page');
+      // Clean the URL
+      router.replace('/dashboard');
+    }
+    
     fetchDashboardData();
-  }, []);
+  }, [accessError, router]);
 
   const fetchDashboardData = async () => {
     try {

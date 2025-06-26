@@ -5,9 +5,15 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token
     const isAuth = !!token
-    const isAuthPage = req.nextUrl.pathname.startsWith('/login') || 
-                      req.nextUrl.pathname.startsWith('/register')
-
+    const userRole = token?.role as string
+    const pathname = req.nextUrl.pathname
+    
+    // Define role-based route protection
+    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register')
+    const isAdminRoute = pathname.startsWith('/admin')
+    const isCreatorRoute = pathname.startsWith('/creator')
+    
+    // Redirect authenticated users away from auth pages
     if (isAuthPage) {
       if (isAuth) {
         return NextResponse.redirect(new URL('/dashboard', req.url))
@@ -15,8 +21,9 @@ export default withAuth(
       return null
     }
 
+    // Require authentication for protected routes
     if (!isAuth) {
-      let from = req.nextUrl.pathname
+      let from = pathname
       if (req.nextUrl.search) {
         from += req.nextUrl.search
       }
@@ -25,6 +32,24 @@ export default withAuth(
         new URL(`/login?from=${encodeURIComponent(from)}`, req.url)
       )
     }
+
+    // Role-based access control
+    if (isAdminRoute) {
+      if (userRole !== 'admin') {
+        // Non-admin users trying to access admin routes
+        return NextResponse.redirect(new URL('/dashboard?error=access_denied', req.url))
+      }
+    }
+    
+    if (isCreatorRoute) {
+      if (userRole !== 'creator' && userRole !== 'admin') {
+        // Non-creator/admin users trying to access creator routes
+        return NextResponse.redirect(new URL('/dashboard?error=access_denied', req.url))
+      }
+    }
+
+    // Allow access for authorized users
+    return null
   },
   {
     callbacks: {

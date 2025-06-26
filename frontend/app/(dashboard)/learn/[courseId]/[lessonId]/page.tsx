@@ -39,6 +39,12 @@ interface Progress {
   is_unlocked: boolean;
 }
 
+interface LessonProgress {
+  lesson_id: string;
+  is_completed: boolean;
+  is_unlocked: boolean;
+}
+
 export default function LessonPlayerPage() {
   const params = useParams();
   const router = useRouter();
@@ -55,6 +61,7 @@ export default function LessonPlayerPage() {
   const [hasQuiz, setHasQuiz] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizPassed, setQuizPassed] = useState(false);
+  const [lessonsProgress, setLessonsProgress] = useState<Map<string, LessonProgress>>(new Map());
 
   useEffect(() => {
     fetchLessonData();
@@ -132,6 +139,9 @@ export default function LessonPlayerPage() {
         const data = await response.json();
         setChapters(data.data);
         
+        // Fetch progress for all lessons
+        await fetchAllLessonsProgress(data.data);
+        
         // Find current chapter and next lesson
         for (const chapter of data.data) {
           const lessonIndex = chapter.lessons.findIndex((l: Lesson) => l._id === lessonId);
@@ -154,6 +164,64 @@ export default function LessonPlayerPage() {
       }
     } catch (error) {
       console.error('Error fetching course structure:', error);
+    }
+  };
+
+  const fetchAllLessonsProgress = async (chapters: Chapter[]) => {
+    try {
+      const progressMap = new Map<string, LessonProgress>();
+      
+      // Collect all lesson IDs
+      const allLessonIds: string[] = [];
+      chapters.forEach(chapter => {
+        chapter.lessons.forEach(lesson => {
+          allLessonIds.push(lesson._id);
+        });
+      });
+      
+      // Fetch progress for all lessons
+      const progressPromises = allLessonIds.map(async (lessonId) => {
+        try {
+          const response = await fetch(`${API_ENDPOINTS.BASE_URL}/progress/lessons/${lessonId}/progress`, {
+            credentials: 'include',
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            return {
+              lesson_id: lessonId,
+              is_completed: data.data.is_completed,
+              is_unlocked: data.data.is_unlocked
+            };
+          }
+          
+          // If no progress exists, lesson is locked (except first lesson)
+          const isFirstLesson = chapters[0]?.lessons[0]?._id === lessonId;
+          return {
+            lesson_id: lessonId,
+            is_completed: false,
+            is_unlocked: isFirstLesson
+          };
+        } catch (error) {
+          // Default to locked if error
+          return {
+            lesson_id: lessonId,
+            is_completed: false,
+            is_unlocked: false
+          };
+        }
+      });
+      
+      const progressResults = await Promise.all(progressPromises);
+      
+      // Build progress map
+      progressResults.forEach(progress => {
+        progressMap.set(progress.lesson_id, progress);
+      });
+      
+      setLessonsProgress(progressMap);
+    } catch (error) {
+      console.error('Error fetching lessons progress:', error);
     }
   };
 
@@ -231,6 +299,25 @@ export default function LessonPlayerPage() {
             },
           });
         }
+        
+        // Update lesson progress in sidebar
+        const updatedProgress = new Map(lessonsProgress);
+        updatedProgress.set(lessonId, {
+          lesson_id: lessonId,
+          is_completed: true,
+          is_unlocked: true
+        });
+        
+        // Unlock next lesson if exists
+        if (nextLesson) {
+          updatedProgress.set(nextLesson._id, {
+            lesson_id: nextLesson._id,
+            is_completed: false,
+            is_unlocked: true
+          });
+        }
+        
+        setLessonsProgress(updatedProgress);
       }
     } catch (error) {
       console.error('Error completing lesson:', error);
@@ -262,6 +349,25 @@ export default function LessonPlayerPage() {
               },
             });
           }
+          
+          // Update lesson progress in sidebar
+          const updatedProgress = new Map(lessonsProgress);
+          updatedProgress.set(lessonId, {
+            lesson_id: lessonId,
+            is_completed: true,
+            is_unlocked: true
+          });
+          
+          // Unlock next lesson if exists
+          if (nextLesson) {
+            updatedProgress.set(nextLesson._id, {
+              lesson_id: nextLesson._id,
+              is_completed: false,
+              is_unlocked: true
+            });
+          }
+          
+          setLessonsProgress(updatedProgress);
         }
       } catch (error) {
         console.error('Error completing lesson:', error);
@@ -325,23 +431,43 @@ export default function LessonPlayerPage() {
                 <div className="space-y-1">
                   {chapter.lessons.map((chapterLesson) => {
                     const isCurrentLesson = chapterLesson._id === lessonId;
-                    const isCompleted = false; // TODO: Check completion status
+                    const lessonProgress = lessonsProgress.get(chapterLesson._id);
+                    const isCompleted = lessonProgress?.is_completed || false;
+                    const isUnlocked = lessonProgress?.is_unlocked || false;
                     
                     return (
                       <button
                         key={chapterLesson._id}
-                        onClick={() => navigateToLesson(chapterLesson._id)}
-                        className={`w-full text-left px-3 py-2 rounded transition-colors ${
+                        onClick={() => {
+                          if (!isUnlocked && !isCurrentLesson) {
+                            toast.error('Please complete previous lessons first');
+                            return;
+                          }
+                          navigateToLesson(chapterLesson._id);
+                        }}
+                        disabled={!isUnlocked && !isCurrentLesson}
+                        className={`w-full text-left px-3 py-2 rounded transition-colors relative ${
                           isCurrentLesson
                             ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
-                            : 'hover:bg-gray-50'
+                            : isUnlocked
+                            ? 'hover:bg-gray-50 cursor-pointer'
+                            : 'opacity-50 cursor-not-allowed'
                         }`}
+                        title={!isUnlocked ? 'Complete previous lessons to unlock' : ''}
                       >
                         <div className="flex items-center">
-                          <span className={`mr-2 ${isCompleted ? 'text-green-600' : 'text-gray-400'}`}>
-                            {isCompleted ? '✓' : '○'}
+                          <span className={`mr-2 text-lg ${
+                            isCompleted 
+                              ? 'text-green-600' 
+                              : isUnlocked 
+                              ? 'text-gray-400' 
+                              : 'text-gray-300'
+                          }`}>
+                            {isCompleted ? '✓' : isUnlocked ? '○' : '🔒'}
                           </span>
-                          <span className="text-sm">{chapterLesson.title}</span>
+                          <span className={`text-sm ${!isUnlocked ? 'text-gray-500' : ''}`}>
+                            {chapterLesson.title}
+                          </span>
                         </div>
                       </button>
                     );

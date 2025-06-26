@@ -328,49 +328,49 @@
 
 **Senior Fullstack Lead:**
 ```
-☐ Set up Stripe SDK and webhooks (2 hours)
-☐ Create payment models and schemas (2 hours)
-☐ Implement one-time course purchase flow (3 hours)
-☐ Test payment success and failure scenarios (1 hour)
+☑ Set up Stripe SDK and webhooks (2 hours)
+☑ Create payment models and schemas (2 hours)
+☑ Implement one-time course purchase flow (3 hours)
+☑ Test payment success and failure scenarios (1 hour)
 ```
 
 **Backend Developer:**
 ```
-☐ Create payment endpoints (/api/v1/payments) (3 hours)
-☐ Implement webhook handling for payment events (2 hours)
-☐ Add payment status tracking (2 hours)
-☐ Create enrollment activation after payment (1 hour)
+☑ Create payment endpoints (/api/v1/payments) (3 hours)
+☑ Implement webhook handling for payment events (2 hours)
+☑ Add payment status tracking (2 hours)
+☑ Create enrollment activation after payment (1 hour)
 ```
 
 ### **Day 23 (Tuesday) - Subscription System**
 **Backend Developer:**
 ```
-☐ Implement Pro subscription creation (3 hours)
-☐ Add subscription status management (2 hours)
-☐ Create subscription webhook handlers (2 hours)
-☐ Implement subscription cancellation (1 hour)
+☑ Implement Pro subscription creation (3 hours)
+☑ Add subscription status management (2 hours)
+☑ Create subscription webhook handlers (2 hours)
+☑ Implement subscription cancellation (1 hour)
 ```
 
 **Frontend Developer:**
 ```
-☐ Create payment form components (3 hours)
-☐ Implement subscription management UI (3 hours)
-☐ Add payment history page (2 hours)
+☑ Create payment form components (3 hours)
+☑ Implement subscription management UI (3 hours)
+☑ Add payment history page (2 hours)
 ```
 
 ### **Day 24 (Wednesday) - Payment UI & UX**
 **Frontend Developer:**
 ```
-☐ Create pricing plans page (/pricing) (3 hours)
-☐ Implement course purchase flow (3 hours)
-☐ Add payment success/failure pages (2 hours)
+☑ Create pricing plans page (/pricing) (3 hours)
+☑ Implement course purchase flow (3 hours)
+☑ Add payment success/failure pages (2 hours)
 ```
 
 **Senior Fullstack Lead:**
 ```
-☐ Complete Stripe integration and testing (4 hours)
-☐ Test complete payment workflows (2 hours)
-☐ Add payment error handling and recovery (2 hours)
+☑ Complete Stripe integration and testing (4 hours)
+☑ Test complete payment workflows (2 hours)
+☑ Add payment error handling and recovery (2 hours)
 ```
 
 ### **Day 25 (Thursday) - Admin Foundation**
@@ -378,27 +378,34 @@
 
 **Backend Developer:**
 ```
-☐ Create admin authentication and roles (2 hours)
-☐ Implement user management endpoints (3 hours)
-☐ Create course approval endpoints (2 hours)
-☐ Add admin analytics endpoints (1 hour)
+☑ Create admin authentication and roles (2 hours)
+☑ Implement user management endpoints (3 hours)
+☑ Create course approval endpoints (2 hours)
+☑ Add admin analytics endpoints (1 hour)
 ```
 
 **Frontend Developer:**
 ```
-☐ Create admin dashboard layout (/admin) (3 hours)
-☐ Implement user management interface (3 hours)
-☐ Create course approval interface (2 hours)
+☑ Create admin dashboard layout (/admin) (3 hours)
+☑ Implement user management interface (3 hours)
+☑ Create course approval interface (2 hours)
+```
+
+**Senior Fullstack Lead:**
+```
+☑ Implement role-based middleware protection (2 hours)
+☑ Update middleware.ts to check user roles for /creator/* and /admin/* routes (1 hour)
+☑ Add role verification to API endpoints (1 hour)
 ```
 
 ### **Day 26 (Friday) - Integration & Demo Prep**
 **Entire Team:**
 ```
-☐ End-to-end payment testing (2 hours)
-☐ Admin functionality testing (1 hour)
-☐ Performance optimization and bug fixes (3 hours)
-☐ Prepare Week 4 demo (1 hour)
-☐ Week 4 retrospective and Phase 1 review (1 hour)
+☑ End-to-end payment testing (2 hours)
+☑ Admin functionality testing (1 hour)
+☑ Performance optimization and bug fixes (3 hours)
+☑ Prepare Week 4 demo (1 hour)
+☑ Week 4 retrospective and Phase 1 review (1 hour)
 ```
 
 **Week 4 Deliverables:**
@@ -425,6 +432,8 @@
 ☐ Security audit and penetration testing
 📋 **Reference:** [SECURITY_COMPLIANCE.md](./SECURITY_COMPLIANCE.md) - Section 1 (Security Audit)
 ☐ Performance optimization (API response times, database queries)
+☐ Code quality review and import order standardization
+☐ Ensure all files follow naming conventions (PascalCase for components)
 ```
 
 ### **Week 6 Focus Areas:**

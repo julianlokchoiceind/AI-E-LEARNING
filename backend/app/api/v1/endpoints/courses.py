@@ -22,16 +22,17 @@ from app.services.course_service import CourseService
 from app.services.analytics_service import AnalyticsService
 from app.core.exceptions import NotFoundException, ForbiddenException, BadRequestException
 from app.schemas.analytics import CreatorAnalytics, CourseAnalytics
+from app.schemas.base import StandardResponse
 
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-@router.post("", response_model=CourseCreateResponse, status_code=201)
+@router.post("", response_model=StandardResponse[CourseCreateResponse], status_code=201)
 async def create_course(
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[CourseCreateResponse]:
     """
     Create a new course with auto-generated title.
     
@@ -44,14 +45,18 @@ async def create_course(
     """
     try:
         result = await CourseService.create_course(current_user)
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="Course created successfully. Redirecting to editor..."
+        )
     except ForbiddenException as e:
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to create course")
 
 
-@router.get("", response_model=CourseListResponse)
+@router.get("", response_model=StandardResponse[CourseListResponse])
 async def list_courses(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -60,7 +65,7 @@ async def list_courses(
     search: Optional[str] = None,
     is_free: Optional[bool] = None,
     current_user: Optional[User] = Depends(get_current_user_optional)
-):
+) -> StandardResponse[CourseListResponse]:
     """
     List courses with filters and pagination.
     
@@ -114,23 +119,27 @@ async def list_courses(
             
             courses_with_access.append(CourseResponse(**course_dict))
         
-        return CourseListResponse(
-            courses=courses_with_access,
-            total=result["total"],
-            page=result["page"],
-            per_page=result["per_page"],
-            total_pages=result["total_pages"]
+        return StandardResponse(
+            success=True,
+            data=CourseListResponse(
+                courses=courses_with_access,
+                total=result["total"],
+                page=result["page"],
+                per_page=result["per_page"],
+                total_pages=result["total_pages"]
+            ),
+            message="Courses retrieved successfully"
         )
     except Exception as e:
         logger.error(f"Error listing courses: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list courses")
 
 
-@router.get("/{course_id}", response_model=CourseResponse)
+@router.get("/{course_id}", response_model=StandardResponse[CourseResponse])
 async def get_course(
     course_id: str,
     current_user: Optional[User] = Depends(get_current_user_optional)
-):
+) -> StandardResponse[CourseResponse]:
     """
     Get course details by ID.
     
@@ -159,19 +168,23 @@ async def get_course(
         # TODO: Add progress percentage when Progress model is implemented
         course_dict["progress_percentage"] = 0
         
-        return CourseResponse(**course_dict)
+        return StandardResponse(
+            success=True,
+            data=CourseResponse(**course_dict),
+            message="Course details retrieved successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to get course")
 
 
-@router.put("/{course_id}", response_model=CourseResponse)
+@router.put("/{course_id}", response_model=StandardResponse[CourseResponse])
 async def update_course(
     course_id: str,
     course_update: CourseUpdate,
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[CourseResponse]:
     """
     Update course details.
     
@@ -187,7 +200,11 @@ async def update_course(
         access_info = await CourseService.check_course_access(course, current_user)
         course_dict.update(access_info)
         
-        return CourseResponse(**course_dict)
+        return StandardResponse(
+            success=True,
+            data=CourseResponse(**course_dict),
+            message="Course updated successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except ForbiddenException as e:
@@ -196,11 +213,11 @@ async def update_course(
         raise HTTPException(status_code=500, detail="Failed to update course")
 
 
-@router.delete("/{course_id}")
+@router.delete("/{course_id}", response_model=StandardResponse[dict])
 async def delete_course(
     course_id: str,
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[dict]:
     """
     Delete (archive) a course.
     
@@ -209,7 +226,11 @@ async def delete_course(
     """
     try:
         result = await CourseService.delete_course(course_id, current_user)
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="Course deleted successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except ForbiddenException as e:
@@ -218,11 +239,11 @@ async def delete_course(
         raise HTTPException(status_code=500, detail="Failed to delete course")
 
 
-@router.post("/{course_id}/submit-for-review")
+@router.post("/{course_id}/submit-for-review", response_model=StandardResponse[dict])
 async def submit_course_for_review(
     course_id: str,
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[dict]:
     """
     Submit course for admin review before publishing.
     
@@ -242,26 +263,29 @@ async def submit_course_for_review(
         
         # Validate course is ready
         if course.status != CourseStatus.DRAFT:
-            return {
-                "success": False,
-                "message": f"Course must be in draft status to submit for review. Current status: {course.status}"
-            }
+            return StandardResponse(
+                success=False,
+                data=None,
+                message=f"Course must be in draft status to submit for review. Current status: {course.status}"
+            )
         
         # Check if course has content
         chapters_count = await db.chapters.count_documents({"course_id": ObjectId(course_id)})
         if chapters_count == 0:
-            return {
-                "success": False,
-                "message": "Course must have at least one chapter before submitting for review"
-            }
+            return StandardResponse(
+                success=False,
+                data=None,
+                message="Course must have at least one chapter before submitting for review"
+            )
         
         # Check if chapters have lessons
         lessons_count = await db.lessons.count_documents({"course_id": ObjectId(course_id)})
         if lessons_count == 0:
-            return {
-                "success": False,
-                "message": "Course must have at least one lesson before submitting for review"
-            }
+            return StandardResponse(
+                success=False,
+                data=None,
+                message="Course must have at least one lesson before submitting for review"
+            )
         
         # Update status to review
         result = await CourseService.update_course(
@@ -272,12 +296,14 @@ async def submit_course_for_review(
         
         # TODO: Send notification to admins about new course for review
         
-        return {
-            "success": True,
-            "message": "Course submitted for review successfully",
-            "course_id": course_id,
-            "status": CourseStatus.REVIEW
-        }
+        return StandardResponse(
+            success=True,
+            data={
+                "course_id": course_id,
+                "status": CourseStatus.REVIEW
+            },
+            message="Course submitted for review successfully"
+        )
         
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -288,11 +314,11 @@ async def submit_course_for_review(
         raise HTTPException(status_code=500, detail="Failed to submit course for review")
 
 
-@router.post("/{course_id}/publish")
+@router.post("/{course_id}/publish", response_model=StandardResponse[dict])
 async def publish_course(
     course_id: str,
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[dict]:
     """
     Directly publish a course (admin only).
     
@@ -312,12 +338,14 @@ async def publish_course(
             current_user
         )
         
-        return {
-            "success": True,
-            "message": "Course published successfully",
-            "course_id": course_id,
-            "status": CourseStatus.PUBLISHED
-        }
+        return StandardResponse(
+            success=True,
+            data={
+                "course_id": course_id,
+                "status": CourseStatus.PUBLISHED
+            },
+            message="Course published successfully"
+        )
         
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -328,11 +356,11 @@ async def publish_course(
         raise HTTPException(status_code=500, detail="Failed to publish course")
 
 
-@router.get("/creator/analytics", response_model=CreatorAnalytics)
+@router.get("/creator/analytics", response_model=StandardResponse[CreatorAnalytics])
 async def get_creator_analytics(
     time_range: str = Query("30days", regex="^(7days|30days|90days|all)$"),
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[CreatorAnalytics]:
     """
     Get analytics for content creator.
     
@@ -352,7 +380,11 @@ async def get_creator_analytics(
             creator_id=str(current_user.id),
             time_range=time_range
         )
-        return analytics
+        return StandardResponse(
+            success=True,
+            data=analytics,
+            message="Creator analytics retrieved successfully"
+        )
     except ForbiddenException as e:
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
@@ -360,12 +392,12 @@ async def get_creator_analytics(
         raise HTTPException(status_code=500, detail="Failed to fetch analytics")
 
 
-@router.get("/{course_id}/analytics", response_model=CourseAnalytics)
+@router.get("/{course_id}/analytics", response_model=StandardResponse[CourseAnalytics])
 async def get_course_analytics(
     course_id: str,
     time_range: str = Query("30days", regex="^(7days|30days|90days|all)$"),
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[CourseAnalytics]:
     """
     Get analytics for a specific course.
     
@@ -383,7 +415,11 @@ async def get_course_analytics(
             course_id=course_id,
             time_range=time_range
         )
-        return analytics
+        return StandardResponse(
+            success=True,
+            data=analytics,
+            message="Course analytics retrieved successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except ForbiddenException as e:

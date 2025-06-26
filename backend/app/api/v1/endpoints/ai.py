@@ -10,6 +10,18 @@ from pydantic import BaseModel, Field
 from app.api.deps import get_current_user
 from app.models.user import User
 from app.services.ai_service import ai_service
+from app.schemas.base import StandardResponse
+from app.schemas.ai import (
+    AIChatRequest,
+    AIChatResponse,
+    AIQuizGenerationRequest,
+    AIQuizGenerationResponse,
+    AISuggestionsRequest,
+    AISuggestionsResponse,
+    AIHealthCheckResponse,
+    ConversationHistory,
+    AIErrorResponse
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -74,15 +86,15 @@ class SuggestionsResponse(BaseModel):
 
 
 @router.post("/chat", 
-             response_model=ChatResponse,
+             response_model=StandardResponse[AIChatResponse],
              responses={
-                 400: {"model": ChatErrorResponse, "description": "Bad request or rate limit exceeded"},
-                 500: {"model": ChatErrorResponse, "description": "Internal server error"}
+                 400: {"model": StandardResponse[AIErrorResponse], "description": "Bad request or rate limit exceeded"},
+                 500: {"model": StandardResponse[AIErrorResponse], "description": "Internal server error"}
              })
 async def ai_chat(
-    request: ChatRequest,
+    request: AIChatRequest,
     current_user: User = Depends(get_current_user)
-) -> ChatResponse:
+) -> StandardResponse[AIChatResponse]:
     """
     Chat with AI Study Buddy
     
@@ -120,11 +132,16 @@ async def ai_chat(
                 )
         
         # Return successful response
-        return ChatResponse(
-            response=result["response"],
-            context=result.get("context"),
-            timestamp=result["timestamp"],
-            model=result["model"]
+        return StandardResponse(
+            success=True,
+            data=AIChatResponse(
+                response=result["response"],
+                context=result.get("context"),
+                timestamp=datetime.fromisoformat(result["timestamp"]),
+                model=result["model"],
+                from_cache=result.get("from_cache", False)
+            ),
+            message="AI response generated successfully"
         )
         
     except HTTPException:
@@ -141,10 +158,10 @@ async def ai_chat(
         )
 
 
-@router.get("/conversation-history", response_model=ConversationHistoryResponse)
+@router.get("/conversation-history", response_model=StandardResponse[ConversationHistory])
 async def get_conversation_history(
     current_user: User = Depends(get_current_user)
-) -> ConversationHistoryResponse:
+) -> StandardResponse[ConversationHistory]:
     """
     Get conversation history with AI assistant
     
@@ -165,9 +182,14 @@ async def get_conversation_history(
             }
             formatted_history.append(formatted_entry)
         
-        return ConversationHistoryResponse(
-            history=formatted_history,
-            total_count=len(formatted_history)
+        return StandardResponse(
+            success=True,
+            data=ConversationHistory(
+                user_id=str(current_user.id),
+                conversations=formatted_history,
+                total_conversations=len(formatted_history)
+            ),
+            message="Conversation history retrieved successfully"
         )
         
     except Exception as e:
@@ -178,10 +200,10 @@ async def get_conversation_history(
         )
 
 
-@router.delete("/conversation-history")
+@router.delete("/conversation-history", response_model=StandardResponse[dict])
 async def clear_conversation_history(
     current_user: User = Depends(get_current_user)
-) -> Dict[str, str]:
+) -> StandardResponse[dict]:
     """
     Clear conversation history with AI assistant
     
@@ -190,7 +212,11 @@ async def clear_conversation_history(
     """
     try:
         await ai_service.clear_conversation_history(str(current_user.id))
-        return {"message": "Conversation history cleared successfully"}
+        return StandardResponse(
+            success=True,
+            data={"cleared": True},
+            message="Conversation history cleared successfully"
+        )
         
     except Exception as e:
         logger.error(f"Clear conversation history error: {str(e)}")
@@ -201,12 +227,12 @@ async def clear_conversation_history(
 
 
 @router.post("/generate-quiz", 
-             response_model=QuizGenerationResponse,
+             response_model=StandardResponse[AIQuizGenerationResponse],
              dependencies=[Depends(get_current_user)])
 async def generate_quiz_questions(
-    request: QuizGenerationRequest,
+    request: AIQuizGenerationRequest,
     current_user: User = Depends(get_current_user)
-) -> QuizGenerationResponse:
+) -> StandardResponse[AIQuizGenerationResponse]:
     """
     Generate quiz questions from lesson content using AI
     
@@ -234,10 +260,15 @@ async def generate_quiz_questions(
             num_questions=request.num_questions
         )
         
-        return QuizGenerationResponse(
-            questions=questions,
-            total_generated=len(questions),
-            difficulty=request.difficulty
+        return StandardResponse(
+            success=True,
+            data=AIQuizGenerationResponse(
+                questions=questions,
+                total_questions=len(questions),
+                difficulty=request.difficulty,
+                generated_at=datetime.utcnow()
+            ),
+            message="Quiz questions generated successfully"
         )
         
     except HTTPException:
@@ -250,8 +281,8 @@ async def generate_quiz_questions(
         )
 
 
-@router.get("/health", response_model=HealthCheckResponse)
-async def ai_health_check() -> HealthCheckResponse:
+@router.get("/health", response_model=StandardResponse[AIHealthCheckResponse])
+async def ai_health_check() -> StandardResponse[AIHealthCheckResponse]:
     """
     Check AI service health
     
@@ -261,28 +292,38 @@ async def ai_health_check() -> HealthCheckResponse:
     try:
         health_data = await ai_service.health_check()
         
-        return HealthCheckResponse(
-            status=health_data["status"],
-            model=health_data.get("model"),
-            response_received=health_data.get("response_received"),
-            timestamp=health_data["timestamp"],
-            error=health_data.get("error")
+        return StandardResponse(
+            success=True,
+            data=AIHealthCheckResponse(
+                status=health_data["status"],
+                model=health_data.get("model"),
+                response_received=health_data.get("response_received"),
+                timestamp=datetime.fromisoformat(health_data["timestamp"]),
+                error=health_data.get("error")
+            ),
+            message="AI service health check completed"
         )
         
     except Exception as e:
         logger.error(f"AI health check error: {str(e)}")
-        return HealthCheckResponse(
-            status="unhealthy",
-            error=str(e),
-            timestamp="N/A"
+        return StandardResponse(
+            success=False,
+            data=AIHealthCheckResponse(
+                status="unhealthy",
+                model="unknown",
+                response_received=False,
+                error=str(e),
+                timestamp=datetime.utcnow()
+            ),
+            message="AI service health check failed"
         )
 
 
-@router.post("/suggestions", response_model=SuggestionsResponse)
+@router.post("/suggestions", response_model=StandardResponse[AISuggestionsResponse])
 async def get_contextual_suggestions(
-    request: SuggestionsRequest,
+    request: AISuggestionsRequest,
     current_user: User = Depends(get_current_user)
-) -> SuggestionsResponse:
+) -> StandardResponse[AISuggestionsResponse]:
     """
     Get contextual question suggestions based on current learning context
     
@@ -310,10 +351,14 @@ async def get_contextual_suggestions(
         if request.user_level:
             context["user_level"] = request.user_level
         
-        return SuggestionsResponse(
-            suggestions=suggestions,
-            context=context if context else None,
-            timestamp=datetime.utcnow().isoformat()
+        return StandardResponse(
+            success=True,
+            data=AISuggestionsResponse(
+                suggestions=suggestions,
+                context_level=request.user_level or "intermediate",
+                generated_at=datetime.utcnow()
+            ),
+            message="Suggestions generated successfully"
         )
         
     except Exception as e:
@@ -326,11 +371,11 @@ async def get_contextual_suggestions(
 
 # Additional utility endpoints
 
-@router.post("/context")
+@router.post("/context", response_model=StandardResponse[dict])
 async def set_ai_context(
     context: Dict[str, Any],
     current_user: User = Depends(get_current_user)
-) -> Dict[str, str]:
+) -> StandardResponse[dict]:
     """
     Set AI context for future conversations
     
@@ -342,10 +387,14 @@ async def set_ai_context(
         # For now, we'll just acknowledge the context setting
         logger.info(f"AI context set for user {current_user.id}: {context}")
         
-        return {
-            "message": "AI context set successfully",
-            "context_keys": list(context.keys())
-        }
+        return StandardResponse(
+            success=True,
+            data={
+                "context_set": True,
+                "context_keys": list(context.keys())
+            },
+            message="AI context set successfully"
+        )
         
     except Exception as e:
         logger.error(f"Set AI context error: {str(e)}")

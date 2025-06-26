@@ -15,6 +15,7 @@ from app.schemas.lesson import (
     VideoUploadResponse,
     MessageResponse
 )
+from app.schemas.base import StandardResponse
 from app.services.lesson_service import lesson_service
 from app.api.deps import get_current_user, get_current_optional_user
 
@@ -40,13 +41,13 @@ def lesson_to_response(lesson: Lesson) -> LessonResponse:
     )
 
 
-@router.post("/chapters/{chapter_id}/lessons", response_model=LessonResponse)
+@router.post("/chapters/{chapter_id}/lessons", response_model=StandardResponse[LessonResponse])
 async def create_lesson(
     chapter_id: str,
     lesson_data: LessonCreate,
     course_id: str,  # Pass as query parameter
     current_user: User = Depends(get_current_user)
-) -> LessonResponse:
+) -> StandardResponse[LessonResponse]:
     """
     Create a new lesson in a chapter.
     
@@ -65,14 +66,18 @@ async def create_lesson(
         user_id=str(current_user.id)
     )
     
-    return lesson_to_response(lesson)
+    return StandardResponse(
+        success=True,
+        data=lesson_to_response(lesson),
+        message="Lesson created successfully"
+    )
 
 
-@router.get("/chapters/{chapter_id}/lessons", response_model=LessonListResponse)
+@router.get("/chapters/{chapter_id}/lessons", response_model=StandardResponse[LessonListResponse])
 async def get_chapter_lessons(
     chapter_id: str,
     current_user: Optional[User] = Depends(get_current_optional_user)
-) -> LessonListResponse:
+) -> StandardResponse[LessonListResponse]:
     """
     Get all lessons for a chapter.
     
@@ -85,17 +90,21 @@ async def get_chapter_lessons(
     
     lesson_responses = [lesson_to_response(lesson) for lesson in lessons]
     
-    return LessonListResponse(
-        lessons=lesson_responses,
-        total=len(lesson_responses)
+    return StandardResponse(
+        success=True,
+        data=LessonListResponse(
+            lessons=lesson_responses,
+            total=len(lesson_responses)
+        ),
+        message="Lessons retrieved successfully"
     )
 
 
-@router.get("/courses/{course_id}/lessons", response_model=LessonListResponse)
+@router.get("/courses/{course_id}/lessons", response_model=StandardResponse[LessonListResponse])
 async def get_course_lessons(
     course_id: str,
     current_user: Optional[User] = Depends(get_current_optional_user)
-) -> LessonListResponse:
+) -> StandardResponse[LessonListResponse]:
     """
     Get all lessons for a course.
     
@@ -108,17 +117,21 @@ async def get_course_lessons(
     
     lesson_responses = [lesson_to_response(lesson) for lesson in lessons]
     
-    return LessonListResponse(
-        lessons=lesson_responses,
-        total=len(lesson_responses)
+    return StandardResponse(
+        success=True,
+        data=LessonListResponse(
+            lessons=lesson_responses,
+            total=len(lesson_responses)
+        ),
+        message="Lessons retrieved successfully"
     )
 
 
-@router.get("/lessons/{lesson_id}", response_model=LessonResponse)
+@router.get("/lessons/{lesson_id}", response_model=StandardResponse[LessonResponse])
 async def get_lesson_detail(
     lesson_id: str,
     current_user: Optional[User] = Depends(get_current_optional_user)
-) -> LessonResponse:
+) -> StandardResponse[LessonResponse]:
     """
     Get lesson details.
     
@@ -129,15 +142,19 @@ async def get_lesson_detail(
         user_id=str(current_user.id) if current_user else None
     )
     
-    return lesson_to_response(lesson)
+    return StandardResponse(
+        success=True,
+        data=lesson_to_response(lesson),
+        message="Lesson details retrieved successfully"
+    )
 
 
-@router.patch("/lessons/{lesson_id}", response_model=LessonResponse)
+@router.patch("/lessons/{lesson_id}", response_model=StandardResponse[LessonResponse])
 async def update_lesson(
     lesson_id: str,
     lesson_update: LessonUpdate,
     current_user: User = Depends(get_current_user)
-) -> LessonResponse:
+) -> StandardResponse[LessonResponse]:
     """
     Update a lesson.
     
@@ -155,14 +172,18 @@ async def update_lesson(
         user_id=str(current_user.id)
     )
     
-    return lesson_to_response(lesson)
+    return StandardResponse(
+        success=True,
+        data=lesson_to_response(lesson),
+        message="Lesson updated successfully"
+    )
 
 
-@router.delete("/lessons/{lesson_id}")
+@router.delete("/lessons/{lesson_id}", response_model=StandardResponse[dict])
 async def delete_lesson(
     lesson_id: str,
     current_user: User = Depends(get_current_user)
-) -> dict:
+) -> StandardResponse[dict]:
     """
     Delete a lesson.
     
@@ -179,15 +200,19 @@ async def delete_lesson(
         user_id=str(current_user.id)
     )
     
-    return result
+    return StandardResponse(
+        success=True,
+        data=result,
+        message="Lesson deleted successfully"
+    )
 
 
-@router.put("/chapters/{chapter_id}/lessons/reorder", response_model=LessonListResponse)
+@router.put("/chapters/{chapter_id}/lessons/reorder", response_model=StandardResponse[LessonListResponse])
 async def reorder_lessons(
     chapter_id: str,
     reorder_data: LessonReorder,
     current_user: User = Depends(get_current_user)
-) -> LessonListResponse:
+) -> StandardResponse[LessonListResponse]:
     """
     Reorder lessons within a chapter.
     
@@ -207,18 +232,22 @@ async def reorder_lessons(
     
     lesson_responses = [lesson_to_response(lesson) for lesson in lessons]
     
-    return LessonListResponse(
-        lessons=lesson_responses,
-        total=len(lesson_responses)
+    return StandardResponse(
+        success=True,
+        data=LessonListResponse(
+            lessons=lesson_responses,
+            total=len(lesson_responses)
+        ),
+        message="Lessons retrieved successfully"
     )
 
 
-@router.post("/lessons/{lesson_id}/video", response_model=VideoUploadResponse)
+@router.post("/lessons/{lesson_id}/video", response_model=StandardResponse[VideoUploadResponse])
 async def upload_lesson_video(
     lesson_id: str,
     video_data: dict,  # In real implementation, this would be file upload
     current_user: User = Depends(get_current_user)
-) -> VideoUploadResponse:
+) -> StandardResponse[VideoUploadResponse]:
     """
     Upload video for a lesson.
     
@@ -243,21 +272,25 @@ async def upload_lesson_video(
         user_id=str(current_user.id)
     )
     
-    return VideoUploadResponse(
-        youtube_url=lesson.video.youtube_url,
-        duration=lesson.video.duration,
-        thumbnail=lesson.video.thumbnail,
-        upload_status="completed",
+    return StandardResponse(
+        success=True,
+        data=VideoUploadResponse(
+            youtube_url=lesson.video.youtube_url,
+            duration=lesson.video.duration,
+            thumbnail=lesson.video.thumbnail,
+            upload_status="completed",
+            message="Video uploaded successfully"
+        ),
         message="Video uploaded successfully"
     )
 
 
-@router.post("/{lesson_id}/reorder", response_model=MessageResponse, status_code=status.HTTP_200_OK)
+@router.post("/{lesson_id}/reorder", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
 async def reorder_lessons(
     lesson_id: str,
     new_order: int = Body(..., embed=True),
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[dict]:
     """
     Reorder a lesson within its chapter.
     
@@ -275,7 +308,8 @@ async def reorder_lessons(
         user_id=str(current_user.id)
     )
     
-    return MessageResponse(
+    return StandardResponse(
         success=True,
+        data={"lesson_id": lesson_id, "new_order": new_order},
         message="Lesson order updated successfully"
     )

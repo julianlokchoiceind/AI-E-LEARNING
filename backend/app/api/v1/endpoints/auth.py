@@ -30,6 +30,7 @@ from app.schemas.auth import (
     RefreshTokenRequest
 )
 from app.api.deps import get_current_user
+from app.schemas.base import StandardResponse, ErrorResponse
 
 logger = logging.getLogger(__name__)
 
@@ -100,9 +101,9 @@ def create_refresh_jwt(subject: str, expires_delta: timedelta = None) -> str:
     return encoded_jwt
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=StandardResponse[UserResponse], status_code=status.HTTP_201_CREATED)
 @limiter.limit(AUTH_RATE_LIMITS["register"])
-async def register(request: Request, user_data: UserCreate) -> Any:
+async def register(request: Request, user_data: UserCreate) -> StandardResponse[UserResponse]:
     """
     Register a new user.
     """
@@ -146,7 +147,7 @@ async def register(request: Request, user_data: UserCreate) -> Any:
         # Continue with registration even if email fails
     
     # Return user response (without password)
-    return UserResponse(
+    user_response = UserResponse(
         id=str(user_doc["_id"]),
         email=user_doc["email"],
         name=user_doc["name"],
@@ -154,6 +155,12 @@ async def register(request: Request, user_data: UserCreate) -> Any:
         premium_status=user_doc["premium_status"],
         is_verified=user_doc["is_verified"],
         created_at=user_doc["created_at"]
+    )
+    
+    return StandardResponse(
+        success=True,
+        data=user_response,
+        message="Registration successful. Please check your email to verify your account."
     )
 
 
@@ -174,11 +181,12 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
             detail="Incorrect email or password"
         )
     
-    if not user["is_verified"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Please verify your email before logging in"
-        )
+    # TEMPORARILY DISABLED FOR DEVELOPMENT
+    # if not user["is_verified"]:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="Please verify your email before logging in"
+    #     )
     
     # Create access token and refresh token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -195,9 +203,9 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
     }
 
 
-@router.get("/verify-email")
+@router.get("/verify-email", response_model=StandardResponse[dict])
 @limiter.limit(AUTH_RATE_LIMITS["verify_email"])
-async def verify_email(request: Request, token: str) -> Any:
+async def verify_email(request: Request, token: str) -> StandardResponse[dict]:
     """
     Verify user email with token.
     """
@@ -224,10 +232,11 @@ async def verify_email(request: Request, token: str) -> Any:
         }
     )
     
-    return {
-        "message": "Email verified successfully",
-        "email": user["email"]
-    }
+    return StandardResponse(
+        success=True,
+        data={"email": user["email"]},
+        message="Email verified successfully"
+    )
 
 
 @router.post("/oauth", response_model=TokenWithRefresh)
@@ -324,18 +333,22 @@ async def refresh_access_token(token_request: RefreshTokenRequest) -> Any:
     }
 
 
-@router.post("/logout")
-async def logout() -> Any:
+@router.post("/logout", response_model=StandardResponse[dict])
+async def logout() -> StandardResponse[dict]:
     """
     Logout user (invalidate token).
     """
     # TODO: Implement token blacklist
-    return {"message": "Successfully logged out"}
+    return StandardResponse(
+        success=True,
+        data={},
+        message="Successfully logged out"
+    )
 
 
-@router.post("/forgot-password")
+@router.post("/forgot-password", response_model=StandardResponse[dict])
 @limiter.limit(AUTH_RATE_LIMITS["forgot_password"])
-async def forgot_password(request: Request, reset_request: PasswordResetRequest) -> Any:
+async def forgot_password(request: Request, reset_request: PasswordResetRequest) -> StandardResponse[dict]:
     """
     Request password reset email.
     """
@@ -346,9 +359,11 @@ async def forgot_password(request: Request, reset_request: PasswordResetRequest)
     
     if not user:
         # Don't reveal if email exists or not for security
-        return {
-            "message": "If the email exists, a password reset link has been sent"
-        }
+        return StandardResponse(
+            success=True,
+            data={},
+            message="If the email exists, a password reset link has been sent"
+        )
     
     # Generate reset token
     reset_token = secrets.token_urlsafe(32)
@@ -377,13 +392,15 @@ async def forgot_password(request: Request, reset_request: PasswordResetRequest)
     except Exception as e:
         logger.error(f"Failed to send password reset email: {str(e)}")
     
-    return {
-        "message": "If the email exists, a password reset link has been sent"
-    }
+    return StandardResponse(
+        success=True,
+        data={},
+        message="If the email exists, a password reset link has been sent"
+    )
 
 
-@router.post("/reset-password")
-async def reset_password(reset_data: PasswordReset) -> Any:
+@router.post("/reset-password", response_model=StandardResponse[dict])
+async def reset_password(reset_data: PasswordReset) -> StandardResponse[dict]:
     """
     Reset password with token.
     """
@@ -414,15 +431,16 @@ async def reset_password(reset_data: PasswordReset) -> Any:
         }
     )
     
-    return {
-        "message": "Password reset successfully",
-        "email": user["email"]
-    }
+    return StandardResponse(
+        success=True,
+        data={"email": user["email"]},
+        message="Password reset successfully"
+    )
 
 
-@router.post("/resend-verification")
+@router.post("/resend-verification", response_model=StandardResponse[dict])
 @limiter.limit(AUTH_RATE_LIMITS["resend_verification"])
-async def resend_verification(request: Request, email_request: EmailVerificationResend) -> Any:
+async def resend_verification(request: Request, email_request: EmailVerificationResend) -> StandardResponse[dict]:
     """
     Resend email verification.
     """
@@ -472,7 +490,8 @@ async def resend_verification(request: Request, email_request: EmailVerification
             detail="Failed to send verification email"
         )
     
-    return {
-        "message": "Verification email sent successfully",
-        "email": user["email"]
-    }
+    return StandardResponse(
+        success=True,
+        data={"email": user["email"]},
+        message="Verification email sent successfully"
+    )

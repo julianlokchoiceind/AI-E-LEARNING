@@ -2,6 +2,9 @@
  * Authentication API client functions
  */
 
+import { StandardResponse } from '@/lib/types/api'
+import { toast } from 'react-hot-toast'
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
 export interface RegisterData {
@@ -47,12 +50,15 @@ export async function registerUser(data: RegisterData): Promise<UserResponse> {
     body: JSON.stringify(data),
   })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Registration failed')
+  const result: StandardResponse<UserResponse> = await response.json()
+
+  if (!response.ok || !result.success) {
+    toast.error(result.message || 'Registration failed')
+    throw new Error(result.message || 'Registration failed')
   }
 
-  return response.json()
+  toast.success(result.message)
+  return result.data!
 }
 
 /**
@@ -72,12 +78,15 @@ export async function loginUser(data: LoginData): Promise<AuthResponse> {
     body: formData.toString(),
   })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Login failed')
+  const result: StandardResponse<AuthResponse> = await response.json()
+
+  if (!response.ok || !result.success) {
+    toast.error(result.message || 'Login failed')
+    throw new Error(result.message || 'Login failed')
   }
 
-  return response.json()
+  toast.success(result.message)
+  return result.data!
 }
 
 /**
@@ -88,12 +97,15 @@ export async function verifyEmail(token: string): Promise<{ message: string; ema
     method: 'GET',
   })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Email verification failed')
+  const result: StandardResponse<{ message: string; email: string }> = await response.json()
+
+  if (!response.ok || !result.success) {
+    toast.error(result.message || 'Email verification failed')
+    throw new Error(result.message || 'Email verification failed')
   }
 
-  return response.json()
+  toast.success(result.message)
+  return result.data!
 }
 
 /**
@@ -107,12 +119,14 @@ export async function refreshToken(token: string): Promise<AuthResponse> {
     },
   })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Token refresh failed')
+  const result: StandardResponse<AuthResponse> = await response.json()
+
+  if (!response.ok || !result.success) {
+    // Don't show toast for token refresh failures
+    throw new Error(result.message || 'Token refresh failed')
   }
 
-  return response.json()
+  return result.data!
 }
 
 /**
@@ -123,12 +137,15 @@ export async function logoutUser(): Promise<{ message: string }> {
     method: 'POST',
   })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Logout failed')
+  const result: StandardResponse<{ message: string }> = await response.json()
+
+  if (!response.ok || !result.success) {
+    toast.error(result.message || 'Logout failed')
+    throw new Error(result.message || 'Logout failed')
   }
 
-  return response.json()
+  toast.success(result.message)
+  return result.data!
 }
 
 /**
@@ -143,12 +160,15 @@ export async function forgotPassword(email: string): Promise<{ message: string }
     body: JSON.stringify({ email }),
   })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Failed to send reset email')
+  const result: StandardResponse<{ message: string }> = await response.json()
+
+  if (!response.ok || !result.success) {
+    toast.error(result.message || 'Failed to send reset email')
+    throw new Error(result.message || 'Failed to send reset email')
   }
 
-  return response.json()
+  toast.success(result.message)
+  return result.data!
 }
 
 /**
@@ -166,12 +186,15 @@ export async function resetPassword(token: string, newPassword: string): Promise
     }),
   })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Failed to reset password')
+  const result: StandardResponse<{ message: string; email: string }> = await response.json()
+
+  if (!response.ok || !result.success) {
+    toast.error(result.message || 'Failed to reset password')
+    throw new Error(result.message || 'Failed to reset password')
   }
 
-  return response.json()
+  toast.success(result.message)
+  return result.data!
 }
 
 /**
@@ -186,10 +209,13 @@ export async function resendVerificationEmail(email: string): Promise<{ message:
     body: JSON.stringify({ email }),
   })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Failed to resend verification email')
+  const result: StandardResponse<{ message: string; email: string }> = await response.json()
+
+  if (!response.ok || !result.success) {
+    toast.error(result.message || 'Failed to resend verification email')
+    throw new Error(result.message || 'Failed to resend verification email')
   }
 
-  return response.json()
+  toast.success(result.message)
+  return result.data!
 }

@@ -16,18 +16,19 @@ from app.schemas.chapter import (
     ChapterWithLessonsResponse,
     ChapterWithLessonsListResponse
 )
+from app.schemas.base import StandardResponse
 from app.services.chapter_service import chapter_service
 from app.api.deps import get_current_user, get_current_optional_user
 
 router = APIRouter()
 
 
-@router.post("/courses/{course_id}/chapters", response_model=ChapterResponse)
+@router.post("/courses/{course_id}/chapters", response_model=StandardResponse[ChapterResponse])
 async def create_chapter(
     course_id: str,
     chapter_data: ChapterCreate,
     current_user: User = Depends(get_current_user)
-) -> ChapterResponse:
+) -> StandardResponse[ChapterResponse]:
     """
     Create a new chapter in a course.
     
@@ -45,25 +46,29 @@ async def create_chapter(
         user_id=str(current_user.id)
     )
     
-    return ChapterResponse(
-        id=str(chapter.id),
-        course_id=str(chapter.course_id),
-        title=chapter.title,
-        description=chapter.description,
-        order=chapter.order,
-        lesson_count=chapter.lesson_count,
-        total_duration=chapter.total_duration,
-        status=chapter.status,
-        created_at=chapter.created_at,
-        updated_at=chapter.updated_at
+    return StandardResponse(
+        success=True,
+        data=ChapterResponse(
+            id=str(chapter.id),
+            course_id=str(chapter.course_id),
+            title=chapter.title,
+            description=chapter.description,
+            order=chapter.order,
+            lesson_count=chapter.lesson_count,
+            total_duration=chapter.total_duration,
+            status=chapter.status,
+            created_at=chapter.created_at,
+            updated_at=chapter.updated_at
+        ),
+        message="Chapter created successfully"
     )
 
 
-@router.get("/courses/{course_id}/chapters", response_model=ChapterListResponse)
+@router.get("/courses/{course_id}/chapters", response_model=StandardResponse[ChapterListResponse])
 async def get_course_chapters(
     course_id: str,
     current_user: Optional[User] = Depends(get_current_optional_user)
-) -> ChapterListResponse:
+) -> StandardResponse[ChapterListResponse]:
     """
     Get all chapters for a course.
     
@@ -90,17 +95,21 @@ async def get_course_chapters(
         for chapter in chapters
     ]
     
-    return ChapterListResponse(
-        chapters=chapter_responses,
-        total=len(chapter_responses)
+    return StandardResponse(
+        success=True,
+        data=ChapterListResponse(
+            chapters=chapter_responses,
+            total=len(chapter_responses)
+        ),
+        message="Chapters retrieved successfully"
     )
 
 
-@router.get("/chapters/{chapter_id}", response_model=ChapterResponse)
+@router.get("/chapters/{chapter_id}", response_model=StandardResponse[ChapterResponse])
 async def get_chapter_detail(
     chapter_id: str,
     current_user: Optional[User] = Depends(get_current_optional_user)
-) -> ChapterResponse:
+) -> StandardResponse[ChapterResponse]:
     """
     Get chapter details.
     
@@ -111,26 +120,30 @@ async def get_chapter_detail(
         user_id=str(current_user.id) if current_user else None
     )
     
-    return ChapterResponse(
-        id=str(chapter.id),
-        course_id=str(chapter.course_id),
-        title=chapter.title,
-        description=chapter.description,
-        order=chapter.order,
-        lesson_count=chapter.lesson_count,
-        total_duration=chapter.total_duration,
-        status=chapter.status,
-        created_at=chapter.created_at,
-        updated_at=chapter.updated_at
+    return StandardResponse(
+        success=True,
+        data=ChapterResponse(
+            id=str(chapter.id),
+            course_id=str(chapter.course_id),
+            title=chapter.title,
+            description=chapter.description,
+            order=chapter.order,
+            lesson_count=chapter.lesson_count,
+            total_duration=chapter.total_duration,
+            status=chapter.status,
+            created_at=chapter.created_at,
+            updated_at=chapter.updated_at
+        ),
+        message="Chapter details retrieved successfully"
     )
 
 
-@router.patch("/chapters/{chapter_id}", response_model=ChapterResponse)
+@router.patch("/chapters/{chapter_id}", response_model=StandardResponse[ChapterResponse])
 async def update_chapter(
     chapter_id: str,
     chapter_update: ChapterUpdate,
     current_user: User = Depends(get_current_user)
-) -> ChapterResponse:
+) -> StandardResponse[ChapterResponse]:
     """
     Update a chapter.
     
@@ -148,25 +161,29 @@ async def update_chapter(
         user_id=str(current_user.id)
     )
     
-    return ChapterResponse(
-        id=str(chapter.id),
-        course_id=str(chapter.course_id),
-        title=chapter.title,
-        description=chapter.description,
-        order=chapter.order,
-        lesson_count=chapter.lesson_count,
-        total_duration=chapter.total_duration,
-        status=chapter.status,
-        created_at=chapter.created_at,
-        updated_at=chapter.updated_at
+    return StandardResponse(
+        success=True,
+        data=ChapterResponse(
+            id=str(chapter.id),
+            course_id=str(chapter.course_id),
+            title=chapter.title,
+            description=chapter.description,
+            order=chapter.order,
+            lesson_count=chapter.lesson_count,
+            total_duration=chapter.total_duration,
+            status=chapter.status,
+            created_at=chapter.created_at,
+            updated_at=chapter.updated_at
+        ),
+        message="Chapter details retrieved successfully"
     )
 
 
-@router.delete("/chapters/{chapter_id}")
+@router.delete("/chapters/{chapter_id}", response_model=StandardResponse[dict])
 async def delete_chapter(
     chapter_id: str,
     current_user: User = Depends(get_current_user)
-) -> dict:
+) -> StandardResponse[dict]:
     """
     Delete a chapter and all its lessons.
     
@@ -183,15 +200,19 @@ async def delete_chapter(
         user_id=str(current_user.id)
     )
     
-    return result
+    return StandardResponse(
+        success=True,
+        data=result,
+        message="Chapter deleted successfully"
+    )
 
 
-@router.put("/courses/{course_id}/chapters/reorder", response_model=ChapterListResponse)
+@router.put("/courses/{course_id}/chapters/reorder", response_model=StandardResponse[ChapterListResponse])
 async def reorder_chapters(
     course_id: str,
     reorder_data: ChapterReorder,
     current_user: User = Depends(get_current_user)
-) -> ChapterListResponse:
+) -> StandardResponse[ChapterListResponse]:
     """
     Reorder chapters within a course.
     
@@ -225,16 +246,20 @@ async def reorder_chapters(
         for chapter in chapters
     ]
     
-    return ChapterListResponse(
-        chapters=chapter_responses,
-        total=len(chapter_responses)
+    return StandardResponse(
+        success=True,
+        data=ChapterListResponse(
+            chapters=chapter_responses,
+            total=len(chapter_responses)
+        ),
+        message="Chapters retrieved successfully"
     )
 
-@router.get("/courses/{course_id}/chapters-with-lessons", response_model=ChapterWithLessonsListResponse)
+@router.get("/courses/{course_id}/chapters-with-lessons", response_model=StandardResponse[ChapterWithLessonsListResponse])
 async def get_course_chapters_with_lessons(
     course_id: str,
     current_user: User = Depends(get_current_user)
-) -> ChapterWithLessonsListResponse:
+) -> StandardResponse[ChapterWithLessonsListResponse]:
     """
     Get all chapters for a course with lessons included.
     
@@ -286,7 +311,11 @@ async def get_course_chapters_with_lessons(
         for chapter in chapters
     ]
     
-    return ChapterWithLessonsListResponse(
-        chapters=chapter_responses,
-        total=len(chapter_responses)
+    return StandardResponse(
+        success=True,
+        data=ChapterWithLessonsListResponse(
+            chapters=chapter_responses,
+            total=len(chapter_responses)
+        ),
+        message="Chapters with lessons retrieved successfully"
     )

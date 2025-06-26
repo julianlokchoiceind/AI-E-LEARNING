@@ -102,3 +102,7 @@ async def get_creator_or_admin_user(current_user: User = Depends(get_current_use
             detail="Not enough permissions. Creator or Admin role required."
         )
     return current_user
+
+
+# Alias for backward compatibility
+get_current_admin = get_admin_user

@@ -772,16 +772,20 @@ const ChapterEditor = () => {
 
 ```typescript
 // MANDATORY API Response Pattern
-// Backend returns:
-{
-  "success": boolean,
-  "data": any,
-  "message": string
+// Backend returns using StandardResponse:
+class StandardResponse<T> {
+  success: boolean;
+  data?: T;
+  message: string;
 }
 
 // Frontend handles:
-const result = await apiCall();
-toast.success(result.message);
+const result = await apiCall<StandardResponse<DataType>>();
+if (result.success) {
+  toast.success(result.message);
+} else {
+  toast.error(result.message);
+}
 ```
 
 #### **🚨 CRITICAL RULE: ZERO SCOPE CREEP**
@@ -2671,10 +2675,11 @@ const handleVideoError = (error) => {
 ### **🎯 High-Level Naming Guidelines**
 
 **File & Directory Naming:**
-- **Frontend files:** camelCase (userProfile.tsx, courseCard.tsx)
+- **Frontend React component files:** PascalCase (CourseCard.tsx, VideoPlayer.tsx, QuizComponent.tsx)
+- **Frontend utility/helper files:** camelCase (formatters.ts, validators.ts, authHelpers.ts)
 - **Backend files:** snake_case (user_service.py, auth_endpoints.py)
 - **Directories:** kebab-case (user-management, course-builder)
-- **Components:** PascalCase (VideoPlayer, QuizComponent)
+- **Component names:** PascalCase (VideoPlayer, QuizComponent)
 
 **API Conventions:**
 - **Endpoints:** kebab-case with RESTful patterns

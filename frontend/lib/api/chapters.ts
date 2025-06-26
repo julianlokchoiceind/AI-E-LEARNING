@@ -1,4 +1,6 @@
 import { API_BASE_URL } from '@/lib/constants/api-endpoints';
+import { StandardResponse } from '@/lib/types/api';
+import { toast } from 'react-hot-toast';
 
 interface ChapterResponse {
   _id: string;
@@ -27,18 +29,15 @@ interface ChapterUpdate {
   status?: string;
 }
 
-interface ChaptersListResponse {
-  success: boolean;
-  data: ChapterResponse[];
+interface ChaptersListData {
+  chapters: ChapterResponse[];
+  total: number;
 }
 
-interface ChapterDetailResponse {
-  success: boolean;
-  data: ChapterResponse;
-}
+// Remove ChapterDetailResponse as we'll use ChapterResponse directly
 
 // Get chapters by course
-export const getChaptersByCourse = async (courseId: string): Promise<ChaptersListResponse> => {
+export const getChaptersByCourse = async (courseId: string): Promise<ChaptersListData> => {
   try {
     const token = localStorage.getItem('access_token');
     const headers: HeadersInit = {
@@ -54,11 +53,13 @@ export const getChaptersByCourse = async (courseId: string): Promise<ChaptersLis
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const result: StandardResponse<ChaptersListData> = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return await response.json();
+    return result.data!;
   } catch (error) {
     console.error('Failed to fetch chapters:', error);
     throw error;
@@ -66,7 +67,7 @@ export const getChaptersByCourse = async (courseId: string): Promise<ChaptersLis
 };
 
 // Get chapter by ID
-export const getChapterById = async (chapterId: string): Promise<ChapterDetailResponse> => {
+export const getChapterById = async (chapterId: string): Promise<ChapterResponse> => {
   try {
     const token = localStorage.getItem('access_token');
     const headers: HeadersInit = {
@@ -82,11 +83,13 @@ export const getChapterById = async (chapterId: string): Promise<ChapterDetailRe
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const result: StandardResponse<ChapterResponse> = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return await response.json();
+    return result.data!;
   } catch (error) {
     console.error('Failed to fetch chapter:', error);
     throw error;
@@ -94,14 +97,14 @@ export const getChapterById = async (chapterId: string): Promise<ChapterDetailRe
 };
 
 // Create new chapter
-export const createChapter = async (data: ChapterCreate): Promise<ChapterDetailResponse> => {
+export const createChapter = async (data: ChapterCreate): Promise<ChapterResponse> => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
       throw new Error('Authentication required');
     }
 
-    const response = await fetch(`${API_BASE_URL}/chapters`, {
+    const response = await fetch(`${API_BASE_URL}/courses/${data.course_id}/chapters`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -110,12 +113,15 @@ export const createChapter = async (data: ChapterCreate): Promise<ChapterDetailR
       body: JSON.stringify(data),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+    const result: StandardResponse<ChapterResponse> = await response.json();
+
+    if (!response.ok || !result.success) {
+      toast.error(result.message || 'Failed to create chapter');
+      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return await response.json();
+    toast.success(result.message);
+    return result.data!;
   } catch (error) {
     console.error('Failed to create chapter:', error);
     throw error;
@@ -123,7 +129,7 @@ export const createChapter = async (data: ChapterCreate): Promise<ChapterDetailR
 };
 
 // Update chapter
-export const updateChapter = async (chapterId: string, data: ChapterUpdate): Promise<ChapterDetailResponse> => {
+export const updateChapter = async (chapterId: string, data: ChapterUpdate): Promise<ChapterResponse> => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -131,7 +137,7 @@ export const updateChapter = async (chapterId: string, data: ChapterUpdate): Pro
     }
 
     const response = await fetch(`${API_BASE_URL}/chapters/${chapterId}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
@@ -139,12 +145,15 @@ export const updateChapter = async (chapterId: string, data: ChapterUpdate): Pro
       body: JSON.stringify(data),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+    const result: StandardResponse<ChapterResponse> = await response.json();
+
+    if (!response.ok || !result.success) {
+      toast.error(result.message || 'Failed to update chapter');
+      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return await response.json();
+    toast.success(result.message);
+    return result.data!;
   } catch (error) {
     console.error('Failed to update chapter:', error);
     throw error;
@@ -166,10 +175,14 @@ export const deleteChapter = async (chapterId: string): Promise<void> => {
       },
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+    const result: StandardResponse<any> = await response.json();
+
+    if (!response.ok || !result.success) {
+      toast.error(result.message || 'Failed to delete chapter');
+      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
+
+    toast.success(result.message);
   } catch (error) {
     console.error('Failed to delete chapter:', error);
     throw error;
@@ -177,28 +190,31 @@ export const deleteChapter = async (chapterId: string): Promise<void> => {
 };
 
 // Reorder chapters
-export const reorderChapters = async (chapterId: string, newOrder: number): Promise<ChapterDetailResponse> => {
+export const reorderChapters = async (courseId: string, reorderData: { chapter_orders: { chapter_id: string; new_order: number }[] }): Promise<ChaptersListData> => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
       throw new Error('Authentication required');
     }
 
-    const response = await fetch(`${API_BASE_URL}/chapters/${chapterId}/reorder`, {
-      method: 'POST',
+    const response = await fetch(`${API_BASE_URL}/courses/${courseId}/chapters/reorder`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ new_order: newOrder }),
+      body: JSON.stringify(reorderData),
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+    const result: StandardResponse<ChaptersListData> = await response.json();
+
+    if (!response.ok || !result.success) {
+      toast.error(result.message || 'Failed to reorder chapters');
+      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return await response.json();
+    toast.success(result.message);
+    return result.data!;
   } catch (error) {
     console.error('Failed to reorder chapter:', error);
     throw error;
@@ -218,12 +234,14 @@ export const getChaptersWithLessons = async (courseId: string): Promise<ChapterR
       },
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const result: StandardResponse<{ chapters: any[]; total: number }> = await response.json();
+
+    if (!response.ok || !result.success) {
+      toast.error(result.message || 'Failed to fetch chapters with lessons');
+      throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    return data.chapters.map((chapter: any) => ({
+    return result.data!.chapters.map((chapter: any) => ({
       _id: chapter.id,
       course_id: chapter.course_id,
       title: chapter.title,

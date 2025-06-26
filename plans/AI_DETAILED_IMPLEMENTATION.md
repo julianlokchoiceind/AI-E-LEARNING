@@ -944,7 +944,7 @@ router = APIRouter()
 study_buddy = StudyBuddyAgent()
 quiz_generator = QuizGeneratorAgent()
 
-@router.post("/chat", response_model=StudyBuddyResponse)
+@router.post("/chat", response_model=StandardResponse[StudyBuddyResponse])
 async def ai_chat(
     context: StudyBuddyContext,
     current_user = Depends(get_current_user)
@@ -969,13 +969,17 @@ async def ai_chat(
             tokens_used=response.tokens_used
         )
         
-        return response
+        return StandardResponse(
+            success=True,
+            data=response,
+            message="AI response generated successfully"
+        )
         
     except Exception as e:
         logger.error(f"AI chat error: {str(e)}")
         raise HTTPException(500, "AI service temporarily unavailable")
 
-@router.post("/quiz-generate")
+@router.post("/quiz-generate", response_model=StandardResponse[Quiz])
 async def generate_quiz(
     lesson_id: str,
     num_questions: int = 5,
@@ -1001,7 +1005,11 @@ async def generate_quiz(
     # Save to database
     await save_generated_quiz(quiz)
     
-    return quiz
+    return StandardResponse(
+        success=True,
+        data=quiz,
+        message=f"Generated {len(quiz.questions)} quiz questions successfully"
+    )
 ```
 
 ---

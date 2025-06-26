@@ -772,16 +772,20 @@ const ChapterEditor = () => {
 
 ```typescript
 // MANDATORY API Response Pattern
-// Backend returns:
-{
-  "success": boolean,
-  "data": any,
-  "message": string
+// Backend returns using StandardResponse:
+class StandardResponse<T> {
+  success: boolean;
+  data?: T;
+  message: string;
 }
 
 // Frontend handles:
-const result = await apiCall();
-toast.success(result.message);
+const result = await apiCall<StandardResponse<DataType>>();
+if (result.success) {
+  toast.success(result.message);
+} else {
+  toast.error(result.message);
+}
 ```
 
 #### **🚨 CRITICAL RULE: ZERO SCOPE CREEP**

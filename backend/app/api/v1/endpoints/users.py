@@ -7,29 +7,45 @@ from app.models.course import Course
 from app.core.deps import get_current_user
 from app.services.enrollment_service import enrollment_service
 from app.services.progress_service import progress_service
-from app.schemas.user import UserDashboardResponse, UserProfileResponse, UserProfileUpdate
+from app.schemas.user import UserResponse, UserProfileUpdate, DashboardData
 from app.schemas.enrollment import EnrollmentListResponse
+from app.schemas.base import StandardResponse
 from datetime import datetime, timedelta
 from beanie import PydanticObjectId
 
 router = APIRouter()
 
-@router.get("/me", response_model=UserProfileResponse, status_code=status.HTTP_200_OK)
+@router.get("/me", response_model=StandardResponse[UserResponse], status_code=status.HTTP_200_OK)
 async def get_my_profile(
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[UserResponse]:
     """Get current user's profile information."""
-    return UserProfileResponse(
+    user_data = UserResponse(
+        id=str(current_user.id),
+        email=current_user.email,
+        name=current_user.name,
+        role=current_user.role,
+        premium_status=current_user.premium_status,
+        is_verified=current_user.is_verified,
+        profile=current_user.profile,
+        stats=current_user.stats,
+        preferences=current_user.preferences,
+        subscription=current_user.subscription,
+        created_at=current_user.created_at,
+        updated_at=current_user.updated_at,
+        last_login=current_user.last_login
+    )
+    return StandardResponse(
         success=True,
-        data=current_user,
+        data=user_data,
         message="Profile retrieved successfully"
     )
 
-@router.put("/me", response_model=UserProfileResponse, status_code=status.HTTP_200_OK)
+@router.put("/me", response_model=StandardResponse[UserResponse], status_code=status.HTTP_200_OK)
 async def update_my_profile(
     profile_data: UserProfileUpdate,
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[UserResponse]:
     """Update current user's profile."""
     try:
         # Update profile fields
@@ -71,9 +87,24 @@ async def update_my_profile(
         current_user.updated_at = datetime.utcnow()
         await current_user.save()
         
-        return UserProfileResponse(
+        user_data = UserResponse(
+            id=str(current_user.id),
+            email=current_user.email,
+            name=current_user.name,
+            role=current_user.role,
+            premium_status=current_user.premium_status,
+            is_verified=current_user.is_verified,
+            profile=current_user.profile,
+            stats=current_user.stats,
+            preferences=current_user.preferences,
+            subscription=current_user.subscription,
+            created_at=current_user.created_at,
+            updated_at=current_user.updated_at,
+            last_login=current_user.last_login
+        )
+        return StandardResponse(
             success=True,
-            data=current_user,
+            data=user_data,
             message="Profile updated successfully"
         )
     except Exception as e:
@@ -82,10 +113,10 @@ async def update_my_profile(
             detail=str(e)
         )
 
-@router.get("/dashboard", response_model=UserDashboardResponse, status_code=status.HTTP_200_OK)
+@router.get("/dashboard", response_model=StandardResponse[DashboardData], status_code=status.HTTP_200_OK)
 async def get_dashboard_data(
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[DashboardData]:
     """Get user dashboard data with aggregated statistics."""
     try:
         user_id = str(current_user.id)
@@ -183,9 +214,9 @@ async def get_dashboard_data(
             "certificates_earned": current_user.stats.certificates_earned
         }
         
-        return UserDashboardResponse(
+        return StandardResponse(
             success=True,
-            data=dashboard_data,
+            data=DashboardData(**dashboard_data),
             message="Dashboard data retrieved successfully"
         )
     except Exception as e:
@@ -194,18 +225,18 @@ async def get_dashboard_data(
             detail=str(e)
         )
 
-@router.get("/my-courses", response_model=EnrollmentListResponse, status_code=status.HTTP_200_OK)
+@router.get("/my-courses", response_model=StandardResponse[list], status_code=status.HTTP_200_OK)
 async def get_my_courses_with_progress(
     current_user: User = Depends(get_current_user)
-):
+) -> StandardResponse[list]:
     """Get all enrolled courses with detailed progress information."""
     try:
-        from app.schemas.enrollment import EnrollmentListResponse
+        from app.schemas.enrollment import EnrollmentSchema
         
         # Get enrollments with course details
         enrollments = await enrollment_service.get_user_enrollments_with_courses(str(current_user.id))
         
-        return EnrollmentListResponse(
+        return StandardResponse(
             success=True,
             data=enrollments,
             message=f"Found {len(enrollments)} enrolled courses"
