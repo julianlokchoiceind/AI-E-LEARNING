@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Trophy, Award, Clock, TrendingUp, Download, BookOpen } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { CertificateCard } from '@/components/feature/CertificateCard';
 import { useAuth } from '@/hooks/useAuth';

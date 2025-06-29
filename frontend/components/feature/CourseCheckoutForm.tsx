@@ -103,12 +103,12 @@ function CheckoutForm({
 
   const processPayment = async () => {
     if (!stripe || !elements) {
-      throw new Error('Payment system not ready. Please try again.');
+      throw new Error('Payment system is still loading. Please wait a moment and try again.');
     }
 
     const cardElement = elements.getElement(CardElement);
     if (!cardElement) {
-      throw new Error('Card element not found');
+      throw new Error('Payment form not properly loaded. Please refresh the page and try again.');
     }
 
     // Create payment method
@@ -149,7 +149,10 @@ function CheckoutForm({
     if (paymentIntent && paymentIntent.status === 'succeeded') {
       return paymentIntent;
     } else {
-      throw new Error('Payment was not completed successfully');
+      // Use payment intent error details if available
+      const errorMessage = paymentIntent?.last_payment_error?.message || 
+                          'Payment could not be completed. Please check your card details and try again.';
+      throw new Error(errorMessage);
     }
   };
 
@@ -162,7 +165,8 @@ function CheckoutForm({
     }
 
     if (!cardComplete) {
-      setPaymentError('Please complete your card information');
+      // Use the error message from Stripe if available, otherwise use a descriptive message
+      setPaymentError(paymentError || 'Please fill in all card details before submitting');
       return;
     }
 
@@ -181,7 +185,7 @@ function CheckoutForm({
           console.warn(`Payment attempt ${attempt} failed:`, error);
           
           if (strategy.canRetry) {
-            toast.error(`${error.message} - Retrying... (${attempt}/${retryHandler.options?.maxRetries || 3})`);
+            toast.error(`${error.message} - Retrying... (${attempt}/3)`);
             return true; // Continue retrying
           } else {
             setPaymentError(error.message);

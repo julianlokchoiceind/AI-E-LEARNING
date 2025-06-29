@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -17,36 +17,54 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  
+  // Debug: Check API connectivity on mount
+  useEffect(() => {
+    console.log('[REGISTER DEBUG] Component mounted');
+    console.log('[REGISTER DEBUG] API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
+    
+    // Test API connectivity
+    fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1') + '/health')
+      .then(res => {
+        console.log('[REGISTER DEBUG] Health check response status:', res.status);
+        return res.text();
+      })
+      .then(text => {
+        console.log('[REGISTER DEBUG] Health check response:', text);
+      })
+      .catch(err => {
+        console.error('[REGISTER DEBUG] Health check failed:', err);
+      });
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setSuccessMessage('')
     
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
+    console.log('[REGISTER DEBUG] Form submission started');
+    console.log('[REGISTER DEBUG] Form data:', formData);
     
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters')
-      return
-    }
-    
+    // Let backend handle all validation
     setIsLoading(true)
     
     try {
+      console.log('[REGISTER DEBUG] Calling registerUser API...');
+      
       // Call backend API to create user
-      const user = await registerUser({
+      // Include confirmPassword for backend validation
+      const response = await registerUser({
         name: formData.name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        // @ts-ignore - backend expects this for validation
+        confirm_password: formData.confirmPassword
       })
       
-      console.log('User registered:', user)
+      console.log('[REGISTER DEBUG] Registration successful:', response)
       
-      // Show success message
-      setSuccessMessage('Registration successful! Please check your email to verify your account.')
+      // Use backend success message
+      setSuccessMessage(response.message)
       
       // Clear form
       setFormData({
@@ -58,16 +76,26 @@ export default function RegisterPage() {
       
       // Redirect to login after 3 seconds
       setTimeout(() => {
+        console.log('[REGISTER DEBUG] Redirecting to login page...');
         router.push('/login?registered=true')
       }, 3000)
     } catch (error) {
+      console.error('[REGISTER DEBUG] Registration error caught:', error);
+      console.error('[REGISTER DEBUG] Error type:', error?.constructor?.name);
+      console.error('[REGISTER DEBUG] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      });
+      
+      // Always use the actual error message from backend
       if (error instanceof Error) {
         setError(error.message)
       } else {
-        setError('Registration failed. Please try again.')
+        // This should never happen if error handler is working correctly
+        setError('An unexpected error occurred')
       }
-      console.error('Registration error:', error)
     } finally {
+      console.log('[REGISTER DEBUG] Form submission completed');
       setIsLoading(false)
     }
   }

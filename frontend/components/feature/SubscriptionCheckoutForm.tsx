@@ -137,7 +137,7 @@ export function SubscriptionCheckoutForm({
           console.warn(`Subscription attempt ${attempt} failed:`, error);
           
           if (strategy.canRetry) {
-            toast.error(`${error.message} - Retrying... (${attempt}/${retryHandler.options?.maxRetries || 3})`);
+            toast.error(`${error.message} - Retrying... (${attempt}/3)`);
             return true; // Continue retrying
           } else {
             setPaymentError(error.message);

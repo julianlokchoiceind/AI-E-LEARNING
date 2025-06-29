@@ -26,7 +26,7 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
 
   const handleDownload = async () => {
     try {
-      const blob = await certificateAPI.downloadCertificate(certificate._id);
+      const blob = await certificateAPI.downloadCertificatePDF(certificate._id);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

@@ -144,7 +144,7 @@ export const AILearningAnalytics: React.FC<AILearningAnalyticsProps> = ({
           {(['week', 'month', 'all'] as const).map((range) => (
             <Button
               key={range}
-              variant={timeRange === range ? 'default' : 'ghost'}
+              variant={timeRange === range ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => setTimeRange(range)}
               className="capitalize"

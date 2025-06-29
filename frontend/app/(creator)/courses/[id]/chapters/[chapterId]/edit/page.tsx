@@ -18,7 +18,7 @@ interface Chapter {
   _id: string;
   course_id: string;
   title: string;
-  description: string;
+  description?: string;
   order: number;
   total_lessons: number;
   total_duration: number;
@@ -30,7 +30,7 @@ interface Chapter {
 interface Lesson {
   _id: string;
   title: string;
-  description: string;
+  description?: string;
   order: number;
   status: string;
   video?: {
@@ -81,12 +81,12 @@ const ChapterEditPage = () => {
 
       // Fetch chapter details
       const chapterResponse = await getChapterById(chapterId);
-      setChapter(chapterResponse.data);
-      setTitleInput(chapterResponse.data.title);
+      setChapter(chapterResponse);
+      setTitleInput(chapterResponse.title);
 
       // Fetch lessons in this chapter
       const lessonsResponse = await getLessonsByChapter(chapterId);
-      setLessons(lessonsResponse.data || []);
+      setLessons(lessonsResponse || []);
     } catch (error) {
       console.error('Failed to fetch chapter data:', error);
       toast.error('Failed to load chapter data');
@@ -109,10 +109,20 @@ const ChapterEditPage = () => {
 
   const handleCreateLesson = async () => {
     try {
-      const response = await createLesson({ chapter_id: chapterId });
+      const lessonCount = lessons.length + 1;
+      const dateStr = new Date().toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: '2-digit' 
+      }).replace(/\//g, '');
+      
+      const response = await createLesson({ 
+        chapter_id: chapterId,
+        title: `Untitled Lesson #${lessonCount} (${dateStr})`
+      });
       
       // Redirect to lesson editor
-      router.push(`/creator/courses/${courseId}/lessons/${response.data._id}/edit`);
+      router.push(`/creator/courses/${courseId}/lessons/${response._id}/edit`);
       toast.success('Lesson created successfully');
     } catch (error) {
       console.error('Failed to create lesson:', error);

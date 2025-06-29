@@ -36,24 +36,24 @@ const CreatorDashboard = () => {
     try {
       setLoading(true);
       // Fetch creator's courses
-      const response = await getCourses(`creator_id=${user?._id}`);
-      setCourses(response.data || []);
+      const response = await getCourses(`creator_id=${user?.id}`);
+      setCourses(response.courses || []);
 
       // Calculate stats
-      const totalStudents = response.data.reduce((sum: number, course: any) => 
+      const totalStudents = response.courses.reduce((sum: number, course: any) => 
         sum + (course.stats?.total_enrollments || 0), 0
       );
-      const totalRevenue = response.data.reduce((sum: number, course: any) => 
+      const totalRevenue = response.courses.reduce((sum: number, course: any) => 
         sum + (course.stats?.total_revenue || 0), 0
       );
-      const avgRating = response.data.length > 0
-        ? response.data.reduce((sum: number, course: any) => 
+      const avgRating = response.courses.length > 0
+        ? response.courses.reduce((sum: number, course: any) => 
             sum + (course.stats?.average_rating || 0), 0
-          ) / response.data.length
+          ) / response.courses.length
         : 0;
 
       setStats({
-        totalCourses: response.data.length,
+        totalCourses: response.courses.length,
         totalStudents,
         totalRevenue,
         avgRating,

@@ -64,6 +64,7 @@ async def create_course(
 
 @router.get("", response_model=StandardResponse[CourseListResponse])
 @measure_performance("api.courses.list")
+@cache_response(ttl_seconds=300)  # Cache for 5 minutes
 async def list_courses(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -147,6 +148,7 @@ async def list_courses(
 
 @router.get("/{course_id}", response_model=StandardResponse[CourseResponse])
 @measure_performance("api.courses.get")
+@cache_response(ttl_seconds=300)  # Cache for 5 minutes
 async def get_course(
     course_id: str,
     current_user: Optional[User] = Depends(get_current_user_optional)
@@ -369,7 +371,7 @@ async def publish_course(
 
 @router.get("/creator/analytics", response_model=StandardResponse[CreatorAnalytics])
 async def get_creator_analytics(
-    time_range: str = Query("30days", regex="^(7days|30days|90days|all)$"),
+    time_range: str = Query("30days", pattern="^(7days|30days|90days|all)$"),
     current_user: User = Depends(get_current_user)
 ) -> StandardResponse[CreatorAnalytics]:
     """
@@ -406,7 +408,7 @@ async def get_creator_analytics(
 @router.get("/{course_id}/analytics", response_model=StandardResponse[CourseAnalytics])
 async def get_course_analytics(
     course_id: str,
-    time_range: str = Query("30days", regex="^(7days|30days|90days|all)$"),
+    time_range: str = Query("30days", pattern="^(7days|30days|90days|all)$"),
     current_user: User = Depends(get_current_user)
 ) -> StandardResponse[CourseAnalytics]:
     """

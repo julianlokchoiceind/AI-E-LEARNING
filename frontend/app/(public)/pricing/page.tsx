@@ -25,8 +25,9 @@ export default function PricingPage() {
       return;
     }
 
-    if (user.subscription?.status === 'active' && user.subscription?.type === 'pro') {
-      toast.info('You already have an active Pro subscription');
+    // Check premium status instead of subscription object
+    if (user.premiumStatus) {
+      toast('You already have premium access');
       return;
     }
 
@@ -170,10 +171,10 @@ export default function PricingPage() {
             <Button
               className="w-full bg-blue-600 hover:bg-blue-700"
               onClick={handleProSubscription}
-              disabled={isProcessing || (user?.subscription?.status === 'active' && user?.subscription?.type === 'pro')}
+              disabled={isProcessing || user?.premiumStatus}
             >
               {isProcessing ? 'Processing...' : 
-               user?.subscription?.status === 'active' && user?.subscription?.type === 'pro' ? 
+               user?.premiumStatus ? 
                'Current Plan' : 'Subscribe to Pro'}
             </Button>
           </div>

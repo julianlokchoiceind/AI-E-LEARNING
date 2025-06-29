@@ -11,6 +11,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
   const [error, setError] = useState('')
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,10 +20,12 @@ export default function ForgotPasswordPage() {
     setLoading(true)
     
     try {
-      await forgotPassword(email)
+      const response = await forgotPassword(email)
+      setSuccessMessage(response.message)
       setSuccess(true)
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset email')
+      // Always use backend error message
+      setError(err.message)
     } finally {
       setLoading(false)
     }
@@ -50,10 +53,7 @@ export default function ForgotPasswordPage() {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-green-800">
-                  Password reset email sent!
-                </p>
-                <p className="mt-2 text-sm text-green-700">
-                  Please check your email and follow the instructions to reset your password.
+                  {successMessage}
                 </p>
               </div>
             </div>

@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 
 # Third-party imports
 import sentry_sdk
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from slowapi import _rate_limit_exceeded_handler
@@ -19,7 +19,6 @@ from app.core.config import settings
 from app.core.database import close_mongo_connection, connect_to_mongo
 from app.core.rate_limit import limiter
 from app.middleware.input_validation import InputValidationMiddleware
-from app.middleware.rate_limiter import RateLimitMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.services.db_optimization import db_optimizer
 from app.services.security_monitoring import security_monitor
@@ -55,16 +54,16 @@ async def lifespan(app: FastAPI):
         logger.info("MongoDB connection established successfully")
         
         # Initialize security monitor with database
-        if db_client:
-            await security_monitor.init_db(db_client)
-            logger.info("Security monitoring initialized")
-            
-            # Initialize database optimizer
-            await db_optimizer.init_db(db_client)
-            logger.info("Database optimizer initialized")
+        await security_monitor.init_db(db_client)
+        logger.info("Security monitoring initialized")
+        
+        # Initialize database optimizer
+        await db_optimizer.init_db(db_client)
+        logger.info("Database optimizer initialized")
     except Exception as e:
         logger.error(f"MongoDB connection failed: {e}")
-        logger.info("Running without MongoDB connection - in-memory mode")
+        # Không chạy in-memory mode, bắt buộc phải có MongoDB
+        raise RuntimeError(f"Cannot start without MongoDB connection: {e}")
     
     yield
     
@@ -85,14 +84,19 @@ app = FastAPI(
 
 # Configure rate limiting
 app.state.limiter = limiter
+
+# Keep using the default rate limit handler but ensure CORS headers
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS
+# Dynamically build origins list
 origins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
+    settings.FRONTEND_URL,  # Use configured frontend URL
+    "http://localhost:3000",  # Keep for local development
     *[str(origin) for origin in settings.BACKEND_CORS_ORIGINS]
 ]
+# Remove duplicates while preserving order
+origins = list(dict.fromkeys(origins))
 
 app.add_middleware(
     CORSMiddleware,
@@ -102,10 +106,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add security middleware
+# Add security middleware - DEBUG: Testing each middleware individually
 app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(RateLimitMiddleware)
-app.add_middleware(InputValidationMiddleware)
+app.add_middleware(InputValidationMiddleware)  # Fixed: now properly handles OAuth2 and form data
 
 
 # Health check endpoint
@@ -124,7 +127,7 @@ async def health_check():
 async def root():
     """Root endpoint."""
     return {
-        "message": "Welcome to AI E-Learning Platform API",
+        "message": "Welcome to CHOICE AI E-Learning Platform API",
         "version": settings.VERSION,
         "docs": f"{settings.API_V1_STR}/docs"
     }

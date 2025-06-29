@@ -8,8 +8,8 @@ from pydantic_settings import BaseSettings
 from pydantic import AnyHttpUrl, validator
 from dotenv import load_dotenv
 
-# Load environment variables from backend/.env
-load_dotenv(os.path.join(os.path.dirname(__file__), '../../.env'))
+# Load environment variables from root .env.local
+load_dotenv(os.path.join(os.path.dirname(__file__), '../../../.env.local'))
 
 
 class Settings(BaseSettings):
@@ -19,7 +19,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = True
     ENVIRONMENT: str = "development"
-    FRONTEND_URL: str = "http://localhost:3000"
+    # Read from NEXT_PUBLIC_APP_URL for consistency with frontend
+    FRONTEND_URL: str = os.getenv("NEXT_PUBLIC_APP_URL", "http://localhost:3000")
     
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
@@ -34,6 +35,7 @@ class Settings(BaseSettings):
     
     # Database
     MONGODB_URI: str
+    DATABASE_NAME: str = "ai-elearning"
     
     # Authentication
     JWT_SECRET: str
@@ -41,26 +43,21 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
-    # Email
-    SMTP_HOST: str
-    SMTP_PORT: int = 587
-    SMTP_USER: str
-    SMTP_PASS: str
-    EMAILS_FROM_EMAIL: Optional[str] = None
-    EMAILS_FROM_NAME: Optional[str] = None
+    # Email (Microsoft Graph API)
+    AZURE_CLIENT_ID: str
+    AZURE_CLIENT_SECRET: str
+    AZURE_TENANT_ID: str
+    MAIL_FROM_ADDRESS: str
+    EMAILS_FROM_NAME: Optional[str] = "AI E-Learning Platform"
+    
+    # Legacy SMTP (deprecated)
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: Optional[int] = 587
+    SMTP_USER: Optional[str] = None
+    SMTP_PASS: Optional[str] = None
     SECURITY_TEAM_EMAIL: str = "security@ai-elearning.com"
     
-    @validator("EMAILS_FROM_EMAIL", pre=True)
-    def get_emails_from(cls, v: Optional[str], values: dict) -> str:
-        if not v:
-            return values.get("SMTP_USER", "noreply@ai-elearning.com")
-        return v
-    
-    @validator("EMAILS_FROM_NAME", pre=True)
-    def get_emails_from_name(cls, v: Optional[str], values: dict) -> str:
-        if not v:
-            return values.get("PROJECT_NAME", "AI E-Learning Platform")
-        return v
+
     
     # AI Service
     ANTHROPIC_API_KEY: str

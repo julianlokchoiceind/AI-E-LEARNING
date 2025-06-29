@@ -23,11 +23,24 @@ db = MongoDB()
 async def connect_to_mongo():
     """Create database connection."""
     try:
+        logger.info(f"Attempting to connect to MongoDB...")
+        logger.info(f"MongoDB URI: {settings.MONGODB_URI[:30]}...")  # Log một phần URI
+        
+        # Thêm server selection timeout và các options khác
         db.client = AsyncIOMotorClient(
             settings.MONGODB_URI,
             maxPoolSize=10,
-            minPoolSize=10
+            minPoolSize=10,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=10000,
+            retryWrites=True,
+            w='majority'
         )
+        
+        # Test connection trước
+        await db.client.admin.command('ping')
+        logger.info("MongoDB ping successful")
+        
         # Use "ai-elearning" as the database name
         db.database = db.client["ai-elearning"]
         
@@ -69,6 +82,7 @@ async def connect_to_mongo():
         )
         
         logger.info("Successfully connected to MongoDB")
+        return db.client
         
     except Exception as e:
         logger.error(f"Could not connect to MongoDB: {e}")

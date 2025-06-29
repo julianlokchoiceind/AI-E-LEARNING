@@ -92,7 +92,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   if (variant === 'compact') {
     return (
       <div className="w-full">
-        <ProgressBar progress={progress.completion_percentage} />
+        <ProgressBar value={progress.completion_percentage} />
       </div>
     );
   }
@@ -109,7 +109,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
               <span>Overall Progress</span>
               <span className="font-medium">{progress.completion_percentage}%</span>
             </div>
-            <ProgressBar progress={progress.completion_percentage} />
+            <ProgressBar value={progress.completion_percentage} />
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -146,7 +146,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
           {progress.completed_lessons}/{progress.total_lessons} lessons
         </span>
       </div>
-      <ProgressBar progress={progress.completion_percentage} />
+      <ProgressBar value={progress.completion_percentage} />
       <p className="text-xs text-gray-500">
         {progress.completion_percentage}% complete
       </p>

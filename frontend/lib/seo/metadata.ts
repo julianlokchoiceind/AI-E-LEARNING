@@ -13,7 +13,7 @@ export interface SEOProps {
   locale?: Locale;
   alternateLocales?: Locale[];
   ogImage?: string;
-  ogType?: 'website' | 'article' | 'video.other' | 'course';
+  ogType?: 'website' | 'article' | 'video.other';
   publishedTime?: string;
   modifiedTime?: string;
   author?: string;
@@ -258,7 +258,7 @@ export function generateCourseMetadata({
     title,
     description,
     keywords,
-    ogType: 'course' as any,
+    ogType: 'article',
     ogImage: course.thumbnail,
     locale,
     structuredData

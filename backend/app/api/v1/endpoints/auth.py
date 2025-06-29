@@ -48,8 +48,8 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(subject: str, expires_delta: timedelta = None) -> str:
-    """Create JWT access token."""
+def create_access_token(subject: str, expires_delta: timedelta = None, **additional_claims) -> str:
+    """Create JWT access token with additional claims."""
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -58,6 +58,9 @@ def create_access_token(subject: str, expires_delta: timedelta = None) -> str:
         )
     
     to_encode = {"exp": expire, "sub": str(subject)}
+    # Add additional claims
+    to_encode.update(additional_claims)
+    
     encoded_jwt = jwt.encode(
         to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM
     )
@@ -124,8 +127,9 @@ async def register(request: Request, user_data: UserCreate) -> StandardResponse[
         "password": get_password_hash(user_data.password),
         "role": "student",
         "premium_status": False,
-        "is_verified": False,
+        "is_verified": False,  # All users must verify email
         "verification_token": generate_verification_token(),
+        "verification_token_expires": datetime.utcnow() + timedelta(hours=24),  # Token expires in 24 hours
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow()
     }
@@ -164,43 +168,75 @@ async def register(request: Request, user_data: UserCreate) -> StandardResponse[
     )
 
 
-@router.post("/login", response_model=TokenWithRefresh)
+@router.post("/login", response_model=StandardResponse[TokenWithRefresh])
 @limiter.limit(AUTH_RATE_LIMITS["login"])
-async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()) -> Any:
+async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()) -> StandardResponse[TokenWithRefresh]:
     """
     OAuth2 compatible token login, get an access token for future requests.
     """
-    db = get_database()
+    logger.info(f"🔐 Login attempt for email: {form_data.username}")
     
-    # Get user from MongoDB
-    user = await db.users.find_one({"email": form_data.username})
-    
-    if not user or not verify_password(form_data.password, user["password"]):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
+    try:
+        db = get_database()
+        logger.info("📊 Database connection obtained")
+        
+        # Get user from MongoDB
+        logger.info(f"🔍 Looking up user: {form_data.username}")
+        user = await db.users.find_one({"email": form_data.username})
+        logger.info(f"👤 User found: {user is not None}")
+        
+        if not user or not verify_password(form_data.password, user["password"]):
+            logger.warning(f"❌ Invalid credentials for: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password"
+            )
+        
+        if not user.get("is_verified", False):
+            logger.warning(f"⚠️ Unverified user login attempt: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Please verify your email before logging in"
+            )
+        
+        # Create access token and refresh token
+        logger.info("🔑 Creating tokens...")
+        logger.info(f"User data: {user.keys()}")
+        
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            subject=str(user["_id"]), 
+            expires_delta=access_token_expires,
+            email=user.get("email", ""),
+            name=user.get("name", user.get("email", "").split("@")[0]),
+            role=user.get("role", "student"),
+            premium_status=user.get("premium_status", False)
         )
-    
-    # TEMPORARILY DISABLED FOR DEVELOPMENT
-    # if not user["is_verified"]:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail="Please verify your email before logging in"
-    #     )
-    
-    # Create access token and refresh token
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        subject=str(user["_id"]), expires_delta=access_token_expires
-    )
-    refresh_token = create_refresh_jwt(subject=str(user["_id"]))
-    
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60  # Convert to seconds
-    }
+        refresh_token = create_refresh_jwt(subject=str(user["_id"]))
+        
+        token_data = TokenWithRefresh(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60  # Convert to seconds
+        )
+        
+        logger.info(f"✅ Login successful for: {form_data.username}")
+        return StandardResponse(
+            success=True,
+            data=token_data,
+            message="Login successful"
+        )
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"🚨 Login error for {form_data.username}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error during login"
+        )
 
 
 @router.get("/verify-email", response_model=StandardResponse[dict])
@@ -212,13 +248,27 @@ async def verify_email(request: Request, token: str) -> StandardResponse[dict]:
     db = get_database()
     
     # Find user with this token
+    logger.info(f"🔍 Looking for verification token: {token[:10]}...{token[-10:]}")
     user = await db.users.find_one({"verification_token": token})
     
     if not user:
+        # Check if this might be an already-used token by looking for verified users
+        # This is a heuristic - in production you might want to store used tokens
+        logger.info("Token not found, checking for already verified users...")
+        
+        # For better UX, we return a generic message instead of exposing if email exists
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid verification token"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This verification link is invalid or has already been used. If you have already verified your email, please login. If you need a new verification link, please use the resend option."
         )
+    
+    # Check if token has expired
+    if user.get("verification_token_expires"):
+        if datetime.utcnow() > user["verification_token_expires"]:
+            raise HTTPException(
+                status_code=status.HTTP_410_GONE,
+                detail="Verification token has expired. Please request a new one."
+            )
     
     # Update user verification status
     await db.users.update_one(
@@ -227,6 +277,7 @@ async def verify_email(request: Request, token: str) -> StandardResponse[dict]:
             "$set": {
                 "is_verified": True,
                 "verification_token": None,
+                "verification_token_expires": None,
                 "updated_at": datetime.utcnow()
             }
         }
@@ -239,9 +290,9 @@ async def verify_email(request: Request, token: str) -> StandardResponse[dict]:
     )
 
 
-@router.post("/oauth", response_model=TokenWithRefresh)
+@router.post("/oauth", response_model=StandardResponse[TokenWithRefresh])
 @limiter.limit(AUTH_RATE_LIMITS["login"])
-async def oauth_login(request: Request, oauth_data: OAuthUserCreate) -> Any:
+async def oauth_login(request: Request, oauth_data: OAuthUserCreate) -> StandardResponse[TokenWithRefresh]:
     """
     Handle OAuth user login/registration.
     """
@@ -290,20 +341,31 @@ async def oauth_login(request: Request, oauth_data: OAuthUserCreate) -> Any:
     # Create tokens
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        subject=str(user["_id"]), expires_delta=access_token_expires
+        subject=str(user["_id"]), 
+        expires_delta=access_token_expires,
+        email=user.get("email", ""),
+        name=user.get("name", user.get("email", "").split("@")[0]),
+        role=user.get("role", "student"),
+        premium_status=user.get("premium_status", False)
     )
     refresh_token = create_refresh_jwt(subject=str(user["_id"]))
     
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-    }
+    token_data = TokenWithRefresh(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+    
+    return StandardResponse(
+        success=True,
+        data=token_data,
+        message="OAuth login successful"
+    )
 
 
-@router.post("/refresh", response_model=TokenWithRefresh)
-async def refresh_access_token(token_request: RefreshTokenRequest) -> Any:
+@router.post("/refresh", response_model=StandardResponse[TokenWithRefresh])
+async def refresh_access_token(token_request: RefreshTokenRequest) -> StandardResponse[TokenWithRefresh]:
     """
     Refresh access token using refresh token.
     """
@@ -325,12 +387,18 @@ async def refresh_access_token(token_request: RefreshTokenRequest) -> Any:
     # Create new refresh token (rotate refresh tokens for security)
     new_refresh_token = create_refresh_jwt(subject=payload.get("sub"))
     
-    return {
-        "access_token": access_token,
-        "refresh_token": new_refresh_token,
-        "token_type": "bearer",
-        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-    }
+    token_data = TokenWithRefresh(
+        access_token=access_token,
+        refresh_token=new_refresh_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+    
+    return StandardResponse(
+        success=True,
+        data=token_data,
+        message="Token refreshed successfully"
+    )
 
 
 @router.post("/logout", response_model=StandardResponse[dict])
@@ -470,6 +538,7 @@ async def resend_verification(request: Request, email_request: EmailVerification
         {
             "$set": {
                 "verification_token": new_token,
+                "verification_token_expires": datetime.utcnow() + timedelta(hours=24),  # Token expires in 24 hours
                 "updated_at": datetime.utcnow()
             }
         }
@@ -497,53 +566,3 @@ async def resend_verification(request: Request, email_request: EmailVerification
     )
 
 
-@router.get("/verify-email", response_model=StandardResponse[dict])
-async def verify_email(token: str) -> StandardResponse[dict]:
-    """
-    Verify email address with token.
-    """
-    db = get_database()
-    
-    # Find user with verification token
-    user = await db.users.find_one({"verification_token": token})
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid verification token"
-        )
-    
-    if user["is_verified"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already verified"
-        )
-    
-    # Update user as verified
-    await db.users.update_one(
-        {"_id": user["_id"]},
-        {
-            "$set": {
-                "is_verified": True,
-                "verification_token": None,
-                "updated_at": datetime.utcnow()
-            }
-        }
-    )
-    
-    # Send welcome email after successful verification
-    try:
-        await email_service.send_welcome_email(
-            to_email=user["email"],
-            name=user["name"]
-        )
-        logger.info(f"Welcome email sent to: {user['email']}")
-    except Exception as e:
-        logger.error(f"Failed to send welcome email: {str(e)}")
-        # Don't fail the verification if email fails
-    
-    return StandardResponse(
-        success=True,
-        data={"email": user["email"]},
-        message="Email verified successfully! Welcome to AI E-Learning Platform."
-    )

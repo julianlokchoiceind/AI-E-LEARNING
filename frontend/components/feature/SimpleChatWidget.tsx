@@ -255,7 +255,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                   {(['simple', 'detailed', 'technical'] as const).map((level) => (
                     <Button
                       key={level}
-                      variant={difficultyPreference === level ? 'default' : 'ghost'}
+                      variant={difficultyPreference === level ? 'primary' : 'ghost'}
                       size="sm"
                       onClick={() => setDifficulty(level)}
                       className="text-xs px-2 py-1 h-auto"
@@ -271,7 +271,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                 <label className="block text-xs font-medium text-gray-700 mb-1">Language</label>
                 <div className="flex space-x-1">
                   <Button
-                    variant={languagePreference === 'en' ? 'default' : 'ghost'}
+                    variant={languagePreference === 'en' ? 'primary' : 'ghost'}
                     size="sm"
                     onClick={() => setLanguage('en')}
                     className="text-xs px-2 py-1 h-auto"
@@ -280,7 +280,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                     English
                   </Button>
                   <Button
-                    variant={languagePreference === 'vi' ? 'default' : 'ghost'}
+                    variant={languagePreference === 'vi' ? 'primary' : 'ghost'}
                     size="sm"
                     onClick={() => setLanguage('vi')}
                     className="text-xs px-2 py-1 h-auto"

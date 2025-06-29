@@ -13,7 +13,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/hooks/useAuth';
 import { faqAPI, FAQ, FAQCategory, FAQListResponse } from '@/lib/api/faq';

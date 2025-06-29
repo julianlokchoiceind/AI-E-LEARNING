@@ -30,8 +30,8 @@ const CreatorCoursesPage = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await getCourses(`creator_id=${user?._id}`);
-      setCourses(response.data || []);
+      const response = await getCourses(`creator_id=${user?.id}`);
+      setCourses(response.courses || []);
     } catch (error) {
       console.error('Failed to fetch courses:', error);
       toast.error('Failed to load courses');
@@ -68,7 +68,7 @@ const CreatorCoursesPage = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
+    const statusConfig: Record<string, { label: string; className: string }> = {
       draft: { label: 'Draft', className: 'bg-gray-100 text-gray-700' },
       review: { label: 'In Review', className: 'bg-yellow-100 text-yellow-700' },
       published: { label: 'Published', className: 'bg-green-100 text-green-700' },

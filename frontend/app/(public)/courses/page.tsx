@@ -10,7 +10,7 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { toast } from 'react-hot-toast';
 
 const CourseCatalogPage = () => {
-  const [courses, setCourses] = useState([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');

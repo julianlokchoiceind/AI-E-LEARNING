@@ -1,7 +1,7 @@
 /**
  * Support ticket API client
  */
-import { authFetch } from '@/lib/utils/auth-helpers';
+import { apiClient } from './api-client';
 import type {
   SupportTicket,
   TicketWithMessages,
@@ -20,27 +20,19 @@ export const supportAPI = {
    * Create a new support ticket
    */
   async createTicket(data: TicketCreateData): Promise<SupportTicket> {
-    const response = await authFetch(`${API_BASE_URL}/support/tickets`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to create ticket');
-    }
-
-    const result = await response.json();
-    return result.data;
+    return apiClient.post(`${API_BASE_URL}/support/tickets`, data);
   },
 
   /**
    * Get tickets with filtering and pagination
    */
-  async getTickets(params?: TicketSearchParams) {
+  async getTickets(params?: TicketSearchParams): Promise<{
+    items: SupportTicket[];
+    total_count: number;
+    total_pages: number;
+    page: number;
+    per_page: number;
+  }> {
     const queryParams = new URLSearchParams();
     
     if (params) {
@@ -51,91 +43,83 @@ export const supportAPI = {
       });
     }
 
-    const response = await authFetch(
+    return apiClient.get(
       `${API_BASE_URL}/support/tickets?${queryParams.toString()}`
     );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch tickets');
-    }
-
-    const result = await response.json();
-    return result.data;
   },
 
   /**
    * Get ticket statistics
    */
   async getTicketStats(): Promise<TicketStats> {
-    const response = await authFetch(`${API_BASE_URL}/support/tickets/stats`);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch ticket stats');
-    }
-
-    const result = await response.json();
-    return result.data;
+    return apiClient.get(`${API_BASE_URL}/support/tickets/stats`);
   },
 
   /**
    * Get a specific ticket with messages
    */
-  async getTicket(ticketId: string, includeInternal = false): Promise<TicketWithMessages> {
-    const queryParams = includeInternal ? '?include_internal=true' : '';
-    const response = await authFetch(
-      `${API_BASE_URL}/support/tickets/${ticketId}${queryParams}`
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch ticket');
-    }
-
-    const result = await response.json();
-    return result.data;
+  async getTicket(ticketId: string): Promise<TicketWithMessages> {
+    return apiClient.get(`${API_BASE_URL}/support/tickets/${ticketId}`);
   },
 
   /**
-   * Update a ticket (admin/support only)
+   * Update a ticket
    */
   async updateTicket(ticketId: string, data: TicketUpdateData): Promise<SupportTicket> {
-    const response = await authFetch(`${API_BASE_URL}/support/tickets/${ticketId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
+    return apiClient.put(`${API_BASE_URL}/support/tickets/${ticketId}`, data);
+  },
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to update ticket');
-    }
+  /**
+   * Close a ticket
+   */
+  async closeTicket(ticketId: string): Promise<SupportTicket> {
+    return apiClient.post(`${API_BASE_URL}/support/tickets/${ticketId}/close`);
+  },
 
-    const result = await response.json();
-    return result.data;
+  /**
+   * Reopen a ticket
+   */
+  async reopenTicket(ticketId: string): Promise<SupportTicket> {
+    return apiClient.post(`${API_BASE_URL}/support/tickets/${ticketId}/reopen`);
   },
 
   /**
    * Add a message to a ticket
    */
-  async addMessage(ticketId: string, data: MessageCreateData) {
-    const response = await authFetch(
-      `${API_BASE_URL}/support/tickets/${ticketId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      }
+  async addMessage(ticketId: string, data: MessageCreateData): Promise<TicketWithMessages> {
+    return apiClient.post(`${API_BASE_URL}/support/tickets/${ticketId}/messages`, data);
+  },
+
+  /**
+   * Upload attachment to a ticket
+   */
+  async uploadAttachment(ticketId: string, file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return apiClient.upload(
+      `${API_BASE_URL}/support/tickets/${ticketId}/attachments`,
+      formData
     );
+  },
+
+  /**
+   * Rate ticket satisfaction
+   */
+  async rateTicket(ticketId: string, data: SatisfactionRatingData): Promise<void> {
+    await apiClient.post(`${API_BASE_URL}/support/tickets/${ticketId}/rate`, data);
+  },
+
+  /**
+   * Get knowledge base articles
+   */
+  async getKnowledgeBase(query?: string) {
+    const params = query ? `?q=${encodeURIComponent(query)}` : '';
+    const response = await fetch(`${API_BASE_URL}/support/knowledge-base${params}`);
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.detail || 'Failed to add message');
+      throw new Error(error.detail || 'Failed to fetch knowledge base');
     }
 
     const result = await response.json();
@@ -143,26 +127,40 @@ export const supportAPI = {
   },
 
   /**
-   * Rate ticket satisfaction
+   * Admin: Get all tickets
    */
-  async rateTicket(ticketId: string, data: SatisfactionRatingData): Promise<SupportTicket> {
-    const response = await authFetch(
-      `${API_BASE_URL}/support/tickets/${ticketId}/rate`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to rate ticket');
+  async getAllTickets(params?: TicketSearchParams) {
+    const queryParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value));
+        }
+      });
     }
 
-    const result = await response.json();
-    return result.data;
+    return apiClient.get(`${API_BASE_URL}/support/admin/tickets?${queryParams.toString()}`);
+  },
+
+  /**
+   * Admin: Assign ticket to agent
+   */
+  async assignTicket(ticketId: string, agentId: string): Promise<SupportTicket> {
+    return apiClient.post(`${API_BASE_URL}/support/admin/tickets/${ticketId}/assign`, {
+      agent_id: agentId
+    });
+  },
+
+  /**
+   * Admin: Update ticket priority
+   */
+  async updatePriority(
+    ticketId: string,
+    priority: 'low' | 'medium' | 'high' | 'urgent'
+  ): Promise<SupportTicket> {
+    return apiClient.post(`${API_BASE_URL}/support/admin/tickets/${ticketId}/priority`, {
+      priority
+    });
   },
 };

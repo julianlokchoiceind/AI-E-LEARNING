@@ -69,8 +69,8 @@ const CourseManagePage = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await getCourses(`creator_id=${user?._id}`);
-      const formattedCourses = response.data.courses.map((course: any) => ({
+      const response = await getCourses(`creator_id=${user?.id}`);
+      const formattedCourses = response.courses.map((course: any) => ({
         id: course._id,
         title: course.title,
         status: course.status,

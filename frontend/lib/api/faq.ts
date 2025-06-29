@@ -2,7 +2,7 @@
  * FAQ API client functions
  */
 
-import { apiClient } from './client';
+import { apiClient } from './api-client';
 
 export interface FAQCategory {
   value: string;
@@ -84,7 +84,7 @@ export const faqAPI = {
       if (params.sort_order) queryParams.append('sort_order', params.sort_order);
     }
     
-    const response = await apiClient<FAQListResponse>(`/faq?${queryParams.toString()}`);
+    const response = await apiClient.get<FAQListResponse>(`/faq?${queryParams.toString()}`);
     return response;
   },
 
@@ -92,7 +92,7 @@ export const faqAPI = {
    * Get FAQ categories with count
    */
   async getCategories(): Promise<FAQCategory[]> {
-    const response = await apiClient<FAQCategory[]>('/faq/categories');
+    const response = await apiClient.get<FAQCategory[]>('/faq/categories');
     return response;
   },
 
@@ -100,7 +100,7 @@ export const faqAPI = {
    * Get popular FAQs
    */
   async getPopularFAQs(limit: number = 10): Promise<FAQListResponse> {
-    const response = await apiClient<FAQListResponse>(`/faq/popular?limit=${limit}`);
+    const response = await apiClient.get<FAQListResponse>(`/faq/popular?limit=${limit}`);
     return response;
   },
 
@@ -108,7 +108,7 @@ export const faqAPI = {
    * Get a single FAQ by ID
    */
   async getFAQ(id: string): Promise<FAQ> {
-    const response = await apiClient<FAQ>(`/faq/${id}`);
+    const response = await apiClient.get<FAQ>(`/faq/${id}`);
     return response;
   },
 
@@ -116,7 +116,7 @@ export const faqAPI = {
    * Get related FAQs
    */
   async getRelatedFAQs(id: string): Promise<FAQListResponse> {
-    const response = await apiClient<FAQListResponse>(`/faq/${id}/related`);
+    const response = await apiClient.get<FAQListResponse>(`/faq/${id}/related`);
     return response;
   },
 
@@ -124,10 +124,7 @@ export const faqAPI = {
    * Create a new FAQ (Admin only)
    */
   async createFAQ(data: FAQCreateData): Promise<FAQ> {
-    const response = await apiClient<FAQ>('/faq', {
-      method: 'POST',
-      data,
-    });
+    const response = await apiClient.post<FAQ>('/faq', data);
     return response;
   },
 
@@ -135,10 +132,7 @@ export const faqAPI = {
    * Update a FAQ (Admin only)
    */
   async updateFAQ(id: string, data: FAQUpdateData): Promise<FAQ> {
-    const response = await apiClient<FAQ>(`/faq/${id}`, {
-      method: 'PUT',
-      data,
-    });
+    const response = await apiClient.put<FAQ>(`/faq/${id}`, data);
     return response;
   },
 
@@ -146,9 +140,7 @@ export const faqAPI = {
    * Delete a FAQ (Admin only)
    */
   async deleteFAQ(id: string): Promise<{ message: string }> {
-    const response = await apiClient<{ message: string }>(`/faq/${id}`, {
-      method: 'DELETE',
-    });
+    const response = await apiClient.delete<{ message: string }>(`/faq/${id}`);
     return response;
   },
 
@@ -161,15 +153,12 @@ export const faqAPI = {
     helpful_votes: number;
     unhelpful_votes: number;
   }> {
-    const response = await apiClient<{
+    const response = await apiClient.post<{
       success: boolean;
       message: string;
       helpful_votes: number;
       unhelpful_votes: number;
-    }>(`/faq/${id}/vote`, {
-      method: 'POST',
-      data,
-    });
+    }>(`/faq/${id}/vote`, data);
     return response;
   },
 
@@ -181,14 +170,11 @@ export const faqAPI = {
     message: string;
     affected_count: number;
   }> {
-    const response = await apiClient<{
+    const response = await apiClient.post<{
       success: boolean;
       message: string;
       affected_count: number;
-    }>('/faq/bulk-action', {
-      method: 'POST',
-      data,
-    });
+    }>('/faq/bulk-action', data);
     return response;
   },
 };

@@ -30,8 +30,8 @@ export default function PaymentSuccessPage() {
 
   const fetchCourseDetails = async () => {
     try {
-      const response = await getCourseById(courseId!);
-      setCourse(response.data);
+      const courseData = await getCourseById(courseId!);
+      setCourse(courseData);
     } catch (error) {
       console.error('Failed to fetch course:', error);
       toast.error('Failed to load course details');

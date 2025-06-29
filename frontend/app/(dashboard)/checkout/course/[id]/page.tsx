@@ -36,8 +36,7 @@ export default function CourseCheckoutPage() {
       setLoading(true);
       
       // Fetch course details
-      const response = await getCourseById(courseId);
-      const courseData = response.data;
+      const courseData = await getCourseById(courseId);
       setCourse(courseData);
 
       // Check if course should be free for this user
@@ -47,8 +46,7 @@ export default function CourseCheckoutPage() {
         return;
       }
 
-      if (user.premium_status || 
-          (user.subscription?.type === 'pro' && user.subscription?.status === 'active')) {
+      if (user?.premiumStatus) {
         toast.error('You already have access to this course. Redirecting...');
         router.push(`/courses/${courseId}`);
         return;

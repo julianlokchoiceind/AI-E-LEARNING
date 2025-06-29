@@ -70,8 +70,8 @@ const CourseBuilderPage = () => {
 
       // Fetch course details
       const courseResponse = await getCourseById(courseId);
-      setCourseData(courseResponse.data);
-      setTitleInput(courseResponse.data.title);
+      setCourseData(courseResponse);
+      setTitleInput(courseResponse.title);
 
       // Fetch chapters with lessons
       const chaptersWithLessons = await getChaptersWithLessons(courseId);
@@ -95,7 +95,7 @@ const CourseBuilderPage = () => {
   const handleCreateChapter = async () => {
     try {
       const response = await createChapter({ course_id: courseId });
-      setChapters([...chapters, response.data]);
+      setChapters([...chapters, response]);
       toast.success('Chapter created successfully');
     } catch (error) {
       console.error('Failed to create chapter:', error);
@@ -167,7 +167,7 @@ const CourseBuilderPage = () => {
       // Update local state - remove lesson from the chapter
       setChapters(prevChapters => {
         return prevChapters.map(chapter => {
-          const updatedLessons = chapter.lessons.filter(l => l._id !== lessonId);
+          const updatedLessons = chapter.lessons.filter((l: any) => l._id !== lessonId);
           return {
             ...chapter,
             lessons: updatedLessons,

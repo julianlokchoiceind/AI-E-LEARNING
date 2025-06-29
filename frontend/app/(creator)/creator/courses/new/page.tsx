@@ -23,9 +23,9 @@ const CreateCoursePage = () => {
         // Create course with API call
         const response = await createCourse();
         
-        if (response.success && response.data?._id) {
+        if (response.course && response.course._id) {
           // Redirect to course editor
-          router.push(`/creator/courses/${response.data._id}/edit`);
+          router.push(`/creator/courses/${response.course._id}/edit`);
         } else {
           throw new Error('Failed to create course');
         }

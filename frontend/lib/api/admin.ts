@@ -459,3 +459,118 @@ export const getUserAnalytics = async (): Promise<UserAnalytics> => {
     throw error;
   }
 };
+
+/**
+ * Get admin analytics data (same as dashboard stats)
+ */
+export const getAdminAnalytics = async (): Promise<AdminDashboardStats> => {
+  return getAdminDashboardStats();
+};
+
+/**
+ * Get admin courses with filters
+ */
+export const getAdminCourses = async (params?: {
+  page?: number;
+  per_page?: number;
+  status?: string;
+  search?: string;
+  category?: string;
+}) => {
+  const queryParams = new URLSearchParams();
+  
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, String(value));
+      }
+    });
+  }
+
+  try {
+    const response = await fetch(`/api/v1/admin/courses?${queryParams.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get admin courses failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get admin users (alias for listUsers)
+ */
+export const getAdminUsers = async (params?: {
+  page?: number;
+  per_page?: number;
+  role?: string;
+  search?: string;
+  premiumOnly?: boolean;
+}) => {
+  const { page = 1, per_page = 20, role, search, premiumOnly } = params || {};
+  return listUsers(page, per_page, { role, search, premiumOnly });
+};
+
+/**
+ * Toggle user premium status (alias for updateUserPremiumStatus)
+ */
+export const toggleUserPremium = async (userId: string, premiumStatus: boolean) => {
+  return updateUserPremiumStatus(userId, premiumStatus);
+};
+
+/**
+ * Toggle course free status
+ */
+export const toggleCourseFree = async (courseId: string, isFree: boolean): Promise<StandardResponse<any>> => {
+  try {
+    const response = await fetch(`/api/v1/admin/courses/${courseId}/free`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ is_free: isFree }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Toggle course free status failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * Set course price
+ */
+export const setCoursePrice = async (courseId: string, price: number): Promise<StandardResponse<any>> => {
+  try {
+    const response = await fetch(`/api/v1/admin/courses/${courseId}/price`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ price }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Set course price failed:', error);
+    throw error;
+  }
+};

@@ -25,7 +25,8 @@ def get_password_hash(password: str) -> str:
 
 def create_access_token(
     subject: Union[str, Any],
-    expires_delta: Optional[timedelta] = None
+    expires_delta: Optional[timedelta] = None,
+    **additional_claims
 ) -> str:
     """
     Create JWT access token.
@@ -33,6 +34,7 @@ def create_access_token(
     Args:
         subject: The subject of the token (usually user ID)
         expires_delta: Token expiration time
+        **additional_claims: Additional claims to include in token (email, name, role, etc.)
     
     Returns:
         Encoded JWT token
@@ -49,6 +51,9 @@ def create_access_token(
         "sub": str(subject),
         "type": "access"
     }
+    
+    # Add additional claims to token
+    to_encode.update(additional_claims)
     
     encoded_jwt = jwt.encode(
         to_encode, 

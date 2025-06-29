@@ -1,7 +1,7 @@
 /**
  * Progress API client
  */
-import { authFetch } from '@/lib/utils/auth-helpers';
+import { apiClient } from './api-client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -54,17 +54,8 @@ export const progressAPI = {
    * Start a lesson
    */
   async startLesson(lessonId: string): Promise<Progress> {
-    const response = await authFetch(`${API_BASE_URL}/progress/lessons/${lessonId}/start`, {
-      method: 'POST',
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to start lesson');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await apiClient.post<{ data: Progress }>(`/progress/lessons/${lessonId}/start`);
+    return response.data;
   },
 
   /**
@@ -74,86 +65,39 @@ export const progressAPI = {
     lessonId: string,
     progressData: VideoProgressUpdate
   ): Promise<Progress> {
-    const response = await authFetch(`${API_BASE_URL}/progress/lessons/${lessonId}/progress`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(progressData),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to update progress');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await apiClient.put<{ data: Progress }>(`/progress/lessons/${lessonId}/progress`, progressData);
+    return response.data;
   },
 
   /**
    * Complete a lesson
    */
   async completeLesson(lessonId: string): Promise<Progress> {
-    const response = await authFetch(`${API_BASE_URL}/progress/lessons/${lessonId}/complete`, {
-      method: 'POST',
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to complete lesson');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await apiClient.post<{ data: Progress }>(`/progress/lessons/${lessonId}/complete`);
+    return response.data;
   },
 
   /**
    * Get lesson progress
    */
   async getLessonProgress(lessonId: string): Promise<Progress> {
-    const response = await authFetch(`${API_BASE_URL}/progress/lessons/${lessonId}/progress`);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch lesson progress');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await apiClient.get<{ data: Progress }>(`/progress/lessons/${lessonId}/progress`);
+    return response.data;
   },
 
   /**
    * Get course progress
    */
   async getCourseProgress(courseId: string): Promise<Progress[]> {
-    const response = await authFetch(`${API_BASE_URL}/progress/courses/${courseId}/progress`);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch course progress');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await apiClient.get<{ data: Progress[] }>(`/progress/courses/${courseId}/progress`);
+    return response.data;
   },
 
   /**
    * Check course completion and trigger certificate generation
    */
   async checkCourseCompletion(courseId: string): Promise<CourseCompletionResponse> {
-    const response = await authFetch(
-      `${API_BASE_URL}/progress/courses/${courseId}/check-completion`,
-      {
-        method: 'POST',
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to check course completion');
-    }
-
-    return response.json();
+    const response = await apiClient.post<CourseCompletionResponse>(`/progress/courses/${courseId}/check-completion`);
+    return response;
   },
 };

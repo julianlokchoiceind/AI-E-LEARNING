@@ -75,8 +75,8 @@ const CreatorDashboardPage = () => {
       setLoading(true);
       
       // Fetch creator's courses
-      const response = await getCourses(`creator_id=${user?._id}`);
-      const courses = response.data.courses;
+      const response = await getCourses(`creator_id=${user?.id}`);
+      const courses = response.courses;
 
       // Calculate statistics
       const publishedCourses = courses.filter((c: any) => c.status === 'published');
@@ -271,7 +271,7 @@ const CreatorDashboardPage = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Recent Courses</h2>
             <Button
-              variant="link"
+              variant="ghost"
               onClick={() => router.push('/creator/courses')}
               className="text-blue-600"
             >

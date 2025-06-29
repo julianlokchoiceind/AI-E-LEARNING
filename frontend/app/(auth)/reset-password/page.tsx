@@ -16,37 +16,27 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     
-    if (!token) {
-      setError('Invalid reset link. No token provided.')
-      return
-    }
-    
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-    
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long')
-      return
-    }
-    
+    // Let backend handle all validation
     setLoading(true)
     
     try {
-      await resetPassword(token, password)
+      // Need to modify resetPassword API to accept confirmPassword for backend validation
+      const response = await resetPassword(token || '', password, confirmPassword)
+      setSuccessMessage(response.message)
       setSuccess(true)
       // Redirect to login after 3 seconds
       setTimeout(() => {
         router.push('/login?reset=true')
       }, 3000)
     } catch (err: any) {
-      setError(err.message || 'Failed to reset password')
+      // Always use backend error message
+      setError(err.message)
     } finally {
       setLoading(false)
     }
@@ -71,7 +61,7 @@ export default function ResetPasswordPage() {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-green-800">
-                  Your password has been reset successfully!
+                  {successMessage}
                 </p>
                 <p className="mt-2 text-sm text-green-700">
                   Redirecting to login page...

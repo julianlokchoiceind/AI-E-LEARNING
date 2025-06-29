@@ -36,8 +36,8 @@ const PreviewLessonPage = () => {
       setError(null);
       
       // Fetch course details
-      const courseResponse = await getCourseById(courseId);
-      setCourse(courseResponse.data);
+      const courseData = await getCourseById(courseId);
+      setCourse(courseData);
 
       // Fetch lesson preview data
       try {
@@ -55,55 +55,9 @@ const PreviewLessonPage = () => {
 
         setLesson(lessonResponse.data);
       } catch (lessonError) {
-        // Fallback to mock data if API not available
-        console.warn('Using mock lesson data:', lessonError);
-        
-        const mockLesson: Lesson = {
-          _id: lessonId,
-          course_id: courseId,
-          chapter_id: '1',
-          title: 'Course Introduction',
-          description: 'Welcome to the course and overview of what you\'ll learn',
-          order: 1,
-          video: {
-            duration: 600, // 10 minutes in seconds
-            url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-            youtube_id: 'dQw4w9WgXcQ',
-            transcript: 'Welcome to this comprehensive course...',
-            captions: '',
-            thumbnail: ''
-          },
-          content: 'In this introductory lesson, we will cover the fundamentals and set expectations for the entire course.',
-          resources: [
-            {
-              title: 'Course Syllabus',
-              type: 'pdf',
-              url: '/resources/syllabus.pdf',
-              description: 'Complete course outline and schedule'
-            },
-            {
-              title: 'Prerequisites Checklist',
-              type: 'pdf',
-              url: '/resources/prerequisites.pdf',
-              description: 'What you need to know before starting'
-            }
-          ],
-          has_quiz: false,
-          quiz_required: false,
-          unlock_conditions: {
-            previous_lesson_required: false,
-            quiz_pass_required: false,
-            minimum_watch_percentage: 80
-          },
-          status: 'published',
-          is_free_preview: true,
-          is_completed: false,
-          is_locked: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-
-        setLesson(mockLesson);
+        console.error('Preview lesson not found:', lessonError);
+        setError('Preview not available for this lesson');
+        return;
       }
     } catch (error) {
       console.error('Failed to fetch preview data:', error);

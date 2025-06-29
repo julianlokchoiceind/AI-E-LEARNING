@@ -106,7 +106,7 @@ export default function BillingPage() {
   }
 
   const hasActiveSubscription = subscriptionStatus?.has_subscription && subscriptionStatus?.status === 'active';
-  const isPremiumUser = user.premium_status;
+  const isPremiumUser = user.premiumStatus;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -186,13 +186,13 @@ export default function BillingPage() {
               <div>
                 <p className="text-sm text-gray-600">Courses Enrolled</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {user.stats?.courses_enrolled || 0}
+                  0
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Certificates Earned</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {user.stats?.certificates_earned || 0}
+                  0
                 </p>
               </div>
             </div>

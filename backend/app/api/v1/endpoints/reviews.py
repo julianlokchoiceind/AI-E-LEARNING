@@ -57,8 +57,8 @@ async def get_course_reviews(
     course_id: str,
     rating: Optional[int] = Query(None, ge=1, le=5),
     is_verified_purchase: Optional[bool] = None,
-    sort_by: str = Query("created_at", regex="^(created_at|rating|helpful_count)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_by: str = Query("created_at", pattern="^(created_at|rating|helpful_count)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     current_user: Optional[User] = Depends(get_current_user_optional)
@@ -108,8 +108,8 @@ async def get_course_review_stats(course_id: str):
 @router.get("/users/{user_id}/reviews", response_model=ReviewListStandardResponse)
 async def get_user_reviews(
     user_id: str,
-    sort_by: str = Query("created_at", regex="^(created_at|rating|helpful_count)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_by: str = Query("created_at", pattern="^(created_at|rating|helpful_count)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     current_user: Optional[User] = Depends(get_current_user_optional)

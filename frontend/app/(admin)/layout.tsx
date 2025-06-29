@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -14,13 +14,21 @@ export default function AdminLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== 'admin')) {
-      router.push('/dashboard');
+    if (!loading) {
+      if (!user || user.role !== 'admin') {
+        // Use replace to prevent back navigation to admin pages
+        router.replace('/not-found');
+        return;
+      }
+      // Only set authorized after confirming admin role
+      setAuthorized(true);
     }
   }, [user, loading, router]);
 
+  // Show loading spinner while checking authentication
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -29,7 +37,9 @@ export default function AdminLayout({
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  // Don't render anything until user is confirmed as admin
+  // This prevents AdminSidebar, AdminHeader, and children from mounting and making API calls
+  if (!authorized) {
     return null;
   }
 

@@ -105,5 +105,11 @@ export function getLocalizedPath(pathname: string, locale: Locale): string {
     return pathWithoutLocale;
   }
   
-  return `/${locale}${pathWithoutLocale}`;
+  // Ensure clean path for Vietnamese
+  const cleanPath = pathWithoutLocale === '/' ? '' : pathWithoutLocale;
+  return `/${locale}${cleanPath}`;
+}
+
+export function getTextDirection(locale: Locale): 'ltr' | 'rtl' {
+  return LOCALE_RTL[locale] ? 'rtl' : 'ltr';
 }

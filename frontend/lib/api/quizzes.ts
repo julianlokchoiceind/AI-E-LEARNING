@@ -1,4 +1,4 @@
-import { apiRequest } from '../utils/api';
+import { apiClient } from './api-client';
 
 export interface QuizQuestion {
   question: string;
@@ -69,17 +69,17 @@ export interface QuizProgress {
 export const quizAPI = {
   // Get quiz for a lesson
   getLessonQuiz: async (lessonId: string): Promise<Quiz> => {
-    return apiRequest(`/quizzes/lesson/${lessonId}`);
+    return apiClient.get<Quiz>(`/quizzes/lesson/${lessonId}`);
   },
 
   // Get quiz by ID
   getQuiz: async (quizId: string): Promise<Quiz> => {
-    return apiRequest(`/quizzes/${quizId}`);
+    return apiClient.get<Quiz>(`/quizzes/${quizId}`);
   },
 
   // Get user's quiz progress
   getQuizProgress: async (quizId: string): Promise<QuizProgress> => {
-    return apiRequest(`/quizzes/${quizId}/progress`);
+    return apiClient.get<QuizProgress>(`/quizzes/${quizId}/progress`);
   },
 
   // Submit quiz answers
@@ -87,10 +87,7 @@ export const quizAPI = {
     quizId: string,
     submission: QuizAnswerSubmit
   ): Promise<QuizAttemptResult> => {
-    return apiRequest(`/quizzes/${quizId}/submit`, {
-      method: 'POST',
-      body: JSON.stringify(submission),
-    });
+    return apiClient.post<QuizAttemptResult>(`/quizzes/${quizId}/submit`, submission);
   },
 
   // Create quiz (for creators/admins)
@@ -108,10 +105,7 @@ export const quizAPI = {
       points: number;
     }[];
   }): Promise<Quiz> => {
-    return apiRequest('/quizzes', {
-      method: 'POST',
-      body: JSON.stringify(quizData),
-    });
+    return apiClient.post<Quiz>('/quizzes', quizData);
   },
 
   // Update quiz (for creators/admins)
@@ -125,16 +119,11 @@ export const quizAPI = {
       is_active: boolean;
     }>
   ): Promise<Quiz> => {
-    return apiRequest(`/quizzes/${quizId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updateData),
-    });
+    return apiClient.put<Quiz>(`/quizzes/${quizId}`, updateData);
   },
 
   // Delete quiz (for creators/admins)
   deleteQuiz: async (quizId: string): Promise<void> => {
-    return apiRequest(`/quizzes/${quizId}`, {
-      method: 'DELETE',
-    });
+    return apiClient.delete<void>(`/quizzes/${quizId}`);
   },
 };

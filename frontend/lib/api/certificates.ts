@@ -1,7 +1,7 @@
 /**
  * Certificate API client
  */
-import { authFetch } from '@/lib/utils/auth-helpers';
+import { apiClient } from './api-client';
 import type {
   Certificate,
   CertificateWithDetails,
@@ -20,58 +20,30 @@ export const certificateAPI = {
    * Generate a certificate for completed course
    */
   async generateCertificate(request: CertificateGenerateRequest): Promise<CertificateWithDetails> {
-    const response = await authFetch(`${API_BASE_URL}/certificates/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to generate certificate');
-    }
-
-    const result = await response.json();
-    return result.data;
+    return apiClient.post(`${API_BASE_URL}/certificates/generate`, request);
   },
 
   /**
    * Get my certificates
    */
   async getMyCertificates(page: number = 1, perPage: number = 10): Promise<CertificateListResponse> {
-    const response = await authFetch(
+    return apiClient.get(
       `${API_BASE_URL}/certificates/my-certificates?page=${page}&per_page=${perPage}`
     );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch certificates');
-    }
-
-    const result = await response.json();
-    return result;
   },
 
   /**
    * Get my certificate statistics
    */
   async getMyCertificateStats(): Promise<CertificateStats> {
-    const response = await authFetch(`${API_BASE_URL}/certificates/my-stats`);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch certificate stats');
-    }
-
-    return response.json();
+    return apiClient.get(`${API_BASE_URL}/certificates/my-stats`);
   },
 
   /**
    * Verify a certificate by code
    */
   async verifyCertificate(verificationCode: string): Promise<CertificateVerification> {
+    // Public endpoint - no auth required
     const response = await fetch(
       `${API_BASE_URL}/certificates/verify/${verificationCode}`
     );
@@ -88,6 +60,7 @@ export const certificateAPI = {
    * Get certificate details by ID
    */
   async getCertificate(certificateId: string): Promise<CertificateWithDetails> {
+    // Public endpoint - no auth required
     const response = await fetch(`${API_BASE_URL}/certificates/${certificateId}`);
 
     if (!response.ok) {
@@ -105,45 +78,29 @@ export const certificateAPI = {
     certificateId: string,
     update: CertificateUpdate
   ): Promise<CertificateWithDetails> {
-    const response = await authFetch(`${API_BASE_URL}/certificates/${certificateId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(update),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to update certificate');
-    }
-
-    const result = await response.json();
-    return result.data;
+    return apiClient.put(`${API_BASE_URL}/certificates/${certificateId}`, update);
   },
 
   /**
    * Get LinkedIn share data
    */
   async getLinkedInShareData(certificateId: string): Promise<LinkedInShareData> {
-    const response = await authFetch(
+    return apiClient.get(
       `${API_BASE_URL}/certificates/${certificateId}/linkedin`
     );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to get share data');
-    }
-
-    return response.json();
   },
 
   /**
    * Download certificate as PDF
    */
-  async downloadCertificate(certificateId: string): Promise<Blob> {
+  async downloadCertificatePDF(certificateId: string): Promise<Blob> {
     const response = await fetch(
-      `${API_BASE_URL}/certificates/${certificateId}/download`
+      `${API_BASE_URL}/certificates/${certificateId}/download`,
+      {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      }
     );
 
     if (!response.ok) {
@@ -158,21 +115,10 @@ export const certificateAPI = {
    * Admin: Revoke a certificate
    */
   async revokeCertificate(certificateId: string, reason: string): Promise<void> {
-    const response = await authFetch(
+    await apiClient.post(
       `${API_BASE_URL}/certificates/admin/revoke/${certificateId}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reason }),
-      }
+      { reason }
     );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to revoke certificate');
-    }
   },
 
   /**
@@ -181,26 +127,21 @@ export const certificateAPI = {
   async getAllCertificates(
     page: number = 1,
     perPage: number = 20,
-    userId?: string,
-    courseId?: string
+    filters?: {
+      userId?: string;
+      courseId?: string;
+    }
   ): Promise<CertificateListResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
       per_page: perPage.toString(),
     });
 
-    if (userId) params.append('user_id', userId);
-    if (courseId) params.append('course_id', courseId);
+    if (filters?.userId) params.append('user_id', filters.userId);
+    if (filters?.courseId) params.append('course_id', filters.courseId);
 
-    const response = await authFetch(
+    return apiClient.get(
       `${API_BASE_URL}/certificates/admin/all?${params.toString()}`
     );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch certificates');
-    }
-
-    return response.json();
   },
 };

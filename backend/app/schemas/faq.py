@@ -22,7 +22,7 @@ class FAQBase(BaseModel):
     tags: List[str] = Field(default_factory=list, max_items=10)
     related_faqs: List[str] = Field(default_factory=list, max_items=5)
     is_published: bool = Field(default=True)
-    slug: Optional[str] = Field(None, regex="^[a-z0-9-]+$")
+    slug: Optional[str] = Field(None, pattern="^[a-z0-9-]+$")
     
     @validator('tags')
     def validate_tags(cls, v):
@@ -55,7 +55,7 @@ class FAQUpdate(BaseModel):
     tags: Optional[List[str]] = Field(None, max_items=10)
     related_faqs: Optional[List[str]] = Field(None, max_items=5)
     is_published: Optional[bool] = None
-    slug: Optional[str] = Field(None, regex="^[a-z0-9-]+$")
+    slug: Optional[str] = Field(None, pattern="^[a-z0-9-]+$")
 
 
 class FAQResponse(FAQBase):
@@ -97,8 +97,8 @@ class FAQSearchQuery(BaseModel):
     is_published: Optional[bool] = True
     page: int = Field(1, ge=1)
     per_page: int = Field(20, ge=1, le=100)
-    sort_by: str = Field("priority", regex="^(priority|view_count|created_at)$")
-    sort_order: str = Field("desc", regex="^(asc|desc)$")
+    sort_by: str = Field("priority", pattern="^(priority|view_count|created_at)$")
+    sort_order: str = Field("desc", pattern="^(asc|desc)$")
 
 
 class FAQVoteRequest(BaseModel):
@@ -117,7 +117,7 @@ class FAQVoteResponse(BaseModel):
 class FAQBulkAction(BaseModel):
     """Bulk action on FAQs"""
     faq_ids: List[str]
-    action: str = Field(..., regex="^(publish|unpublish|delete)$")
+    action: str = Field(..., pattern="^(publish|unpublish|delete)$")
 
 
 # Response types using StandardResponse

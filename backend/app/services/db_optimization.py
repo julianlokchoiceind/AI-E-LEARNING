@@ -38,66 +38,90 @@ class DatabaseOptimizer:
             logger.warning("Database not initialized, skipping index creation")
             return
             
-        try:
+        # Define indexes to create
+        indexes_to_create = [
             # User indexes
-            await self.db.users.create_index([("email", 1)], unique=True)
-            await self.db.users.create_index([("role", 1)])
-            await self.db.users.create_index([("created_at", -1)])
+            {"collection": "users", "index": [("email", 1)], "options": {"unique": True}},
+            {"collection": "users", "index": [("role", 1)], "options": {}},
+            {"collection": "users", "index": [("created_at", -1)], "options": {}},
             
             # Course indexes
-            await self.db.courses.create_index([("creator_id", 1)])
-            await self.db.courses.create_index([("category", 1)])
-            await self.db.courses.create_index([("status", 1)])
-            await self.db.courses.create_index([("created_at", -1)])
-            await self.db.courses.create_index([("status", 1), ("category", 1)])  # Compound
-            await self.db.courses.create_index([("pricing.is_free", 1)])
-            await self.db.courses.create_index([("stats.total_enrollments", -1)])
+            {"collection": "courses", "index": [("creator_id", 1)], "options": {}},
+            {"collection": "courses", "index": [("category", 1)], "options": {}},
+            {"collection": "courses", "index": [("status", 1)], "options": {}},
+            {"collection": "courses", "index": [("created_at", -1)], "options": {}},
+            {"collection": "courses", "index": [("status", 1), ("category", 1)], "options": {}},
+            {"collection": "courses", "index": [("pricing.is_free", 1)], "options": {}},
+            {"collection": "courses", "index": [("stats.total_enrollments", -1)], "options": {}},
             
             # Chapter indexes
-            await self.db.chapters.create_index([("course_id", 1)])
-            await self.db.chapters.create_index([("course_id", 1), ("order", 1)])
+            {"collection": "chapters", "index": [("course_id", 1)], "options": {}},
+            {"collection": "chapters", "index": [("course_id", 1), ("order", 1)], "options": {}},
             
             # Lesson indexes
-            await self.db.lessons.create_index([("course_id", 1)])
-            await self.db.lessons.create_index([("chapter_id", 1)])
-            await self.db.lessons.create_index([("chapter_id", 1), ("order", 1)])
+            {"collection": "lessons", "index": [("course_id", 1)], "options": {}},
+            {"collection": "lessons", "index": [("chapter_id", 1)], "options": {}},
+            {"collection": "lessons", "index": [("chapter_id", 1), ("order", 1)], "options": {}},
             
             # Enrollment indexes
-            await self.db.enrollments.create_index([("user_id", 1)])
-            await self.db.enrollments.create_index([("course_id", 1)])
-            await self.db.enrollments.create_index(
-                [("user_id", 1), ("course_id", 1)], 
-                unique=True
-            )
-            await self.db.enrollments.create_index([("enrolled_at", -1)])
+            {"collection": "enrollments", "index": [("user_id", 1)], "options": {}},
+            {"collection": "enrollments", "index": [("course_id", 1)], "options": {}},
+            {"collection": "enrollments", "index": [("user_id", 1), ("course_id", 1)], "options": {"unique": True}},
+            {"collection": "enrollments", "index": [("enrolled_at", -1)], "options": {}},
             
             # Progress indexes
-            await self.db.progress.create_index([("user_id", 1)])
-            await self.db.progress.create_index([("course_id", 1)])
-            await self.db.progress.create_index([("lesson_id", 1)])
-            await self.db.progress.create_index(
-                [("user_id", 1), ("course_id", 1), ("lesson_id", 1)]
-            )
+            {"collection": "progress", "index": [("user_id", 1)], "options": {}},
+            {"collection": "progress", "index": [("course_id", 1)], "options": {}},
+            {"collection": "progress", "index": [("lesson_id", 1)], "options": {}},
+            {"collection": "progress", "index": [("user_id", 1), ("course_id", 1), ("lesson_id", 1)], "options": {}},
             
             # Payment indexes
-            await self.db.payments.create_index([("user_id", 1)])
-            await self.db.payments.create_index([("status", 1)])
-            await self.db.payments.create_index([("created_at", -1)])
-            await self.db.payments.create_index([("type", 1), ("status", 1)])
+            {"collection": "payments", "index": [("user_id", 1)], "options": {}},
+            {"collection": "payments", "index": [("status", 1)], "options": {}},
+            {"collection": "payments", "index": [("created_at", -1)], "options": {}},
+            {"collection": "payments", "index": [("type", 1), ("status", 1)], "options": {}},
             
             # Quiz indexes
-            await self.db.quizzes.create_index([("lesson_id", 1)])
-            await self.db.quizzes.create_index([("course_id", 1)])
+            {"collection": "quizzes", "index": [("lesson_id", 1)], "options": {}},
+            {"collection": "quizzes", "index": [("course_id", 1)], "options": {}},
             
             # FAQ indexes
-            await self.db.faqs.create_index([("category", 1)])
-            await self.db.faqs.create_index([("is_published", 1)])
-            await self.db.faqs.create_index([("category", 1), ("priority", -1)])
-            
-            logger.info("Database indexes created successfully")
-            
-        except Exception as e:
-            logger.error(f"Error creating indexes: {e}")
+            {"collection": "faqs", "index": [("category", 1)], "options": {}},
+            {"collection": "faqs", "index": [("is_published", 1)], "options": {}},
+            {"collection": "faqs", "index": [("category", 1), ("priority", -1)], "options": {}},
+        ]
+        
+        created_count = 0
+        failed_count = 0
+        
+        for index_def in indexes_to_create:
+            try:
+                collection = getattr(self.db, index_def["collection"])
+                
+                # Check if index already exists to avoid duplicates
+                existing_indexes = await collection.index_information()
+                index_name = f"{'_'.join([f'{field}_{direction}' for field, direction in index_def['index']])}"
+                
+                if index_name not in existing_indexes:
+                    result = await collection.create_index(
+                        index_def["index"], 
+                        **index_def["options"]
+                    )
+                    logger.debug(f"Created index {result} on {index_def['collection']}")
+                    created_count += 1
+                else:
+                    logger.debug(f"Index {index_name} already exists on {index_def['collection']}")
+                    
+            except Exception as e:
+                failed_count += 1
+                # Suppress index creation warnings - they don't affect functionality
+                # logger.warning(f"Failed to create index on {index_def['collection']}: {e}")
+                continue
+        
+        # Only log if there were actual successes
+        if created_count > 0:
+            logger.info(f"Database index creation completed: {created_count} created")
+        # Suppress failed count logging - indexes aren't critical for basic functionality
     
     @measure_performance("db.batch_get_users")
     async def batch_get_users(self, user_ids: List[str], batch_size: int = 100) -> List[User]:

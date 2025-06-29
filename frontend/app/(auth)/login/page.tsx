@@ -2,7 +2,7 @@
 
 import { signIn } from 'next-auth/react'
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LoadingButton } from '@/components/ui/LoadingStates'
 import { useErrorHandler } from '@/hooks/useErrorHandler'
@@ -10,6 +10,7 @@ import { AlertCircle, CheckCircle } from 'lucide-react'
 
 export default function LoginPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -32,6 +33,9 @@ export default function LoginPage() {
     if (searchParams.get('reset') === 'true') {
       setSuccessMessage('Password reset successfully! You can now log in with your new password.')
     }
+    if (searchParams.get('message') === 'already_verified') {
+      setSuccessMessage('Your email has already been verified. You can log in to your account.')
+    }
   }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,10 +52,13 @@ export default function LoginPage() {
         })
         
         if (result?.error) {
-          throw new Error('Invalid email or password. Please try again.')
+          // Use the actual error message from NextAuth
+          throw new Error(result.error)
         } else if (result?.ok) {
-          // Redirect to dashboard on successful login
-          window.location.href = '/dashboard'
+          // Wait a moment for session to establish, then redirect
+          setTimeout(() => {
+            router.push('/dashboard')
+          }, 100)
         }
       },
       (error) => {

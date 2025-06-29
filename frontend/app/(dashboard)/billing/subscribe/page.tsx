@@ -31,9 +31,9 @@ export default function SubscribePage() {
     }
 
     if (user) {
-      // Check if user already has active Pro subscription
-      if (user.subscription?.type === 'pro' && user.subscription?.status === 'active') {
-        toast.info('You already have an active Pro subscription');
+      // Premium users have free access
+      if (user.premiumStatus) {
+        toast.success('You have premium access to all courses');
         router.push('/billing');
         return;
       }

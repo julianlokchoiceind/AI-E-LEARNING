@@ -456,7 +456,7 @@ export default function CourseApproval() {
           isOpen={showCourseModal}
           onClose={() => setShowCourseModal(false)}
           title="Course Details"
-          size="large"
+          size="xl"
         >
           <div className="space-y-6">
             {/* Course Header */}

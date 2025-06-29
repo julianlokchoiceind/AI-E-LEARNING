@@ -38,23 +38,38 @@ export const authOptions: NextAuthOptions = {
             password: credentials.password
           })
 
-          // For now, we'll decode the JWT token to get user info
-          // In production, you might want to call a /me endpoint
+          // Decode the JWT token to get user info
           const tokenPayload = JSON.parse(
             Buffer.from(authResponse.access_token.split('.')[1], 'base64').toString()
           )
 
+          // Extract user information from JWT payload
+          // Backend includes email, name, role in the JWT payload
           return {
-            id: tokenPayload.sub, // email is used as subject in our JWT
-            email: tokenPayload.sub,
-            name: tokenPayload.sub.split('@')[0], // Use email prefix as name for now
-            role: 'student',
-            premiumStatus: false,
-            accessToken: authResponse.access_token
+            id: tokenPayload.sub, // User ID
+            email: tokenPayload.email || credentials.email, // Use email from token or fallback to credentials
+            name: tokenPayload.name || tokenPayload.email?.split('@')[0] || credentials.email.split('@')[0], // Use name from token or email prefix
+            role: tokenPayload.role || 'student',
+            premiumStatus: tokenPayload.premium_status || false,
+            accessToken: authResponse.access_token,
+            refreshToken: authResponse.refresh_token
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Login error:', error)
-          return null
+          
+          // Preserve the original error message from backend
+          if (error?.message && typeof error.message === 'string') {
+            // Don't show technical errors to users
+            if (error.message.includes('fetch') || error.message.includes('network')) {
+              throw new Error('Unable to connect to server. Please try again.')
+            }
+            
+            // Pass through the actual error message from backend
+            throw new Error(error.message)
+          }
+          
+          // Only use generic message as absolute fallback
+          throw new Error('Authentication failed. Please try again.')
         }
       }
     })
@@ -101,14 +116,33 @@ export const authOptions: NextAuthOptions = {
             body: JSON.stringify({
               email: user.email,
               name: user.name || user.email?.split('@')[0],
-              provider: account.provider,
-              provider_id: account.providerAccountId,
+              provider: account?.provider || 'unknown',
+              provider_id: account?.providerAccountId || '',
               picture: user.image
             })
           })
           
           if (response.ok) {
             const data = await response.json()
+            
+            // Decode JWT to get user info
+            if (data.access_token) {
+              try {
+                const tokenPayload = JSON.parse(
+                  Buffer.from(data.access_token.split('.')[1], 'base64').toString()
+                )
+                
+                // Update user object with decoded info
+                user.id = tokenPayload.sub
+                user.email = tokenPayload.email || user.email
+                user.name = tokenPayload.name || user.name
+                user.role = tokenPayload.role || 'student'
+                user.premiumStatus = tokenPayload.premium_status || false
+              } catch (e) {
+                console.error('Failed to decode JWT:', e)
+              }
+            }
+            
             // Store tokens in user object to pass to JWT callback
             user.accessToken = data.access_token
             user.refreshToken = data.refresh_token

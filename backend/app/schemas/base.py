@@ -2,11 +2,34 @@
 Base schemas for standardized API responses.
 Following FastAPI + Pydantic best practices for consistent API structure.
 """
-from typing import Generic, TypeVar, Optional
-from pydantic import BaseModel
+from typing import Generic, TypeVar, Optional, Any
+from pydantic import BaseModel, Field, validator
+from beanie import PydanticObjectId
 
 # Type variable for generic response data
 T = TypeVar("T")
+
+
+class PyObjectId(str):
+    """Custom type for MongoDB ObjectId that works with Pydantic."""
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if isinstance(v, PydanticObjectId):
+            return str(v)
+        if not isinstance(v, str):
+            raise TypeError('string required')
+        if not PydanticObjectId.is_valid(v):
+            raise ValueError('invalid ObjectId')
+        return v
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, schema, handler):
+        schema.update(type='string')
+        return schema
 
 
 class StandardResponse(BaseModel, Generic[T]):

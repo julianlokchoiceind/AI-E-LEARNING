@@ -11,8 +11,10 @@ class ApiClient {
   private baseUrl: string;
   private defaultTimeout: number = 30000; // 30 seconds
 
-  constructor(baseUrl: string = API_ENDPOINTS.BASE_URL || '') {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl?: string) {
+    // Use the provided baseUrl or fall back to API_ENDPOINTS.BASE_URL
+    this.baseUrl = baseUrl || API_ENDPOINTS.BASE_URL || 'http://localhost:8000/api/v1';
+    console.log('[API-CLIENT] Constructor - baseUrl:', this.baseUrl);
   }
 
   // Get auth token
@@ -64,8 +66,18 @@ class ApiClient {
       ...fetchOptions
     } = options;
 
+    const fullUrl = `${this.baseUrl}${url}`;
+    console.debug('[API-CLIENT] Starting request:', {
+      fullUrl,
+      method: fetchOptions.method || 'GET',
+      requireAuth,
+      hasBody: !!fetchOptions.body,
+      retryCount
+    });
+
     // Check if auth is required
     if (requireAuth && !this.getAuthToken()) {
+      console.debug('[API-CLIENT] Auth required but no token found');
       throw new AppError(
         'Authentication required',
         ErrorType.AUTHENTICATION
@@ -75,30 +87,58 @@ class ApiClient {
     // Create abort controller
     const controller = this.createAbortController(timeout);
 
-    // Prepare headers
+    // Prepare headers - set default content type only if not specified
     const requestHeaders: HeadersInit = {
-      'Content-Type': 'application/json',
+      ...(!Object.keys(headers).some(key => key.toLowerCase() === 'content-type') ? { 'Content-Type': 'application/json' } : {}),
       ...headers
     };
+    
+    // Only add cache prevention headers for auth and user-specific endpoints
+    const noCacheEndpoints = ['/auth/', '/users/me', '/profile', '/dashboard', '/admin/', '/payment'];
+    const shouldNoCache = noCacheEndpoints.some(endpoint => url.includes(endpoint));
+    
+    if (shouldNoCache) {
+      requestHeaders['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+      requestHeaders['Pragma'] = 'no-cache';
+      requestHeaders['Expires'] = '0';
+    }
 
     // Add auth header if needed
     const finalHeaders = requireAuth 
       ? this.addAuthHeader(requestHeaders)
       : requestHeaders;
 
+    console.debug('[API-CLIENT] Request headers:', finalHeaders);
+
     try {
-      const response = await fetch(`${this.baseUrl}${url}`, {
+      const response = await fetch(fullUrl, {
         ...fetchOptions,
         headers: finalHeaders,
-        signal: controller.signal
+        signal: controller.signal,
+        // Only disable Next.js caching for auth/user endpoints
+        ...(shouldNoCache ? { cache: 'no-store' } : {})
+      } as RequestInit);
+
+      console.debug('[API-CLIENT] Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
       });
 
       // Handle non-2xx responses
       if (!response.ok) {
+        console.debug('[API-CLIENT] Response not OK, parsing error...');
         const error = await parseErrorFromResponse(response);
+        console.debug('[API-CLIENT] Parsed error:', {
+          message: error.message,
+          type: error.type,
+          details: error.details
+        });
         
         // Handle token expiration
         if (response.status === 401 && requireAuth) {
+          console.debug('[API-CLIENT] 401 error with auth required, attempting token refresh');
           // Clear invalid token
           localStorage.removeItem('access_token');
           
@@ -107,28 +147,66 @@ class ApiClient {
           
           // Retry the request once
           if (retryCount === 0) {
+            console.debug('[API-CLIENT] Retrying request after token refresh');
             return this.request(url, { ...options, retryCount: 1 });
           }
         }
         
+        console.debug('[API-CLIENT] Throwing parsed error');
         throw error;
       }
 
       // Parse JSON response
-      const data = await response.json();
+      const responseText = await response.text();
+      console.debug('[API-CLIENT] Response text:', responseText.substring(0, 500));
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('[API-CLIENT] Failed to parse JSON:', e);
+        throw new AppError(
+          'Invalid JSON response from server',
+          ErrorType.SERVER
+        );
+      }
+      
+      console.debug('[API-CLIENT] Parsed data:', {
+        hasData: !!data,
+        dataType: typeof data,
+        dataKeys: data && typeof data === 'object' ? Object.keys(data) : []
+      });
       
       // Handle API response wrapper
       if (data.success === false) {
+        console.debug('[API-CLIENT] API returned success=false');
         throw new AppError(
           data.message || 'Request failed',
           ErrorType.SERVER
         );
       }
 
-      return data.data || data;
+      console.debug('[API-CLIENT] Request successful, returning:', data);
+      
+      // If response has standard format with data property, return the data
+      if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+        console.debug('[API-CLIENT] Extracting data from StandardResponse:', data.data);
+        return data.data;
+      }
+      
+      // Otherwise return the whole response
+      console.debug('[API-CLIENT] Returning full response (no StandardResponse format)');
+      return data;
     } catch (error) {
+      console.debug('[API-CLIENT] Caught error:', {
+        errorType: error?.constructor?.name,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        isAppError: error instanceof AppError
+      });
+
       // Handle abort errors
       if (error instanceof Error && error.name === 'AbortError') {
+        console.debug('[API-CLIENT] Request aborted (timeout)');
         throw new AppError(
           'Request timeout',
           ErrorType.NETWORK
@@ -137,11 +215,18 @@ class ApiClient {
 
       // Re-throw AppError instances
       if (error instanceof AppError) {
+        console.debug('[API-CLIENT] Re-throwing AppError');
         throw error;
       }
 
       // Handle other errors
-      throw handleError(error, false);
+      console.debug('[API-CLIENT] Handling other error with handleError');
+      const handledError = handleError(error, false);
+      console.debug('[API-CLIENT] Handled error:', {
+        message: handledError.message,
+        type: handledError.type
+      });
+      throw handledError;
     }
   }
 
@@ -153,7 +238,7 @@ class ApiClient {
         throw new Error('No refresh token');
       }
 
-      const response = await fetch(`${this.baseUrl}/api/v1/auth/refresh`, {
+      const response = await fetch(`${this.baseUrl}/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -190,11 +275,23 @@ class ApiClient {
   }
 
   async post<T>(url: string, body?: any, options?: RequestOptions): Promise<T> {
-    return this.request<T>(url, {
+    const requestOptions: RequestOptions = {
       ...options,
-      method: 'POST',
-      body: body ? JSON.stringify(body) : undefined
-    });
+      method: 'POST'
+    };
+
+    // Handle different body types
+    if (body !== undefined) {
+      if (typeof body === 'string') {
+        // Body is already a string (e.g., URLSearchParams)
+        requestOptions.body = body;
+      } else {
+        // JSON body - stringify
+        requestOptions.body = JSON.stringify(body);
+      }
+    }
+
+    return this.request<T>(url, requestOptions);
   }
 
   async put<T>(url: string, body?: any, options?: RequestOptions): Promise<T> {

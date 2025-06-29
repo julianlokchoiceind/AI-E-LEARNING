@@ -1,0 +1,214 @@
+/**
+ * User API client functions
+ * 
+ * IMPORTANT: The api client (from api-client.ts) automatically unwraps StandardResponse format.
+ * When you call api.get<T>(), it returns T directly, not { success: boolean, data: T }.
+ * The api client handles the unwrapping internally.
+ */
+
+import { api } from './api-client';
+import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
+
+export interface DashboardUser {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: string;
+  premium_status: boolean;
+}
+
+export interface DashboardStats {
+  total_courses: number;
+  completed_courses: number;
+  in_progress_courses: number;
+  total_hours_learned: number;
+  current_streak: number;
+  longest_streak: number;
+}
+
+export interface RecentCourse {
+  id: string;
+  title: string;
+  thumbnail?: string;
+  progress: number;
+  last_accessed?: string;
+}
+
+export interface UpcomingLesson {
+  course_id: string;
+  course_title: string;
+  lesson_title: string;
+  estimated_time: number;
+}
+
+export interface DashboardData {
+  user: DashboardUser;
+  stats: DashboardStats;
+  recent_courses: RecentCourse[];
+  upcoming_lessons: UpcomingLesson[];
+  certificates_earned: number;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  premium_status: boolean;
+  is_verified: boolean;
+  profile: {
+    avatar?: string;
+    bio?: string;
+    location?: string;
+    linkedin?: string;
+    github?: string;
+    website?: string;
+    title?: string;
+    skills?: string[];
+    learning_goals?: string[];
+  };
+  stats: {
+    courses_enrolled: number;
+    courses_completed: number;
+    total_hours_learned: number;
+    certificates_earned: number;
+    current_streak: number;
+    longest_streak: number;
+  };
+  preferences: {
+    language: string;
+    timezone: string;
+    email_notifications: boolean;
+    push_notifications: boolean;
+    marketing_emails: boolean;
+  };
+  subscription?: {
+    type: string;
+    status: string;
+    current_period_end?: string;
+  };
+  created_at: string;
+  updated_at: string;
+  last_login?: string;
+}
+
+export const usersApi = {
+  /**
+   * Get dashboard data for the authenticated user
+   */
+  getDashboard: async (): Promise<DashboardData> => {
+    try {
+      // The api client already unwraps StandardResponse and returns just the data
+      const data = await api.get<DashboardData>(
+        API_ENDPOINTS.USERS.DASHBOARD,
+        { requireAuth: true }
+      );
+      
+      return data;
+    } catch (error) {
+      console.error('Get dashboard failed:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get current user profile
+   */
+  getProfile: async (): Promise<UserProfile> => {
+    try {
+      // The api client already unwraps StandardResponse and returns just the data
+      const data = await api.get<UserProfile>(
+        API_ENDPOINTS.USERS.PROFILE,
+        { requireAuth: true }
+      );
+      
+      return data;
+    } catch (error) {
+      console.error('Get profile failed:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update current user profile
+   */
+  updateProfile: async (data: Partial<UserProfile>): Promise<UserProfile> => {
+    try {
+      // The api client already unwraps StandardResponse and returns just the data
+      const updatedProfile = await api.put<UserProfile>(
+        API_ENDPOINTS.USERS.UPDATE_PROFILE,
+        data,
+        { requireAuth: true }
+      );
+      
+      return updatedProfile;
+    } catch (error) {
+      console.error('Update profile failed:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get user's enrolled courses
+   */
+  getMyCourses: async () => {
+    try {
+      const result = await api.get(
+        API_ENDPOINTS.USERS.COURSES,
+        { requireAuth: true }
+      );
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to load courses');
+      }
+      
+      return result.data;
+    } catch (error) {
+      console.error('Get my courses failed:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get user's certificates
+   */
+  getCertificates: async () => {
+    try {
+      const result = await api.get(
+        API_ENDPOINTS.USERS.CERTIFICATES,
+        { requireAuth: true }
+      );
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to load certificates');
+      }
+      
+      return result.data;
+    } catch (error) {
+      console.error('Get certificates failed:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get user's learning progress
+   */
+  getProgress: async () => {
+    try {
+      const result = await api.get(
+        API_ENDPOINTS.USERS.PROGRESS,
+        { requireAuth: true }
+      );
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to load progress');
+      }
+      
+      return result.data;
+    } catch (error) {
+      console.error('Get progress failed:', error);
+      throw error;
+    }
+  },
+};

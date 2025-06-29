@@ -8,7 +8,7 @@ interface CourseResponse {
   short_description: string;
   thumbnail?: string;
   category: string;
-  level: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
   creator_id: string;
   creator_name: string;
   total_chapters: number;
@@ -29,7 +29,7 @@ interface CourseResponse {
     total_reviews: number;
     total_revenue: number;
   };
-  status: string;
+  status: 'draft' | 'review' | 'published' | 'archived';
   published_at?: string;
   created_at: string;
   updated_at: string;
@@ -50,6 +50,8 @@ interface CourseDetailData extends CourseResponse {
   prerequisites: string[];
   target_audience: string[];
   preview_video?: string;
+  slug: string;
+  language: string;
 }
 
 interface CreateCourseData {

@@ -47,8 +47,81 @@ const nextConfig = {
     return config;
   },
   
-  // Security headers
+  // Security and caching headers for optimal performance
   headers: async () => [
+    // Static content pages - Long cache duration for performance
+    {
+      source: '/(about|contact|terms|privacy|faq|pricing)',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+        },
+        {
+          key: 'X-Frame-Options',
+          value: 'DENY',
+        },
+      ],
+    },
+    // Course catalog - Moderate cache with background revalidation
+    {
+      source: '/courses',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=300, must-revalidate, s-maxage=600, stale-while-revalidate=86400',
+        },
+      ],
+    },
+    // Individual course pages - Short cache for fresh content
+    {
+      source: '/courses/:path*',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=300, must-revalidate, s-maxage=600, stale-while-revalidate=3600',
+        },
+      ],
+    },
+    // Authentication pages - No cache for security
+    {
+      source: '/(login|register|forgot-password|reset-password|verify-email)',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'no-store, no-cache, must-revalidate',
+        },
+        {
+          key: 'Pragma',
+          value: 'no-cache',
+        },
+      ],
+    },
+    // User-specific pages - Private cache only
+    {
+      source: '/(dashboard|profile|my-courses|billing|certificates|learn|support)/:path*',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'private, no-cache, no-store, must-revalidate',
+        },
+        {
+          key: 'Pragma',
+          value: 'no-cache',
+        },
+      ],
+    },
+    // API routes - Let backend handle caching
+    {
+      source: '/api/:path*',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'no-cache, no-transform',
+        },
+      ],
+    },
+    // Global security headers
     {
       source: '/(.*)',
       headers: [
@@ -68,6 +141,10 @@ const nextConfig = {
           key: 'Referrer-Policy',
           value: 'origin-when-cross-origin',
         },
+        {
+          key: 'Permissions-Policy',
+          value: 'camera=(), microphone=(), geolocation=()',
+        },
       ],
     },
   ],
@@ -83,22 +160,12 @@ const nextConfig = {
   
   // Environment variables
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
   },
   
   // Redirects for SEO
   redirects: async () => [
-    {
-      source: '/dashboard',
-      destination: '/dashboard',
-      permanent: false,
-      has: [
-        {
-          type: 'cookie',
-          key: 'next-auth.session-token',
-        },
-      ],
-    },
+    // Removed problematic /dashboard -> /dashboard redirect that caused infinite loop
   ],
 }
 

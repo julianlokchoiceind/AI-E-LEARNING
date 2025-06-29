@@ -80,6 +80,7 @@ class User(Document):
     
     # Verification and reset tokens
     verification_token: Optional[str] = None
+    verification_token_expires: Optional[datetime] = None
     reset_password_token: Optional[str] = None
     reset_password_expires: Optional[datetime] = None
     

@@ -39,8 +39,8 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
     // In production, send to error monitoring service
-    if (typeof window !== 'undefined' && window.Sentry) {
-      window.Sentry.captureException(error, {
+    if (typeof window !== 'undefined' && (window as any).Sentry) {
+      (window as any).Sentry.captureException(error, {
         contexts: {
           react: {
             componentStack: errorInfo.componentStack
@@ -142,9 +142,13 @@ export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
   fallback?: ReactNode
 ) {
-  return (props: P) => (
+  const WrappedComponent = (props: P) => (
     <ErrorBoundary fallback={fallback}>
       <Component {...props} />
     </ErrorBoundary>
   );
+  
+  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name || 'Component'})`;
+  
+  return WrappedComponent;
 }

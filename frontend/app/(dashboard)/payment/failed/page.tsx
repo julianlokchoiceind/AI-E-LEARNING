@@ -29,8 +29,8 @@ export default function PaymentFailedPage() {
 
   const fetchCourseDetails = async () => {
     try {
-      const response = await getCourseById(courseId!);
-      setCourse(response.data);
+      const courseData = await getCourseById(courseId!);
+      setCourse(courseData);
     } catch (error) {
       console.error('Failed to fetch course:', error);
     } finally {
@@ -71,7 +71,7 @@ export default function PaymentFailedPage() {
 
   const handleContactSupport = () => {
     // In a real app, this would open a support chat or redirect to contact form
-    toast.info('Support contact feature coming soon. Please email support@elearning.com');
+    toast('Support contact feature coming soon. Please email support@elearning.com');
   };
 
   if (loading) {

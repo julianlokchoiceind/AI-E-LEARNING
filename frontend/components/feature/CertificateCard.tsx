@@ -88,10 +88,10 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
         {/* Course Info */}
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
-            <Badge className={getCategoryColor(certificate.course_category)} size="sm">
+            <Badge className={getCategoryColor(certificate.course_category)}>
               {certificate.course_category.replace('-', ' ')}
             </Badge>
-            <Badge className={getLevelColor(certificate.course_level)} size="sm">
+            <Badge className={getLevelColor(certificate.course_level)}>
               {certificate.course_level}
             </Badge>
           </div>
@@ -126,7 +126,7 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
             <div className="h-2 w-2 bg-green-500 rounded-full"></div>
             <span className="text-sm text-green-700">Valid Certificate</span>
             {certificate.is_public && (
-              <Badge size="sm" variant="outline">
+              <Badge variant="outline">
                 Public
               </Badge>
             )}

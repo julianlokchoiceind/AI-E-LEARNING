@@ -779,6 +779,11 @@ class StandardResponse<T> {
   message: string;
 }
 
+// Frontend API Client Structure:
+// Base URL: NEXT_PUBLIC_API_URL = "http://localhost:8000/api/v1"
+// Endpoints: "/auth/login", "/courses", etc. (no /api/v1 prefix)
+// Final URL: baseUrl + endpoint = "http://localhost:8000/api/v1/auth/login"
+
 // Frontend handles:
 const result = await apiCall<StandardResponse<DataType>>();
 if (result.success) {

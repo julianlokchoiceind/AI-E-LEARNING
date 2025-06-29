@@ -102,7 +102,7 @@ export function UnsavedChangesWarning({
             Stay on Page
           </Button>
           <Button
-            variant="destructive"
+            variant="danger"
             onClick={handleConfirmLeave}
           >
             Leave Without Saving

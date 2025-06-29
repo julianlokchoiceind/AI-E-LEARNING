@@ -37,7 +37,7 @@ export default function RootLayout({
   // Get locale from headers set by middleware
   const headersList = headers()
   const localeFromHeaders = headersList.get('x-locale')
-  const locale = isValidLocale(localeFromHeaders) ? localeFromHeaders : DEFAULT_LOCALE
+  const locale = localeFromHeaders && isValidLocale(localeFromHeaders) ? localeFromHeaders : DEFAULT_LOCALE
   const direction = getTextDirection(locale)
 
   return (

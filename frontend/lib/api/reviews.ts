@@ -1,7 +1,7 @@
 /**
  * Review API client
  */
-import { authFetch } from '@/lib/utils/auth-helpers';
+import { apiClient } from './api-client';
 import type {
   Review,
   ReviewStats,
@@ -21,21 +21,7 @@ export const reviewAPI = {
    * Create a review for a course
    */
   async createReview(courseId: string, data: ReviewCreateData): Promise<Review> {
-    const response = await authFetch(`${API_BASE_URL}/reviews/courses/${courseId}/reviews`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to create review');
-    }
-
-    const result = await response.json();
-    return result.data;
+    return apiClient.post(`${API_BASE_URL}/reviews/courses/${courseId}/reviews`, data);
   },
 
   /**
@@ -109,112 +95,102 @@ export const reviewAPI = {
   },
 
   /**
-   * Get a specific review
+   * Get my reviews
    */
-  async getReview(reviewId: string): Promise<Review> {
-    const response = await fetch(`${API_BASE_URL}/reviews/reviews/${reviewId}`);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch review');
+  async getMyReviews(params?: ReviewSearchParams) {
+    const queryParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value));
+        }
+      });
     }
 
-    const result = await response.json();
-    return result.data;
+    return apiClient.get(
+      `${API_BASE_URL}/reviews/my-reviews?${queryParams.toString()}`
+    );
   },
 
   /**
    * Update a review
    */
   async updateReview(reviewId: string, data: ReviewUpdateData): Promise<Review> {
-    const response = await authFetch(`${API_BASE_URL}/reviews/reviews/${reviewId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to update review');
-    }
-
-    const result = await response.json();
-    return result.data;
+    return apiClient.put(`${API_BASE_URL}/reviews/${reviewId}`, data);
   },
 
   /**
    * Delete a review
    */
   async deleteReview(reviewId: string): Promise<void> {
-    const response = await authFetch(`${API_BASE_URL}/reviews/reviews/${reviewId}`, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to delete review');
-    }
+    await apiClient.delete(`${API_BASE_URL}/reviews/${reviewId}`);
   },
 
   /**
-   * Vote on review helpfulness
+   * Vote on a review
    */
-  async voteReview(reviewId: string, data: ReviewVoteData): Promise<Review> {
-    const response = await authFetch(`${API_BASE_URL}/reviews/reviews/${reviewId}/vote`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to vote');
-    }
-
-    const result = await response.json();
-    return result.data;
+  async voteReview(reviewId: string, data: ReviewVoteData): Promise<void> {
+    await apiClient.post(`${API_BASE_URL}/reviews/${reviewId}/vote`, data);
   },
 
   /**
    * Report a review
    */
   async reportReview(reviewId: string, data: ReviewReportData): Promise<void> {
-    const response = await authFetch(`${API_BASE_URL}/reviews/reviews/${reviewId}/report`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to report review');
-    }
+    await apiClient.post(`${API_BASE_URL}/reviews/${reviewId}/report`, data);
   },
 
   /**
-   * Add instructor response to review
+   * Instructor: Respond to a review
    */
   async respondToReview(reviewId: string, data: InstructorResponseData): Promise<Review> {
-    const response = await authFetch(`${API_BASE_URL}/reviews/reviews/${reviewId}/respond`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
+    return apiClient.post(`${API_BASE_URL}/reviews/${reviewId}/respond`, data);
+  },
+
+  /**
+   * Get course rating summary
+   */
+  async getCourseSummary(courseId: string): Promise<CourseRatingSummary> {
+    const response = await fetch(`${API_BASE_URL}/reviews/courses/${courseId}/summary`);
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.detail || 'Failed to add response');
+      throw new Error(error.detail || 'Failed to fetch course summary');
     }
 
     const result = await response.json();
     return result.data;
+  },
+
+  /**
+   * Admin: Get all reviews
+   */
+  async getAllReviews(params?: ReviewSearchParams) {
+    const queryParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+
+    return apiClient.get(`${API_BASE_URL}/reviews/admin/all?${queryParams.toString()}`);
+  },
+
+  /**
+   * Admin: Moderate a review
+   */
+  async moderateReview(
+    reviewId: string,
+    action: 'approve' | 'reject' | 'flag',
+    reason?: string
+  ): Promise<Review> {
+    return apiClient.post(`${API_BASE_URL}/reviews/admin/${reviewId}/moderate`, {
+      action,
+      reason
+    });
   },
 };

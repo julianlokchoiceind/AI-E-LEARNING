@@ -202,7 +202,7 @@ export default function MyCoursesPage() {
                 {/* Completion Badge */}
                 {enrollment.progress.is_completed && (
                   <div className="absolute top-2 right-2">
-                    <Badge variant="success">Completed</Badge>
+                    <Badge variant="default">Completed</Badge>
                   </div>
                 )}
               </div>
@@ -232,7 +232,7 @@ export default function MyCoursesPage() {
                       {enrollment.progress.lessons_completed}/{enrollment.progress.total_lessons} lessons
                     </span>
                   </div>
-                  <ProgressBar progress={enrollment.progress.completion_percentage} />
+                  <ProgressBar value={enrollment.progress.completion_percentage} />
                   <p className="text-xs text-gray-500 mt-1">
                     {enrollment.progress.completion_percentage}% complete
                   </p>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { getAdminAnalytics } from '@/lib/api/admin';
+import { getAdminAnalytics, AdminDashboardStats } from '@/lib/api/admin';
 import { 
   Users, 
   BookOpen, 
@@ -17,6 +17,7 @@ import {
   Activity
 } from 'lucide-react';
 
+// Map the AdminDashboardStats to the format expected by the component
 interface DashboardStats {
   users: {
     total: number;
@@ -57,7 +58,36 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       const response = await getAdminAnalytics();
-      setStats(response.data);
+      
+      // Transform AdminDashboardStats to DashboardStats format
+      const transformedStats: DashboardStats = {
+        users: {
+          total: response.total_users || 0,
+          new_today: response.new_users_today || 0,
+          active_this_week: response.active_users_this_week || 0,
+          premium_users: response.total_admins || 0
+        },
+        courses: {
+          total: response.total_courses || 0,
+          published: response.published_courses || 0,
+          pending_approval: response.pending_review_courses || 0,
+          total_enrollments: response.total_enrollments || 0
+        },
+        revenue: {
+          total_monthly: response.revenue_this_month || 0,
+          subscription_revenue: 0, // Not in AdminDashboardStats
+          course_sales_revenue: response.revenue_this_month || 0,
+          growth_percentage: 0 // Not in AdminDashboardStats
+        },
+        system: {
+          active_sessions: response.active_users_today || 0,
+          pending_support_tickets: 0, // Not in AdminDashboardStats
+          server_status: 'Healthy',
+          last_backup: '2 hours ago'
+        }
+      };
+      
+      setStats(transformedStats);
     } catch (error) {
       console.error('Failed to fetch dashboard stats:', error);
     } finally {

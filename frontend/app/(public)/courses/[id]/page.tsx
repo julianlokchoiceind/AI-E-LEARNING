@@ -21,7 +21,7 @@ const CourseDetailPage = () => {
   const { user } = useAuth();
   const courseId = params.id as string;
 
-  const [course, setCourse] = useState<Course | null>(null);
+  const [course, setCourse] = useState<any>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
@@ -36,19 +36,16 @@ const CourseDetailPage = () => {
   const fetchCourseDetails = async () => {
     try {
       setLoading(true);
-      const response = await getCourseById(courseId);
-      setCourse(response.data);
+      const courseData = await getCourseById(courseId);
+      setCourse(courseData);
       
       // Check access based on PRD pricing logic
       const checkAccess = () => {
         // 1. Free course - everyone has access
-        if (response.data.pricing.is_free) return true;
+        if (courseData.pricing.is_free) return true;
         
         // 2. Premium user - free access to all courses
-        if (user?.premium_status) return true;
-        
-        // 3. Pro subscription - full access
-        if (user?.subscription?.type === 'pro' && user?.subscription?.status === 'active') return true;
+        if (user?.premiumStatus) return true;
         
         // 4. Check if user purchased this course
         // TODO: This would require checking enrollment status
@@ -164,9 +161,10 @@ const CourseDetailPage = () => {
           ]
         }
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch course details:', error);
-      toast.error('Failed to load course details');
+      // Use backend error message
+      toast.error(error.message || error.detail || 'Failed to load course details');
     } finally {
       setLoading(false);
     }
@@ -182,21 +180,22 @@ const CourseDetailPage = () => {
       setEnrolling(true);
       
       // Check if it's a free course or user has access
-      if (course.pricing.is_free || user.premium_status || 
-          (user.subscription?.type === 'pro' && user.subscription?.status === 'active')) {
+      if (course.pricing.is_free || user.premiumStatus) {
         // Direct enrollment for free access
-        await enrollInCourse(courseId);
+        const response = await enrollInCourse(courseId);
         setIsEnrolled(true);
         setHasAccess(true);
-        toast.success('Successfully enrolled in course!');
+        // Use backend message if available
+        toast.success(response.message || 'Successfully enrolled in course!');
         router.push(`/learn/${courseId}`);
       } else {
         // Redirect to payment
         router.push(`/checkout/course/${courseId}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to enroll:', error);
-      toast.error('Failed to enroll in course');
+      // Use backend error message
+      toast.error(error.message || error.detail || 'Failed to enroll in course');
     } finally {
       setEnrolling(false);
     }
@@ -464,7 +463,7 @@ const CourseDetailPage = () => {
                     </p>
                   </div>
                   <div className="divide-y">
-                    {chapter.lessons.map((lesson) => (
+                    {(chapter.lessons || []).map((lesson) => (
                       <div
                         key={lesson._id}
                         className="p-4 flex items-center justify-between hover:bg-gray-50"

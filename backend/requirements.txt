@@ -18,6 +18,10 @@ slowapi
 
 # AI Integration
 pydantic-ai
+
+# Email Service (Microsoft Graph API)
+msal
+requests
 anthropic
 
 # Email

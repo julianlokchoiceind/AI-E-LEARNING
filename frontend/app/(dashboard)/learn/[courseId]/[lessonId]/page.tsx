@@ -274,7 +274,7 @@ export default function LessonPlayerPage() {
     // If there's a quiz and it hasn't been passed yet, show it
     if (hasQuiz && !quizPassed) {
       setShowQuiz(true);
-      toast.info('Great job! Now complete the quiz to finish this lesson.');
+      toast.success('Great job! Now complete the quiz to finish this lesson.');
       return;
     }
 
@@ -513,7 +513,7 @@ export default function LessonPlayerPage() {
             </div>
 
             {/* Quiz Section */}
-            {hasQuiz && (showQuiz || (progress?.video_progress.watch_percentage >= 80 && !quizPassed)) && (
+            {hasQuiz && (showQuiz || ((progress?.video_progress?.watch_percentage ?? 0) >= 80 && !quizPassed)) && (
               <div className="mt-8">
                 <QuizComponent
                   lessonId={lessonId}
@@ -532,7 +532,7 @@ export default function LessonPlayerPage() {
             )}
 
             {/* Next Lesson Button */}
-            {nextLesson && progress?.video_progress.watch_percentage >= 80 && (!hasQuiz || quizPassed) && (
+            {nextLesson && (progress?.video_progress?.watch_percentage ?? 0) >= 80 && (!hasQuiz || quizPassed) && (
               <div className="mt-8 text-center">
                 <button
                   onClick={() => navigateToLesson(nextLesson._id)}

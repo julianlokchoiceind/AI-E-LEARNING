@@ -33,6 +33,13 @@ export default function VerifyEmailPage() {
       .catch((error) => {
         setStatus('error')
         setMessage(error.message || 'Email verification failed. Please try again.')
+        
+        // If the link was already used, show login button
+        if (error.message?.includes('already been used')) {
+          setTimeout(() => {
+            router.push('/login?message=already_verified')
+          }, 5000)
+        }
       })
   }, [searchParams, router])
   
@@ -90,6 +97,11 @@ export default function VerifyEmailPage() {
                   <p className="text-sm font-medium text-red-800">
                     {message}
                   </p>
+                  {message?.includes('already been used') && (
+                    <p className="mt-2 text-sm text-red-700">
+                      Redirecting to login page in 5 seconds...
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

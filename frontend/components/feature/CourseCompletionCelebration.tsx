@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Award, Download, Share2, ExternalLink, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { CertificateDisplay } from '@/components/feature/CertificateDisplay';
@@ -97,7 +97,7 @@ export function CourseCompletionCelebration({
     if (!certificate) return;
 
     try {
-      const blob = await certificateAPI.downloadCertificate(certificate._id);
+      const blob = await certificateAPI.downloadCertificatePDF(certificate._id);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

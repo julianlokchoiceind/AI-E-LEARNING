@@ -92,8 +92,22 @@ export default withAuth(
     // Get pathname without locale for route matching
     const pathnameWithoutLocale = getPathnameWithoutLocale(pathname)
     
-    // Define role-based route protection (check against clean pathname)
-    const isAuthPage = pathnameWithoutLocale.startsWith('/login') || pathnameWithoutLocale.startsWith('/register')
+    // Define route types (check against clean pathname)
+    const isAuthPage = pathnameWithoutLocale.startsWith('/login') || 
+                      pathnameWithoutLocale.startsWith('/register') ||
+                      pathnameWithoutLocale.startsWith('/forgot-password') ||
+                      pathnameWithoutLocale.startsWith('/reset-password')
+    
+    const isPublicRoute = pathnameWithoutLocale === '/' ||
+                         pathnameWithoutLocale.startsWith('/courses') ||
+                         pathnameWithoutLocale.startsWith('/about') ||
+                         pathnameWithoutLocale.startsWith('/contact') ||
+                         pathnameWithoutLocale.startsWith('/faq') ||
+                         pathnameWithoutLocale.startsWith('/pricing') ||
+                         pathnameWithoutLocale.startsWith('/terms') ||
+                         pathnameWithoutLocale.startsWith('/privacy') ||
+                         pathnameWithoutLocale.startsWith('/verify')
+    
     const isAdminRoute = pathnameWithoutLocale.startsWith('/admin')
     const isCreatorRoute = pathnameWithoutLocale.startsWith('/creator')
     
@@ -105,6 +119,13 @@ export default withAuth(
         return NextResponse.redirect(new URL(dashboardPath, req.url))
       }
       return null
+    }
+
+    // Allow public routes without authentication
+    if (isPublicRoute) {
+      const response = NextResponse.next()
+      response.headers.set('x-locale', getLocaleFromPath(pathname))
+      return response
     }
 
     // Require authentication for protected routes
@@ -124,9 +145,8 @@ export default withAuth(
     // Role-based access control
     if (isAdminRoute) {
       if (userRole !== 'admin') {
-        const currentLocale = getLocaleFromPath(pathname)
-        const dashboardPath = getLocalizedPath('/dashboard', currentLocale)
-        return NextResponse.redirect(new URL(`${dashboardPath}?error=access_denied`, req.url))
+        // Redirect to 404 page for unauthorized admin access
+        return NextResponse.redirect(new URL('/not-found', req.url))
       }
     }
     
@@ -145,7 +165,7 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => true, // We handle authorization in the middleware function
+      authorized: () => true, // We handle authorization in the middleware function
     },
   }
 )

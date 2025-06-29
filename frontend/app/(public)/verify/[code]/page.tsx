@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { CheckCircle, XCircle, AlertTriangle, Search } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { CertificateDisplay } from '@/components/feature/CertificateDisplay';
 import { certificateAPI } from '@/lib/api/certificates';

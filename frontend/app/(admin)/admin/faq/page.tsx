@@ -13,7 +13,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { faqAPI, FAQ, FAQCreateData, FAQUpdateData } from '@/lib/api/faq';
@@ -329,7 +329,7 @@ export default function AdminFAQPage() {
                           {faq.view_count}
                         </td>
                         <td className="p-4">
-                          <Badge variant={faq.is_published ? 'success' : 'secondary'}>
+                          <Badge variant={faq.is_published ? 'default' : 'secondary'}>
                             {faq.is_published ? 'Published' : 'Draft'}
                           </Badge>
                         </td>
@@ -431,7 +431,7 @@ export default function AdminFAQPage() {
               Tags (comma separated)
             </label>
             <Input
-              value={formData.tags.join(', ')}
+              value={formData.tags?.join(', ') || ''}
               onChange={(e) => setFormData({ 
                 ...formData, 
                 tags: e.target.value.split(',').map(t => t.trim()).filter(t => t) 

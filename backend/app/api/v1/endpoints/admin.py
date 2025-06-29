@@ -226,7 +226,7 @@ async def bulk_approve_courses(
 async def list_users(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    role: Optional[str] = Query(None, regex="^(student|creator|admin)$"),
+    role: Optional[str] = Query(None, pattern="^(student|creator|admin)$"),
     premium_only: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
     current_admin: User = Depends(get_current_admin)
@@ -288,7 +288,7 @@ async def toggle_user_premium(
 @router.put("/users/{user_id}/role")
 async def update_user_role(
     user_id: str,
-    role: str = Query(..., regex="^(student|creator|admin)$"),
+    role: str = Query(..., pattern="^(student|creator|admin)$"),
     current_admin: User = Depends(get_current_admin)
 ):
     """
@@ -346,7 +346,7 @@ async def delete_user(
 @router.post("/users/bulk-action")
 async def bulk_user_action(
     user_ids: List[str],
-    action: str = Query(..., regex="^(delete|update_role|toggle_premium)$"),
+    action: str = Query(..., pattern="^(delete|update_role|toggle_premium)$"),
     data: Optional[dict] = None,
     current_admin: User = Depends(get_current_admin)
 ):
@@ -446,7 +446,7 @@ async def refund_payment(
 
 @router.get("/analytics/revenue")
 async def get_revenue_analytics(
-    period: str = Query("month", regex="^(day|week|month|year)$"),
+    period: str = Query("month", pattern="^(day|week|month|year)$"),
     date_from: Optional[str] = Query(None),
     date_to: Optional[str] = Query(None),
     current_admin: User = Depends(get_current_admin)

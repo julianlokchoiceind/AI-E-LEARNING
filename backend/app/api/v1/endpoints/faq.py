@@ -35,8 +35,8 @@ async def get_faqs(
     tags: List[str] = Query(None, description="Filter by tags"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    sort_by: str = Query("priority", regex="^(priority|view_count|created_at)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$")
+    sort_by: str = Query("priority", pattern="^(priority|view_count|created_at)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$")
 ):
     """
     Get all published FAQs with optional search and filters

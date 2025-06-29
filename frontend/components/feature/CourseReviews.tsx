@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
@@ -366,7 +366,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             {renderStars(review.rating, 'h-4 w-4')}
                             {review.user.is_verified_purchase && (
-                              <Badge variant="success" size="sm">
+                              <Badge variant="secondary">
                                 <CheckCircle className="h-3 w-3 mr-1" />
                                 Verified Purchase
                               </Badge>
@@ -590,7 +590,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
                     >
                       <Star
                         className={`h-5 w-5 ${
-                          formData[sub.key] && rating <= formData[sub.key]
+                          formData[sub.key] && rating <= (formData[sub.key] || 0)
                             ? 'text-yellow-400 fill-current'
                             : 'text-gray-300'
                         }`}

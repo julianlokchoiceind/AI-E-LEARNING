@@ -40,7 +40,7 @@ class InputValidator:
         # Path traversal patterns
         self.path_traversal_patterns = [
             r"\.\./",
-            r"\.\.\\"
+            r"\.\.\\",
             r"%2e%2e%2f",
             r"%2e%2e%5c",
         ]
@@ -125,46 +125,98 @@ class InputValidationMiddleware:
     def __init__(self, app):
         self.app = app
         self.validator = InputValidator()
+        # Paths that should be skipped (OAuth2, file uploads, etc.)
+        self.skip_paths = [
+            "/api/v1/auth/login",
+            "/api/v1/auth/token", 
+            "/token",
+            "/docs",
+            "/redoc",
+            "/openapi.json"
+        ]
+    
+    def should_skip_validation(self, path: str, content_type: str) -> bool:
+        """Determine if request should skip validation"""
+        # Skip OAuth2 endpoints
+        if any(skip_path in path for skip_path in self.skip_paths):
+            return True
+        
+        # Skip form-urlencoded requests (OAuth2, file uploads)
+        if content_type and "application/x-www-form-urlencoded" in content_type:
+            return True
+        
+        # Skip multipart form data (file uploads)
+        if content_type and "multipart/form-data" in content_type:
+            return True
+        
+        return False
     
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
             request = Request(scope, receive)
             
             try:
-                # Validate query parameters
+                # Always validate query parameters and path parameters
                 for key, value in request.query_params.items():
                     self.validator.validate_input(value)
                 
-                # Validate path parameters
                 path_params = scope.get("path_params", {})
                 for key, value in path_params.items():
                     self.validator.validate_input(str(value))
                 
-                # For POST/PUT/PATCH requests, validate body
-                if request.method in ["POST", "PUT", "PATCH"]:
-                    # Store the body for later use
-                    body = await request.body()
-                    
-                    # Try to parse as JSON
-                    try:
-                        if body:
-                            json_body = json.loads(body)
-                            validated_body = self.validator.validate_input(json_body)
-                            
-                            # Create new receive callable with validated body
-                            async def new_receive():
-                                return {
-                                    "type": "http.request",
-                                    "body": json.dumps(validated_body).encode()
-                                }
-                            
-                            # Update receive
-                            receive = new_receive
-                    except json.JSONDecodeError:
-                        # Not JSON, skip validation
-                        pass
+                # Check if we should skip body validation
+                content_type = request.headers.get("content-type", "")
+                path = scope.get("path", "")
                 
-                await self.app(scope, receive, send)
+                if self.should_skip_validation(path, content_type):
+                    # Skip body validation for OAuth2 and form data
+                    await self.app(scope, receive, send)
+                    return
+                
+                # For JSON requests, validate body using a custom receive wrapper
+                if request.method in ["POST", "PUT", "PATCH"] and "application/json" in content_type:
+                    # Create a wrapper that validates JSON body without consuming it
+                    body_data = b""
+                    body_complete = False
+                    
+                    async def wrapped_receive():
+                        nonlocal body_data, body_complete
+                        
+                        message = await receive()
+                        
+                        if message["type"] == "http.request":
+                            body_chunk = message.get("body", b"")
+                            body_data += body_chunk
+                            
+                            # If this is the last chunk, validate the complete body
+                            if not message.get("more_body", False):
+                                body_complete = True
+                                
+                                if body_data:
+                                    try:
+                                        # Parse and validate JSON
+                                        json_body = json.loads(body_data.decode())
+                                        validated_body = self.validator.validate_input(json_body)
+                                        
+                                        # Update the body with validated data
+                                        validated_body_bytes = json.dumps(validated_body).encode()
+                                        
+                                        # Return the validated body
+                                        return {
+                                            "type": "http.request",
+                                            "body": validated_body_bytes,
+                                            "more_body": False
+                                        }
+                                    except json.JSONDecodeError:
+                                        # If not valid JSON, pass through original
+                                        pass
+                        
+                        return message
+                    
+                    await self.app(scope, wrapped_receive, send)
+                else:
+                    # For non-JSON requests or GET requests, proceed normally
+                    await self.app(scope, receive, send)
                 
             except HTTPException as e:
                 # Send error response

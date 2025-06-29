@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Edit2, Globe, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { CertificateDisplay } from '@/components/feature/CertificateDisplay';
 import { useAuth } from '@/hooks/useAuth';
@@ -113,7 +113,7 @@ const CertificateViewPage = () => {
       </div>
 
       {/* Certificate Display */}
-      <CertificateDisplay certificate={certificate} showActions={isOwner} />
+      <CertificateDisplay certificate={certificate} showActions={isOwner || false} />
 
       {/* Certificate Info */}
       <Card className="mt-8">

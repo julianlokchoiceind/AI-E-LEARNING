@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { Clock, CheckCircle, XCircle, RotateCcw, Trophy } from 'lucide-react';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { Label } from '@/components/ui/Label';
 import { Progress } from '@/components/ui/Progress';

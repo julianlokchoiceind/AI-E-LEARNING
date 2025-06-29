@@ -29,22 +29,21 @@ import {
 } from 'lucide-react';
 
 interface User {
-  _id: string;
+  id: string;
   name: string;
   email: string;
-  role: 'student' | 'creator' | 'admin';
+  role: string;
   premium_status: boolean;
-  is_verified: boolean;
-  created_at: string;
-  last_login: string;
-  stats: {
-    courses_enrolled: number;
-    courses_completed: number;
-    certificates_earned: number;
-  };
   subscription?: {
     type: string;
     status: string;
+  };
+  created_at: string;
+  last_login?: string;
+  stats?: {
+    courses_enrolled: number;
+    courses_completed: number;
+    certificates_earned: number;
   };
 }
 
@@ -69,12 +68,13 @@ export default function UserManagement() {
       const response = await getAdminUsers({
         search: searchTerm,
         role: roleFilter,
-        premium: premiumFilter
+        premiumOnly: premiumFilter === 'premium' ? true : undefined
       });
-      setUsers(response.data.users);
-    } catch (error) {
+      setUsers(response.users);
+    } catch (error: any) {
       console.error('Failed to fetch users:', error);
-      toast.error('Failed to load users');
+      // Use backend error message
+      toast.error(error.message || error.detail || 'Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -90,11 +90,13 @@ export default function UserManagement() {
       const response = await toggleUserPremium(userId, !currentStatus);
       
       if (response.success) {
-        toast.success(`Premium status ${!currentStatus ? 'enabled' : 'disabled'}`);
+        // Use backend message if available
+        toast.success(response.message || `Premium status ${!currentStatus ? 'enabled' : 'disabled'}`);
         await fetchUsers(); // Refresh list
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update premium status');
+      // Always use backend error message
+      toast.error(error.message);
     } finally {
       setActionLoading({ ...actionLoading, [userId]: false });
     }
@@ -106,11 +108,13 @@ export default function UserManagement() {
       const response = await updateUserRole(userId, newRole);
       
       if (response.success) {
-        toast.success(`Role updated to ${newRole}`);
+        // Use backend message if available
+        toast.success(response.message || `Role updated to ${newRole}`);
         await fetchUsers(); // Refresh list
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update role');
+      // Always use backend error message
+      toast.error(error.message);
     } finally {
       setActionLoading({ ...actionLoading, [userId]: false });
     }
@@ -120,19 +124,21 @@ export default function UserManagement() {
     if (!selectedUser) return;
     
     try {
-      setActionLoading({ ...actionLoading, [selectedUser._id]: true });
-      const response = await deleteUser(selectedUser._id);
+      setActionLoading({ ...actionLoading, [selectedUser.id]: true });
+      const response = await deleteUser(selectedUser.id);
       
       if (response.success) {
-        toast.success('User deleted successfully');
+        // Use backend message if available
+        toast.success(response.message || 'User deleted successfully');
         setShowDeleteModal(false);
         setSelectedUser(null);
         await fetchUsers(); // Refresh list
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to delete user');
+      // Always use backend error message
+      toast.error(error.message);
     } finally {
-      setActionLoading({ ...actionLoading, [selectedUser._id]: false });
+      setActionLoading({ ...actionLoading, [selectedUser.id]: false });
     }
   };
 
@@ -147,10 +153,6 @@ export default function UserManagement() {
       default:
         return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const getStatusColor = (isVerified: boolean) => {
-    return isVerified ? 'text-green-600' : 'text-yellow-600';
   };
 
   const filteredUsers = users.filter(user => {
@@ -266,7 +268,7 @@ export default function UserManagement() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50">
+                  <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -294,8 +296,8 @@ export default function UserManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm">
-                        <div className={`font-medium ${getStatusColor(user.is_verified)}`}>
-                          {user.is_verified ? 'Verified' : 'Unverified'}
+                        <div className={`font-medium ${user.subscription ? 'text-green-600' : 'text-gray-600'}`}>
+                          {user.subscription ? 'Subscribed' : 'Free User'}
                         </div>
                         {user.subscription && (
                           <div className="text-xs text-gray-500">
@@ -306,9 +308,9 @@ export default function UserManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div>
-                        <div>{user.stats.courses_enrolled} enrolled</div>
+                        <div>{user.stats?.courses_enrolled || 0} enrolled</div>
                         <div className="text-xs text-gray-500">
-                          {user.stats.courses_completed} completed
+                          {user.stats?.courses_completed || 0} completed
                         </div>
                       </div>
                     </td>
@@ -334,8 +336,8 @@ export default function UserManagement() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleTogglePremium(user._id, user.premium_status)}
-                          loading={actionLoading[user._id]}
+                          onClick={() => handleTogglePremium(user.id, user.premium_status)}
+                          loading={actionLoading[user.id]}
                           disabled={user.role === 'admin'}
                         >
                           <Crown className={`h-4 w-4 ${user.premium_status ? 'text-yellow-500' : 'text-gray-400'}`} />
@@ -395,19 +397,19 @@ export default function UserManagement() {
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900">
-                  {selectedUser.stats.courses_enrolled}
+                  {selectedUser.stats?.courses_enrolled || 0}
                 </div>
                 <div className="text-sm text-gray-500">Courses Enrolled</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900">
-                  {selectedUser.stats.courses_completed}
+                  {selectedUser.stats?.courses_completed || 0}
                 </div>
                 <div className="text-sm text-gray-500">Completed</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900">
-                  {selectedUser.stats.certificates_earned}
+                  {selectedUser.stats?.certificates_earned || 0}
                 </div>
                 <div className="text-sm text-gray-500">Certificates</div>
               </div>
@@ -420,7 +422,7 @@ export default function UserManagement() {
               </label>
               <select
                 value={selectedUser.role}
-                onChange={(e) => handleRoleChange(selectedUser._id, e.target.value)}
+                onChange={(e) => handleRoleChange(selectedUser.id, e.target.value)}
                 disabled={selectedUser.role === 'admin'}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
               >
@@ -433,9 +435,9 @@ export default function UserManagement() {
             {/* Actions */}
             <div className="flex space-x-3">
               <Button
-                onClick={() => handleTogglePremium(selectedUser._id, selectedUser.premium_status)}
-                loading={actionLoading[selectedUser._id]}
-                variant={selectedUser.premium_status ? "outline" : "default"}
+                onClick={() => handleTogglePremium(selectedUser.id, selectedUser.premium_status)}
+                loading={actionLoading[selectedUser.id]}
+                variant={selectedUser.premium_status ? "outline" : "primary"}
                 disabled={selectedUser.role === 'admin'}
               >
                 <Crown className="h-4 w-4 mr-2" />
@@ -469,7 +471,7 @@ export default function UserManagement() {
             <div className="flex space-x-3">
               <Button
                 onClick={handleDeleteUser}
-                loading={actionLoading[selectedUser._id]}
+                loading={actionLoading[selectedUser.id]}
                 variant="outline"
                 className="text-red-600 border-red-200 hover:bg-red-50"
               >

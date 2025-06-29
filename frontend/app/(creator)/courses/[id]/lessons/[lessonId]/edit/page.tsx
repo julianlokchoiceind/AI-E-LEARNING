@@ -227,32 +227,59 @@ const LessonEditPage = () => {
       // Calculate total points
       const totalPoints = quizData.questions.reduce((sum, q) => sum + q.points, 0);
       
-      const quizPayload = {
-        lesson_id: lessonId,
-        course_id: courseId,
-        title: quizData.title,
-        description: quizData.description,
-        config: {
-          time_limit: null, // Can be added later
-          pass_percentage: quizData.pass_percentage,
-          max_attempts: quizData.max_attempts,
-          shuffle_questions: quizData.shuffle_questions,
-          shuffle_answers: quizData.shuffle_answers,
-          show_correct_answers: quizData.show_correct_answers,
-          immediate_feedback: quizData.immediate_feedback
-        },
-        questions: quizData.questions,
-        total_points: totalPoints
-      };
+      const questionsPayload = quizData.questions.map(q => ({
+        question: q.question,
+        type: q.type || 'multiple_choice' as const,
+        options: q.options,
+        correct_answer: q.correct_answer ?? 0,
+        explanation: q.explanation,
+        points: q.points
+      }));
       
       if (quiz) {
         // Update existing quiz
-        const updated = await quizAPI.updateQuiz(quiz._id, quizPayload);
+        const updatePayload = {
+          title: quizData.title,
+          description: quizData.description,
+          config: {
+            time_limit: null,
+            pass_percentage: quizData.pass_percentage,
+            max_attempts: quizData.max_attempts,
+            shuffle_questions: quizData.shuffle_questions,
+            shuffle_answers: quizData.shuffle_answers,
+            show_correct_answers: quizData.show_correct_answers,
+            immediate_feedback: quizData.immediate_feedback
+          },
+          questions: questionsPayload
+        };
+        const updated = await quizAPI.updateQuiz(quiz._id, updatePayload);
         setQuiz(updated);
         toast.success('Quiz updated successfully');
       } else {
         // Create new quiz
-        const created = await quizAPI.createQuiz(quizPayload);
+        const createPayload = {
+          lesson_id: lessonId,
+          course_id: courseId,
+          title: quizData.title,
+          description: quizData.description,
+          config: {
+            time_limit: null,
+            pass_percentage: quizData.pass_percentage,
+            max_attempts: quizData.max_attempts,
+            shuffle_questions: quizData.shuffle_questions,
+            shuffle_answers: quizData.shuffle_answers,
+            show_correct_answers: quizData.show_correct_answers,
+            immediate_feedback: quizData.immediate_feedback
+          },
+          questions: questionsPayload.map(q => ({
+            question: q.question,
+            options: q.options,
+            correct_answer: q.correct_answer,
+            explanation: q.explanation || undefined,
+            points: q.points
+          }))
+        };
+        const created = await quizAPI.createQuiz(createPayload);
         setQuiz(created);
         toast.success('Quiz created successfully');
       }

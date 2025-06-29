@@ -3,6 +3,8 @@
  * Tools for measuring and optimizing application performance
  */
 
+import React from 'react';
+
 // Performance timing interface
 interface PerformanceTiming {
   startTime: number;
@@ -51,7 +53,7 @@ class PerformanceMonitor {
   /**
    * Log performance metric
    */
-  private logMetric(label: string, duration: number): void {
+  public logMetric(label: string, duration: number): void {
     const metric = {
       label,
       duration,

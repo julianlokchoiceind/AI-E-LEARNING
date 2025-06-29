@@ -78,9 +78,17 @@ const USER_FRIENDLY_MESSAGES: Record<string, string> = {
 
 // Parse error from response
 export async function parseErrorFromResponse(response: Response): Promise<AppError> {
+  console.debug('[ERROR-HANDLER] parseErrorFromResponse called:', {
+    status: response.status,
+    statusText: response.statusText,
+    url: response.url
+  });
+
   let errorMessage = USER_FRIENDLY_MESSAGES[response.status.toString()] || ERROR_MESSAGES[ErrorType.UNKNOWN];
   let errorType = ErrorType.UNKNOWN;
   let details = null;
+
+  console.debug('[ERROR-HANDLER] Default error message:', errorMessage);
 
   // Determine error type based on status code
   switch (response.status) {
@@ -106,47 +114,120 @@ export async function parseErrorFromResponse(response: Response): Promise<AppErr
       break;
   }
 
+  console.debug('[ERROR-HANDLER] Error type determined:', errorType);
+
   // Try to parse error details from response body
   try {
-    const data = await response.json();
-    if (data.error) {
+    const responseText = await response.text();
+    console.debug('[ERROR-HANDLER] Response text:', responseText.substring(0, 500));
+    
+    if (!responseText) {
+      console.debug('[ERROR-HANDLER] No response text available');
+      return new AppError(errorMessage, errorType, ErrorSeverity.MEDIUM, response.status, details);
+    }
+    
+    const data = JSON.parse(responseText);
+    console.debug('[ERROR-HANDLER] Parsed JSON data:', {
+      hasDetail: !!data.detail,
+      hasError: !!data.error,
+      hasMessage: !!data.message,
+      dataKeys: Object.keys(data)
+    });
+    
+    // FastAPI HTTPException format (most common)
+    if (data.detail) {
+      if (typeof data.detail === 'string') {
+        errorMessage = data.detail;
+        console.debug('[ERROR-HANDLER] Using detail string:', errorMessage);
+      } else if (Array.isArray(data.detail)) {
+        // Validation errors - format array into readable message
+        errorMessage = data.detail
+          .map((err: any) => err.msg || err.message || err.detail)
+          .join(', ');
+        details = data.detail;
+        console.debug('[ERROR-HANDLER] Using detail array:', errorMessage);
+      } else if (typeof data.detail === 'object' && data.detail.msg) {
+        errorMessage = data.detail.msg;
+        console.debug('[ERROR-HANDLER] Using detail.msg:', errorMessage);
+      }
+    }
+    // Standard error format with error object
+    else if (data.error) {
       errorMessage = data.error.message || data.error || errorMessage;
       details = data.error.details || data.details;
-    } else if (data.message) {
-      errorMessage = data.message;
+      console.debug('[ERROR-HANDLER] Using error format:', errorMessage);
     }
-  } catch {
+    // Simple message format (rate limit, etc.)
+    else if (data.message) {
+      errorMessage = data.message;
+      console.debug('[ERROR-HANDLER] Using message format:', errorMessage);
+    }
+  } catch (parseError) {
     // If parsing fails, use default error message
+    console.error('[ERROR-HANDLER] Failed to parse response:', parseError);
   }
+
+  console.debug('[ERROR-HANDLER] Final error being returned:', {
+    message: errorMessage,
+    type: errorType,
+    status: response.status
+  });
 
   return new AppError(errorMessage, errorType, ErrorSeverity.MEDIUM, response.status, details);
 }
 
 // Global error handler
 export function handleError(error: unknown, showToast: boolean = true): AppError {
+  console.debug('[ERROR-HANDLER] handleError called with:', {
+    errorType: error?.constructor?.name,
+    isAppError: error instanceof AppError,
+    isError: error instanceof Error,
+    showToast
+  });
+
   let appError: AppError;
 
   if (error instanceof AppError) {
+    console.debug('[ERROR-HANDLER] Error is already AppError:', {
+      message: error.message,
+      type: error.type,
+      statusCode: error.statusCode
+    });
     appError = error;
   } else if (error instanceof Error) {
     // Check for specific error messages
     const errorMessage = error.message.toLowerCase();
     let errorType = ErrorType.UNKNOWN;
 
+    console.debug('[ERROR-HANDLER] Processing Error instance:', {
+      originalMessage: error.message,
+      lowercaseMessage: errorMessage
+    });
+
     if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
       errorType = ErrorType.NETWORK;
+      console.debug('[ERROR-HANDLER] Detected network error');
     } else if (errorMessage.includes('unauthorized') || errorMessage.includes('authentication')) {
       errorType = ErrorType.AUTHENTICATION;
+      console.debug('[ERROR-HANDLER] Detected auth error');
     } else if (errorMessage.includes('validation') || errorMessage.includes('invalid')) {
       errorType = ErrorType.VALIDATION;
+      console.debug('[ERROR-HANDLER] Detected validation error');
     }
 
+    const friendlyMessage = USER_FRIENDLY_MESSAGES[error.message] || error.message;
+    console.debug('[ERROR-HANDLER] Creating AppError:', {
+      friendlyMessage,
+      errorType
+    });
+
     appError = new AppError(
-      USER_FRIENDLY_MESSAGES[error.message] || error.message,
+      friendlyMessage,
       errorType,
       ErrorSeverity.MEDIUM
     );
   } else {
+    console.debug('[ERROR-HANDLER] Unknown error type:', error);
     appError = new AppError(
       'An unexpected error occurred',
       ErrorType.UNKNOWN,
@@ -155,15 +236,22 @@ export function handleError(error: unknown, showToast: boolean = true): AppError
   }
 
   // Log error
-  console.error('[Error Handler]:', appError);
+  console.error('[ERROR-HANDLER] Final AppError:', {
+    message: appError.message,
+    type: appError.type,
+    severity: appError.severity,
+    statusCode: appError.statusCode,
+    details: appError.details
+  });
 
   // Send to monitoring service in production
-  if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined' && window.Sentry) {
-    window.Sentry.captureException(appError);
+  if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined' && (window as any).Sentry) {
+    (window as any).Sentry.captureException(appError);
   }
 
   // Show toast notification
   if (showToast) {
+    console.debug('[ERROR-HANDLER] Showing error toast');
     showErrorToast(appError);
   }
 

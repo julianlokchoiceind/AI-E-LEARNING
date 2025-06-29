@@ -45,7 +45,7 @@ const NavigationGuard: React.FC<NavigationGuardProps> = ({
     const originalPush = router.push;
     router.push = (...args: Parameters<typeof router.push>) => {
       if (hasUnsavedChanges) {
-        const url = typeof args[0] === 'string' ? args[0] : args[0].pathname || '';
+        const url = typeof args[0] === 'string' ? args[0] : (args[0] as any)?.pathname || '';
         handleRouteChange(url);
       }
       return originalPush.apply(router, args);

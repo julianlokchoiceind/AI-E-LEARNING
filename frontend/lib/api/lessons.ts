@@ -94,7 +94,7 @@ export const getPreviewLesson = async (courseId: string, lessonId: string): Prom
 export const createLesson = async (data: LessonCreateData): Promise<Lesson> => {
   try {
     const session = await getSession();
-    const response = await fetch(API_ENDPOINTS.LESSONS, {
+    const response = await fetch(API_ENDPOINTS.LESSONS.CREATE, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
