@@ -60,9 +60,9 @@ export default function FAQPage() {
         
         setFaqs(response.items);
         setTotalPages(Math.ceil(response.total / response.per_page));
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to fetch FAQs:', error);
-        toast.error('Failed to load FAQs');
+        toast.error(error.message || 'Operation Failed');
       } finally {
         setLoading(false);
       }
@@ -122,10 +122,10 @@ export default function FAQPage() {
       setVotedFaqs(newVoted);
       localStorage.setItem('votedFaqs', JSON.stringify(Array.from(newVoted)));
 
-      toast.success(result.message);
-    } catch (error) {
+      toast.success(result.message || 'Operation Failed');
+    } catch (error: any) {
       console.error('Failed to vote:', error);
-      toast.error('Failed to submit vote');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

@@ -89,9 +89,9 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
         const userReview = response.items.find((r: Review) => r.user.id === user.id);
         setUserReview(userReview || null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch reviews:', error);
-      toast.error('Failed to load reviews');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -106,13 +106,13 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
           })
         : await reviewAPI.createReview(courseId, formData);
       
-      toast.success(editingReview ? 'Review updated' : 'Review submitted');
+      toast.success(reviewData.message || 'Operation Failed');
       setShowReviewModal(false);
       resetForm();
       fetchReviews();
     } catch (error: any) {
       console.error('Failed to submit review:', error);
-      toast.error(error.message || 'Failed to submit review');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
@@ -123,12 +123,12 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
     }
 
     try {
-      await reviewAPI.voteReview(reviewId, { is_helpful: isHelpful });
-      toast.success('Vote recorded');
+      const response = await reviewAPI.voteReview(reviewId, { is_helpful: isHelpful });
+      toast.success(response.message || 'Operation Failed');
       fetchReviews();
     } catch (error: any) {
       console.error('Failed to vote:', error);
-      toast.error(error.message || 'Failed to vote');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
@@ -136,12 +136,12 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
     if (!confirm('Are you sure you want to delete this review?')) return;
 
     try {
-      await reviewAPI.deleteReview(reviewId);
-      toast.success('Review deleted');
+      const response = await reviewAPI.deleteReview(reviewId);
+      toast.success(response?.message || 'Operation Failed');
       fetchReviews();
     } catch (error: any) {
       console.error('Failed to delete review:', error);
-      toast.error(error.message || 'Failed to delete review');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
@@ -149,18 +149,18 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
     if (!reportingReview || !reportReason) return;
 
     try {
-      await reviewAPI.reportReview(reportingReview._id, {
+      const response = await reviewAPI.reportReview(reportingReview._id, {
         reason: reportReason,
         details: reportDetails,
       });
-      toast.success('Review reported');
+      toast.success(response.message || 'Operation Failed');
       setShowReportModal(false);
       setReportingReview(null);
       setReportReason('');
       setReportDetails('');
     } catch (error: any) {
       console.error('Failed to report review:', error);
-      toast.error(error.message || 'Failed to report review');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

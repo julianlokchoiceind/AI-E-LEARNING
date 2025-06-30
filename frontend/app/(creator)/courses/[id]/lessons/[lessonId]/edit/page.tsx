@@ -137,9 +137,9 @@ const LessonEditPage = () => {
         // No quiz exists yet, that's okay
         console.log('No quiz found for this lesson');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch lesson data:', error);
-      toast.error('Failed to load lesson data');
+      toast.error(error.message || 'Operation Failed');
       router.push(`/creator/courses/${courseId}/edit`);
     } finally {
       setLoading(false);
@@ -254,7 +254,7 @@ const LessonEditPage = () => {
         };
         const updated = await quizAPI.updateQuiz(quiz._id, updatePayload);
         setQuiz(updated);
-        toast.success('Quiz updated successfully');
+        toast.success(updated.message || 'Operation Failed');
       } else {
         // Create new quiz
         const createPayload = {
@@ -281,11 +281,11 @@ const LessonEditPage = () => {
         };
         const created = await quizAPI.createQuiz(createPayload);
         setQuiz(created);
-        toast.success('Quiz created successfully');
+        toast.success(created.message || 'Operation Failed');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save quiz:', error);
-      toast.error('Failed to save quiz');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

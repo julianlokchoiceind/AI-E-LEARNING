@@ -58,9 +58,9 @@ export default function BillingPage() {
 
       setSubscriptionStatus(subscriptionResponse);
       setPaymentHistory(historyResponse.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch billing data:', error);
-      toast.error('Failed to load billing information');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -76,14 +76,14 @@ export default function BillingPage() {
       const response = await cancelSubscription(true);
       
       if (response.success) {
-        toast.success('Subscription cancelled successfully');
+        toast.success(response.message || 'Operation Failed');
         await fetchBillingData(); // Refresh data
       } else {
         throw new Error('Cancellation failed');
       }
     } catch (error: any) {
       console.error('Cancellation failed:', error);
-      toast.error(error.message || 'Failed to cancel subscription');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setCanceling(false);
     }

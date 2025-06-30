@@ -128,9 +128,9 @@ const CreatorDashboardPage = () => {
       }));
 
       setRecentCourses(recent);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }

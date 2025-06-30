@@ -38,15 +38,17 @@ export default function ContactPage() {
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+      
       if (response.ok) {
-        toast.success(t('contact.success'));
+        toast.success(data.message || 'Operation Failed');
         setFormData({ name: '', email: '', subject: '', message: '' });
       } else {
-        toast.error(t('contact.error'));
+        toast.error(data.message || 'Operation Failed');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Contact form submission error:', error);
-      toast.error(t('contact.error'));
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setIsSubmitting(false);
     }

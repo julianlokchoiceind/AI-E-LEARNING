@@ -69,9 +69,9 @@ export default function MyCoursesPage() {
       if (result.success) {
         setEnrollments(result.data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Enrollments fetch error:', error);
-      toast.error('Failed to load your courses');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }

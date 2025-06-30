@@ -64,9 +64,9 @@ export default function AdminSupportPage() {
       const response = await supportAPI.getTickets(params);
       setTickets(response.items);
       setTotalPages(response.total_pages);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch tickets:', error);
-      toast.error('Failed to load support tickets');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -83,12 +83,12 @@ export default function AdminSupportPage() {
 
   const handleQuickUpdate = async (ticketId: string, update: TicketUpdateData) => {
     try {
-      await supportAPI.updateTicket(ticketId, update);
-      toast.success('Ticket updated successfully');
+      const response = await supportAPI.updateTicket(ticketId, update);
+      toast.success(response.message || 'Operation Failed');
       fetchTickets(); // Refresh list
     } catch (error: any) {
       console.error('Failed to update ticket:', error);
-      toast.error(error.message || 'Failed to update ticket');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

@@ -110,7 +110,7 @@ export default function DashboardPage() {
           };
           
           setDashboardData(mockDashboardData);
-          toast.error('Failed to load dashboard data. Using cached version.');
+          toast.error((error as any)?.message || 'Operation Failed');
         }
         
         setLoading(false);
@@ -130,7 +130,7 @@ export default function DashboardPage() {
       // Try to fetch real data from API
       const data = await usersApi.getDashboard();
       setDashboardData(data);
-      toast.success('Dashboard refreshed successfully');
+      toast.success(data?.message || 'Operation Failed');
     } catch (error) {
       console.error('Dashboard refresh error:', error);
       
@@ -157,7 +157,7 @@ export default function DashboardPage() {
       };
       
       setDashboardData(mockDashboardData);
-      toast.error('Failed to refresh dashboard data');
+      toast.error((error as any)?.message || 'Operation Failed');
     }
     
     setLoading(false);

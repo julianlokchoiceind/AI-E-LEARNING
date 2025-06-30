@@ -61,9 +61,9 @@ export default function TicketDetailPage() {
       if (data.status === 'resolved' && !data.satisfaction_rating) {
         setShowRatingModal(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch ticket:', error);
-      toast.error('Failed to load ticket');
+      toast.error(error.message || 'Operation Failed');
       router.push('/support');
     } finally {
       setLoading(false);
@@ -79,13 +79,13 @@ export default function TicketDetailPage() {
         message: message.trim(),
       };
       
-      await supportAPI.addMessage(ticketId, messageData);
+      const response = await supportAPI.addMessage(ticketId, messageData);
       setMessage('');
       fetchTicket(); // Refresh to get new message
-      toast.success('Message sent');
+      toast.success(response.message || 'Operation Failed');
     } catch (error: any) {
       console.error('Failed to send message:', error);
-      toast.error(error.message || 'Failed to send message');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setSending(false);
     }
@@ -103,13 +103,13 @@ export default function TicketDetailPage() {
         comment: ratingComment.trim() || undefined,
       };
       
-      await supportAPI.rateTicket(ticketId, ratingData);
-      toast.success('Thank you for your feedback!');
+      const response = await supportAPI.rateTicket(ticketId, ratingData);
+      toast.success(response.message || 'Operation Failed');
       setShowRatingModal(false);
       fetchTicket(); // Refresh to show rating
     } catch (error: any) {
       console.error('Failed to rate ticket:', error);
-      toast.error(error.message || 'Failed to submit rating');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

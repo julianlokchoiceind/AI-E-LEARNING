@@ -87,9 +87,9 @@ const ChapterEditPage = () => {
       // Fetch lessons in this chapter
       const lessonsResponse = await getLessonsByChapter(chapterId);
       setLessons(lessonsResponse || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch chapter data:', error);
-      toast.error('Failed to load chapter data');
+      toast.error(error.message || 'Operation Failed');
       router.push(`/creator/courses/${courseId}/edit`);
     } finally {
       setLoading(false);
@@ -123,10 +123,10 @@ const ChapterEditPage = () => {
       
       // Redirect to lesson editor
       router.push(`/creator/courses/${courseId}/lessons/${response._id}/edit`);
-      toast.success('Lesson created successfully');
-    } catch (error) {
+      toast.success(response.message || 'Operation Failed');
+    } catch (error: any) {
       console.error('Failed to create lesson:', error);
-      toast.error('Failed to create lesson');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

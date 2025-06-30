@@ -29,6 +29,7 @@ lerna-debug.log*
 .env.test.local
 .env.production.local
 .env.production
+frontend/.env.local
 
 # Python
 __pycache__/

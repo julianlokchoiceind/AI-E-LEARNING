@@ -88,9 +88,9 @@ export default function LessonPlayerPage() {
 
       const data = await response.json();
       setLesson(data.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching lesson:', error);
-      toast.error('Failed to load lesson');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
@@ -121,9 +121,9 @@ export default function LessonPlayerPage() {
         const data = await progressResponse.json();
         setProgress(data.data);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error starting lesson:', error);
-      toast.error('Failed to start lesson');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -286,7 +286,8 @@ export default function LessonPlayerPage() {
       });
 
       if (response.ok) {
-        toast.success('Lesson completed! 🎉');
+        const data = await response.json();
+        toast.success(data.message || 'Operation Failed');
         
         // Update local progress state
         if (progress) {
@@ -336,7 +337,8 @@ export default function LessonPlayerPage() {
         });
 
         if (response.ok) {
-          toast.success('Quiz passed! Lesson completed! 🎉');
+          const data = await response.json();
+          toast.success(data.message || 'Operation Failed');
           
           // Update local progress state
           if (progress) {
@@ -373,7 +375,7 @@ export default function LessonPlayerPage() {
         console.error('Error completing lesson:', error);
       }
     } else {
-      toast.error('Quiz not passed. Please try again.');
+      toast.error('Operation Failed');
     }
   };
 

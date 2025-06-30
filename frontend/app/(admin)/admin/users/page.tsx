@@ -74,7 +74,7 @@ export default function UserManagement() {
     } catch (error: any) {
       console.error('Failed to fetch users:', error);
       // Use backend error message
-      toast.error(error.message || error.detail || 'Failed to load users');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -91,12 +91,12 @@ export default function UserManagement() {
       
       if (response.success) {
         // Use backend message if available
-        toast.success(response.message || `Premium status ${!currentStatus ? 'enabled' : 'disabled'}`);
+        toast.success(response.message || 'Operation Failed');
         await fetchUsers(); // Refresh list
       }
     } catch (error: any) {
       // Always use backend error message
-      toast.error(error.message);
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setActionLoading({ ...actionLoading, [userId]: false });
     }
@@ -109,12 +109,12 @@ export default function UserManagement() {
       
       if (response.success) {
         // Use backend message if available
-        toast.success(response.message || `Role updated to ${newRole}`);
+        toast.success(response.message || 'Operation Failed');
         await fetchUsers(); // Refresh list
       }
     } catch (error: any) {
       // Always use backend error message
-      toast.error(error.message);
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setActionLoading({ ...actionLoading, [userId]: false });
     }
@@ -129,14 +129,14 @@ export default function UserManagement() {
       
       if (response.success) {
         // Use backend message if available
-        toast.success(response.message || 'User deleted successfully');
+        toast.success(response.message || 'Operation Failed');
         setShowDeleteModal(false);
         setSelectedUser(null);
         await fetchUsers(); // Refresh list
       }
     } catch (error: any) {
       // Always use backend error message
-      toast.error(error.message);
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setActionLoading({ ...actionLoading, [selectedUser.id]: false });
     }

@@ -143,7 +143,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       if (error.message.includes('rate limit')) {
         toast.error('You\'re sending messages too quickly. Please wait a moment.');
       } else {
-        toast.error('Failed to get AI response. Please try again.');
+        toast.error(error.message || 'Operation Failed');
       }
       
       // Add error message to chat

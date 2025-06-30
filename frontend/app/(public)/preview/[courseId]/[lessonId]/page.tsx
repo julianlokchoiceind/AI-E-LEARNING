@@ -59,10 +59,10 @@ const PreviewLessonPage = () => {
         setError('Preview not available for this lesson');
         return;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch preview data:', error);
       setError('Failed to load lesson preview');
-      toast.error('Failed to load lesson preview');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }

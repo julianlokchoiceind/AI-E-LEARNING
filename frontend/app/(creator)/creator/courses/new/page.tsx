@@ -29,9 +29,9 @@ const CreateCoursePage = () => {
         } else {
           throw new Error('Failed to create course');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to create course:', error);
-        toast.error('Failed to create course. Please try again.');
+        toast.error(error.message || 'Operation Failed');
         router.push('/creator/courses');
       }
     };

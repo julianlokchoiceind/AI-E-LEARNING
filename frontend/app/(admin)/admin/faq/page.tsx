@@ -52,9 +52,9 @@ export default function AdminFAQPage() {
         per_page: 100,
       });
       setFaqs(response.items);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch FAQs:', error);
-      toast.error('Failed to load FAQs');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -66,18 +66,18 @@ export default function AdminFAQPage() {
         // Update existing FAQ
         const updated = await faqAPI.updateFAQ(editingFaq._id, formData as FAQUpdateData);
         setFaqs(faqs.map(f => f._id === updated._id ? updated : f));
-        toast.success('FAQ updated successfully');
+        toast.success(updated.message || 'Operation Failed');
       } else {
         // Create new FAQ
         const created = await faqAPI.createFAQ(formData);
         setFaqs([created, ...faqs]);
-        toast.success('FAQ created successfully');
+        toast.success(created.message || 'Operation Failed');
       }
       
       resetForm();
     } catch (error: any) {
       console.error('Failed to save FAQ:', error);
-      toast.error(error.response?.data?.detail || 'Failed to save FAQ');
+      toast.error(error.response?.data?.detail || error.message || 'Operation Failed');
     }
   };
 
@@ -85,12 +85,12 @@ export default function AdminFAQPage() {
     if (!confirm('Are you sure you want to delete this FAQ?')) return;
 
     try {
-      await faqAPI.deleteFAQ(faqId);
+      const response = await faqAPI.deleteFAQ(faqId);
       setFaqs(faqs.filter(f => f._id !== faqId));
-      toast.success('FAQ deleted successfully');
-    } catch (error) {
+      toast.success(response?.message || 'Operation Failed');
+    } catch (error: any) {
       console.error('Failed to delete FAQ:', error);
-      toast.error('Failed to delete FAQ');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
@@ -107,7 +107,7 @@ export default function AdminFAQPage() {
     if (!confirm(confirmMessage)) return;
 
     try {
-      await faqAPI.bulkAction({
+      const response = await faqAPI.bulkAction({
         faq_ids: Array.from(selectedFaqs),
         action,
       });
@@ -124,10 +124,10 @@ export default function AdminFAQPage() {
       }
       
       setSelectedFaqs(new Set());
-      toast.success(`Successfully ${action}ed ${selectedFaqs.size} FAQs`);
-    } catch (error) {
+      toast.success(response?.message || 'Operation Failed');
+    } catch (error: any) {
       console.error('Failed to perform bulk action:', error);
-      toast.error('Failed to perform bulk action');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

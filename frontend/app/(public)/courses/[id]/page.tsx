@@ -164,7 +164,7 @@ const CourseDetailPage = () => {
     } catch (error: any) {
       console.error('Failed to fetch course details:', error);
       // Use backend error message
-      toast.error(error.message || error.detail || 'Failed to load course details');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -186,7 +186,7 @@ const CourseDetailPage = () => {
         setIsEnrolled(true);
         setHasAccess(true);
         // Use backend message if available
-        toast.success(response.message || 'Successfully enrolled in course!');
+        toast.success(response.message || 'Operation Failed');
         router.push(`/learn/${courseId}`);
       } else {
         // Redirect to payment
@@ -195,7 +195,7 @@ const CourseDetailPage = () => {
     } catch (error: any) {
       console.error('Failed to enroll:', error);
       // Use backend error message
-      toast.error(error.message || error.detail || 'Failed to enroll in course');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setEnrolling(false);
     }

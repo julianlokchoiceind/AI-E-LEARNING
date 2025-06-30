@@ -36,9 +36,9 @@ export default function PricingPage() {
       // Create payment method (in production, collect card details)
       // For demo, we'll redirect to a payment collection page
       router.push('/billing/subscribe');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Subscription error:', error);
-      toast.error('Failed to start subscription process');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setIsProcessing(false);
     }

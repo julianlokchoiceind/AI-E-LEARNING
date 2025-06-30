@@ -43,9 +43,9 @@ const CertificateViewPage = () => {
         background_color: cert.background_color,
         accent_color: cert.accent_color,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch certificate:', error);
-      toast.error('Failed to load certificate');
+      toast.error(error.message || 'Operation Failed');
       router.push('/certificates');
     } finally {
       setLoading(false);
@@ -57,10 +57,10 @@ const CertificateViewPage = () => {
       const updated = await certificateAPI.updateCertificate(certificateId, updateData);
       setCertificate(updated);
       setShowEditModal(false);
-      toast.success('Certificate updated successfully');
-    } catch (error) {
+      toast.success(updated.message || 'Operation Failed');
+    } catch (error: any) {
       console.error('Failed to update certificate:', error);
-      toast.error('Failed to update certificate');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

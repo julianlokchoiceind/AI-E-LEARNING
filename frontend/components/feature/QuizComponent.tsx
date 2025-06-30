@@ -44,9 +44,9 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
         } catch (error) {
           // No progress yet, that's okay
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to fetch quiz:', error);
-        toast.error('Failed to load quiz');
+        toast.error(error.message || 'Operation Failed');
       } finally {
         setIsLoading(false);
       }
@@ -125,13 +125,13 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
 
       // Show result message
       if (result.passed) {
-        toast.success(`Congratulations! You passed with ${result.score}%`);
+        toast.success(result.message || 'Operation Failed');
       } else {
-        toast.error(`You scored ${result.score}%. You need ${quiz.config.pass_percentage}% to pass.`);
+        toast.error(result.message || 'Operation Failed');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to submit quiz:', error);
-      toast.error('Failed to submit quiz');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setIsSubmitting(false);
     }

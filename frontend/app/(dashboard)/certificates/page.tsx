@@ -30,9 +30,9 @@ const CertificatesPage = () => {
       const response = await certificateAPI.getMyCertificates(currentPage, 12);
       setCertificates(response.items);
       setTotalPages(response.total_pages);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch certificates:', error);
-      toast.error('Failed to load certificates');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }

@@ -214,7 +214,7 @@ export const useAIChat = ({
       } else if (errorMessage.includes('credit balance')) {
         toast.error('AI service is temporarily unavailable. Please try again later.');
       } else {
-        toast.error('Failed to get AI response. Please try again.');
+        toast.error(errorMessage || 'Operation Failed');
       }
 
       // Add error message to chat
@@ -353,9 +353,9 @@ export const useAIChat = ({
 
       setMessages(historyMessages);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to get conversation history:', error);
-      toast.error('Failed to load conversation history');
+      toast.error(error.message || 'Operation Failed');
     }
   }, []);
 
@@ -373,12 +373,13 @@ export const useAIChat = ({
         throw new Error('Failed to clear conversation history');
       }
 
+      const data = await response.json();
       clearMessages();
-      toast.success('Conversation history cleared');
+      toast.success(data?.message || 'Operation Failed');
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to clear conversation history:', error);
-      toast.error('Failed to clear conversation history');
+      toast.error(error.message || 'Operation Failed');
     }
   }, [clearMessages]);
 

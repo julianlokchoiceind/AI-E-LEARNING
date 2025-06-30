@@ -52,9 +52,9 @@ export default function CourseCheckoutPage() {
         return;
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch course:', error);
-      toast.error('Failed to load course details');
+      toast.error(error.message || 'Operation Failed');
       router.push('/courses');
     } finally {
       setLoading(false);

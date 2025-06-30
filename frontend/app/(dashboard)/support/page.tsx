@@ -63,9 +63,9 @@ export default function SupportPage() {
       const response = await supportAPI.getTickets(params);
       setTickets(response.items);
       setTotalPages(response.total_pages);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch tickets:', error);
-      toast.error('Failed to load support tickets');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -73,14 +73,14 @@ export default function SupportPage() {
 
   const handleCreateTicket = async () => {
     try {
-      const ticket = await supportAPI.createTicket(formData);
-      toast.success('Support ticket created successfully');
+      const response = await supportAPI.createTicket(formData);
+      toast.success(response.message || 'Operation Failed');
       setShowCreateModal(false);
       resetForm();
       fetchTickets(); // Refresh list
     } catch (error: any) {
       console.error('Failed to create ticket:', error);
-      toast.error(error.message || 'Failed to create ticket');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

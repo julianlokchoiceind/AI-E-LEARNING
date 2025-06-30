@@ -84,9 +84,9 @@ export default function CourseApproval() {
         category: categoryFilter
       });
       setCourses(response.data.courses);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch courses:', error);
-      toast.error('Failed to load courses');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -98,11 +98,11 @@ export default function CourseApproval() {
       const response = await approveCourse(courseId);
       
       if (response.success) {
-        toast.success('Course approved successfully');
+        toast.success(response.message || 'Operation Failed');
         await fetchCourses(); // Refresh list
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to approve course');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setActionLoading({ ...actionLoading, [courseId]: false });
     }
@@ -119,14 +119,14 @@ export default function CourseApproval() {
       const response = await rejectCourse(selectedCourse._id, rejectionReason);
       
       if (response.success) {
-        toast.success('Course rejected');
+        toast.success(response.message || 'Operation Failed');
         setShowRejectModal(false);
         setRejectionReason('');
         setSelectedCourse(null);
         await fetchCourses(); // Refresh list
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to reject course');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setActionLoading({ ...actionLoading, [selectedCourse._id]: false });
     }
@@ -138,11 +138,11 @@ export default function CourseApproval() {
       const response = await toggleCourseFree(courseId, !currentStatus);
       
       if (response.success) {
-        toast.success(`Course marked as ${!currentStatus ? 'free' : 'paid'}`);
+        toast.success(response.message || 'Operation Failed');
         await fetchCourses(); // Refresh list
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update course pricing');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setActionLoading({ ...actionLoading, [courseId]: false });
     }

@@ -59,9 +59,9 @@ const CreatorAnalyticsPage = () => {
       setRevenue(revenueData);
       setStudents(studentsData);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch analytics:', error);
-      toast.error('Failed to load analytics');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -70,10 +70,10 @@ const CreatorAnalyticsPage = () => {
   const handleExport = async (reportType: string) => {
     try {
       const result = await exportAnalytics(reportType, timeRange, 'csv');
-      toast.success(`Export generated! Download from: ${result.download_url}`);
-    } catch (error) {
+      toast.success(result.message || 'Operation Failed');
+    } catch (error: any) {
       console.error('Export failed:', error);
-      toast.error('Failed to export analytics');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

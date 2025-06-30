@@ -35,9 +35,9 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success('Certificate downloaded');
-    } catch (error) {
-      toast.error('Failed to download certificate');
+      toast.success('Operation Failed'); // Download doesn't return response
+    } catch (error: any) {
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
@@ -52,8 +52,8 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
       
       window.open(linkedinUrl, '_blank', 'width=600,height=400');
       toast.success('Opening LinkedIn share dialog');
-    } catch (error) {
-      toast.error('Failed to share on LinkedIn');
+    } catch (error: any) {
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

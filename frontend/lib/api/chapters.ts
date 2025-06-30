@@ -1,6 +1,5 @@
 import { API_BASE_URL } from '@/lib/constants/api-endpoints';
 import { StandardResponse } from '@/lib/types/api';
-import { toast } from 'react-hot-toast';
 
 interface ChapterResponse {
   _id: string;
@@ -116,11 +115,9 @@ export const createChapter = async (data: ChapterCreate): Promise<ChapterRespons
     const result: StandardResponse<ChapterResponse> = await response.json();
 
     if (!response.ok || !result.success) {
-      toast.error(result.message || 'Failed to create chapter');
       throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    toast.success(result.message);
     return result.data!;
   } catch (error) {
     console.error('Failed to create chapter:', error);
@@ -148,11 +145,9 @@ export const updateChapter = async (chapterId: string, data: ChapterUpdate): Pro
     const result: StandardResponse<ChapterResponse> = await response.json();
 
     if (!response.ok || !result.success) {
-      toast.error(result.message || 'Failed to update chapter');
       throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    toast.success(result.message);
     return result.data!;
   } catch (error) {
     console.error('Failed to update chapter:', error);
@@ -178,11 +173,8 @@ export const deleteChapter = async (chapterId: string): Promise<void> => {
     const result: StandardResponse<any> = await response.json();
 
     if (!response.ok || !result.success) {
-      toast.error(result.message || 'Failed to delete chapter');
       throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
-
-    toast.success(result.message);
   } catch (error) {
     console.error('Failed to delete chapter:', error);
     throw error;
@@ -209,11 +201,9 @@ export const reorderChapters = async (courseId: string, reorderData: { chapter_o
     const result: StandardResponse<ChaptersListData> = await response.json();
 
     if (!response.ok || !result.success) {
-      toast.error(result.message || 'Failed to reorder chapters');
       throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 
-    toast.success(result.message);
     return result.data!;
   } catch (error) {
     console.error('Failed to reorder chapter:', error);
@@ -237,7 +227,6 @@ export const getChaptersWithLessons = async (courseId: string): Promise<ChapterR
     const result: StandardResponse<{ chapters: any[]; total: number }> = await response.json();
 
     if (!response.ok || !result.success) {
-      toast.error(result.message || 'Failed to fetch chapters with lessons');
       throw new Error(result.message || `HTTP ${response.status}: ${response.statusText}`);
     }
 

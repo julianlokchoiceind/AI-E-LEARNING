@@ -58,9 +58,9 @@ const CreatorDashboard = () => {
         totalRevenue,
         avgRating,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch creator data:', error);
-      toast.error('Failed to load dashboard data');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }

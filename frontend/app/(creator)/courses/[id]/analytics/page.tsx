@@ -50,9 +50,9 @@ const CourseAnalyticsPage = () => {
 
       const data = await response.json();
       setAnalytics(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch analytics:', error);
-      toast.error('Failed to load analytics');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }

@@ -78,7 +78,7 @@ const CourseBuilderPage = () => {
       setChapters(chaptersWithLessons || []);
     } catch (error) {
       console.error('Failed to fetch course data:', error);
-      toast.error('Failed to load course data');
+      toast.error(error.message || 'Operation Failed');
       router.push('/creator/courses');
     } finally {
       setLoading(false);
@@ -96,10 +96,10 @@ const CourseBuilderPage = () => {
     try {
       const response = await createChapter({ course_id: courseId });
       setChapters([...chapters, response]);
-      toast.success('Chapter created successfully');
+      toast.success(response.message || 'Operation Failed');
     } catch (error) {
       console.error('Failed to create chapter:', error);
-      toast.error('Failed to create chapter');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
@@ -128,10 +128,10 @@ const CourseBuilderPage = () => {
       
       // Redirect to lesson editor
       router.push(`/creator/courses/${courseId}/lessons/${response._id}/edit`);
-      toast.success('Lesson created successfully');
+      toast.success(response.message || 'Operation Failed');
     } catch (error) {
       console.error('Failed to create lesson:', error);
-      toast.error('Failed to create lesson');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
@@ -143,12 +143,12 @@ const CourseBuilderPage = () => {
     if (!confirm('Are you sure you want to delete this chapter?')) return;
 
     try {
-      await deleteChapter(chapterId);
+      const response = await deleteChapter(chapterId);
       setChapters(chapters.filter(ch => ch._id !== chapterId));
-      toast.success('Chapter deleted successfully');
-    } catch (error) {
+      toast.success(response?.message || 'Operation Failed');
+    } catch (error: any) {
       console.error('Failed to delete chapter:', error);
-      toast.error('Failed to delete chapter');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
@@ -162,7 +162,7 @@ const CourseBuilderPage = () => {
     try {
       // Import deleteLesson from lessons API
       const { deleteLesson } = await import('@/lib/api/lessons');
-      await deleteLesson(lessonId);
+      const response = await deleteLesson(lessonId);
       
       // Update local state - remove lesson from the chapter
       setChapters(prevChapters => {
@@ -176,10 +176,10 @@ const CourseBuilderPage = () => {
         });
       });
       
-      toast.success('Lesson deleted successfully');
-    } catch (error) {
+      toast.success(response?.message || 'Operation Failed');
+    } catch (error: any) {
       console.error('Failed to delete lesson:', error);
-      toast.error('Failed to delete lesson');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
@@ -214,7 +214,7 @@ const CourseBuilderPage = () => {
       ]);
     } catch (error) {
       console.error('Failed to reorder chapters:', error);
-      toast.error('Failed to reorder chapters');
+      toast.error(error.message || 'Operation Failed');
       // Revert on error
       setChapters(chapters);
     }
@@ -250,10 +250,10 @@ const CourseBuilderPage = () => {
         });
       });
       
-      toast.success('Lesson order updated');
-    } catch (error) {
+      toast.success('Operation Failed'); // reorderLesson doesn't return response
+    } catch (error: any) {
       console.error('Failed to reorder lesson:', error);
-      toast.error('Failed to reorder lesson');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

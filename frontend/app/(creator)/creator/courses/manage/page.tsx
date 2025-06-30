@@ -85,9 +85,9 @@ const CourseManagePage = () => {
         selected: false
       }));
       setCourses(formattedCourses);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch courses:', error);
-      toast.error('Failed to load courses');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -158,16 +158,17 @@ const CourseManagePage = () => {
 
     try {
       // In real app, would have bulk delete endpoint
+      let lastResponse;
       for (const courseId of selectedCourses) {
-        await deleteCourse(courseId);
+        lastResponse = await deleteCourse(courseId);
       }
       
       setCourses(courses.filter(c => !selectedCourses.includes(c.id)));
       setSelectedCourses([]);
-      toast.success(`${selectedCourses.length} courses deleted successfully`);
-    } catch (error) {
+      toast.success(lastResponse?.message || 'Operation Failed');
+    } catch (error: any) {
       console.error('Failed to delete courses:', error);
-      toast.error('Failed to delete some courses');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

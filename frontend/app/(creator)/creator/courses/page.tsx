@@ -32,9 +32,9 @@ const CreatorCoursesPage = () => {
       setLoading(true);
       const response = await getCourses(`creator_id=${user?.id}`);
       setCourses(response.courses || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch courses:', error);
-      toast.error('Failed to load courses');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -54,12 +54,12 @@ const CreatorCoursesPage = () => {
     }
 
     try {
-      await deleteCourse(courseId);
+      const response = await deleteCourse(courseId);
       setCourses(courses.filter(c => c._id !== courseId));
-      toast.success('Course deleted successfully');
-    } catch (error) {
+      toast.success(response.message || 'Operation Failed');
+    } catch (error: any) {
       console.error('Failed to delete course:', error);
-      toast.error('Failed to delete course');
+      toast.error(error.message || 'Operation Failed');
     }
   };
 

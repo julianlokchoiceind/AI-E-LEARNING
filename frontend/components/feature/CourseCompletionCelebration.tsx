@@ -55,7 +55,7 @@ export function CourseCompletionCelebration({
         if (result.success && result.data) {
           setCertificate(result.data);
           setCertificateGenerated(true);
-          toast.success('Certificate generated successfully!');
+          toast.success(result.message || 'Operation Failed');
         }
       }
     } catch (error) {
@@ -80,10 +80,10 @@ export function CourseCompletionCelebration({
       
       setCertificate(cert);
       setCertificateGenerated(true);
-      toast.success('Certificate generated successfully!');
+      toast.success(cert.message || 'Operation Failed');
     } catch (error: any) {
       console.error('Failed to generate certificate:', error);
-      toast.error(error.message || 'Failed to generate certificate');
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }
@@ -106,9 +106,9 @@ export function CourseCompletionCelebration({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success('Certificate downloaded');
-    } catch (error) {
-      toast.error('Failed to download certificate');
+      toast.success('Operation Failed'); // Download doesn't return response
+    } catch (error: any) {
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
@@ -123,8 +123,8 @@ export function CourseCompletionCelebration({
       
       window.open(linkedinUrl, '_blank', 'width=600,height=400');
       toast.success('Opening LinkedIn share dialog');
-    } catch (error) {
-      toast.error('Failed to share on LinkedIn');
+    } catch (error: any) {
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
