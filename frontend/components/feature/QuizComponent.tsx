@@ -3,16 +3,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { Clock, CheckCircle, XCircle, RotateCcw, Trophy } from 'lucide-react';
-import { 
-  Card, 
-  CardHeader, 
-  CardContent,
-  Button,
-  RadioGroup,
-  RadioGroupItem,
-  Label,
-  ProgressBar as Progress
-} from '@/components/ui';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
+import { Label } from '@/components/ui/Label';
+import { ProgressBar as Progress } from '@/components/ui/ProgressBar';
 import { quizAPI, Quiz, QuizProgress, QuizAnswerSubmit, QuizAttemptResult } from '@/lib/api/quizzes';
 
 interface QuizComponentProps {
