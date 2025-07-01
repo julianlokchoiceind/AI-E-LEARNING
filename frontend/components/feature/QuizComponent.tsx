@@ -7,7 +7,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { Label } from '@/components/ui/Label';
-import { Progress } from '@/components/ui/Progress';
+import { ProgressBar as Progress } from '@/components/ui/ProgressBar';
 import { quizAPI, Quiz, QuizProgress, QuizAnswerSubmit, QuizAttemptResult } from '@/lib/api/quizzes';
 
 interface QuizComponentProps {
