@@ -76,7 +76,7 @@ const CourseBuilderPage = () => {
       // Fetch chapters with lessons
       const chaptersWithLessons = await getChaptersWithLessons(courseId);
       setChapters(chaptersWithLessons || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch course data:', error);
       toast.error(error.message || 'Operation Failed');
       router.push('/creator/courses');
@@ -97,7 +97,7 @@ const CourseBuilderPage = () => {
       const response = await createChapter({ course_id: courseId });
       setChapters([...chapters, response]);
       toast.success(response.message || 'Operation Failed');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create chapter:', error);
       toast.error(error.message || 'Operation Failed');
     }
@@ -129,7 +129,7 @@ const CourseBuilderPage = () => {
       // Redirect to lesson editor
       router.push(`/creator/courses/${courseId}/lessons/${response._id}/edit`);
       toast.success(response.message || 'Operation Failed');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create lesson:', error);
       toast.error(error.message || 'Operation Failed');
     }
@@ -145,7 +145,7 @@ const CourseBuilderPage = () => {
     try {
       const response = await deleteChapter(chapterId);
       setChapters(chapters.filter(ch => ch._id !== chapterId));
-      toast.success(response?.message || 'Operation Failed');
+      toast.success(response.message || 'Operation Failed');
     } catch (error: any) {
       console.error('Failed to delete chapter:', error);
       toast.error(error.message || 'Operation Failed');
@@ -176,7 +176,7 @@ const CourseBuilderPage = () => {
         });
       });
       
-      toast.success(response?.message || 'Operation Failed');
+      toast.success(response.message || 'Operation Failed');
     } catch (error: any) {
       console.error('Failed to delete lesson:', error);
       toast.error(error.message || 'Operation Failed');
@@ -212,7 +212,7 @@ const CourseBuilderPage = () => {
         updateChapter(newChapters[index]._id, { order: newChapters[index].order }),
         updateChapter(newChapters[swapIndex]._id, { order: newChapters[swapIndex].order })
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to reorder chapters:', error);
       toast.error(error.message || 'Operation Failed');
       // Revert on error
@@ -250,7 +250,7 @@ const CourseBuilderPage = () => {
         });
       });
       
-      toast.success('Operation Failed'); // reorderLesson doesn't return response
+      toast.success(response.message || 'Operation Failed'); // reorderLesson doesn't return response
     } catch (error: any) {
       console.error('Failed to reorder lesson:', error);
       toast.error(error.message || 'Operation Failed');

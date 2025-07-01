@@ -17,11 +17,9 @@ from app.schemas.payment import (
     PaymentIntentResponse,
     PaymentHistoryResponse,
     SubscriptionResponse,
-    PaymentStandardResponse,
-    SubscriptionStandardResponse,
-    PaymentHistoryStandardResponse,
     StripeWebhookEvent
 )
+from app.schemas.base import StandardResponse
 from app.services.payment_service import PaymentService
 from app.services.course_service import CourseService
 from app.core.exceptions import NotFoundException
@@ -34,7 +32,7 @@ logger = logging.getLogger(__name__)
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 
-@router.post("/course/{course_id}", response_model=PaymentIntentResponse)
+@router.post("/course/{course_id}", response_model=StandardResponse[PaymentIntentResponse])
 async def create_course_payment(
     course_id: str,
     payment_data: CoursePaymentRequest,
@@ -79,7 +77,11 @@ async def create_course_payment(
             payment_method_id=payment_data.payment_method_id
         )
         
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="Payment intent created successfully"
+        )
         
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -93,7 +95,7 @@ async def create_course_payment(
         )
 
 
-@router.post("/subscription", response_model=SubscriptionStandardResponse)
+@router.post("/subscription", response_model=StandardResponse[SubscriptionResponse])
 async def create_subscription(
     subscription_data: SubscriptionRequest,
     current_user: User = Depends(get_current_user)
@@ -126,10 +128,10 @@ async def create_subscription(
             plan_type=subscription_data.plan_type
         )
         
-        return SubscriptionStandardResponse(
+        return StandardResponse(
             success=True,
-            message="Subscription created successfully",
-            data=subscription
+            data=subscription,
+            message="Subscription created successfully"
         )
         
     except HTTPException as e:
@@ -142,7 +144,7 @@ async def create_subscription(
         )
 
 
-@router.get("/history", response_model=PaymentHistoryStandardResponse)
+@router.get("/history", response_model=StandardResponse[PaymentHistoryResponse])
 async def get_payment_history(
     limit: int = 20,
     offset: int = 0,
@@ -164,10 +166,10 @@ async def get_payment_history(
             offset=offset
         )
         
-        return PaymentHistoryStandardResponse(
+        return StandardResponse(
             success=True,
-            message="Payment history retrieved",
-            data=history
+            data=history,
+            message="Payment history retrieved successfully"
         )
         
     except Exception as e:
@@ -178,7 +180,7 @@ async def get_payment_history(
         )
 
 
-@router.post("/cancel", response_model=SubscriptionStandardResponse)
+@router.post("/cancel", response_model=StandardResponse[SubscriptionResponse])
 async def cancel_subscription(
     cancel_data: SubscriptionCancelRequest,
     current_user: User = Depends(get_current_user)
@@ -208,10 +210,10 @@ async def cancel_subscription(
             cancel_at_period_end=cancel_data.cancel_at_period_end
         )
         
-        return SubscriptionStandardResponse(
+        return StandardResponse(
             success=True,
-            message=result["message"],
-            data=result
+            data=result,
+            message=result.get("message", "Subscription cancelled successfully")
         )
         
     except HTTPException as e:
@@ -281,7 +283,7 @@ async def stripe_webhook(
         )
 
 
-@router.get("/subscription/status")
+@router.get("/subscription/status", response_model=StandardResponse[dict])
 async def get_subscription_status(
     current_user: User = Depends(get_current_user)
 ):
@@ -296,19 +298,25 @@ async def get_subscription_status(
     """
     try:
         if not current_user.subscription:
-            return {
+            subscription_data = {
                 "type": "free",
                 "status": "inactive",
                 "has_subscription": False
             }
+        else:
+            subscription_data = {
+                "type": current_user.subscription.get("type", "free"),
+                "status": current_user.subscription.get("status", "inactive"),
+                "current_period_end": current_user.subscription.get("current_period_end"),
+                "cancel_at_period_end": current_user.subscription.get("cancel_at_period_end", False),
+                "has_subscription": current_user.subscription.get("status") == "active"
+            }
         
-        return {
-            "type": current_user.subscription.get("type", "free"),
-            "status": current_user.subscription.get("status", "inactive"),
-            "current_period_end": current_user.subscription.get("current_period_end"),
-            "cancel_at_period_end": current_user.subscription.get("cancel_at_period_end", False),
-            "has_subscription": current_user.subscription.get("status") == "active"
-        }
+        return StandardResponse(
+            success=True,
+            data=subscription_data,
+            message="Subscription status retrieved successfully"
+        )
         
     except Exception as e:
         logger.error(f"Error fetching subscription status: {str(e)}")

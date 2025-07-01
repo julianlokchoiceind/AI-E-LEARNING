@@ -25,6 +25,18 @@ const nextConfig = {
   
   // Bundle optimization
   webpack: (config, { isServer }) => {
+    // Explicit path resolution for production builds
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname),
+      '@/components': require('path').resolve(__dirname, 'components'),
+      '@/lib': require('path').resolve(__dirname, 'lib'),
+      '@/hooks': require('path').resolve(__dirname, 'hooks'),
+      '@/types': require('path').resolve(__dirname, 'types'),
+      '@/stores': require('path').resolve(__dirname, 'stores'),
+      '@/styles': require('path').resolve(__dirname, 'styles'),
+    };
+    
     // Optimize bundle size
     if (!isServer) {
       config.resolve.fallback = {

@@ -13,12 +13,9 @@ from app.schemas.review import (
     ReviewReportRequest,
     InstructorResponseRequest,
     ReviewModerationRequest,
-    ReviewSearchQuery,
-    ReviewStandardResponse,
-    ReviewListStandardResponse,
-    ReviewStatsStandardResponse,
-    CourseRatingSummaryStandardResponse
+    ReviewSearchQuery
 )
+from app.schemas.base import StandardResponse
 from app.services.review_service import ReviewService
 from app.core.deps import get_current_user, get_admin_user, get_current_user_optional
 
@@ -26,7 +23,7 @@ router = APIRouter()
 review_service = ReviewService()
 
 
-@router.post("/courses/{course_id}/reviews", response_model=ReviewStandardResponse)
+@router.post("/courses/{course_id}/reviews", response_model=StandardResponse[dict])
 async def create_review(
     course_id: str,
     review_data: ReviewCreateRequest,
@@ -35,11 +32,11 @@ async def create_review(
     """Create a review for a course"""
     try:
         review = await review_service.create_review(course_id, current_user, review_data)
-        return {
-            "success": True,
-            "data": review_service._format_review(review),
-            "message": "Review submitted successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=review_service._format_review(review),
+            message="Review submitted successfully"
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -52,7 +49,7 @@ async def create_review(
         )
 
 
-@router.get("/courses/{course_id}/reviews", response_model=ReviewListStandardResponse)
+@router.get("/courses/{course_id}/reviews", response_model=StandardResponse[dict])
 async def get_course_reviews(
     course_id: str,
     rating: Optional[int] = Query(None, ge=1, le=5),
@@ -76,11 +73,11 @@ async def get_course_reviews(
         )
         
         result = await review_service.get_reviews(query, current_user)
-        return {
-            "success": True,
-            "data": result,
-            "message": "Reviews retrieved successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="Reviews retrieved successfully"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -88,16 +85,16 @@ async def get_course_reviews(
         )
 
 
-@router.get("/courses/{course_id}/reviews/stats", response_model=ReviewStatsStandardResponse)
+@router.get("/courses/{course_id}/reviews/stats", response_model=StandardResponse[dict])
 async def get_course_review_stats(course_id: str):
     """Get review statistics for a course"""
     try:
         stats = await review_service.get_course_stats(course_id)
-        return {
-            "success": True,
-            "data": stats,
-            "message": "Review statistics retrieved successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=stats,
+            message="Review statistics retrieved successfully"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -105,7 +102,7 @@ async def get_course_review_stats(course_id: str):
         )
 
 
-@router.get("/users/{user_id}/reviews", response_model=ReviewListStandardResponse)
+@router.get("/users/{user_id}/reviews", response_model=StandardResponse[dict])
 async def get_user_reviews(
     user_id: str,
     sort_by: str = Query("created_at", pattern="^(created_at|rating|helpful_count)$"),
@@ -125,11 +122,11 @@ async def get_user_reviews(
         )
         
         result = await review_service.get_reviews(query, current_user)
-        return {
-            "success": True,
-            "data": result,
-            "message": "User reviews retrieved successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="User reviews retrieved successfully"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -137,7 +134,7 @@ async def get_user_reviews(
         )
 
 
-@router.get("/reviews/{review_id}", response_model=ReviewStandardResponse)
+@router.get("/reviews/{review_id}", response_model=StandardResponse[dict])
 async def get_review(
     review_id: str,
     current_user: Optional[User] = Depends(get_current_user_optional)
@@ -161,11 +158,11 @@ async def get_review(
             })
             review_dict["user_vote"] = vote.is_helpful if vote else None
         
-        return {
-            "success": True,
-            "data": review_dict,
-            "message": "Review retrieved successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=review_dict,
+            message="Review retrieved successfully"
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -175,7 +172,7 @@ async def get_review(
         )
 
 
-@router.put("/reviews/{review_id}", response_model=ReviewStandardResponse)
+@router.put("/reviews/{review_id}", response_model=StandardResponse[dict])
 async def update_review(
     review_id: str,
     update_data: ReviewUpdateRequest,
@@ -190,11 +187,11 @@ async def update_review(
                 detail="Review not found"
             )
         
-        return {
-            "success": True,
-            "data": review_service._format_review(review),
-            "message": "Review updated successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=review_service._format_review(review),
+            message="Review updated successfully"
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -209,7 +206,7 @@ async def update_review(
         )
 
 
-@router.delete("/reviews/{review_id}")
+@router.delete("/reviews/{review_id}", response_model=StandardResponse[dict])
 async def delete_review(
     review_id: str,
     current_user: User = Depends(get_current_user)
@@ -223,10 +220,11 @@ async def delete_review(
                 detail="Review not found"
             )
         
-        return {
-            "success": True,
-            "message": "Review deleted successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=None,
+            message="Review deleted successfully"
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -241,7 +239,7 @@ async def delete_review(
         )
 
 
-@router.post("/reviews/{review_id}/vote", response_model=ReviewStandardResponse)
+@router.post("/reviews/{review_id}/vote", response_model=StandardResponse[dict])
 async def vote_review(
     review_id: str,
     vote_data: ReviewVoteRequest,
@@ -250,11 +248,11 @@ async def vote_review(
     """Vote on review helpfulness"""
     try:
         review = await review_service.vote_review(review_id, current_user, vote_data)
-        return {
-            "success": True,
-            "data": review_service._format_review(review),
-            "message": "Vote recorded successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=review_service._format_review(review),
+            message="Vote recorded successfully"
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -267,7 +265,7 @@ async def vote_review(
         )
 
 
-@router.post("/reviews/{review_id}/report")
+@router.post("/reviews/{review_id}/report", response_model=StandardResponse[dict])
 async def report_review(
     review_id: str,
     report_data: ReviewReportRequest,
@@ -276,10 +274,11 @@ async def report_review(
     """Report a review for moderation"""
     try:
         success = await review_service.report_review(review_id, current_user, report_data)
-        return {
-            "success": True,
-            "message": "Review reported successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=None,
+            message="Review reported successfully"
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -292,7 +291,7 @@ async def report_review(
         )
 
 
-@router.post("/reviews/{review_id}/respond", response_model=ReviewStandardResponse)
+@router.post("/reviews/{review_id}/respond", response_model=StandardResponse[dict])
 async def respond_to_review(
     review_id: str,
     response_data: InstructorResponseRequest,
@@ -301,11 +300,11 @@ async def respond_to_review(
     """Add instructor response to review"""
     try:
         review = await review_service.respond_to_review(review_id, current_user, response_data)
-        return {
-            "success": True,
-            "data": review_service._format_review(review),
-            "message": "Response added successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=review_service._format_review(review),
+            message="Response added successfully"
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -318,7 +317,7 @@ async def respond_to_review(
         )
 
 
-@router.put("/reviews/{review_id}/moderate", response_model=ReviewStandardResponse)
+@router.put("/reviews/{review_id}/moderate", response_model=StandardResponse[dict])
 async def moderate_review(
     review_id: str,
     moderation_data: ReviewModerationRequest,
@@ -327,11 +326,11 @@ async def moderate_review(
     """Moderate a review (admin only)"""
     try:
         review = await review_service.moderate_review(review_id, current_user, moderation_data)
-        return {
-            "success": True,
-            "data": review_service._format_review(review),
-            "message": "Review moderated successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=review_service._format_review(review),
+            message="Review moderated successfully"
+        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

@@ -15,18 +15,17 @@ from app.schemas.certificate import (
     CertificateGenerateRequest,
     CertificateUpdate,
     CertificateRevoke,
-    CertificateStandardResponse,
-    CertificateListResponse,
     CertificateVerification,
     CertificateStats,
     LinkedInShareData,
     CertificateWithDetails
 )
+from app.schemas.base import StandardResponse
 
 router = APIRouter()
 
 
-@router.post("/generate", response_model=CertificateStandardResponse)
+@router.post("/generate", response_model=StandardResponse[dict])
 async def generate_certificate(
     request: CertificateGenerateRequest,
     current_user: User = Depends(get_current_user)
@@ -61,7 +60,7 @@ async def generate_certificate(
         # Get detailed certificate
         details = await CertificateService.get_certificate_with_details(str(certificate.id))
         
-        return CertificateStandardResponse(
+        return StandardResponse(
             success=True,
             data=details,
             message="Certificate generated successfully"
@@ -73,7 +72,7 @@ async def generate_certificate(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/my-certificates", response_model=CertificateListResponse)
+@router.get("/my-certificates", response_model=StandardResponse[dict])
 async def get_my_certificates(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=50),
@@ -98,19 +97,23 @@ async def get_my_certificates(
         
         total_pages = (total + per_page - 1) // per_page
         
-        return CertificateListResponse(
-            items=certificates,
-            total=total,
-            page=page,
-            per_page=per_page,
-            total_pages=total_pages
+        return StandardResponse(
+            success=True,
+            data={
+                "items": certificates,
+                "total": total,
+                "page": page,
+                "per_page": per_page,
+                "total_pages": total_pages
+            },
+            message="Certificates retrieved successfully"
         )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/my-stats", response_model=CertificateStats)
+@router.get("/my-stats", response_model=StandardResponse[dict])
 async def get_my_certificate_stats(
     current_user: User = Depends(get_current_user)
 ):
@@ -119,13 +122,17 @@ async def get_my_certificate_stats(
         stats = await CertificateService.get_user_certificate_stats(
             user_id=str(current_user.id)
         )
-        return stats
+        return StandardResponse(
+            success=True,
+            data=stats,
+            message="Certificate statistics retrieved successfully"
+        )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/verify/{verification_code}", response_model=CertificateVerification)
+@router.get("/verify/{verification_code}", response_model=StandardResponse[dict])
 async def verify_certificate(verification_code: str):
     """
     Verify a certificate by its verification code.
@@ -133,13 +140,17 @@ async def verify_certificate(verification_code: str):
     """
     try:
         verification = await CertificateService.verify_certificate(verification_code)
-        return verification
+        return StandardResponse(
+            success=True,
+            data=verification,
+            message="Certificate verification completed"
+        )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{certificate_id}", response_model=CertificateWithDetails)
+@router.get("/{certificate_id}", response_model=StandardResponse[dict])
 async def get_certificate(
     certificate_id: str,
     current_user: Optional[User] = Depends(get_current_user)
@@ -155,7 +166,11 @@ async def get_certificate(
             if not current_user or str(current_user.id) != certificate.user_id:
                 raise HTTPException(status_code=403, detail="Certificate is private")
         
-        return certificate
+        return StandardResponse(
+            success=True,
+            data=certificate,
+            message="Certificate retrieved successfully"
+        )
         
     except HTTPException:
         raise
@@ -163,7 +178,7 @@ async def get_certificate(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{certificate_id}", response_model=CertificateStandardResponse)
+@router.put("/{certificate_id}", response_model=StandardResponse[dict])
 async def update_certificate(
     certificate_id: str,
     update_data: CertificateUpdate,
@@ -183,7 +198,7 @@ async def update_certificate(
         # Get detailed certificate
         details = await CertificateService.get_certificate_with_details(str(certificate.id))
         
-        return CertificateStandardResponse(
+        return StandardResponse(
             success=True,
             data=details,
             message="Certificate updated successfully"
@@ -195,7 +210,7 @@ async def update_certificate(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{certificate_id}/linkedin", response_model=LinkedInShareData)
+@router.get("/{certificate_id}/linkedin", response_model=StandardResponse[dict])
 async def get_linkedin_share_data(
     certificate_id: str,
     current_user: User = Depends(get_current_user)
@@ -211,7 +226,11 @@ async def get_linkedin_share_data(
             raise HTTPException(status_code=403, detail="Not your certificate")
         
         share_data = await CertificateService.generate_linkedin_share_data(certificate_id)
-        return share_data
+        return StandardResponse(
+            success=True,
+            data=share_data.dict(),
+            message="LinkedIn share data retrieved successfully"
+        )
         
     except HTTPException:
         raise
@@ -257,7 +276,7 @@ async def download_certificate(
 
 
 # Admin endpoints
-@router.post("/admin/revoke/{certificate_id}", response_model=CertificateStandardResponse)
+@router.post("/admin/revoke/{certificate_id}", response_model=StandardResponse[dict])
 async def revoke_certificate(
     certificate_id: str,
     revoke_data: CertificateRevoke,
@@ -277,7 +296,7 @@ async def revoke_certificate(
         if not certificate:
             raise HTTPException(status_code=404, detail="Certificate not found")
         
-        return CertificateStandardResponse(
+        return StandardResponse(
             success=True,
             data=None,
             message="Certificate revoked successfully"
@@ -289,7 +308,7 @@ async def revoke_certificate(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/admin/all", response_model=CertificateListResponse)
+@router.get("/admin/all", response_model=StandardResponse[dict])
 async def get_all_certificates(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -322,12 +341,16 @@ async def get_all_certificates(
         total = await Certificate.find(filter_dict).count()
         total_pages = (total + per_page - 1) // per_page
         
-        return CertificateListResponse(
-            items=detailed_certs,
-            total=total,
-            page=page,
-            per_page=per_page,
-            total_pages=total_pages
+        return StandardResponse(
+            success=True,
+            data={
+                "items": detailed_certs,
+                "total": total,
+                "page": page,
+                "per_page": per_page,
+                "total_pages": total_pages
+            },
+            message="Certificates retrieved successfully"
         )
         
     except Exception as e:

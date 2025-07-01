@@ -14,6 +14,7 @@ from app.schemas.admin import (
     AdminDashboardStats,
     PendingReviewResponse
 )
+from app.schemas.base import StandardResponse
 from app.services.course_service import CourseService
 from app.services.admin_service import AdminService
 from app.core.exceptions import NotFoundException, ForbiddenException
@@ -23,7 +24,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-@router.get("/dashboard/stats", response_model=AdminDashboardStats)
+@router.get("/dashboard/stats", response_model=StandardResponse[AdminDashboardStats])
 async def get_admin_dashboard_stats(
     current_admin: User = Depends(get_current_admin)
 ):
@@ -38,13 +39,17 @@ async def get_admin_dashboard_stats(
     """
     try:
         stats = await AdminService.get_dashboard_stats()
-        return stats
+        return StandardResponse(
+            success=True,
+            data=stats,
+            message="Dashboard stats retrieved successfully"
+        )
     except Exception as e:
         logger.error(f"Error fetching admin stats: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch dashboard stats")
 
 
-@router.get("/courses/pending-review", response_model=List[PendingReviewResponse])
+@router.get("/courses/pending-review", response_model=StandardResponse[List[PendingReviewResponse]])
 async def get_pending_review_courses(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -57,13 +62,17 @@ async def get_pending_review_courses(
     """
     try:
         courses = await AdminService.get_pending_review_courses(page, per_page)
-        return courses
+        return StandardResponse(
+            success=True,
+            data=courses,
+            message="Pending review courses retrieved successfully"
+        )
     except Exception as e:
         logger.error(f"Error fetching pending courses: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch pending courses")
 
 
-@router.post("/courses/{course_id}/approve", response_model=CourseApprovalResponse)
+@router.post("/courses/{course_id}/approve", response_model=StandardResponse[CourseApprovalResponse])
 async def approve_course(
     course_id: str,
     current_admin: User = Depends(get_current_admin)
@@ -80,7 +89,11 @@ async def approve_course(
     """
     try:
         result = await AdminService.approve_course(course_id, current_admin)
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="Course approved successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -88,7 +101,7 @@ async def approve_course(
         raise HTTPException(status_code=500, detail="Failed to approve course")
 
 
-@router.post("/courses/{course_id}/reject", response_model=CourseApprovalResponse)
+@router.post("/courses/{course_id}/reject", response_model=StandardResponse[CourseApprovalResponse])
 async def reject_course(
     course_id: str,
     rejection: CourseApprovalRequest,
@@ -116,7 +129,11 @@ async def reject_course(
             rejection.feedback, 
             current_admin
         )
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="Course rejected successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -124,7 +141,7 @@ async def reject_course(
         raise HTTPException(status_code=500, detail="Failed to reject course")
 
 
-@router.put("/courses/{course_id}/status")
+@router.put("/courses/{course_id}/status", response_model=StandardResponse[dict])
 async def update_course_status(
     course_id: str,
     status: CourseStatus,
@@ -141,7 +158,11 @@ async def update_course_status(
     """
     try:
         result = await AdminService.update_course_status(course_id, status, current_admin)
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="Course status updated successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -149,7 +170,7 @@ async def update_course_status(
         raise HTTPException(status_code=500, detail="Failed to update course status")
 
 
-@router.put("/courses/{course_id}/pricing")
+@router.put("/courses/{course_id}/pricing", response_model=StandardResponse[dict])
 async def update_course_pricing(
     course_id: str,
     is_free: bool,
@@ -171,7 +192,11 @@ async def update_course_pricing(
             price, 
             current_admin
         )
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="Course pricing updated successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -179,7 +204,7 @@ async def update_course_pricing(
         raise HTTPException(status_code=500, detail="Failed to update course pricing")
 
 
-@router.get("/users/creators", response_model=List[dict])
+@router.get("/users/creators", response_model=StandardResponse[List[dict]])
 async def list_content_creators(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -196,13 +221,17 @@ async def list_content_creators(
     """
     try:
         creators = await AdminService.list_content_creators(page, per_page)
-        return creators
+        return StandardResponse(
+            success=True,
+            data=creators,
+            message="Content creators retrieved successfully"
+        )
     except Exception as e:
         logger.error(f"Error listing creators: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to list creators")
 
 
-@router.post("/courses/bulk-approve")
+@router.post("/courses/bulk-approve", response_model=StandardResponse[dict])
 async def bulk_approve_courses(
     course_ids: List[str],
     current_admin: User = Depends(get_current_admin)
@@ -214,7 +243,11 @@ async def bulk_approve_courses(
     """
     try:
         results = await AdminService.bulk_approve_courses(course_ids, current_admin)
-        return results
+        return StandardResponse(
+            success=True,
+            data=results,
+            message="Courses approved successfully"
+        )
     except Exception as e:
         logger.error(f"Error bulk approving courses: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to bulk approve courses")
@@ -222,7 +255,7 @@ async def bulk_approve_courses(
 
 # User Management Endpoints
 
-@router.get("/users")
+@router.get("/users", response_model=StandardResponse[List[dict]])
 async def list_users(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -249,13 +282,17 @@ async def list_users(
             premium_only=premium_only,
             search=search
         )
-        return users
+        return StandardResponse(
+            success=True,
+            data=users,
+            message="Users retrieved successfully"
+        )
     except Exception as e:
         logger.error(f"Error listing users: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to list users")
 
 
-@router.put("/users/{user_id}/premium")
+@router.put("/users/{user_id}/premium", response_model=StandardResponse[dict])
 async def toggle_user_premium(
     user_id: str,
     is_premium: bool,
@@ -277,7 +314,11 @@ async def toggle_user_premium(
             is_premium=is_premium,
             admin=current_admin
         )
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="User premium status updated successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -285,7 +326,7 @@ async def toggle_user_premium(
         raise HTTPException(status_code=500, detail="Failed to update premium status")
 
 
-@router.put("/users/{user_id}/role")
+@router.put("/users/{user_id}/role", response_model=StandardResponse[dict])
 async def update_user_role(
     user_id: str,
     role: str = Query(..., pattern="^(student|creator|admin)$"),
@@ -307,7 +348,11 @@ async def update_user_role(
             new_role=role,
             admin=current_admin
         )
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="User role updated successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -315,7 +360,7 @@ async def update_user_role(
         raise HTTPException(status_code=500, detail="Failed to update user role")
 
 
-@router.delete("/users/{user_id}")
+@router.delete("/users/{user_id}", response_model=StandardResponse[dict])
 async def delete_user(
     user_id: str,
     current_admin: User = Depends(get_current_admin)
@@ -335,7 +380,11 @@ async def delete_user(
             user_id=user_id,
             admin=current_admin
         )
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="User deleted successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -343,7 +392,7 @@ async def delete_user(
         raise HTTPException(status_code=500, detail="Failed to delete user")
 
 
-@router.post("/users/bulk-action")
+@router.post("/users/bulk-action", response_model=StandardResponse[dict])
 async def bulk_user_action(
     user_ids: List[str],
     action: str = Query(..., pattern="^(delete|update_role|toggle_premium)$"),
@@ -367,7 +416,11 @@ async def bulk_user_action(
             data=data,
             admin=current_admin
         )
-        return results
+        return StandardResponse(
+            success=True,
+            data=results,
+            message="Bulk action completed successfully"
+        )
     except Exception as e:
         logger.error(f"Error in bulk user action: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to perform bulk action")
@@ -375,7 +428,7 @@ async def bulk_user_action(
 
 # Payment Management Endpoints
 
-@router.get("/payments")
+@router.get("/payments", response_model=StandardResponse[List[dict]])
 async def list_payments(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -404,13 +457,17 @@ async def list_payments(
             date_from=date_from,
             date_to=date_to
         )
-        return payments
+        return StandardResponse(
+            success=True,
+            data=payments,
+            message="Payments retrieved successfully"
+        )
     except Exception as e:
         logger.error(f"Error listing payments: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to list payments")
 
 
-@router.post("/payments/{payment_id}/refund")
+@router.post("/payments/{payment_id}/refund", response_model=StandardResponse[dict])
 async def refund_payment(
     payment_id: str,
     amount: Optional[float] = None,
@@ -434,7 +491,11 @@ async def refund_payment(
             reason=reason,
             admin=current_admin
         )
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="Payment refunded successfully"
+        )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -444,7 +505,7 @@ async def refund_payment(
 
 # Analytics Endpoints
 
-@router.get("/analytics/revenue")
+@router.get("/analytics/revenue", response_model=StandardResponse[dict])
 async def get_revenue_analytics(
     period: str = Query("month", pattern="^(day|week|month|year)$"),
     date_from: Optional[str] = Query(None),
@@ -467,13 +528,17 @@ async def get_revenue_analytics(
             date_from=date_from,
             date_to=date_to
         )
-        return analytics
+        return StandardResponse(
+            success=True,
+            data=analytics,
+            message="Revenue analytics retrieved successfully"
+        )
     except Exception as e:
         logger.error(f"Error fetching revenue analytics: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch revenue analytics")
 
 
-@router.get("/analytics/users")
+@router.get("/analytics/users", response_model=StandardResponse[dict])
 async def get_user_analytics(
     current_admin: User = Depends(get_current_admin)
 ):
@@ -489,7 +554,11 @@ async def get_user_analytics(
     """
     try:
         analytics = await AdminService.get_user_analytics()
-        return analytics
+        return StandardResponse(
+            success=True,
+            data=analytics,
+            message="User analytics retrieved successfully"
+        )
     except Exception as e:
         logger.error(f"Error fetching user analytics: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch user analytics")

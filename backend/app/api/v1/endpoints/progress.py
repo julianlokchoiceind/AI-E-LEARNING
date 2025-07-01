@@ -6,17 +6,12 @@ from app.models.enrollment import Enrollment
 from app.core.deps import get_current_user
 from app.services.progress_service import progress_service
 from app.services.certificate_service import CertificateService
-from app.schemas.progress import (
-    ProgressResponse,
-    ProgressListResponse,
-    VideoProgressUpdate,
-    MessageResponse
-)
-from app.schemas.certificate import CertificateStandardResponse
+from app.schemas.progress import VideoProgressUpdate
+from app.schemas.base import StandardResponse
 
 router = APIRouter()
 
-@router.post("/lessons/{lesson_id}/start", response_model=ProgressResponse, status_code=status.HTTP_200_OK)
+@router.post("/lessons/{lesson_id}/start", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
 async def start_lesson(
     lesson_id: str,
     current_user: User = Depends(get_current_user)
@@ -24,7 +19,7 @@ async def start_lesson(
     """Start a lesson and create initial progress record."""
     try:
         progress = await progress_service.start_lesson(lesson_id, str(current_user.id))
-        return ProgressResponse(
+        return StandardResponse(
             success=True,
             data=progress,
             message="Lesson started successfully"
@@ -35,7 +30,7 @@ async def start_lesson(
             detail=str(e)
         )
 
-@router.put("/lessons/{lesson_id}/progress", response_model=ProgressResponse, status_code=status.HTTP_200_OK)
+@router.put("/lessons/{lesson_id}/progress", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
 async def update_video_progress(
     lesson_id: str,
     update_data: VideoProgressUpdate,
@@ -54,7 +49,7 @@ async def update_video_progress(
         if progress.is_completed:
             message = "Lesson completed! Next lesson unlocked."
         
-        return ProgressResponse(
+        return StandardResponse(
             success=True,
             data=progress,
             message=message
@@ -65,7 +60,7 @@ async def update_video_progress(
             detail=str(e)
         )
 
-@router.post("/lessons/{lesson_id}/complete", response_model=ProgressResponse, status_code=status.HTTP_200_OK)
+@router.post("/lessons/{lesson_id}/complete", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
 async def complete_lesson(
     lesson_id: str,
     current_user: User = Depends(get_current_user)
@@ -73,7 +68,7 @@ async def complete_lesson(
     """Mark a lesson as completed."""
     try:
         progress = await progress_service.complete_lesson(lesson_id, str(current_user.id))
-        return ProgressResponse(
+        return StandardResponse(
             success=True,
             data=progress,
             message="Lesson marked as completed"
@@ -84,7 +79,7 @@ async def complete_lesson(
             detail=str(e)
         )
 
-@router.get("/lessons/{lesson_id}/progress", response_model=ProgressResponse, status_code=status.HTTP_200_OK)
+@router.get("/lessons/{lesson_id}/progress", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
 async def get_lesson_progress(
     lesson_id: str,
     current_user: User = Depends(get_current_user)
@@ -98,13 +93,13 @@ async def get_lesson_progress(
             detail="Progress not found"
         )
     
-    return ProgressResponse(
+    return StandardResponse(
         success=True,
         data=progress,
         message="Progress retrieved successfully"
     )
 
-@router.get("/courses/{course_id}/progress", response_model=ProgressListResponse, status_code=status.HTTP_200_OK)
+@router.get("/courses/{course_id}/progress", response_model=StandardResponse[list], status_code=status.HTTP_200_OK)
 async def get_course_progress(
     course_id: str,
     current_user: User = Depends(get_current_user)
@@ -112,14 +107,14 @@ async def get_course_progress(
     """Get all lesson progress for a course."""
     progress_list = await progress_service.get_course_progress(course_id, str(current_user.id))
     
-    return ProgressListResponse(
+    return StandardResponse(
         success=True,
         data=progress_list,
         message="Course progress retrieved successfully"
     )
 
 
-@router.post("/courses/{course_id}/check-completion", response_model=CertificateStandardResponse)
+@router.post("/courses/{course_id}/check-completion", response_model=StandardResponse[dict])
 async def check_course_completion(
     course_id: str,
     current_user: User = Depends(get_current_user)
@@ -153,15 +148,15 @@ async def check_course_completion(
             # Get detailed certificate
             details = await CertificateService.get_certificate_with_details(str(certificate.id))
             
-            return CertificateStandardResponse(
+            return StandardResponse(
                 success=True,
                 data=details,
                 message="Congratulations! Your course completion certificate has been issued."
             )
         else:
-            return CertificateStandardResponse(
+            return StandardResponse(
                 success=False,
-                data=None,
+                data={},
                 message="Course not yet completed or certificate already issued."
             )
             

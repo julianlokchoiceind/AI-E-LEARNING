@@ -6,10 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from beanie import PydanticObjectId
 
 from app.models.user import User
-from app.schemas.quiz import (
-    QuizCreate, QuizUpdate, QuizResponse, QuizInDB,
-    QuizAnswerSubmit, QuizAttemptResult, QuizProgressResponse
-)
+from app.schemas.quiz import QuizCreate, QuizUpdate, QuizAnswerSubmit
+from app.schemas.base import StandardResponse
 from app.api.deps import get_current_user
 from app.services.quiz_service import QuizService
 from app.core.exceptions import NotFoundError, ForbiddenError, BadRequestError
@@ -17,11 +15,11 @@ from app.core.exceptions import NotFoundError, ForbiddenError, BadRequestError
 router = APIRouter()
 
 
-@router.post("/", response_model=QuizInDB, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=StandardResponse[dict], status_code=status.HTTP_201_CREATED)
 async def create_quiz(
     quiz_data: QuizCreate,
     current_user: User = Depends(get_current_user)
-) -> QuizInDB:
+) -> StandardResponse[dict]:
     """
     Create a new quiz for a lesson.
     
@@ -41,7 +39,11 @@ async def create_quiz(
     
     try:
         quiz = await QuizService.create_quiz(quiz_data, current_user.id)
-        return QuizInDB(**quiz.dict(), _id=quiz.id)
+        return StandardResponse(
+            success=True,
+            data=quiz.dict(),
+            message="Quiz created successfully"
+        )
     except (NotFoundError, BadRequestError) as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -49,11 +51,11 @@ async def create_quiz(
         )
 
 
-@router.get("/lesson/{lesson_id}", response_model=QuizResponse)
+@router.get("/lesson/{lesson_id}", response_model=StandardResponse[dict])
 async def get_lesson_quiz(
     lesson_id: PydanticObjectId,
     current_user: User = Depends(get_current_user)
-) -> QuizResponse:
+) -> StandardResponse[dict]:
     """
     Get quiz for a specific lesson.
     
@@ -73,7 +75,11 @@ async def get_lesson_quiz(
         quiz_response, _ = await QuizService.get_quiz_for_student(
             quiz.id, current_user.id
         )
-        return quiz_response
+        return StandardResponse(
+            success=True,
+            data=quiz_response,
+            message="Quiz retrieved successfully"
+        )
     except ForbiddenError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -81,11 +87,11 @@ async def get_lesson_quiz(
         )
 
 
-@router.get("/{quiz_id}", response_model=QuizResponse)
+@router.get("/{quiz_id}", response_model=StandardResponse[dict])
 async def get_quiz(
     quiz_id: PydanticObjectId,
     current_user: User = Depends(get_current_user)
-) -> QuizResponse:
+) -> StandardResponse[dict]:
     """
     Get a specific quiz.
     
@@ -95,7 +101,11 @@ async def get_quiz(
         quiz_response, _ = await QuizService.get_quiz_for_student(
             quiz_id, current_user.id
         )
-        return quiz_response
+        return StandardResponse(
+            success=True,
+            data=quiz_response,
+            message="Quiz retrieved successfully"
+        )
     except NotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -108,11 +118,11 @@ async def get_quiz(
         )
 
 
-@router.get("/{quiz_id}/progress", response_model=QuizProgressResponse)
+@router.get("/{quiz_id}/progress", response_model=StandardResponse[dict])
 async def get_quiz_progress(
     quiz_id: PydanticObjectId,
     current_user: User = Depends(get_current_user)
-) -> QuizProgressResponse:
+) -> StandardResponse[dict]:
     """
     Get user's progress for a specific quiz.
     
@@ -125,7 +135,11 @@ async def get_quiz_progress(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No progress found for this quiz"
             )
-        return progress
+        return StandardResponse(
+            success=True,
+            data=progress,
+            message="Quiz progress retrieved successfully"
+        )
     except NotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -133,12 +147,12 @@ async def get_quiz_progress(
         )
 
 
-@router.post("/{quiz_id}/submit", response_model=QuizAttemptResult)
+@router.post("/{quiz_id}/submit", response_model=StandardResponse[dict])
 async def submit_quiz(
     quiz_id: PydanticObjectId,
     submission: QuizAnswerSubmit,
     current_user: User = Depends(get_current_user)
-) -> QuizAttemptResult:
+) -> StandardResponse[dict]:
     """
     Submit quiz answers and get results.
     
@@ -151,7 +165,11 @@ async def submit_quiz(
         result = await QuizService.submit_quiz_attempt(
             quiz_id, current_user.id, submission
         )
-        return result
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="Quiz submitted successfully"
+        )
     except NotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -169,12 +187,12 @@ async def submit_quiz(
         )
 
 
-@router.put("/{quiz_id}", response_model=QuizInDB)
+@router.put("/{quiz_id}", response_model=StandardResponse[dict])
 async def update_quiz(
     quiz_id: PydanticObjectId,
     quiz_update: QuizUpdate,
     current_user: User = Depends(get_current_user)
-) -> QuizInDB:
+) -> StandardResponse[dict]:
     """
     Update quiz details.
     
@@ -189,7 +207,11 @@ async def update_quiz(
     
     try:
         quiz = await QuizService.update_quiz(quiz_id, quiz_update)
-        return QuizInDB(**quiz.dict(), _id=quiz.id)
+        return StandardResponse(
+            success=True,
+            data=quiz.dict(),
+            message="Quiz updated successfully"
+        )
     except NotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -197,11 +219,11 @@ async def update_quiz(
         )
 
 
-@router.delete("/{quiz_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{quiz_id}", response_model=StandardResponse[dict])
 async def delete_quiz(
     quiz_id: PydanticObjectId,
     current_user: User = Depends(get_current_user)
-) -> None:
+) -> StandardResponse[dict]:
     """
     Delete a quiz (soft delete).
     
@@ -216,6 +238,11 @@ async def delete_quiz(
     
     try:
         await QuizService.delete_quiz(quiz_id)
+        return StandardResponse(
+            success=True,
+            data={},
+            message="Quiz deleted successfully"
+        )
     except NotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -12,23 +12,18 @@ from app.api.deps import get_admin_user, get_current_user
 from app.models.user import User
 from app.schemas.faq import (
     FAQBulkAction,
-    FAQBulkActionResponse,
     FAQCreate,
-    FAQCreateResponse,
-    FAQDeleteResponse,
-    FAQListStandardResponse,
     FAQSearchQuery,
     FAQUpdate,
-    FAQUpdateResponse,
-    FAQVoteRequest,
-    FAQVoteStandardResponse
+    FAQVoteRequest
 )
+from app.schemas.base import StandardResponse
 from app.services.faq_service import faq_service
 
 router = APIRouter()
 
 
-@router.get("", response_model=FAQListStandardResponse)
+@router.get("", response_model=StandardResponse[dict])
 async def get_faqs(
     q: str = Query(None, description="Search query"),
     category: str = Query(None, description="Filter by category"),
@@ -54,14 +49,14 @@ async def get_faqs(
     
     result = await faq_service.search_faqs(query)
     
-    return FAQListStandardResponse(
+    return StandardResponse(
         success=True,
         data=result,
         message="FAQs retrieved successfully"
     )
 
 
-@router.get("/categories", response_model=dict)
+@router.get("/categories", response_model=StandardResponse[list])
 async def get_faq_categories():
     """
     Get FAQ categories with count
@@ -81,14 +76,14 @@ async def get_faq_categories():
             "count": count
         })
     
-    return {
-        "success": True,
-        "data": categories,
-        "message": "Categories retrieved successfully"
-    }
+    return StandardResponse(
+        success=True,
+        data=categories,
+        message="Categories retrieved successfully"
+    )
 
 
-@router.get("/popular", response_model=FAQListStandardResponse)
+@router.get("/popular", response_model=StandardResponse[dict])
 async def get_popular_faqs(
     limit: int = Query(10, ge=1, le=50)
 ):
@@ -97,7 +92,7 @@ async def get_popular_faqs(
     """
     faqs = await faq_service.get_popular_faqs(limit)
     
-    return FAQListStandardResponse(
+    return StandardResponse(
         success=True,
         data={
             "items": faqs,
@@ -109,7 +104,7 @@ async def get_popular_faqs(
     )
 
 
-@router.get("/search", response_model=FAQListStandardResponse)
+@router.get("/search", response_model=StandardResponse[dict])
 async def search_faqs(
     query_params: FAQSearchQuery = Depends()
 ):
@@ -118,14 +113,14 @@ async def search_faqs(
     """
     result = await faq_service.search_faqs(query_params)
     
-    return FAQListStandardResponse(
+    return StandardResponse(
         success=True,
         data=result,
         message="Search results retrieved successfully"
     )
 
 
-@router.post("", response_model=FAQCreateResponse)
+@router.post("", response_model=StandardResponse[dict])
 async def create_faq(
     faq_data: FAQCreate,
     current_user: User = Depends(get_admin_user)
@@ -135,35 +130,35 @@ async def create_faq(
     """
     faq = await faq_service.create_faq(faq_data)
     
-    return FAQCreateResponse(
+    return StandardResponse(
         success=True,
         data=faq,
         message="FAQ created successfully"
     )
 
 
-@router.get("/{faq_id}", response_model=FAQCreateResponse)
+@router.get("/{faq_id}", response_model=StandardResponse[dict])
 async def get_faq(faq_id: str):
     """
     Get FAQ by ID and increment view count
     """
     faq = await faq_service.get_faq(faq_id)
     
-    return FAQCreateResponse(
+    return StandardResponse(
         success=True,
         data=faq,
         message="FAQ retrieved successfully"
     )
 
 
-@router.get("/{faq_id}/related", response_model=FAQListStandardResponse)
+@router.get("/{faq_id}/related", response_model=StandardResponse[dict])
 async def get_related_faqs(faq_id: str):
     """
     Get FAQs related to the given FAQ
     """
     faqs = await faq_service.get_related_faqs(faq_id)
     
-    return FAQListStandardResponse(
+    return StandardResponse(
         success=True,
         data={
             "items": faqs,
@@ -175,7 +170,7 @@ async def get_related_faqs(faq_id: str):
     )
 
 
-@router.put("/{faq_id}", response_model=FAQUpdateResponse)
+@router.put("/{faq_id}", response_model=StandardResponse[dict])
 async def update_faq(
     faq_id: str,
     update_data: FAQUpdate,
@@ -186,14 +181,14 @@ async def update_faq(
     """
     faq = await faq_service.update_faq(faq_id, update_data)
     
-    return FAQUpdateResponse(
+    return StandardResponse(
         success=True,
         data=faq,
         message="FAQ updated successfully"
     )
 
 
-@router.delete("/{faq_id}", response_model=FAQDeleteResponse)
+@router.delete("/{faq_id}", response_model=StandardResponse[dict])
 async def delete_faq(
     faq_id: str,
     current_user: User = Depends(get_admin_user)
@@ -203,14 +198,14 @@ async def delete_faq(
     """
     result = await faq_service.delete_faq(faq_id)
     
-    return FAQDeleteResponse(
+    return StandardResponse(
         success=True,
         data=result,
         message="FAQ deleted successfully"
     )
 
 
-@router.post("/{faq_id}/vote", response_model=FAQVoteStandardResponse)
+@router.post("/{faq_id}/vote", response_model=StandardResponse[dict])
 async def vote_faq(
     faq_id: str,
     vote_data: FAQVoteRequest,
@@ -221,14 +216,14 @@ async def vote_faq(
     """
     result = await faq_service.vote_faq(faq_id, vote_data.is_helpful)
     
-    return FAQVoteStandardResponse(
+    return StandardResponse(
         success=True,
         data=result,
-        message=result["message"]
+        message=result.get("message", "Vote recorded successfully")
     )
 
 
-@router.post("/bulk-action", response_model=FAQBulkActionResponse)
+@router.post("/bulk-action", response_model=StandardResponse[dict])
 async def bulk_action_faqs(
     bulk_data: FAQBulkAction,
     current_user: User = Depends(get_admin_user)
@@ -238,8 +233,8 @@ async def bulk_action_faqs(
     """
     result = await faq_service.bulk_action(bulk_data.faq_ids, bulk_data.action)
     
-    return FAQBulkActionResponse(
+    return StandardResponse(
         success=True,
         data=result,
-        message=result["message"]
+        message=result.get("message", "Bulk action completed successfully")
     )

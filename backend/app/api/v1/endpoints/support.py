@@ -13,11 +13,11 @@ from app.schemas.support_ticket import (
     TicketSearchQuery,
     SatisfactionRatingRequest,
     ContactFormRequest,
-    TicketStandardResponse,
-    TicketWithMessagesStandardResponse,
-    TicketListStandardResponse,
-    MessageStandardResponse,
-    TicketStatsStandardResponse
+    SupportTicketSchema,
+    TicketWithMessagesSchema,
+    TicketListSchema,
+    MessageSchema,
+    TicketStatsSchema
 )
 from app.services.support_ticket_service import SupportTicketService
 from app.core.deps import get_current_user, get_admin_user
@@ -28,7 +28,7 @@ router = APIRouter()
 ticket_service = SupportTicketService()
 
 
-@router.post("/tickets", response_model=TicketStandardResponse)
+@router.post("/tickets", response_model=StandardResponse[SupportTicketSchema])
 async def create_ticket(
     ticket_data: TicketCreateRequest,
     current_user: User = Depends(get_current_user)
@@ -36,11 +36,11 @@ async def create_ticket(
     """Create a new support ticket"""
     try:
         ticket = await ticket_service.create_ticket(current_user, ticket_data)
-        return {
-            "success": True,
-            "data": ticket.dict(),
-            "message": "Support ticket created successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=ticket.dict(),
+            message="Support ticket created successfully"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -48,7 +48,7 @@ async def create_ticket(
         )
 
 
-@router.get("/tickets", response_model=TicketListStandardResponse)
+@router.get("/tickets", response_model=StandardResponse[TicketListSchema])
 async def get_tickets(
     q: Optional[str] = None,
     status: Optional[TicketStatus] = None,
@@ -78,11 +78,11 @@ async def get_tickets(
         )
         
         result = await ticket_service.search_tickets(query, current_user)
-        return {
-            "success": True,
-            "data": result,
-            "message": "Tickets retrieved successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=result,
+            message="Tickets retrieved successfully"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -90,18 +90,18 @@ async def get_tickets(
         )
 
 
-@router.get("/tickets/stats", response_model=TicketStatsStandardResponse)
+@router.get("/tickets/stats", response_model=StandardResponse[TicketStatsSchema])
 async def get_ticket_stats(
     current_user: User = Depends(get_current_user)
 ):
     """Get ticket statistics"""
     try:
         stats = await ticket_service.get_ticket_stats(current_user)
-        return {
-            "success": True,
-            "data": stats,
-            "message": "Ticket statistics retrieved successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=stats,
+            message="Ticket statistics retrieved successfully"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -109,7 +109,7 @@ async def get_ticket_stats(
         )
 
 
-@router.get("/tickets/{ticket_id}", response_model=TicketWithMessagesStandardResponse)
+@router.get("/tickets/{ticket_id}", response_model=StandardResponse[TicketWithMessagesSchema])
 async def get_ticket(
     ticket_id: str,
     include_internal: bool = False,
@@ -133,11 +133,11 @@ async def get_ticket(
                 detail="Ticket not found or access denied"
             )
         
-        return {
-            "success": True,
-            "data": ticket_data,
-            "message": "Ticket retrieved successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=ticket_data,
+            message="Ticket retrieved successfully"
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -147,7 +147,7 @@ async def get_ticket(
         )
 
 
-@router.put("/tickets/{ticket_id}", response_model=TicketStandardResponse)
+@router.put("/tickets/{ticket_id}", response_model=StandardResponse[SupportTicketSchema])
 async def update_ticket(
     ticket_id: str,
     update_data: TicketUpdateRequest,
@@ -163,11 +163,11 @@ async def update_ticket(
                 detail="Ticket not found"
             )
         
-        return {
-            "success": True,
-            "data": ticket.dict(),
-            "message": "Ticket updated successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=ticket.dict(),
+            message="Ticket updated successfully"
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -177,7 +177,7 @@ async def update_ticket(
         )
 
 
-@router.post("/tickets/{ticket_id}/messages", response_model=MessageStandardResponse)
+@router.post("/tickets/{ticket_id}/messages", response_model=StandardResponse[MessageSchema])
 async def add_message(
     ticket_id: str,
     message_data: MessageCreateRequest,
@@ -193,11 +193,11 @@ async def add_message(
                 detail="Ticket not found or access denied"
             )
         
-        return {
-            "success": True,
-            "data": message.dict(),
-            "message": "Message added successfully"
-        }
+        return StandardResponse(
+            success=True,
+            data=message.dict(),
+            message="Message added successfully"
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -207,7 +207,7 @@ async def add_message(
         )
 
 
-@router.post("/tickets/{ticket_id}/rate", response_model=TicketStandardResponse)
+@router.post("/tickets/{ticket_id}/rate", response_model=StandardResponse[SupportTicketSchema])
 async def rate_ticket(
     ticket_id: str,
     rating_data: SatisfactionRatingRequest,
@@ -223,11 +223,11 @@ async def rate_ticket(
                 detail="Ticket not found, access denied, or ticket not resolved"
             )
         
-        return {
-            "success": True,
-            "data": ticket.dict(),
-            "message": "Thank you for your feedback!"
-        }
+        return StandardResponse(
+            success=True,
+            data=ticket.dict(),
+            message="Thank you for your feedback!"
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -249,11 +249,11 @@ async def submit_contact_form(contact_data: ContactFormRequest):
             message=contact_data.message
         )
         
-        return {
-            "success": True,
-            "data": {},
-            "message": "Thank you for your message! We'll get back to you soon."
-        }
+        return StandardResponse(
+            success=True,
+            data={},
+            message="Thank you for your message! We'll get back to you soon."
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

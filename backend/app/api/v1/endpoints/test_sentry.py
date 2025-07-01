@@ -5,11 +5,12 @@ This file should be removed in production.
 from fastapi import APIRouter, HTTPException
 import sentry_sdk
 from app.core.sentry_utils import capture_enrollment_error, track_business_metric
+from app.schemas.base import StandardResponse
 
 router = APIRouter()
 
 
-@router.get("/sentry-test")
+@router.get("/sentry-test", response_model=StandardResponse[dict])
 async def test_sentry():
     """Test Sentry error tracking."""
     
@@ -25,17 +26,20 @@ async def test_sentry():
     except Exception as e:
         sentry_sdk.capture_exception(e)
     
-    return {
-        "message": "Sentry test completed",
-        "tests": [
-            "Captured test message",
-            "Tracked business metric",
-            "Captured test exception"
-        ]
-    }
+    return StandardResponse(
+        success=True,
+        data={
+            "tests": [
+                "Captured test message",
+                "Tracked business metric",
+                "Captured test exception"
+            ]
+        },
+        message="Sentry test completed"
+    )
 
 
-@router.get("/sentry-error")
+@router.get("/sentry-error", response_model=StandardResponse[dict])
 async def test_sentry_error():
     """Test Sentry error tracking with unhandled exception."""
     # This will be automatically captured by Sentry

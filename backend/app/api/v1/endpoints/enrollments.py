@@ -7,17 +7,16 @@ from app.core.deps import get_current_user
 from app.core.email import email_service
 from app.services.enrollment_service import enrollment_service
 from app.schemas.enrollment import (
-    EnrollmentResponse,
-    EnrollmentListResponse,
-    EnrollmentCreate,
-    MessageResponse
+    EnrollmentSchema,
+    EnrollmentCreate
 )
+from app.schemas.base import StandardResponse
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-@router.post("/courses/{course_id}/enroll", response_model=EnrollmentResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/courses/{course_id}/enroll", response_model=StandardResponse[EnrollmentSchema], status_code=status.HTTP_201_CREATED)
 async def enroll_in_course(
     course_id: str,
     enrollment_data: EnrollmentCreate = Body(default=EnrollmentCreate()),
@@ -52,7 +51,7 @@ async def enroll_in_course(
             logger.error(f"Failed to send enrollment confirmation email: {str(e)}")
             # Don't fail enrollment if email fails
         
-        return EnrollmentResponse(
+        return StandardResponse(
             success=True,
             data=enrollment,
             message="Successfully enrolled in course"
@@ -63,20 +62,20 @@ async def enroll_in_course(
             detail=str(e)
         )
 
-@router.get("/enrollments", response_model=EnrollmentListResponse, status_code=status.HTTP_200_OK)
+@router.get("/enrollments", response_model=StandardResponse[list[EnrollmentSchema]], status_code=status.HTTP_200_OK)
 async def get_my_enrollments(
     current_user: User = Depends(get_current_user)
 ):
     """Get all courses user is enrolled in."""
     enrollments = await enrollment_service.get_user_enrollments(str(current_user.id))
     
-    return EnrollmentListResponse(
+    return StandardResponse(
         success=True,
         data=enrollments,
         message=f"Found {len(enrollments)} enrolled courses"
     )
 
-@router.get("/courses/{course_id}/enrollment", response_model=EnrollmentResponse, status_code=status.HTTP_200_OK)
+@router.get("/courses/{course_id}/enrollment", response_model=StandardResponse[EnrollmentSchema], status_code=status.HTTP_200_OK)
 async def get_course_enrollment(
     course_id: str,
     current_user: User = Depends(get_current_user)
@@ -90,13 +89,13 @@ async def get_course_enrollment(
             detail="Not enrolled in this course"
         )
     
-    return EnrollmentResponse(
+    return StandardResponse(
         success=True,
         data=enrollment,
         message="Enrollment retrieved successfully"
     )
 
-@router.delete("/courses/{course_id}/unenroll", response_model=MessageResponse, status_code=status.HTTP_200_OK)
+@router.delete("/courses/{course_id}/unenroll", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
 async def unenroll_from_course(
     course_id: str,
     current_user: User = Depends(get_current_user)
@@ -105,8 +104,9 @@ async def unenroll_from_course(
     try:
         await enrollment_service.unenroll_user(course_id, str(current_user.id))
         
-        return MessageResponse(
+        return StandardResponse(
             success=True,
+            data={},
             message="Successfully unenrolled from course"
         )
     except Exception as e:
@@ -115,7 +115,7 @@ async def unenroll_from_course(
             detail=str(e)
         )
 
-@router.post("/enrollments/{enrollment_id}/certificate", response_model=EnrollmentResponse, status_code=status.HTTP_200_OK)
+@router.post("/enrollments/{enrollment_id}/certificate", response_model=StandardResponse[EnrollmentSchema], status_code=status.HTTP_200_OK)
 async def issue_certificate(
     enrollment_id: str,
     current_user: User = Depends(get_current_user)
@@ -132,7 +132,7 @@ async def issue_certificate(
         
         enrollment = await enrollment_service.issue_certificate(enrollment_id)
         
-        return EnrollmentResponse(
+        return StandardResponse(
             success=True,
             data=enrollment,
             message="Certificate issued successfully"

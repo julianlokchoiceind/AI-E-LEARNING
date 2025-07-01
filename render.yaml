@@ -3,7 +3,7 @@ services:
   - type: web
     name: ai-elearning-frontend
     env: node
-    buildCommand: cd frontend && npm ci && npm run build
+    buildCommand: cd frontend && npm ci && NODE_OPTIONS="--max-old-space-size=4096" npm run build
     startCommand: cd frontend && npm start
     envVars:
       - key: NODE_ENV
@@ -48,6 +48,8 @@ services:
         sync: false
       - key: SENTRY_DSN
         sync: false
+      - key: SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING
+        value: "1"
 
   # Backend - FastAPI Application
   - type: web
