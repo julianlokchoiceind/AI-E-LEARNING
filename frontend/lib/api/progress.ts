@@ -2,8 +2,7 @@
  * Progress API client
  */
 import { apiClient } from './api-client';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+import { StandardResponse } from '@/lib/types/api';
 
 export interface VideoProgressUpdate {
   watch_percentage: number;
@@ -31,31 +30,14 @@ export interface Progress {
   updated_at: string;
 }
 
-export interface ProgressResponse {
-  success: boolean;
-  data: Progress;
-  message: string;
-}
-
-export interface ProgressListResponse {
-  success: boolean;
-  data: Progress[];
-  message: string;
-}
-
-export interface CourseCompletionResponse {
-  success: boolean;
-  data: any; // Certificate data if successful
-  message: string;
-}
+// Remove old response interfaces as we'll use StandardResponse
 
 export const progressAPI = {
   /**
    * Start a lesson
    */
-  async startLesson(lessonId: string): Promise<Progress> {
-    const response = await apiClient.post<{ data: Progress }>(`/progress/lessons/${lessonId}/start`);
-    return response.data;
+  async startLesson(lessonId: string): Promise<StandardResponse<Progress>> {
+    return apiClient.post<StandardResponse<Progress>>(`/progress/lessons/${lessonId}/start`, {});
   },
 
   /**
@@ -64,40 +46,35 @@ export const progressAPI = {
   async updateVideoProgress(
     lessonId: string,
     progressData: VideoProgressUpdate
-  ): Promise<Progress> {
-    const response = await apiClient.put<{ data: Progress }>(`/progress/lessons/${lessonId}/progress`, progressData);
-    return response.data;
+  ): Promise<StandardResponse<Progress>> {
+    return apiClient.put<StandardResponse<Progress>>(`/progress/lessons/${lessonId}/progress`, progressData);
   },
 
   /**
    * Complete a lesson
    */
-  async completeLesson(lessonId: string): Promise<Progress> {
-    const response = await apiClient.post<{ data: Progress }>(`/progress/lessons/${lessonId}/complete`);
-    return response.data;
+  async completeLesson(lessonId: string): Promise<StandardResponse<Progress>> {
+    return apiClient.post<StandardResponse<Progress>>(`/progress/lessons/${lessonId}/complete`, {});
   },
 
   /**
    * Get lesson progress
    */
-  async getLessonProgress(lessonId: string): Promise<Progress> {
-    const response = await apiClient.get<{ data: Progress }>(`/progress/lessons/${lessonId}/progress`);
-    return response.data;
+  async getLessonProgress(lessonId: string): Promise<StandardResponse<Progress>> {
+    return apiClient.get<StandardResponse<Progress>>(`/progress/lessons/${lessonId}/progress`);
   },
 
   /**
    * Get course progress
    */
-  async getCourseProgress(courseId: string): Promise<Progress[]> {
-    const response = await apiClient.get<{ data: Progress[] }>(`/progress/courses/${courseId}/progress`);
-    return response.data;
+  async getCourseProgress(courseId: string): Promise<StandardResponse<Progress[]>> {
+    return apiClient.get<StandardResponse<Progress[]>>(`/progress/courses/${courseId}/progress`);
   },
 
   /**
    * Check course completion and trigger certificate generation
    */
-  async checkCourseCompletion(courseId: string): Promise<CourseCompletionResponse> {
-    const response = await apiClient.post<CourseCompletionResponse>(`/progress/courses/${courseId}/check-completion`);
-    return response;
+  async checkCourseCompletion(courseId: string): Promise<StandardResponse<any>> {
+    return apiClient.post<StandardResponse<any>>(`/progress/courses/${courseId}/check-completion`, {});
   },
 };

@@ -81,12 +81,18 @@ const ChapterEditPage = () => {
 
       // Fetch chapter details
       const chapterResponse = await getChapterById(chapterId);
-      setChapter(chapterResponse);
-      setTitleInput(chapterResponse.title);
+      if (!chapterResponse.success) {
+        throw new Error(chapterResponse.message || 'Operation Failed');
+      }
+      setChapter(chapterResponse.data);
+      setTitleInput(chapterResponse.data.title);
 
       // Fetch lessons in this chapter
       const lessonsResponse = await getLessonsByChapter(chapterId);
-      setLessons(lessonsResponse || []);
+      if (!lessonsResponse.success) {
+        throw new Error(lessonsResponse.message || 'Operation Failed');
+      }
+      setLessons(lessonsResponse.data || []);
     } catch (error: any) {
       console.error('Failed to fetch chapter data:', error);
       toast.error(error.message || 'Operation Failed');
@@ -121,9 +127,11 @@ const ChapterEditPage = () => {
         title: `Untitled Lesson #${lessonCount} (${dateStr})`
       });
       
-      // Redirect to lesson editor
-      router.push(`/creator/courses/${courseId}/lessons/${response._id}/edit`);
-      toast.success(response.message || 'Operation Failed');
+      if (response.success && response.data) {
+        // Redirect to lesson editor
+        router.push(`/creator/courses/${courseId}/lessons/${response.data._id}/edit`);
+        toast.success(response.message || 'Operation Failed');
+      }
     } catch (error: any) {
       console.error('Failed to create lesson:', error);
       toast.error(error.message || 'Operation Failed');

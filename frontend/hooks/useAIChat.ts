@@ -174,16 +174,21 @@ export const useAIChat = ({
           throw new Error(data.error || 'Failed to get AI response');
         }
       }
+      
+      if (!data.success) {
+        throw new Error(data.message || 'Operation Failed');
+      }
 
       // Simulate typing delay for better UX
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      const responseData = data.data;
       const aiMessage: Message = {
         id: Date.now().toString(),
         type: 'ai',
-        content: data.response,
+        content: responseData.response,
         timestamp: new Date(),
-        context: data.context
+        context: responseData.context
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -197,7 +202,7 @@ export const useAIChat = ({
         
         // Extract learning goals from AI response if mentioned
         if (enableLearningAnalytics) {
-          extractLearningGoalsFromResponse(data.data.response);
+          extractLearningGoalsFromResponse(responseData.response);
         }
       }
 
@@ -214,7 +219,7 @@ export const useAIChat = ({
       } else if (errorMessage.includes('credit balance')) {
         toast.error('AI service is temporarily unavailable. Please try again later.');
       } else {
-        toast.error(errorMessage || 'Operation Failed');
+        toast.error(errorMessage);
       }
 
       // Add error message to chat
@@ -250,7 +255,10 @@ export const useAIChat = ({
       });
       
       if (response.ok) {
-        return await response.json();
+        const data = await response.json();
+        if (data.success) {
+          return data.data;
+        }
       }
     } catch (error) {
       console.warn('Failed to fetch progress data:', error);
@@ -334,8 +342,12 @@ export const useAIChat = ({
 
       const data = await response.json();
       
+      if (!data.success) {
+        throw new Error(data.message || 'Operation Failed');
+      }
+      
       // Convert server history to messages
-      const historyMessages: Message[] = data.history.map((entry: any) => [
+      const historyMessages: Message[] = data.data.history.map((entry: any) => [
         {
           id: `history-q-${entry.timestamp}`,
           type: 'user' as const,
@@ -374,8 +386,13 @@ export const useAIChat = ({
       }
 
       const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.message || 'Operation Failed');
+      }
+      
       clearMessages();
-      toast.success(data?.message || 'Operation Failed');
+      toast.success(data.message);
 
     } catch (error: any) {
       console.error('Failed to clear conversation history:', error);

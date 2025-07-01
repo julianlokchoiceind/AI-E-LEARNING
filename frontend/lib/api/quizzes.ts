@@ -1,4 +1,5 @@
 import { apiClient } from './api-client';
+import { StandardResponse } from '@/lib/types/api';
 
 export interface QuizQuestion {
   question: string;
@@ -68,26 +69,26 @@ export interface QuizProgress {
 
 export const quizAPI = {
   // Get quiz for a lesson
-  getLessonQuiz: async (lessonId: string): Promise<Quiz> => {
-    return apiClient.get<Quiz>(`/quizzes/lesson/${lessonId}`);
+  getLessonQuiz: async (lessonId: string): Promise<StandardResponse<Quiz>> => {
+    return apiClient.get<StandardResponse<Quiz>>(`/quizzes/lesson/${lessonId}`);
   },
 
   // Get quiz by ID
-  getQuiz: async (quizId: string): Promise<Quiz> => {
-    return apiClient.get<Quiz>(`/quizzes/${quizId}`);
+  getQuiz: async (quizId: string): Promise<StandardResponse<Quiz>> => {
+    return apiClient.get<StandardResponse<Quiz>>(`/quizzes/${quizId}`);
   },
 
   // Get user's quiz progress
-  getQuizProgress: async (quizId: string): Promise<QuizProgress> => {
-    return apiClient.get<QuizProgress>(`/quizzes/${quizId}/progress`);
+  getQuizProgress: async (quizId: string): Promise<StandardResponse<QuizProgress>> => {
+    return apiClient.get<StandardResponse<QuizProgress>>(`/quizzes/${quizId}/progress`);
   },
 
   // Submit quiz answers
   submitQuiz: async (
     quizId: string,
     submission: QuizAnswerSubmit
-  ): Promise<QuizAttemptResult> => {
-    return apiClient.post<QuizAttemptResult>(`/quizzes/${quizId}/submit`, submission);
+  ): Promise<StandardResponse<QuizAttemptResult>> => {
+    return apiClient.post<StandardResponse<QuizAttemptResult>>(`/quizzes/${quizId}/submit`, submission);
   },
 
   // Create quiz (for creators/admins)
@@ -104,8 +105,8 @@ export const quizAPI = {
       explanation?: string;
       points: number;
     }[];
-  }): Promise<Quiz> => {
-    return apiClient.post<Quiz>('/quizzes', quizData);
+  }): Promise<StandardResponse<Quiz>> => {
+    return apiClient.post<StandardResponse<Quiz>>('/quizzes', quizData);
   },
 
   // Update quiz (for creators/admins)
@@ -118,12 +119,12 @@ export const quizAPI = {
       questions: QuizQuestion[];
       is_active: boolean;
     }>
-  ): Promise<Quiz> => {
-    return apiClient.put<Quiz>(`/quizzes/${quizId}`, updateData);
+  ): Promise<StandardResponse<Quiz>> => {
+    return apiClient.put<StandardResponse<Quiz>>(`/quizzes/${quizId}`, updateData);
   },
 
   // Delete quiz (for creators/admins)
-  deleteQuiz: async (quizId: string): Promise<void> => {
-    return apiClient.delete<void>(`/quizzes/${quizId}`);
+  deleteQuiz: async (quizId: string): Promise<StandardResponse<any>> => {
+    return apiClient.delete<StandardResponse<any>>(`/quizzes/${quizId}`);
   },
 };

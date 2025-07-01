@@ -46,8 +46,12 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     setLoading(true);
     const result = await handleError(async () => {
-      const data = await usersApi.getProfile();
-      return data;
+      const response = await usersApi.getProfile();
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to load profile');
+      }
     });
 
     if (result) {
@@ -77,7 +81,7 @@ export default function ProfilePage() {
     setSaving(true);
 
     const result = await handleError(async () => {
-      await usersApi.updateProfile({
+      const response = await usersApi.updateProfile({
         name: profileData.name,
         profile: {
           bio: profileData.bio,
@@ -87,12 +91,13 @@ export default function ProfilePage() {
           linkedin: profileData.linkedin
         }
       });
-      return true;
+      if (response.success) {
+        toast.success(response.message || t('profile.updateSuccess'));
+        return true;
+      } else {
+        throw new Error(response.message || 'Failed to update profile');
+      }
     });
-
-    if (result) {
-      toast.success(t('profile.updateSuccess'));
-    }
     setSaving(false);
   };
 

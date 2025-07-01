@@ -83,7 +83,12 @@ export default function CourseApproval() {
         status: statusFilter,
         category: categoryFilter
       });
-      setCourses(response.data.courses);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      setCourses(response.data?.courses || []);
     } catch (error: any) {
       console.error('Failed to fetch courses:', error);
       toast.error(error.message || 'Operation Failed');
@@ -98,8 +103,10 @@ export default function CourseApproval() {
       const response = await approveCourse(courseId);
       
       if (response.success) {
-        toast.success(response.message || 'Operation Failed');
+        toast.success(response.message);
         await fetchCourses(); // Refresh list
+      } else {
+        throw new Error(response.message || 'Operation Failed');
       }
     } catch (error: any) {
       toast.error(error.message || 'Operation Failed');
@@ -119,11 +126,13 @@ export default function CourseApproval() {
       const response = await rejectCourse(selectedCourse._id, rejectionReason);
       
       if (response.success) {
-        toast.success(response.message || 'Operation Failed');
+        toast.success(response.message);
         setShowRejectModal(false);
         setRejectionReason('');
         setSelectedCourse(null);
         await fetchCourses(); // Refresh list
+      } else {
+        throw new Error(response.message || 'Operation Failed');
       }
     } catch (error: any) {
       toast.error(error.message || 'Operation Failed');
@@ -138,8 +147,10 @@ export default function CourseApproval() {
       const response = await toggleCourseFree(courseId, !currentStatus);
       
       if (response.success) {
-        toast.success(response.message || 'Operation Failed');
+        toast.success(response.message);
         await fetchCourses(); // Refresh list
+      } else {
+        throw new Error(response.message || 'Operation Failed');
       }
     } catch (error: any) {
       toast.error(error.message || 'Operation Failed');

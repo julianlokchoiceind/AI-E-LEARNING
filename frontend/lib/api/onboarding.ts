@@ -93,7 +93,7 @@ export interface OnboardingCompletionRequest {
 /**
  * Get current onboarding status
  */
-export const getOnboardingStatus = async (): Promise<OnboardingStatus> => {
+export const getOnboardingStatus = async (): Promise<StandardResponse<OnboardingStatus>> => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -113,7 +113,7 @@ export const getOnboardingStatus = async (): Promise<OnboardingStatus> => {
     }
 
     const result: StandardResponse<OnboardingStatus> = await response.json();
-    return result.data;
+    return result;
   } catch (error) {
     console.error('Get onboarding status failed:', error);
     throw error;
@@ -123,7 +123,7 @@ export const getOnboardingStatus = async (): Promise<OnboardingStatus> => {
 /**
  * Start onboarding process
  */
-export const startOnboarding = async (skipOnboarding: boolean = false): Promise<OnboardingStepResponse> => {
+export const startOnboarding = async (skipOnboarding: boolean = false): Promise<StandardResponse<OnboardingStepResponse>> => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -146,7 +146,7 @@ export const startOnboarding = async (skipOnboarding: boolean = false): Promise<
     }
 
     const result: StandardResponse<OnboardingStepResponse> = await response.json();
-    return result.data;
+    return result;
   } catch (error) {
     console.error('Start onboarding failed:', error);
     throw error;
@@ -156,7 +156,7 @@ export const startOnboarding = async (skipOnboarding: boolean = false): Promise<
 /**
  * Update learning path preferences
  */
-export const updateLearningPath = async (data: LearningPathRequest): Promise<OnboardingStepResponse> => {
+export const updateLearningPath = async (data: LearningPathRequest): Promise<StandardResponse<OnboardingStepResponse>> => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -177,7 +177,7 @@ export const updateLearningPath = async (data: LearningPathRequest): Promise<Onb
     }
 
     const result: StandardResponse<OnboardingStepResponse> = await response.json();
-    return result.data;
+    return result;
   } catch (error) {
     console.error('Update learning path failed:', error);
     throw error;
@@ -187,7 +187,7 @@ export const updateLearningPath = async (data: LearningPathRequest): Promise<Onb
 /**
  * Update profile setup
  */
-export const updateProfileSetup = async (data: ProfileSetupRequest): Promise<OnboardingStepResponse> => {
+export const updateProfileSetup = async (data: ProfileSetupRequest): Promise<StandardResponse<OnboardingStepResponse>> => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -208,7 +208,7 @@ export const updateProfileSetup = async (data: ProfileSetupRequest): Promise<Onb
     }
 
     const result: StandardResponse<OnboardingStepResponse> = await response.json();
-    return result.data;
+    return result;
   } catch (error) {
     console.error('Update profile setup failed:', error);
     throw error;
@@ -218,7 +218,7 @@ export const updateProfileSetup = async (data: ProfileSetupRequest): Promise<Onb
 /**
  * Get course recommendations
  */
-export const getCourseRecommendations = async (): Promise<OnboardingRecommendations> => {
+export const getCourseRecommendations = async (): Promise<StandardResponse<OnboardingRecommendations>> => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -238,7 +238,7 @@ export const getCourseRecommendations = async (): Promise<OnboardingRecommendati
     }
 
     const result: StandardResponse<OnboardingRecommendations> = await response.json();
-    return result.data;
+    return result;
   } catch (error) {
     console.error('Get course recommendations failed:', error);
     throw error;
@@ -248,7 +248,7 @@ export const getCourseRecommendations = async (): Promise<OnboardingRecommendati
 /**
  * Complete onboarding
  */
-export const completeOnboarding = async (data: OnboardingCompletionRequest): Promise<OnboardingStepResponse> => {
+export const completeOnboarding = async (data: OnboardingCompletionRequest): Promise<StandardResponse<OnboardingStepResponse>> => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -269,7 +269,7 @@ export const completeOnboarding = async (data: OnboardingCompletionRequest): Pro
     }
 
     const result: StandardResponse<OnboardingStepResponse> = await response.json();
-    return result.data;
+    return result;
   } catch (error) {
     console.error('Complete onboarding failed:', error);
     throw error;
@@ -279,7 +279,7 @@ export const completeOnboarding = async (data: OnboardingCompletionRequest): Pro
 /**
  * Get platform tour steps
  */
-export const getPlatformTour = async (): Promise<PlatformTour> => {
+export const getPlatformTour = async (): Promise<StandardResponse<PlatformTour>> => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -299,7 +299,7 @@ export const getPlatformTour = async (): Promise<PlatformTour> => {
     }
 
     const result: StandardResponse<PlatformTour> = await response.json();
-    return result.data;
+    return result;
   } catch (error) {
     console.error('Get platform tour failed:', error);
     throw error;
@@ -309,7 +309,7 @@ export const getPlatformTour = async (): Promise<PlatformTour> => {
 /**
  * Skip onboarding entirely
  */
-export const skipOnboarding = async (): Promise<OnboardingStepResponse> => {
+export const skipOnboarding = async (): Promise<StandardResponse<OnboardingStepResponse>> => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -329,7 +329,7 @@ export const skipOnboarding = async (): Promise<OnboardingStepResponse> => {
     }
 
     const result: StandardResponse<OnboardingStepResponse> = await response.json();
-    return result.data;
+    return result;
   } catch (error) {
     console.error('Skip onboarding failed:', error);
     throw error;

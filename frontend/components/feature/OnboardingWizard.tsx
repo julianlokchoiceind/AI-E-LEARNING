@@ -99,7 +99,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
   const checkOnboardingStatus = async () => {
     try {
-      const status = await getOnboardingStatus();
+      const response = await getOnboardingStatus();
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      const status = response.data;
       if (status.is_completed || status.skipped) {
         onClose();
         return;
@@ -110,20 +116,27 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         currentStep: status.current_step as OnboardingStep,
         progress: status.progress_percentage
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to check onboarding status:', error);
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
   const handleSkipOnboarding = async () => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
-      await skipOnboarding();
-      toast.success('You can always complete onboarding from your profile settings');
+      const response = await skipOnboarding();
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      toast.success(response.message);
       onClose();
       onComplete?.();
-    } catch (error) {
-      toast.error('Operation Failed');
+    } catch (error: any) {
+      console.error('Failed to skip onboarding:', error);
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }
@@ -133,13 +146,20 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     try {
       setState(prev => ({ ...prev, isLoading: true }));
       const response = await startOnboarding(false);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      const data = response.data;
       setState(prev => ({
         ...prev,
         currentStep: 'learning_path',
-        progress: response.progress_percentage
+        progress: data.progress_percentage
       }));
-    } catch (error) {
-      toast.error('Operation Failed');
+    } catch (error: any) {
+      console.error('Failed to start onboarding:', error);
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }
@@ -160,13 +180,19 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         learning_goals: state.learningGoals
       });
       
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      const data = response.data;
       setState(prev => ({
         ...prev,
         currentStep: 'profile_setup',
-        progress: response.progress_percentage
+        progress: data.progress_percentage
       }));
-    } catch (error) {
-      toast.error('Operation Failed');
+    } catch (error: any) {
+      console.error('Failed to update learning path:', error);
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }
@@ -185,17 +211,29 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         github: state.github
       });
       
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
       // Get course recommendations
-      const recommendations = await getCourseRecommendations();
+      const recommendationsResponse = await getCourseRecommendations();
+      
+      if (!recommendationsResponse.success) {
+        throw new Error(recommendationsResponse.message || 'Operation Failed');
+      }
+      
+      const data = response.data;
+      const recommendations = recommendationsResponse.data;
       
       setState(prev => ({
         ...prev,
         currentStep: 'course_recommendations',
-        progress: response.progress_percentage,
+        progress: data.progress_percentage,
         recommendations
       }));
-    } catch (error) {
-      toast.error('Operation Failed');
+    } catch (error: any) {
+      console.error('Failed to update profile setup:', error);
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }
@@ -210,21 +248,26 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         enable_notifications: true
       });
       
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
       setState(prev => ({
         ...prev,
         currentStep: 'completed',
         progress: 100
       }));
       
-      toast.success('Welcome to the platform! Start learning now.');
+      toast.success(response.message);
       
       // Close modal after showing completion for a moment
       setTimeout(() => {
         onClose();
         onComplete?.();
       }, 2000);
-    } catch (error) {
-      toast.error('Operation Failed');
+    } catch (error: any) {
+      console.error('Failed to complete onboarding:', error);
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }

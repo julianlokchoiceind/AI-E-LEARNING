@@ -77,16 +77,20 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
         per_page: 10,
       });
       
-      setReviews(response.items);
-      setTotalPages(response.total_pages);
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
       
-      if (response.stats) {
-        setStats(response.stats);
+      setReviews(response.data?.items || []);
+      setTotalPages(response.data?.total_pages || 1);
+      
+      if (response.data?.stats) {
+        setStats(response.data.stats);
       }
       
       // Find user's review if exists
       if (user) {
-        const userReview = response.items.find((r: Review) => r.user.id === user.id);
+        const userReview = response.data?.items?.find((r: Review) => r.user.id === user.id);
         setUserReview(userReview || null);
       }
     } catch (error: any) {
@@ -99,14 +103,18 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
 
   const handleSubmitReview = async () => {
     try {
-      const reviewData = editingReview 
+      const response = editingReview 
         ? await reviewAPI.updateReview(editingReview._id, {
             ...formData,
             edit_reason: 'Updated review'
           })
         : await reviewAPI.createReview(courseId, formData);
       
-      toast.success(reviewData.message || 'Operation Failed');
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      toast.success(response.message);
       setShowReviewModal(false);
       resetForm();
       fetchReviews();
@@ -124,7 +132,12 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
 
     try {
       const response = await reviewAPI.voteReview(reviewId, { is_helpful: isHelpful });
-      toast.success(response.message || 'Operation Failed');
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      toast.success(response.message);
       fetchReviews();
     } catch (error: any) {
       console.error('Failed to vote:', error);
@@ -137,7 +150,12 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
 
     try {
       const response = await reviewAPI.deleteReview(reviewId);
-      toast.success(response?.message || 'Operation Failed');
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      toast.success(response.message);
       fetchReviews();
     } catch (error: any) {
       console.error('Failed to delete review:', error);
@@ -153,7 +171,12 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
         reason: reportReason,
         details: reportDetails,
       });
-      toast.success(response.message || 'Operation Failed');
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      toast.success(response.message);
       setShowReportModal(false);
       setReportingReview(null);
       setReportReason('');

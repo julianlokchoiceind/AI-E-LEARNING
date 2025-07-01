@@ -9,7 +9,7 @@ import { LanguageSwitcherCompact } from '@/components/ui/LanguageSwitcher'
 import { useLocalizedRouter } from '@/lib/i18n/context'
 
 export function Header() {
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, logout, loading } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const { navItems, t } = useNavigationTranslations()
@@ -63,7 +63,13 @@ export function Header() {
           {/* Desktop Auth Section */}
           <div className="hidden md:flex md:items-center md:space-x-4">
             <LanguageSwitcherCompact className="mr-2" />
-            {isAuthenticated ? (
+            {loading ? (
+              /* Show loading skeleton to prevent hydration mismatch */
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+                <div className="w-20 h-4 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            ) : isAuthenticated ? (
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -230,7 +236,13 @@ export function Header() {
               <div className="px-2 mb-3">
                 <LanguageSwitcherCompact />
               </div>
-              {isAuthenticated ? (
+              {loading ? (
+                /* Mobile loading skeleton */
+                <div className="px-2 space-y-2">
+                  <div className="w-full h-10 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="w-full h-10 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ) : isAuthenticated ? (
                 <div className="px-2 space-y-1">
                   <div className="px-3 py-2 text-base font-medium text-gray-900">
                     {user?.name || user?.email || 'User'}

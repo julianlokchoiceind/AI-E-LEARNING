@@ -4,6 +4,7 @@
  */
 
 import { StandardResponse } from '@/lib/types/api';
+import { api } from '@/lib/api/api-client';
 
 // Types
 export interface AdminDashboardStats {
@@ -114,20 +115,14 @@ export interface UserAnalytics {
 /**
  * Get admin dashboard statistics
  */
-export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => {
+export const getAdminDashboardStats = async (): Promise<StandardResponse<AdminDashboardStats>> => {
   try {
-    const response = await fetch('/api/v1/admin/dashboard/stats', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.get<StandardResponse<AdminDashboardStats>>(
+      '/admin/dashboard/stats',
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get admin dashboard stats failed:', error);
     throw error;
@@ -140,23 +135,14 @@ export const getAdminDashboardStats = async (): Promise<AdminDashboardStats> => 
 export const getPendingReviewCourses = async (
   page: number = 1,
   perPage: number = 20
-): Promise<any[]> => {
+): Promise<StandardResponse<any[]>> => {
   try {
-    const response = await fetch(
-      `/api/v1/admin/courses/pending-review?page=${page}&per_page=${perPage}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+    const response = await api.get<StandardResponse<any[]>>(
+      `/admin/courses/pending-review?page=${page}&per_page=${perPage}`,
+      { requireAuth: true }
     );
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    
+    return response;
   } catch (error) {
     console.error('Get pending review courses failed:', error);
     throw error;
@@ -168,19 +154,13 @@ export const getPendingReviewCourses = async (
  */
 export const approveCourse = async (courseId: string): Promise<StandardResponse<any>> => {
   try {
-    const response = await fetch(`/api/v1/admin/courses/${courseId}/approve`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.post<StandardResponse<any>>(
+      `/admin/courses/${courseId}/approve`,
+      {},
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Approve course failed:', error);
     throw error;
@@ -195,20 +175,13 @@ export const rejectCourse = async (
   feedback: string
 ): Promise<StandardResponse<any>> => {
   try {
-    const response = await fetch(`/api/v1/admin/courses/${courseId}/reject`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ feedback }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.post<StandardResponse<any>>(
+      `/admin/courses/${courseId}/reject`,
+      { feedback },
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Reject course failed:', error);
     throw error;
@@ -226,7 +199,7 @@ export const listUsers = async (
     premiumOnly?: boolean;
     search?: string;
   }
-): Promise<UserListResponse> => {
+): Promise<StandardResponse<UserListResponse>> => {
   try {
     const params = new URLSearchParams({
       page: page.toString(),
@@ -237,18 +210,12 @@ export const listUsers = async (
     if (filters?.premiumOnly !== undefined) params.append('premium_only', filters.premiumOnly.toString());
     if (filters?.search) params.append('search', filters.search);
 
-    const response = await fetch(`/api/v1/admin/users?${params}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.get<StandardResponse<UserListResponse>>(
+      `/admin/users?${params}`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('List users failed:', error);
     throw error;
@@ -263,19 +230,13 @@ export const updateUserPremiumStatus = async (
   isPremium: boolean
 ): Promise<StandardResponse<any>> => {
   try {
-    const response = await fetch(`/api/v1/admin/users/${userId}/premium?is_premium=${isPremium}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.put<StandardResponse<any>>(
+      `/admin/users/${userId}/premium?is_premium=${isPremium}`,
+      {},
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Update user premium status failed:', error);
     throw error;
@@ -290,19 +251,13 @@ export const updateUserRole = async (
   role: string
 ): Promise<StandardResponse<any>> => {
   try {
-    const response = await fetch(`/api/v1/admin/users/${userId}/role?role=${role}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.put<StandardResponse<any>>(
+      `/admin/users/${userId}/role?role=${role}`,
+      {},
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Update user role failed:', error);
     throw error;
@@ -314,19 +269,12 @@ export const updateUserRole = async (
  */
 export const deleteUser = async (userId: string): Promise<StandardResponse<any>> => {
   try {
-    const response = await fetch(`/api/v1/admin/users/${userId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.delete<StandardResponse<any>>(
+      `/admin/users/${userId}`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Delete user failed:', error);
     throw error;
@@ -345,7 +293,7 @@ export const listPayments = async (
     dateFrom?: string;
     dateTo?: string;
   }
-): Promise<PaymentListResponse> => {
+): Promise<StandardResponse<PaymentListResponse>> => {
   try {
     const params = new URLSearchParams({
       page: page.toString(),
@@ -357,18 +305,12 @@ export const listPayments = async (
     if (filters?.dateFrom) params.append('date_from', filters.dateFrom);
     if (filters?.dateTo) params.append('date_to', filters.dateTo);
 
-    const response = await fetch(`/api/v1/admin/payments?${params}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.get<StandardResponse<PaymentListResponse>>(
+      `/admin/payments?${params}`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('List payments failed:', error);
     throw error;
@@ -387,19 +329,13 @@ export const refundPayment = async (
     const params = new URLSearchParams({ reason });
     if (amount !== null) params.append('amount', amount.toString());
 
-    const response = await fetch(`/api/v1/admin/payments/${paymentId}/refund?${params}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.post<StandardResponse<any>>(
+      `/admin/payments/${paymentId}/refund?${params}`,
+      {},
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Refund payment failed:', error);
     throw error;
@@ -413,24 +349,18 @@ export const getRevenueAnalytics = async (
   period: string = 'month',
   dateFrom?: string,
   dateTo?: string
-): Promise<RevenueAnalytics> => {
+): Promise<StandardResponse<RevenueAnalytics>> => {
   try {
     const params = new URLSearchParams({ period });
     if (dateFrom) params.append('date_from', dateFrom);
     if (dateTo) params.append('date_to', dateTo);
 
-    const response = await fetch(`/api/v1/admin/analytics/revenue?${params}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.get<StandardResponse<RevenueAnalytics>>(
+      `/admin/analytics/revenue?${params}`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get revenue analytics failed:', error);
     throw error;
@@ -440,20 +370,14 @@ export const getRevenueAnalytics = async (
 /**
  * Get user analytics
  */
-export const getUserAnalytics = async (): Promise<UserAnalytics> => {
+export const getUserAnalytics = async (): Promise<StandardResponse<UserAnalytics>> => {
   try {
-    const response = await fetch('/api/v1/admin/analytics/users', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.get<StandardResponse<UserAnalytics>>(
+      '/admin/analytics/users',
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get user analytics failed:', error);
     throw error;
@@ -463,7 +387,7 @@ export const getUserAnalytics = async (): Promise<UserAnalytics> => {
 /**
  * Get admin analytics data (same as dashboard stats)
  */
-export const getAdminAnalytics = async (): Promise<AdminDashboardStats> => {
+export const getAdminAnalytics = async (): Promise<StandardResponse<AdminDashboardStats>> => {
   return getAdminDashboardStats();
 };
 
@@ -476,7 +400,7 @@ export const getAdminCourses = async (params?: {
   status?: string;
   search?: string;
   category?: string;
-}) => {
+}): Promise<StandardResponse<any>> => {
   const queryParams = new URLSearchParams();
   
   if (params) {
@@ -488,18 +412,12 @@ export const getAdminCourses = async (params?: {
   }
 
   try {
-    const response = await fetch(`/api/v1/admin/courses?${queryParams.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.get<StandardResponse<any>>(
+      `/admin/courses?${queryParams.toString()}`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get admin courses failed:', error);
     throw error;
@@ -515,7 +433,7 @@ export const getAdminUsers = async (params?: {
   role?: string;
   search?: string;
   premiumOnly?: boolean;
-}) => {
+}): Promise<StandardResponse<UserListResponse>> => {
   const { page = 1, per_page = 20, role, search, premiumOnly } = params || {};
   return listUsers(page, per_page, { role, search, premiumOnly });
 };
@@ -523,7 +441,7 @@ export const getAdminUsers = async (params?: {
 /**
  * Toggle user premium status (alias for updateUserPremiumStatus)
  */
-export const toggleUserPremium = async (userId: string, premiumStatus: boolean) => {
+export const toggleUserPremium = async (userId: string, premiumStatus: boolean): Promise<StandardResponse<any>> => {
   return updateUserPremiumStatus(userId, premiumStatus);
 };
 
@@ -532,19 +450,13 @@ export const toggleUserPremium = async (userId: string, premiumStatus: boolean) 
  */
 export const toggleCourseFree = async (courseId: string, isFree: boolean): Promise<StandardResponse<any>> => {
   try {
-    const response = await fetch(`/api/v1/admin/courses/${courseId}/free`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ is_free: isFree }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.put<StandardResponse<any>>(
+      `/admin/courses/${courseId}/free`,
+      { is_free: isFree },
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Toggle course free status failed:', error);
     throw error;
@@ -556,19 +468,13 @@ export const toggleCourseFree = async (courseId: string, isFree: boolean): Promi
  */
 export const setCoursePrice = async (courseId: string, price: number): Promise<StandardResponse<any>> => {
   try {
-    const response = await fetch(`/api/v1/admin/courses/${courseId}/price`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ price }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.put<StandardResponse<any>>(
+      `/admin/courses/${courseId}/price`,
+      { price },
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Set course price failed:', error);
     throw error;

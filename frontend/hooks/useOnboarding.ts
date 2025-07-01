@@ -27,7 +27,13 @@ export const useOnboarding = (): UseOnboardingReturn => {
     try {
       setLoading(true);
       setError(null);
-      const onboardingStatus = await getOnboardingStatus();
+      const response = await getOnboardingStatus();
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      const onboardingStatus = response.data;
       setStatus(onboardingStatus);
     } catch (err: any) {
       console.error('Failed to fetch onboarding status:', err);

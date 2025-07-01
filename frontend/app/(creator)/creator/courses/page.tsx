@@ -31,7 +31,12 @@ const CreatorCoursesPage = () => {
     try {
       setLoading(true);
       const response = await getCourses(`creator_id=${user?.id}`);
-      setCourses(response.courses || []);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      setCourses(response.data?.courses || []);
     } catch (error: any) {
       console.error('Failed to fetch courses:', error);
       toast.error(error.message || 'Operation Failed');
@@ -55,8 +60,13 @@ const CreatorCoursesPage = () => {
 
     try {
       const response = await deleteCourse(courseId);
-      setCourses(courses.filter(c => c._id !== courseId));
-      toast.success(response.message || 'Operation Failed');
+      
+      if (response.success) {
+        setCourses(courses.filter(c => c._id !== courseId));
+        toast.success(response.message || 'Course deleted successfully');
+      } else {
+        throw new Error(response.message || 'Operation Failed');
+      }
     } catch (error: any) {
       console.error('Failed to delete course:', error);
       toast.error(error.message || 'Operation Failed');

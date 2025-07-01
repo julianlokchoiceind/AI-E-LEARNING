@@ -25,6 +25,10 @@ const nextConfig = {
   
   // Bundle optimization
   webpack: (config, { isServer }) => {
+    // Add case sensitivity check to catch errors during development
+    const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
+    config.plugins.push(new CaseSensitivePathsPlugin());
+    
     // Explicit path resolution for production builds
     config.resolve.alias = {
       ...config.resolve.alias,

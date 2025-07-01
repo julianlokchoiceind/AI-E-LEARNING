@@ -770,6 +770,23 @@ const ChapterEditor = () => {
 - ✅ Display loading/error states
 - ✅ Provide user feedback for all actions
 
+**🚨 CRITICAL ERROR HANDLING RULE:**
+```typescript
+// MANDATORY: All error messages MUST follow this pattern:
+// 1. Always show backend message if available
+// 2. If no message, fallback to "Operation Failed"
+// 3. NEVER use custom error messages like "Failed to load", "Error occurred", etc.
+
+// ✅ CORRECT:
+toast.error(error.message || 'Operation Failed');
+setError(error.message || 'Operation Failed');
+
+// ❌ WRONG:
+toast.error('Failed to load dashboard');
+setError('An unexpected error occurred');
+toast.error(error.message || 'Failed to fetch data');
+```
+
 ```typescript
 // MANDATORY API Response Pattern
 // Backend returns using StandardResponse:
@@ -779,17 +796,53 @@ class StandardResponse<T> {
   message: string;
 }
 
+// 🚨 CRITICAL: api-client.ts Configuration
+// The api-client MUST return the FULL StandardResponse object
+// DO NOT auto-unwrap or extract data from the response
+// This allows frontend to access success, data, and message fields
+
+// ❌ WRONG (auto-unwrapping):
+// api-client.ts
+if (response.ok) {
+  const data = await response.json();
+  return data.data; // NO! This loses access to message
+}
+
+// ✅ CORRECT (return full response):
+// api-client.ts
+if (response.ok) {
+  const data = await response.json();
+  return data; // Return full StandardResponse
+}
+
 // Frontend API Client Structure:
 // Base URL: NEXT_PUBLIC_API_URL = "http://localhost:8000/api/v1"
 // Endpoints: "/auth/login", "/courses", etc. (no /api/v1 prefix)
 // Final URL: baseUrl + endpoint = "http://localhost:8000/api/v1/auth/login"
 
 // Frontend handles:
-const result = await apiCall<StandardResponse<DataType>>();
-if (result.success) {
-  toast.success(result.message);
+const response = await apiCall<StandardResponse<DataType>>();
+if (response.success) {
+  // Access data through response.data
+  setData(response.data);
+  toast.success(response.message || 'Operation successful');
 } else {
-  toast.error(result.message);
+  toast.error(response.message || 'Operation Failed');
+}
+
+// Error handling pattern:
+try {
+  const response = await someAPICall();
+  if (response.success) {
+    // Use backend success message
+    toast.success(response.message || 'Operation successful');
+  } else {
+    // Use backend error message, fallback to "Operation Failed"
+    throw new Error(response.message || 'Operation Failed');
+  }
+} catch (error: any) {
+  // ALWAYS use backend message first, fallback to "Operation Failed" 
+  toast.error(error.message || 'Operation Failed');
 }
 ```
 

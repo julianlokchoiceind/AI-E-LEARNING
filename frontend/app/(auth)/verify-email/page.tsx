@@ -23,16 +23,20 @@ export default function VerifyEmailPage() {
     // Verify email with backend
     verifyEmail(token)
       .then((response) => {
-        setStatus('success')
-        setMessage(response.message)
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-          router.push('/login?verified=true')
-        }, 3000)
+        if (response.success) {
+          setStatus('success')
+          setMessage(response.message || 'Email verified successfully!')
+          // Redirect to login after 3 seconds
+          setTimeout(() => {
+            router.push('/login?verified=true')
+          }, 3000)
+        } else {
+          throw new Error(response.message || 'Email verification failed')
+        }
       })
       .catch((error) => {
         setStatus('error')
-        setMessage(error.message || 'Email verification failed. Please try again.')
+        setMessage(error.message || 'Operation Failed')
         
         // If the link was already used, show login button
         if (error.message?.includes('already been used')) {

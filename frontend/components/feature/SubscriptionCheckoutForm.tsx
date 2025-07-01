@@ -105,7 +105,7 @@ export function SubscriptionCheckoutForm({
     if (subscriptionResponse.success) {
       return subscriptionResponse;
     } else {
-      throw new Error('Subscription creation failed');
+      throw new Error(subscriptionResponse.message || 'Operation Failed');
     }
   };
 
@@ -147,7 +147,7 @@ export function SubscriptionCheckoutForm({
       );
 
       // Subscription successful
-      toast.success('Subscription created successfully!');
+      toast.success(subscriptionResponse.message);
       
       // Give a moment for backend to process
       setTimeout(() => {

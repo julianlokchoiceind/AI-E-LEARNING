@@ -49,15 +49,26 @@ const CreatorAnalyticsPage = () => {
       setLoading(true);
       
       // Fetch all analytics data in parallel
-      const [overviewData, revenueData, studentsData] = await Promise.all([
+      const [overviewResponse, revenueResponse, studentsResponse] = await Promise.all([
         getCreatorOverview(timeRange),
         getRevenueAnalytics(timeRange),
         getStudentAnalytics(20, 0)
       ]);
 
-      setOverview(overviewData);
-      setRevenue(revenueData);
-      setStudents(studentsData);
+      // Check responses and extract data
+      if (!overviewResponse.success) {
+        throw new Error(overviewResponse.message || 'Operation Failed');
+      }
+      if (!revenueResponse.success) {
+        throw new Error(revenueResponse.message || 'Operation Failed');
+      }
+      if (!studentsResponse.success) {
+        throw new Error(studentsResponse.message || 'Operation Failed');
+      }
+
+      setOverview(overviewResponse.data || null);
+      setRevenue(revenueResponse.data || null);
+      setStudents(studentsResponse.data || null);
       
     } catch (error: any) {
       console.error('Failed to fetch analytics:', error);
@@ -69,8 +80,13 @@ const CreatorAnalyticsPage = () => {
 
   const handleExport = async (reportType: string) => {
     try {
-      const result = await exportAnalytics(reportType, timeRange, 'csv');
-      toast.success(result.message || 'Operation Failed');
+      const response = await exportAnalytics(reportType, timeRange, 'csv');
+      
+      if (response.success) {
+        toast.success(response.message || 'Export successful');
+      } else {
+        throw new Error(response.message || 'Operation Failed');
+      }
     } catch (error: any) {
       console.error('Export failed:', error);
       toast.error(error.message || 'Operation Failed');

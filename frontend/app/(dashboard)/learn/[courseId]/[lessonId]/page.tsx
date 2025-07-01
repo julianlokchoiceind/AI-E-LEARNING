@@ -89,6 +89,9 @@ export default function LessonPlayerPage() {
       }
 
       const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Operation Failed');
+      }
       setLesson(data.data);
     } catch (error: any) {
       console.error('Error fetching lesson:', error);
@@ -121,7 +124,9 @@ export default function LessonPlayerPage() {
 
       if (progressResponse.ok) {
         const data = await progressResponse.json();
-        setProgress(data.data);
+        if (data.success && data.data) {
+          setProgress(data.data);
+        }
       }
     } catch (error: any) {
       console.error('Error starting lesson:', error);
@@ -139,29 +144,32 @@ export default function LessonPlayerPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setChapters(data.data);
-        
-        // Fetch progress for all lessons
-        await fetchAllLessonsProgress(data.data);
-        
-        // Find current chapter and next lesson
-        for (const chapter of data.data) {
-          const lessonIndex = chapter.lessons.findIndex((l: Lesson) => l._id === lessonId);
-          if (lessonIndex !== -1) {
-            setCurrentChapter(chapter);
-            
-            // Check for next lesson in same chapter
-            if (lessonIndex < chapter.lessons.length - 1) {
-              setNextLesson(chapter.lessons[lessonIndex + 1]);
-            } else {
-              // Check for first lesson in next chapter
-              const chapterIndex = data.data.findIndex((c: Chapter) => c._id === chapter._id);
-              if (chapterIndex < data.data.length - 1 && data.data[chapterIndex + 1].lessons.length > 0) {
-                setNextLesson(data.data[chapterIndex + 1].lessons[0]);
+        if (data.success && data.data) {
+          const chaptersData = data.data;
+          setChapters(chaptersData);
+          
+          // Fetch progress for all lessons
+          await fetchAllLessonsProgress(chaptersData);
+          
+          // Find current chapter and next lesson
+          for (const chapter of chaptersData) {
+            const lessonIndex = chapter.lessons.findIndex((l: Lesson) => l._id === lessonId);
+            if (lessonIndex !== -1) {
+              setCurrentChapter(chapter);
+              
+              // Check for next lesson in same chapter
+              if (lessonIndex < chapter.lessons.length - 1) {
+                setNextLesson(chapter.lessons[lessonIndex + 1]);
+              } else {
+                // Check for first lesson in next chapter
+                const chapterIndex = chaptersData.findIndex((c: Chapter) => c._id === chapter._id);
+                if (chapterIndex < chaptersData.length - 1 && chaptersData[chapterIndex + 1].lessons.length > 0) {
+                setNextLesson(chaptersData[chapterIndex + 1].lessons[0]);
               }
             }
             break;
           }
+        }
         }
       }
     } catch (error) {
@@ -190,11 +198,13 @@ export default function LessonPlayerPage() {
           
           if (response.ok) {
             const data = await response.json();
-            return {
-              lesson_id: lessonId,
-              is_completed: data.data.is_completed,
-              is_unlocked: data.data.is_unlocked
-            };
+            if (data.success && data.data) {
+              return {
+                lesson_id: lessonId,
+                is_completed: data.data.is_completed,
+                is_unlocked: data.data.is_unlocked
+              };
+            }
           }
           
           // If no progress exists, lesson is locked (except first lesson)
@@ -265,7 +275,9 @@ export default function LessonPlayerPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setProgress(data.data);
+        if (data.success && data.data) {
+          setProgress(data.data);
+        }
       }
     } catch (error) {
       console.error('Error updating progress:', error);

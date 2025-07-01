@@ -21,11 +21,15 @@ export default function ForgotPasswordPage() {
     
     try {
       const response = await forgotPassword(email)
-      setSuccessMessage(response.message)
-      setSuccess(true)
+      if (response.success) {
+        setSuccessMessage(response.message || 'Password reset email sent! Please check your inbox.')
+        setSuccess(true)
+      } else {
+        throw new Error(response.message || 'Failed to send reset email')
+      }
     } catch (err: any) {
       // Always use backend error message
-      setError(err.message)
+      setError(err.message || 'Operation Failed')
     } finally {
       setLoading(false)
     }

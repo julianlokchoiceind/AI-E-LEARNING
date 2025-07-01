@@ -1,9 +1,5 @@
 /**
  * Authentication API client functions
- * 
- * IMPORTANT: The api client (from api-client.ts) automatically unwraps StandardResponse format.
- * When you call api.post<T>(), it returns T directly, not StandardResponse<T>.
- * The api client handles the unwrapping internally in the request() method.
  */
 
 import { StandardResponse } from '@/lib/types/api'
@@ -43,14 +39,13 @@ export interface UserResponse {
 /**
  * Register a new user
  */
-export async function registerUser(data: RegisterData): Promise<{ user: UserResponse; message: string }> {
+export async function registerUser(data: RegisterData): Promise<StandardResponse<UserResponse>> {
   console.log('[AUTH API DEBUG] registerUser called with:', data);
   
   try {
     console.log('[AUTH API DEBUG] Making API request to /auth/register');
     
-    // The API client already unwraps StandardResponse and returns just the data
-    const user = await api.post<UserResponse>(
+    const response = await api.post<StandardResponse<UserResponse>>(
       '/auth/register',
       data,
       {
@@ -58,16 +53,11 @@ export async function registerUser(data: RegisterData): Promise<{ user: UserResp
       }
     )
 
-    console.log('[AUTH API DEBUG] Registration API response:', user);
+    console.log('[AUTH API DEBUG] Registration API response:', response);
     
-    // Return the user and a success message
-    return {
-      user: user,
-      message: 'Registration successful! Please check your email to verify your account.'
-    }
+    return response;
   } catch (error) {
     console.error('[AUTH API DEBUG] Registration API error:', error);
-    // The api client already handles error parsing
     throw error
   }
 }
@@ -75,100 +65,96 @@ export async function registerUser(data: RegisterData): Promise<{ user: UserResp
 /**
  * Login user and get access token
  */
-export async function loginUser(data: LoginData): Promise<AuthResponseWithRefresh> {
+export async function loginUser(data: LoginData): Promise<StandardResponse<AuthResponseWithRefresh>> {
   // OAuth2 compatible login with form data
   const formData = new URLSearchParams()
   formData.append('username', data.email) // OAuth2 uses 'username' field
   formData.append('password', data.password)
 
-  // The api.post returns the unwrapped data from StandardResponse
-  const result = await api.post<AuthResponseWithRefresh>(
+  const response = await api.post<StandardResponse<AuthResponseWithRefresh>>(
     '/auth/login',
     formData.toString(),
     {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
+      requireAuth: false
     }
   )
   
-  if (!result) {
-    throw new Error('No response from login API');
-  }
-  
-  return result;
+  return response;
 }
 
 /**
  * Verify email with token
  */
-export async function verifyEmail(token: string): Promise<{ message: string; email?: string }> {
-  const result = await api.get<{ email?: string; message?: string }>(
-    `/auth/verify-email?token=${encodeURIComponent(token)}`
+export async function verifyEmail(token: string): Promise<StandardResponse<{ email?: string }>> {
+  const response = await api.get<StandardResponse<{ email?: string }>>(
+    `/auth/verify-email?token=${encodeURIComponent(token)}`,
+    { requireAuth: false }
   )
   
-  // The API client already unwraps the response
-  return {
-    message: result.message || 'Email verified successfully',
-    email: result.email
-  }
+  return response;
 }
 
 /**
  * Refresh access token
  */
-export async function refreshToken(token: string): Promise<AuthResponseWithRefresh> {
-  const result = await api.post<AuthResponseWithRefresh>(
+export async function refreshToken(token: string): Promise<StandardResponse<AuthResponseWithRefresh>> {
+  const response = await api.post<StandardResponse<AuthResponseWithRefresh>>(
     '/auth/refresh',
     { refresh_token: token },
     {
       requireAuth: false // No auth required for refresh endpoint
     }
   )
-  return result
+  return response
 }
 
 /**
  * Logout user
  */
-export async function logoutUser(): Promise<{ message: string }> {
-  const result = await api.post<{ message: string }>('/auth/logout')
-  return result
+export async function logoutUser(): Promise<StandardResponse<any>> {
+  const response = await api.post<StandardResponse<any>>('/auth/logout', {})
+  return response
 }
 
 /**
  * Request password reset email
  */
-export async function forgotPassword(email: string): Promise<{ message: string }> {
-  const result = await api.post<{ message: string }>(
+export async function forgotPassword(email: string): Promise<StandardResponse<any>> {
+  const response = await api.post<StandardResponse<any>>(
     '/auth/forgot-password',
-    { email }
+    { email },
+    { requireAuth: false }
   )
-  return result
+  return response
 }
 
 /**
  * Reset password with token
  */
-export async function resetPassword(token: string, newPassword: string, confirmPassword?: string): Promise<{ message: string; email: string }> {
-  const result = await api.post<{ message: string; email: string }>(
+export async function resetPassword(token: string, newPassword: string, confirmPassword?: string): Promise<StandardResponse<{ email: string }>> {
+  const response = await api.post<StandardResponse<{ email: string }>>(
     '/auth/reset-password',
     {
       token,
       new_password: newPassword,
       confirm_password: confirmPassword // Backend validates if provided
-    }
+    },
+    { requireAuth: false }
   )
-  return result
+  return response
 }
 
 /**
  * Resend verification email
  */
-export async function resendVerificationEmail(email: string): Promise<{ message: string; email: string }> {
-  const result = await api.post<{ message: string; email: string }>(
+export async function resendVerificationEmail(email: string): Promise<StandardResponse<{ email: string }>> {
+  const response = await api.post<StandardResponse<{ email: string }>>(
     '/auth/resend-verification',
-    { email }
+    { email },
+    { requireAuth: false }
   )
-  return result
+  return response
 }

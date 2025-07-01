@@ -35,10 +35,13 @@ export default function FAQPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await faqAPI.getCategories();
-        setCategories(data);
-      } catch (error) {
+        const response = await faqAPI.getCategories();
+        if (response.success && response.data) {
+          setCategories(response.data);
+        }
+      } catch (error: any) {
         console.error('Failed to fetch categories:', error);
+        toast.error(error.message || 'Operation Failed');
       }
     };
     fetchCategories();
@@ -58,8 +61,12 @@ export default function FAQPage() {
           sort_order: 'desc',
         });
         
-        setFaqs(response.items);
-        setTotalPages(Math.ceil(response.total / response.per_page));
+        if (response.success && response.data) {
+          setFaqs(response.data.items);
+          setTotalPages(Math.ceil(response.data.total / response.data.per_page));
+        } else {
+          throw new Error(response.message || 'Failed to fetch FAQs');
+        }
       } catch (error: any) {
         console.error('Failed to fetch FAQs:', error);
         toast.error(error.message || 'Operation Failed');

@@ -1,4 +1,6 @@
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
+import { StandardResponse } from '@/lib/types/api';
+import { api } from '@/lib/api/api-client';
 
 // Types for analytics data
 export interface AnalyticsOverview {
@@ -104,101 +106,71 @@ export interface RevenueAnalytics {
 }
 
 // API functions
-export const getCreatorOverview = async (timeRange: string = '30days'): Promise<AnalyticsOverview> => {
+export const getCreatorOverview = async (timeRange: string = '30days'): Promise<StandardResponse<AnalyticsOverview>> => {
   try {
-    const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/v1/analytics/creator/overview?time_range=${timeRange}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch analytics overview');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await api.get<StandardResponse<AnalyticsOverview>>(
+      `/analytics/creator/overview?time_range=${timeRange}`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get creator overview error:', error);
     throw error;
   }
 };
 
-export const getCourseAnalytics = async (courseId: string, timeRange: string = '30days'): Promise<CourseAnalytics> => {
+export const getCourseAnalytics = async (courseId: string, timeRange: string = '30days'): Promise<StandardResponse<CourseAnalytics>> => {
   try {
-    const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/v1/analytics/creator/courses/${courseId}?time_range=${timeRange}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch course analytics');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await api.get<StandardResponse<CourseAnalytics>>(
+      `/analytics/creator/courses/${courseId}?time_range=${timeRange}`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get course analytics error:', error);
     throw error;
   }
 };
 
-export const getStudentAnalytics = async (limit: number = 20, offset: number = 0): Promise<StudentAnalytics> => {
+export const getStudentAnalytics = async (limit: number = 20, offset: number = 0): Promise<StandardResponse<StudentAnalytics>> => {
   try {
-    const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/v1/analytics/creator/students?limit=${limit}&offset=${offset}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch student analytics');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await api.get<StandardResponse<StudentAnalytics>>(
+      `/analytics/creator/students?limit=${limit}&offset=${offset}`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get student analytics error:', error);
     throw error;
   }
 };
 
-export const getRevenueAnalytics = async (timeRange: string = '30days'): Promise<RevenueAnalytics> => {
+export const getRevenueAnalytics = async (timeRange: string = '30days'): Promise<StandardResponse<RevenueAnalytics>> => {
   try {
-    const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/v1/analytics/creator/revenue?time_range=${timeRange}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch revenue analytics');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await api.get<StandardResponse<RevenueAnalytics>>(
+      `/analytics/creator/revenue?time_range=${timeRange}`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get revenue analytics error:', error);
     throw error;
   }
 };
 
-export const exportAnalytics = async (reportType: string, timeRange: string = '30days', format: string = 'csv') => {
+export const exportAnalytics = async (reportType: string, timeRange: string = '30days', format: string = 'csv'): Promise<StandardResponse<any>> => {
   try {
-    const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/v1/analytics/creator/export/${reportType}?time_range=${timeRange}&format=${format}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to export analytics');
-    }
-
-    const result = await response.json();
-    return result.data;
+    const response = await api.post<StandardResponse<any>>(
+      `/analytics/creator/export/${reportType}?time_range=${timeRange}&format=${format}`,
+      {},
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Export analytics error:', error);
     throw error;

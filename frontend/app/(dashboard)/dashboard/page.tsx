@@ -88,10 +88,15 @@ export default function DashboardPage() {
         
         try {
           // Try to fetch real data from API
-          const data = await usersApi.getDashboard();
-          setDashboardData(data);
-        } catch (error) {
+          const response = await usersApi.getDashboard();
+          if (response.success && response.data) {
+            setDashboardData(response.data);
+          } else {
+            throw new Error(response.message || 'Failed to load dashboard');
+          }
+        } catch (error: any) {
           console.error('Dashboard API error:', error);
+          toast.error(error.message || 'Operation Failed');
           
           // Fallback to mock data if API fails
           const mockDashboardData: DashboardData = {
@@ -159,9 +164,12 @@ export default function DashboardPage() {
     
     try {
       // Try to fetch real data from API
-      const data = await usersApi.getDashboard();
-      setDashboardData(data);
-      toast.success(data?.message || 'Operation Failed');
+      const response = await usersApi.getDashboard();
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      setDashboardData(response.data);
+      toast.success(response.message);
     } catch (error) {
       console.error('Dashboard refresh error:', error);
       

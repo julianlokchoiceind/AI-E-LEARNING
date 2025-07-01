@@ -113,6 +113,9 @@ const LessonEditPage = () => {
       if (!lessonResponse.ok) throw new Error('Failed to fetch lesson');
       
       const lessonData = await lessonResponse.json();
+      if (!lessonData.success) {
+        throw new Error(lessonData.message || 'Operation Failed');
+      }
       setLesson(lessonData.data);
       setTitleInput(lessonData.data.title);
 
@@ -254,7 +257,7 @@ const LessonEditPage = () => {
         };
         const updated = await quizAPI.updateQuiz(quiz._id, updatePayload);
         setQuiz(updated);
-        toast.success(updated.message || 'Operation Failed');
+        toast.success('Quiz updated successfully');
       } else {
         // Create new quiz
         const createPayload = {

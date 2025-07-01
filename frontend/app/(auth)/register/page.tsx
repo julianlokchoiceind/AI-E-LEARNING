@@ -63,8 +63,12 @@ export default function RegisterPage() {
       
       console.log('[REGISTER DEBUG] Registration successful:', response)
       
-      // Use backend success message
-      setSuccessMessage(response.message)
+      // Use backend success message from StandardResponse
+      if (response.success) {
+        setSuccessMessage(response.message || 'Registration successful! Please check your email to verify your account.')
+      } else {
+        throw new Error(response.message || 'Registration failed')
+      }
       
       // Clear form
       setFormData({
@@ -87,12 +91,12 @@ export default function RegisterPage() {
         stack: error instanceof Error ? error.stack : 'No stack trace'
       });
       
-      // Always use the actual error message from backend
+      // Always use the actual error message from backend, fallback to "Operation Failed"
       if (error instanceof Error) {
-        setError(error.message)
+        setError(error.message || 'Operation Failed')
       } else {
         // This should never happen if error handler is working correctly
-        setError('An unexpected error occurred')
+        setError('Operation Failed')
       }
     } finally {
       console.log('[REGISTER DEBUG] Form submission completed');

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { getAdminAnalytics, AdminDashboardStats } from '@/lib/api/admin';
+import { toast } from 'react-hot-toast';
 import { 
   Users, 
   BookOpen, 
@@ -59,28 +60,34 @@ export default function AdminDashboard() {
       setLoading(true);
       const response = await getAdminAnalytics();
       
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      const adminStats = response.data;
+      
       // Transform AdminDashboardStats to DashboardStats format
       const transformedStats: DashboardStats = {
         users: {
-          total: response.total_users || 0,
-          new_today: response.new_users_today || 0,
-          active_this_week: response.active_users_this_week || 0,
-          premium_users: response.total_admins || 0
+          total: adminStats?.total_users || 0,
+          new_today: adminStats?.new_users_today || 0,
+          active_this_week: adminStats?.active_users_this_week || 0,
+          premium_users: adminStats?.total_admins || 0
         },
         courses: {
-          total: response.total_courses || 0,
-          published: response.published_courses || 0,
-          pending_approval: response.pending_review_courses || 0,
-          total_enrollments: response.total_enrollments || 0
+          total: adminStats?.total_courses || 0,
+          published: adminStats?.published_courses || 0,
+          pending_approval: adminStats?.pending_review_courses || 0,
+          total_enrollments: adminStats?.total_enrollments || 0
         },
         revenue: {
-          total_monthly: response.revenue_this_month || 0,
+          total_monthly: adminStats?.revenue_this_month || 0,
           subscription_revenue: 0, // Not in AdminDashboardStats
-          course_sales_revenue: response.revenue_this_month || 0,
+          course_sales_revenue: adminStats?.revenue_this_month || 0,
           growth_percentage: 0 // Not in AdminDashboardStats
         },
         system: {
-          active_sessions: response.active_users_today || 0,
+          active_sessions: adminStats?.active_users_today || 0,
           pending_support_tickets: 0, // Not in AdminDashboardStats
           server_status: 'Healthy',
           last_backup: '2 hours ago'
@@ -88,8 +95,9 @@ export default function AdminDashboard() {
       };
       
       setStats(transformedStats);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch dashboard stats:', error);
+      toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);
     }

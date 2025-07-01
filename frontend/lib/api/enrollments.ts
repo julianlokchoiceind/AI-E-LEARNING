@@ -1,4 +1,6 @@
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
+import { StandardResponse } from '@/lib/types/api';
+import { api } from '@/lib/api/api-client';
 
 export type EnrollmentType = 'free' | 'purchased' | 'subscription' | 'admin_granted';
 
@@ -43,76 +45,74 @@ export interface EnrollmentCreate {
 export const enrollInCourse = async (
   courseId: string,
   enrollmentData?: EnrollmentCreate
-): Promise<Enrollment> => {
-  const response = await fetch(`${API_ENDPOINTS.BASE_URL}/enrollments/courses/${courseId}/enroll`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify(enrollmentData || {}),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to enroll in course');
-  }
-
-  const result = await response.json();
-  return result.data;
-};
-
-export const getMyEnrollments = async (): Promise<Enrollment[]> => {
-  const response = await fetch(`${API_ENDPOINTS.BASE_URL}/enrollments/enrollments`, {
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to get enrollments');
-  }
-
-  const result = await response.json();
-  return result.data;
-};
-
-export const getCourseEnrollment = async (courseId: string): Promise<Enrollment> => {
-  const response = await fetch(`${API_ENDPOINTS.BASE_URL}/enrollments/courses/${courseId}/enrollment`, {
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Not enrolled in this course');
-  }
-
-  const result = await response.json();
-  return result.data;
-};
-
-export const unenrollFromCourse = async (courseId: string): Promise<void> => {
-  const response = await fetch(`${API_ENDPOINTS.BASE_URL}/enrollments/courses/${courseId}/unenroll`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to unenroll from course');
+): Promise<StandardResponse<Enrollment>> => {
+  try {
+    const response = await api.post<StandardResponse<Enrollment>>(
+      `/enrollments/courses/${courseId}/enroll`,
+      enrollmentData || {},
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Failed to enroll in course:', error);
+    throw error;
   }
 };
 
-export const issueCertificate = async (enrollmentId: string): Promise<Enrollment> => {
-  const response = await fetch(`${API_ENDPOINTS.BASE_URL}/enrollments/enrollments/${enrollmentId}/certificate`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to issue certificate');
+export const getMyEnrollments = async (): Promise<StandardResponse<Enrollment[]>> => {
+  try {
+    const response = await api.get<StandardResponse<Enrollment[]>>(
+      '/enrollments/enrollments',
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Failed to get enrollments:', error);
+    throw error;
   }
+};
 
-  const result = await response.json();
-  return result.data;
+export const getCourseEnrollment = async (courseId: string): Promise<StandardResponse<Enrollment>> => {
+  try {
+    const response = await api.get<StandardResponse<Enrollment>>(
+      `/enrollments/courses/${courseId}/enrollment`,
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Not enrolled in this course:', error);
+    throw error;
+  }
+};
+
+export const unenrollFromCourse = async (courseId: string): Promise<StandardResponse<any>> => {
+  try {
+    const response = await api.delete<StandardResponse<any>>(
+      `/enrollments/courses/${courseId}/unenroll`,
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Failed to unenroll from course:', error);
+    throw error;
+  }
+};
+
+export const issueCertificate = async (enrollmentId: string): Promise<StandardResponse<Enrollment>> => {
+  try {
+    const response = await api.post<StandardResponse<Enrollment>>(
+      `/enrollments/enrollments/${enrollmentId}/certificate`,
+      {},
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Failed to issue certificate:', error);
+    throw error;
+  }
 };

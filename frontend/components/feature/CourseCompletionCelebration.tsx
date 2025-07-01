@@ -55,7 +55,7 @@ export function CourseCompletionCelebration({
         if (result.success && result.data) {
           setCertificate(result.data);
           setCertificateGenerated(true);
-          toast.success(result.message || 'Operation Failed');
+          toast.success(result.message);
         }
       }
     } catch (error) {
@@ -73,14 +73,19 @@ export function CourseCompletionCelebration({
 
     try {
       setLoading(true);
-      const cert = await certificateAPI.generateCertificate({
+      const response = await certificateAPI.generateCertificate({
         enrollment_id: enrollmentId,
         template_id: 'default'
       });
       
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      const cert = response.data;
       setCertificate(cert);
       setCertificateGenerated(true);
-      toast.success(cert.message || 'Operation Failed');
+      toast.success(response.message);
     } catch (error: any) {
       console.error('Failed to generate certificate:', error);
       toast.error(error.message || 'Operation Failed');
@@ -97,7 +102,13 @@ export function CourseCompletionCelebration({
     if (!certificate) return;
 
     try {
-      const blob = await certificateAPI.downloadCertificatePDF(certificate._id);
+      const response = await certificateAPI.downloadCertificatePDF(certificate._id);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -106,8 +117,9 @@ export function CourseCompletionCelebration({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success('Operation Failed'); // Download doesn't return response
+      toast.success(response.message);
     } catch (error: any) {
+      console.error('Failed to download certificate:', error);
       toast.error(error.message || 'Operation Failed');
     }
   };
@@ -116,14 +128,21 @@ export function CourseCompletionCelebration({
     if (!certificate) return;
 
     try {
-      const shareData = await certificateAPI.getLinkedInShareData(certificate._id);
+      const response = await certificateAPI.getLinkedInShareData(certificate._id);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      const shareData = response.data;
       const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
         shareData.certificate_url
       )}`;
       
       window.open(linkedinUrl, '_blank', 'width=600,height=400');
-      toast.success('Opening LinkedIn share dialog');
+      toast.success(response.message);
     } catch (error: any) {
+      console.error('Failed to get LinkedIn share data:', error);
       toast.error(error.message || 'Operation Failed');
     }
   };

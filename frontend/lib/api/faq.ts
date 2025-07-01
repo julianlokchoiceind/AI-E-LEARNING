@@ -3,6 +3,7 @@
  */
 
 import { apiClient } from './api-client';
+import { StandardResponse } from '@/types/api';
 
 export interface FAQCategory {
   value: string;
@@ -71,7 +72,7 @@ export const faqAPI = {
   /**
    * Get FAQs with search and filters
    */
-  async getFAQs(params?: FAQSearchParams): Promise<FAQListResponse> {
+  async getFAQs(params?: FAQSearchParams): Promise<StandardResponse<FAQListResponse>> {
     const queryParams = new URLSearchParams();
     
     if (params) {
@@ -84,97 +85,84 @@ export const faqAPI = {
       if (params.sort_order) queryParams.append('sort_order', params.sort_order);
     }
     
-    const response = await apiClient.get<FAQListResponse>(`/faq?${queryParams.toString()}`);
-    return response;
+    return apiClient.get<StandardResponse<FAQListResponse>>(`/faq?${queryParams.toString()}`);
   },
 
   /**
    * Get FAQ categories with count
    */
-  async getCategories(): Promise<FAQCategory[]> {
-    const response = await apiClient.get<FAQCategory[]>('/faq/categories');
-    return response;
+  async getCategories(): Promise<StandardResponse<FAQCategory[]>> {
+    return apiClient.get<StandardResponse<FAQCategory[]>>('/faq/categories');
   },
 
   /**
    * Get popular FAQs
    */
-  async getPopularFAQs(limit: number = 10): Promise<FAQListResponse> {
-    const response = await apiClient.get<FAQListResponse>(`/faq/popular?limit=${limit}`);
-    return response;
+  async getPopularFAQs(limit: number = 10): Promise<StandardResponse<FAQListResponse>> {
+    return apiClient.get<StandardResponse<FAQListResponse>>(`/faq/popular?limit=${limit}`);
   },
 
   /**
    * Get a single FAQ by ID
    */
-  async getFAQ(id: string): Promise<FAQ> {
-    const response = await apiClient.get<FAQ>(`/faq/${id}`);
-    return response;
+  async getFAQ(id: string): Promise<StandardResponse<FAQ>> {
+    return apiClient.get<StandardResponse<FAQ>>(`/faq/${id}`);
   },
 
   /**
    * Get related FAQs
    */
-  async getRelatedFAQs(id: string): Promise<FAQListResponse> {
-    const response = await apiClient.get<FAQListResponse>(`/faq/${id}/related`);
-    return response;
+  async getRelatedFAQs(id: string): Promise<StandardResponse<FAQListResponse>> {
+    return apiClient.get<StandardResponse<FAQListResponse>>(`/faq/${id}/related`);
   },
 
   /**
    * Create a new FAQ (Admin only)
    */
-  async createFAQ(data: FAQCreateData): Promise<FAQ> {
-    const response = await apiClient.post<FAQ>('/faq', data);
+  async createFAQ(data: FAQCreateData): Promise<StandardResponse<FAQ>> {
+    const response = await apiClient.post<StandardResponse<FAQ>>('/faq', data);
     return response;
   },
 
   /**
    * Update a FAQ (Admin only)
    */
-  async updateFAQ(id: string, data: FAQUpdateData): Promise<FAQ> {
-    const response = await apiClient.put<FAQ>(`/faq/${id}`, data);
+  async updateFAQ(id: string, data: FAQUpdateData): Promise<StandardResponse<FAQ>> {
+    const response = await apiClient.put<StandardResponse<FAQ>>(`/faq/${id}`, data);
     return response;
   },
 
   /**
    * Delete a FAQ (Admin only)
    */
-  async deleteFAQ(id: string): Promise<{ message: string }> {
-    const response = await apiClient.delete<{ message: string }>(`/faq/${id}`);
+  async deleteFAQ(id: string): Promise<StandardResponse<{ message: string }>> {
+    const response = await apiClient.delete<StandardResponse<{ message: string }>>(`/faq/${id}`);
     return response;
   },
 
   /**
    * Vote on FAQ helpfulness
    */
-  async voteFAQ(id: string, data: FAQVoteData): Promise<{
-    success: boolean;
-    message: string;
+  async voteFAQ(id: string, data: FAQVoteData): Promise<StandardResponse<{
     helpful_votes: number;
     unhelpful_votes: number;
-  }> {
-    const response = await apiClient.post<{
-      success: boolean;
-      message: string;
+  }>> {
+    const response = await apiClient.post<StandardResponse<{
       helpful_votes: number;
       unhelpful_votes: number;
-    }>(`/faq/${id}/vote`, data);
+    }>>(`/faq/${id}/vote`, data);
     return response;
   },
 
   /**
    * Perform bulk action on FAQs (Admin only)
    */
-  async bulkAction(data: FAQBulkAction): Promise<{
-    success: boolean;
-    message: string;
+  async bulkAction(data: FAQBulkAction): Promise<StandardResponse<{
     affected_count: number;
-  }> {
-    const response = await apiClient.post<{
-      success: boolean;
-      message: string;
+  }>> {
+    const response = await apiClient.post<StandardResponse<{
       affected_count: number;
-    }>('/faq/bulk-action', data);
+    }>>('/faq/bulk-action', data);
     return response;
   },
 };

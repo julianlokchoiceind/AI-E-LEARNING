@@ -92,8 +92,8 @@ const CourseCatalogPage = () => {
       return response;
     });
     
-    if (result) {
-      setCourses(result.courses || []);
+    if (result && result.success && result.data) {
+      setCourses(result.data.courses || []);
     }
     
     setLoading(false);

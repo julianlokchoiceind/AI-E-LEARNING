@@ -132,10 +132,12 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        const suggestions = enableEnhancedFeatures ? 
-          data.data.suggestions : 
-          data.suggestions;
-        setQuickSuggestions(suggestions.slice(0, 4)); // Show max 4 in widget
+        if (data.success && data.data) {
+          const suggestions = enableEnhancedFeatures ? 
+            data.data.suggestions : 
+            data.data.suggestions;
+          setQuickSuggestions(suggestions.slice(0, 4)); // Show max 4 in widget
+        }
       }
     } catch (error) {
       console.error('Failed to fetch quick suggestions:', error);

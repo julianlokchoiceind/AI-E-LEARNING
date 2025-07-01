@@ -62,8 +62,13 @@ export default function AdminSupportPage() {
       };
 
       const response = await supportAPI.getTickets(params);
-      setTickets(response.items);
-      setTotalPages(response.total_pages);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      setTickets(response.data?.items || []);
+      setTotalPages(response.data?.total_pages || 1);
     } catch (error: any) {
       console.error('Failed to fetch tickets:', error);
       toast.error(error.message || 'Operation Failed');
@@ -74,18 +79,29 @@ export default function AdminSupportPage() {
 
   const fetchStats = async () => {
     try {
-      const data = await supportAPI.getTicketStats();
-      setStats(data);
-    } catch (error) {
+      const response = await supportAPI.getTicketStats();
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      setStats(response.data);
+    } catch (error: any) {
       console.error('Failed to fetch stats:', error);
+      toast.error(error.message || 'Operation Failed');
     }
   };
 
   const handleQuickUpdate = async (ticketId: string, update: TicketUpdateData) => {
     try {
       const response = await supportAPI.updateTicket(ticketId, update);
-      toast.success(response.message || 'Operation Failed');
-      fetchTickets(); // Refresh list
+      
+      if (response.success) {
+        toast.success(response.message);
+        fetchTickets(); // Refresh list
+      } else {
+        throw new Error(response.message || 'Operation Failed');
+      }
     } catch (error: any) {
       console.error('Failed to update ticket:', error);
       toast.error(error.message || 'Operation Failed');

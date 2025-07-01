@@ -129,7 +129,13 @@ function CheckoutForm({
     }
 
     // Create payment intent
-    const paymentResponse = await createCoursePayment(course._id, paymentMethod.id);
+    const response = await createCoursePayment(course._id, paymentMethod.id);
+    
+    if (!response.success) {
+      throw new Error(response.message || 'Operation Failed');
+    }
+    
+    const paymentResponse = response.data;
 
     // Confirm payment
     const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(

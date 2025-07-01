@@ -10,6 +10,20 @@
 
 ---
 
+## 🎯 **COMPLIANCE STATEMENT**
+
+**"Luôn tuân thủ claude.me hoặc coding_rules"** - This phase ensures:
+
+✅ **CLAUDE.md Compliance**: All patterns follow existing SaveStatusIndicator, useApiCall, useErrorHandler  
+✅ **CODING_RULES.md Compliance**: Zero scope creep, copy-paste consistency from existing files  
+✅ **Golden Rule**: ONLY change what's explicitly requested - extend existing patterns, don't create new ones  
+✅ **Pattern Inheritance**: Loading states extend SaveStatusIndicator, API calls use existing useApiCall hook  
+✅ **StandardResponse Integration**: All implementations work with existing StandardResponse pattern  
+
+**🔥 GOLDEN RULE**: Copy exact patterns from existing files instead of creating new implementations.
+
+---
+
 ## 📅 **WEEK-BY-WEEK BREAKDOWN**
 
 ---

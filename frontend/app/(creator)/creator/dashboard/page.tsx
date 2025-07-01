@@ -76,7 +76,12 @@ const CreatorDashboardPage = () => {
       
       // Fetch creator's courses
       const response = await getCourses(`creator_id=${user?.id}`);
-      const courses = response.courses;
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      const courses = response.data?.courses || [];
 
       // Calculate statistics
       const publishedCourses = courses.filter((c: any) => c.status === 'published');
@@ -130,6 +135,7 @@ const CreatorDashboardPage = () => {
       setRecentCourses(recent);
     } catch (error: any) {
       console.error('Failed to fetch dashboard data:', error);
+      // Always use backend message, only fallback to "Operation Failed" if no message
       toast.error(error.message || 'Operation Failed');
     } finally {
       setLoading(false);

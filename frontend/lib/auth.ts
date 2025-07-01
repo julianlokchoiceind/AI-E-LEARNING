@@ -38,9 +38,14 @@ export const authOptions: NextAuthOptions = {
             password: credentials.password
           })
 
+          // Check if login was successful
+          if (!authResponse.success) {
+            throw new Error(authResponse.message || 'Login failed')
+          }
+
           // Decode the JWT token to get user info
           const tokenPayload = JSON.parse(
-            Buffer.from(authResponse.access_token.split('.')[1], 'base64').toString()
+            Buffer.from(authResponse.data.access_token.split('.')[1], 'base64').toString()
           )
 
           // Extract user information from JWT payload
@@ -51,8 +56,8 @@ export const authOptions: NextAuthOptions = {
             name: tokenPayload.name || tokenPayload.email?.split('@')[0] || credentials.email.split('@')[0], // Use name from token or email prefix
             role: tokenPayload.role || 'student',
             premiumStatus: tokenPayload.premium_status || false,
-            accessToken: authResponse.access_token,
-            refreshToken: authResponse.refresh_token
+            accessToken: authResponse.data.access_token,
+            refreshToken: authResponse.data.refresh_token
           }
         } catch (error: any) {
           console.error('Login error:', error)
@@ -125,11 +130,17 @@ export const authOptions: NextAuthOptions = {
           if (response.ok) {
             const data = await response.json()
             
+            // Check if OAuth backend sync was successful
+            if (!data.success) {
+              console.error('OAuth backend sync failed:', data.message)
+              return false
+            }
+            
             // Decode JWT to get user info
-            if (data.access_token) {
+            if (data.data && data.data.access_token) {
               try {
                 const tokenPayload = JSON.parse(
-                  Buffer.from(data.access_token.split('.')[1], 'base64').toString()
+                  Buffer.from(data.data.access_token.split('.')[1], 'base64').toString()
                 )
                 
                 // Update user object with decoded info
@@ -144,8 +155,8 @@ export const authOptions: NextAuthOptions = {
             }
             
             // Store tokens in user object to pass to JWT callback
-            user.accessToken = data.access_token
-            user.refreshToken = data.refresh_token
+            user.accessToken = data.data.access_token
+            user.refreshToken = data.data.refresh_token
             return true
           }
           

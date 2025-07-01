@@ -4,6 +4,8 @@
  */
 
 import { StandardResponse } from '@/lib/types/api';
+import { api } from '@/lib/api/api-client';
+import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
 
 // Payment Types
 export enum PaymentType {
@@ -107,25 +109,18 @@ export interface SubscriptionStatusResponse {
 export const createCoursePayment = async (
   courseId: string,
   paymentMethodId: string
-): Promise<PaymentIntentResponse> => {
+): Promise<StandardResponse<PaymentIntentResponse>> => {
   try {
-    const response = await fetch(`/api/v1/payments/course/${courseId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const response = await api.post<StandardResponse<PaymentIntentResponse>>(
+      `/payments/course/${courseId}`,
+      {
         course_id: courseId,
         payment_method_id: paymentMethodId,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+      },
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Create course payment failed:', error);
     throw error;
@@ -140,23 +135,16 @@ export const createSubscription = async (
   planType: SubscriptionType = SubscriptionType.PRO
 ): Promise<StandardResponse<SubscriptionResponse>> => {
   try {
-    const response = await fetch('/api/v1/payments/subscription', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const response = await api.post<StandardResponse<SubscriptionResponse>>(
+      '/payments/subscription',
+      {
         payment_method_id: paymentMethodId,
         plan_type: planType,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+      },
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Create subscription failed:', error);
     throw error;
@@ -171,21 +159,12 @@ export const getPaymentHistory = async (
   offset: number = 0
 ): Promise<StandardResponse<PaymentHistoryResponse>> => {
   try {
-    const response = await fetch(
-      `/api/v1/payments/history?limit=${limit}&offset=${offset}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+    const response = await api.get<StandardResponse<PaymentHistoryResponse>>(
+      `/payments/history?limit=${limit}&offset=${offset}`,
+      { requireAuth: true }
     );
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    
+    return response;
   } catch (error) {
     console.error('Get payment history failed:', error);
     throw error;
@@ -200,23 +179,16 @@ export const cancelSubscription = async (
   reason?: string
 ): Promise<StandardResponse<any>> => {
   try {
-    const response = await fetch('/api/v1/payments/cancel', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const response = await api.post<StandardResponse<any>>(
+      '/payments/cancel',
+      {
         cancel_at_period_end: cancelAtPeriodEnd,
         reason,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+      },
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Cancel subscription failed:', error);
     throw error;
@@ -226,20 +198,14 @@ export const cancelSubscription = async (
 /**
  * Get subscription status
  */
-export const getSubscriptionStatus = async (): Promise<SubscriptionStatusResponse> => {
+export const getSubscriptionStatus = async (): Promise<StandardResponse<SubscriptionStatusResponse>> => {
   try {
-    const response = await fetch('/api/v1/payments/subscription/status', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const response = await api.get<StandardResponse<SubscriptionStatusResponse>>(
+      '/payments/subscription/status',
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get subscription status failed:', error);
     throw error;

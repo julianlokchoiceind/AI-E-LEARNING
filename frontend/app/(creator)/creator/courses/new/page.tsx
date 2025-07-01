@@ -23,11 +23,13 @@ const CreateCoursePage = () => {
         // Create course with API call
         const response = await createCourse();
         
-        if (response.course && response.course._id) {
+        if (response.success && response.data?._id) {
+          // Show success message from backend
+          toast.success(response.message || 'Course created successfully');
           // Redirect to course editor
-          router.push(`/creator/courses/${response.course._id}/edit`);
+          router.push(`/creator/courses/${response.data._id}/edit`);
         } else {
-          throw new Error('Failed to create course');
+          throw new Error(response.message || 'Operation Failed');
         }
       } catch (error: any) {
         console.error('Failed to create course:', error);

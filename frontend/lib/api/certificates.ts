@@ -2,6 +2,7 @@
  * Certificate API client
  */
 import { apiClient } from './api-client';
+import { StandardResponse } from '@/lib/types/api';
 import type {
   Certificate,
   CertificateWithDetails,
@@ -13,62 +14,50 @@ import type {
   CertificateListResponse
 } from '@/lib/types/certificate';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-
 export const certificateAPI = {
   /**
    * Generate a certificate for completed course
    */
-  async generateCertificate(request: CertificateGenerateRequest): Promise<CertificateWithDetails> {
-    return apiClient.post(`${API_BASE_URL}/certificates/generate`, request);
+  async generateCertificate(request: CertificateGenerateRequest): Promise<StandardResponse<CertificateWithDetails>> {
+    return apiClient.post<StandardResponse<CertificateWithDetails>>('/certificates/generate', request);
   },
 
   /**
    * Get my certificates
    */
-  async getMyCertificates(page: number = 1, perPage: number = 10): Promise<CertificateListResponse> {
-    return apiClient.get(
-      `${API_BASE_URL}/certificates/my-certificates?page=${page}&per_page=${perPage}`
+  async getMyCertificates(page: number = 1, perPage: number = 10): Promise<StandardResponse<CertificateListResponse>> {
+    return apiClient.get<StandardResponse<CertificateListResponse>>(
+      `/certificates/my-certificates?page=${page}&per_page=${perPage}`
     );
   },
 
   /**
    * Get my certificate statistics
    */
-  async getMyCertificateStats(): Promise<CertificateStats> {
-    return apiClient.get(`${API_BASE_URL}/certificates/my-stats`);
+  async getMyCertificateStats(): Promise<StandardResponse<CertificateStats>> {
+    return apiClient.get<StandardResponse<CertificateStats>>('/certificates/my-stats');
   },
 
   /**
    * Verify a certificate by code
    */
-  async verifyCertificate(verificationCode: string): Promise<CertificateVerification> {
+  async verifyCertificate(verificationCode: string): Promise<StandardResponse<CertificateVerification>> {
     // Public endpoint - no auth required
-    const response = await fetch(
-      `${API_BASE_URL}/certificates/verify/${verificationCode}`
+    return apiClient.get<StandardResponse<CertificateVerification>>(
+      `/certificates/verify/${verificationCode}`,
+      { requireAuth: false }
     );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to verify certificate');
-    }
-
-    return response.json();
   },
 
   /**
    * Get certificate details by ID
    */
-  async getCertificate(certificateId: string): Promise<CertificateWithDetails> {
+  async getCertificate(certificateId: string): Promise<StandardResponse<CertificateWithDetails>> {
     // Public endpoint - no auth required
-    const response = await fetch(`${API_BASE_URL}/certificates/${certificateId}`);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch certificate');
-    }
-
-    return response.json();
+    return apiClient.get<StandardResponse<CertificateWithDetails>>(
+      `/certificates/${certificateId}`,
+      { requireAuth: false }
+    );
   },
 
   /**
@@ -77,16 +66,16 @@ export const certificateAPI = {
   async updateCertificate(
     certificateId: string,
     update: CertificateUpdate
-  ): Promise<CertificateWithDetails> {
-    return apiClient.put(`${API_BASE_URL}/certificates/${certificateId}`, update);
+  ): Promise<StandardResponse<CertificateWithDetails>> {
+    return apiClient.put<StandardResponse<CertificateWithDetails>>(`/certificates/${certificateId}`, update);
   },
 
   /**
    * Get LinkedIn share data
    */
-  async getLinkedInShareData(certificateId: string): Promise<LinkedInShareData> {
-    return apiClient.get(
-      `${API_BASE_URL}/certificates/${certificateId}/linkedin`
+  async getLinkedInShareData(certificateId: string): Promise<StandardResponse<LinkedInShareData>> {
+    return apiClient.get<StandardResponse<LinkedInShareData>>(
+      `/certificates/${certificateId}/linkedin`
     );
   },
 
@@ -94,29 +83,18 @@ export const certificateAPI = {
    * Download certificate as PDF
    */
   async downloadCertificatePDF(certificateId: string): Promise<Blob> {
-    const response = await fetch(
-      `${API_BASE_URL}/certificates/${certificateId}/download`,
-      {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      }
+    // Download files require special handling
+    return apiClient.download(
+      `/certificates/${certificateId}/download`
     );
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to download certificate');
-    }
-
-    return response.blob();
   },
 
   /**
    * Admin: Revoke a certificate
    */
-  async revokeCertificate(certificateId: string, reason: string): Promise<void> {
-    await apiClient.post(
-      `${API_BASE_URL}/certificates/admin/revoke/${certificateId}`,
+  async revokeCertificate(certificateId: string, reason: string): Promise<StandardResponse<any>> {
+    return apiClient.post<StandardResponse<any>>(
+      `/certificates/admin/revoke/${certificateId}`,
       { reason }
     );
   },
@@ -131,7 +109,7 @@ export const certificateAPI = {
       userId?: string;
       courseId?: string;
     }
-  ): Promise<CertificateListResponse> {
+  ): Promise<StandardResponse<CertificateListResponse>> {
     const params = new URLSearchParams({
       page: page.toString(),
       per_page: perPage.toString(),
@@ -140,8 +118,8 @@ export const certificateAPI = {
     if (filters?.userId) params.append('user_id', filters.userId);
     if (filters?.courseId) params.append('course_id', filters.courseId);
 
-    return apiClient.get(
-      `${API_BASE_URL}/certificates/admin/all?${params.toString()}`
+    return apiClient.get<StandardResponse<CertificateListResponse>>(
+      `/certificates/admin/all?${params.toString()}`
     );
   },
 };

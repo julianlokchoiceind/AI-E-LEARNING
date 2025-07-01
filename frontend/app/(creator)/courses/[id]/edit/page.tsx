@@ -95,8 +95,10 @@ const CourseBuilderPage = () => {
   const handleCreateChapter = async () => {
     try {
       const response = await createChapter({ course_id: courseId });
-      setChapters([...chapters, response]);
-      toast.success(response.message || 'Operation Failed');
+      if (response.success && response.data) {
+        setChapters([...chapters, response.data]);
+        toast.success(response.message || 'Operation Failed');
+      }
     } catch (error: any) {
       console.error('Failed to create chapter:', error);
       toast.error(error.message || 'Operation Failed');
@@ -127,8 +129,10 @@ const CourseBuilderPage = () => {
       });
       
       // Redirect to lesson editor
-      router.push(`/creator/courses/${courseId}/lessons/${response._id}/edit`);
-      toast.success(response.message || 'Operation Failed');
+      if (response.success && response.data) {
+        router.push(`/creator/courses/${courseId}/lessons/${response.data._id}/edit`);
+        toast.success(response.message || 'Operation Failed');
+      }
     } catch (error: any) {
       console.error('Failed to create lesson:', error);
       toast.error(error.message || 'Operation Failed');
@@ -222,7 +226,7 @@ const CourseBuilderPage = () => {
 
   const handleLessonReorder = async (chapterId: string, lessonId: string, newOrder: number) => {
     try {
-      await reorderLesson(lessonId, newOrder);
+      const response = await reorderLesson(lessonId, newOrder);
       
       // Update local state - find the chapter and update its lessons
       setChapters(prevChapters => {
@@ -250,7 +254,7 @@ const CourseBuilderPage = () => {
         });
       });
       
-      toast.success(response.message || 'Operation Failed'); // reorderLesson doesn't return response
+      toast.success(response.message || 'Lesson reordered successfully');
     } catch (error: any) {
       console.error('Failed to reorder lesson:', error);
       toast.error(error.message || 'Operation Failed');

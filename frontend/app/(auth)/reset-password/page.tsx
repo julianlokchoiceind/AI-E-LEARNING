@@ -28,15 +28,19 @@ export default function ResetPasswordPage() {
     try {
       // Need to modify resetPassword API to accept confirmPassword for backend validation
       const response = await resetPassword(token || '', password, confirmPassword)
-      setSuccessMessage(response.message)
-      setSuccess(true)
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        router.push('/login?reset=true')
-      }, 3000)
+      if (response.success) {
+        setSuccessMessage(response.message || 'Password reset successfully!')
+        setSuccess(true)
+        // Redirect to login after 3 seconds
+        setTimeout(() => {
+          router.push('/login?reset=true')
+        }, 3000)
+      } else {
+        throw new Error(response.message || 'Failed to reset password')
+      }
     } catch (err: any) {
       // Always use backend error message
-      setError(err.message)
+      setError(err.message || 'Operation Failed')
     } finally {
       setLoading(false)
     }

@@ -58,55 +58,50 @@ interface CreateCourseData {
 }
 
 // Get courses list with filters
-export const getCourses = async (queryParams?: string): Promise<CoursesListData> => {
+export const getCourses = async (queryParams?: string): Promise<StandardResponse<CoursesListData>> => {
   const url = queryParams ? `/courses?${queryParams}` : '/courses';
-  const result = await api.get<StandardResponse<CoursesListData>>(url);
-  return result.data!;
+  return api.get<StandardResponse<CoursesListData>>(url);
 };
 
 // Get course details
-export const getCourseById = async (courseId: string): Promise<CourseDetailData> => {
-  const result = await api.get<StandardResponse<CourseDetailData>>(
+export const getCourseById = async (courseId: string): Promise<StandardResponse<CourseDetailData>> => {
+  return api.get<StandardResponse<CourseDetailData>>(
     `/courses/${courseId}`,
     { requireAuth: false } // Auth optional for course details
   );
-  return result.data!;
 };
 
 // Create new course (for creators/admin)
-export const createCourse = async (): Promise<CreateCourseData> => {
-  const result = await api.post<StandardResponse<CreateCourseData>>(
+export const createCourse = async (): Promise<StandardResponse<CreateCourseData>> => {
+  return api.post<StandardResponse<CreateCourseData>>(
     '/courses',
     {}, // Empty body for quick creation
     { requireAuth: true }
   );
-  return result.data!;
 };
 
 // Update course
-export const updateCourse = async (courseId: string, data: Partial<CourseResponse>): Promise<CourseDetailData> => {
-  const result = await api.put<StandardResponse<CourseDetailData>>(
+export const updateCourse = async (courseId: string, data: Partial<CourseResponse>): Promise<StandardResponse<CourseDetailData>> => {
+  return api.put<StandardResponse<CourseDetailData>>(
     `/courses/${courseId}`,
     data,
     { requireAuth: true }
   );
-  return result.data!;
 };
 
 // Delete course
-export const deleteCourse = async (courseId: string): Promise<void> => {
-  await api.delete<StandardResponse<any>>(
+export const deleteCourse = async (courseId: string): Promise<StandardResponse<any>> => {
+  return api.delete<StandardResponse<any>>(
     `/courses/${courseId}`,
     { requireAuth: true }
   );
 };
 
 // Enroll in course
-export const enrollInCourse = async (courseId: string): Promise<any> => {
-  const result = await api.post<StandardResponse<any>>(
+export const enrollInCourse = async (courseId: string): Promise<StandardResponse<any>> => {
+  return api.post<StandardResponse<any>>(
     `/courses/${courseId}/enroll`,
     null,
     { requireAuth: true }
   );
-  return result.data!;
 };

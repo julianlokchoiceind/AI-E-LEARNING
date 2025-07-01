@@ -31,7 +31,13 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
     const fetchQuizData = async () => {
       try {
         setIsLoading(true);
-        const quizData = await quizAPI.getLessonQuiz(lessonId);
+        const quizResponse = await quizAPI.getLessonQuiz(lessonId);
+        
+        if (!quizResponse.success) {
+          throw new Error(quizResponse.message || 'Operation Failed');
+        }
+        
+        const quizData = quizResponse.data;
         setQuiz(quizData);
         
         // Initialize answers array
@@ -39,8 +45,10 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
         
         // Try to get progress
         try {
-          const progressData = await quizAPI.getQuizProgress(quizData._id);
-          setProgress(progressData);
+          const progressResponse = await quizAPI.getQuizProgress(quizData._id);
+          if (progressResponse.success) {
+            setProgress(progressResponse.data);
+          }
         } catch (error) {
           // No progress yet, that's okay
         }
@@ -101,7 +109,13 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
         time_taken: timeTaken
       };
 
-      const result = await quizAPI.submitQuiz(quiz._id, submission);
+      const response = await quizAPI.submitQuiz(quiz._id, submission);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      const result = response.data;
       setAttemptResult(result);
       setShowResults(true);
 
@@ -125,9 +139,9 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
 
       // Show result message
       if (result.passed) {
-        toast.success(result.message || 'Operation Failed');
+        toast.success(response.message);
       } else {
-        toast.error(result.message || 'Operation Failed');
+        toast.error(response.message);
       }
     } catch (error: any) {
       console.error('Failed to submit quiz:', error);

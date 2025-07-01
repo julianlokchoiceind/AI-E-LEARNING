@@ -2,6 +2,7 @@
  * Support ticket API client
  */
 import { apiClient } from './api-client';
+import { StandardResponse } from '@/types/api';
 import type {
   SupportTicket,
   TicketWithMessages,
@@ -13,26 +14,26 @@ import type {
   TicketStats
 } from '@/lib/types/support';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+// Remove API_BASE_URL as apiClient already handles the base URL
 
 export const supportAPI = {
   /**
    * Create a new support ticket
    */
-  async createTicket(data: TicketCreateData): Promise<SupportTicket> {
-    return apiClient.post(`${API_BASE_URL}/support/tickets`, data);
+  async createTicket(data: TicketCreateData): Promise<StandardResponse<SupportTicket>> {
+    return apiClient.post<StandardResponse<SupportTicket>>('/support/tickets', data);
   },
 
   /**
    * Get tickets with filtering and pagination
    */
-  async getTickets(params?: TicketSearchParams): Promise<{
+  async getTickets(params?: TicketSearchParams): Promise<StandardResponse<{
     items: SupportTicket[];
     total_count: number;
     total_pages: number;
     page: number;
     per_page: number;
-  }> {
+  }>> {
     const queryParams = new URLSearchParams();
     
     if (params) {
@@ -43,62 +44,66 @@ export const supportAPI = {
       });
     }
 
-    return apiClient.get(
-      `${API_BASE_URL}/support/tickets?${queryParams.toString()}`
-    );
+    return apiClient.get<StandardResponse<{
+      items: SupportTicket[];
+      total_count: number;
+      total_pages: number;
+      page: number;
+      per_page: number;
+    }>>(`/support/tickets?${queryParams.toString()}`);
   },
 
   /**
    * Get ticket statistics
    */
-  async getTicketStats(): Promise<TicketStats> {
-    return apiClient.get(`${API_BASE_URL}/support/tickets/stats`);
+  async getTicketStats(): Promise<StandardResponse<TicketStats>> {
+    return apiClient.get<StandardResponse<TicketStats>>('/support/tickets/stats');
   },
 
   /**
    * Get a specific ticket with messages
    */
-  async getTicket(ticketId: string): Promise<TicketWithMessages> {
-    return apiClient.get(`${API_BASE_URL}/support/tickets/${ticketId}`);
+  async getTicket(ticketId: string): Promise<StandardResponse<TicketWithMessages>> {
+    return apiClient.get<StandardResponse<TicketWithMessages>>(`/support/tickets/${ticketId}`);
   },
 
   /**
    * Update a ticket
    */
-  async updateTicket(ticketId: string, data: TicketUpdateData): Promise<SupportTicket> {
-    return apiClient.put(`${API_BASE_URL}/support/tickets/${ticketId}`, data);
+  async updateTicket(ticketId: string, data: TicketUpdateData): Promise<StandardResponse<SupportTicket>> {
+    return apiClient.put<StandardResponse<SupportTicket>>(`/support/tickets/${ticketId}`, data);
   },
 
   /**
    * Close a ticket
    */
-  async closeTicket(ticketId: string): Promise<SupportTicket> {
-    return apiClient.post(`${API_BASE_URL}/support/tickets/${ticketId}/close`);
+  async closeTicket(ticketId: string): Promise<StandardResponse<SupportTicket>> {
+    return apiClient.post<StandardResponse<SupportTicket>>(`/support/tickets/${ticketId}/close`, {});
   },
 
   /**
    * Reopen a ticket
    */
-  async reopenTicket(ticketId: string): Promise<SupportTicket> {
-    return apiClient.post(`${API_BASE_URL}/support/tickets/${ticketId}/reopen`);
+  async reopenTicket(ticketId: string): Promise<StandardResponse<SupportTicket>> {
+    return apiClient.post<StandardResponse<SupportTicket>>(`/support/tickets/${ticketId}/reopen`, {});
   },
 
   /**
    * Add a message to a ticket
    */
-  async addMessage(ticketId: string, data: MessageCreateData): Promise<TicketWithMessages> {
-    return apiClient.post(`${API_BASE_URL}/support/tickets/${ticketId}/messages`, data);
+  async addMessage(ticketId: string, data: MessageCreateData): Promise<StandardResponse<TicketWithMessages>> {
+    return apiClient.post<StandardResponse<TicketWithMessages>>(`/support/tickets/${ticketId}/messages`, data);
   },
 
   /**
    * Upload attachment to a ticket
    */
-  async uploadAttachment(ticketId: string, file: File): Promise<{ url: string }> {
+  async uploadAttachment(ticketId: string, file: File): Promise<StandardResponse<{ url: string }>> {
     const formData = new FormData();
     formData.append('file', file);
 
-    return apiClient.upload(
-      `${API_BASE_URL}/support/tickets/${ticketId}/attachments`,
+    return apiClient.upload<StandardResponse<{ url: string }>>(
+      `/support/tickets/${ticketId}/attachments`,
       formData
     );
   },
@@ -106,30 +111,28 @@ export const supportAPI = {
   /**
    * Rate ticket satisfaction
    */
-  async rateTicket(ticketId: string, data: SatisfactionRatingData): Promise<void> {
-    await apiClient.post(`${API_BASE_URL}/support/tickets/${ticketId}/rate`, data);
+  async rateTicket(ticketId: string, data: SatisfactionRatingData): Promise<StandardResponse<any>> {
+    return apiClient.post<StandardResponse<any>>(`/support/tickets/${ticketId}/rate`, data);
   },
 
   /**
    * Get knowledge base articles
    */
-  async getKnowledgeBase(query?: string) {
+  async getKnowledgeBase(query?: string): Promise<StandardResponse<any>> {
     const params = query ? `?q=${encodeURIComponent(query)}` : '';
-    const response = await fetch(`${API_BASE_URL}/support/knowledge-base${params}`);
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch knowledge base');
-    }
-
-    const result = await response.json();
-    return result.data;
+    return apiClient.get<StandardResponse<any>>(`/support/knowledge-base${params}`);
   },
 
   /**
    * Admin: Get all tickets
    */
-  async getAllTickets(params?: TicketSearchParams) {
+  async getAllTickets(params?: TicketSearchParams): Promise<StandardResponse<{
+    items: SupportTicket[];
+    total_count: number;
+    total_pages: number;
+    page: number;
+    per_page: number;
+  }>> {
     const queryParams = new URLSearchParams();
     
     if (params) {
@@ -140,14 +143,20 @@ export const supportAPI = {
       });
     }
 
-    return apiClient.get(`${API_BASE_URL}/support/admin/tickets?${queryParams.toString()}`);
+    return apiClient.get<StandardResponse<{
+      items: SupportTicket[];
+      total_count: number;
+      total_pages: number;
+      page: number;
+      per_page: number;
+    }>>(`/support/admin/tickets?${queryParams.toString()}`);
   },
 
   /**
    * Admin: Assign ticket to agent
    */
-  async assignTicket(ticketId: string, agentId: string): Promise<SupportTicket> {
-    return apiClient.post(`${API_BASE_URL}/support/admin/tickets/${ticketId}/assign`, {
+  async assignTicket(ticketId: string, agentId: string): Promise<StandardResponse<SupportTicket>> {
+    return apiClient.post<StandardResponse<SupportTicket>>(`/support/admin/tickets/${ticketId}/assign`, {
       agent_id: agentId
     });
   },
@@ -158,8 +167,8 @@ export const supportAPI = {
   async updatePriority(
     ticketId: string,
     priority: 'low' | 'medium' | 'high' | 'urgent'
-  ): Promise<SupportTicket> {
-    return apiClient.post(`${API_BASE_URL}/support/admin/tickets/${ticketId}/priority`, {
+  ): Promise<StandardResponse<SupportTicket>> {
+    return apiClient.post<StandardResponse<SupportTicket>>(`/support/admin/tickets/${ticketId}/priority`, {
       priority
     });
   },

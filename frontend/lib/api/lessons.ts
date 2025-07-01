@@ -1,7 +1,7 @@
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
-import { getSession } from 'next-auth/react';
 import { Lesson } from '@/lib/types/course';
 import { StandardResponse } from '@/lib/types/api';
+import { api } from '@/lib/api/api-client';
 
 export interface LessonCreateData {
   chapter_id: string;
@@ -26,21 +26,14 @@ export interface LessonUpdateData {
 }
 
 // Get all lessons for a chapter
-export const getLessonsByChapter = async (chapterId: string): Promise<Lesson[]> => {
+export const getLessonsByChapter = async (chapterId: string): Promise<StandardResponse<{ lessons: Lesson[] }>> => {
   try {
-    const session = await getSession();
-    const response = await fetch(`${API_ENDPOINTS.CHAPTERS}/${chapterId}/lessons`, {
-      headers: {
-        'Authorization': `Bearer ${session?.accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data.lessons;
+    const response = await api.get<StandardResponse<{ lessons: Lesson[] }>>(
+      `/chapters/${chapterId}/lessons`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get lessons by chapter failed:', error);
     throw error;
@@ -48,21 +41,14 @@ export const getLessonsByChapter = async (chapterId: string): Promise<Lesson[]> 
 };
 
 // Get single lesson
-export const getLesson = async (lessonId: string): Promise<Lesson> => {
+export const getLesson = async (lessonId: string): Promise<StandardResponse<Lesson>> => {
   try {
-    const session = await getSession();
-    const response = await fetch(`${API_ENDPOINTS.LESSONS}/${lessonId}`, {
-      headers: {
-        'Authorization': `Bearer ${session?.accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data;
+    const response = await api.get<StandardResponse<Lesson>>(
+      `/lessons/${lessonId}`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get lesson failed:', error);
     throw error;
@@ -72,18 +58,12 @@ export const getLesson = async (lessonId: string): Promise<Lesson> => {
 // Get lesson for preview (no authentication required)
 export const getPreviewLesson = async (courseId: string, lessonId: string): Promise<StandardResponse<Lesson>> => {
   try {
-    const response = await fetch(API_ENDPOINTS.COURSES.PREVIEW_LESSON(courseId, lessonId), {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data;
+    const response = await api.get<StandardResponse<Lesson>>(
+      `/courses/${courseId}/lessons/${lessonId}/preview`,
+      { requireAuth: false }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Get preview lesson failed:', error);
     throw error;
@@ -91,24 +71,15 @@ export const getPreviewLesson = async (courseId: string, lessonId: string): Prom
 };
 
 // Create lesson
-export const createLesson = async (data: LessonCreateData): Promise<Lesson> => {
+export const createLesson = async (data: LessonCreateData): Promise<StandardResponse<Lesson>> => {
   try {
-    const session = await getSession();
-    const response = await fetch(API_ENDPOINTS.LESSONS.CREATE, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.accessToken}`,
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result;
+    const response = await api.post<StandardResponse<Lesson>>(
+      '/lessons',
+      data,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Create lesson failed:', error);
     throw error;
@@ -116,24 +87,15 @@ export const createLesson = async (data: LessonCreateData): Promise<Lesson> => {
 };
 
 // Update lesson
-export const updateLesson = async (lessonId: string, data: LessonUpdateData): Promise<Lesson> => {
+export const updateLesson = async (lessonId: string, data: LessonUpdateData): Promise<StandardResponse<Lesson>> => {
   try {
-    const session = await getSession();
-    const response = await fetch(`${API_ENDPOINTS.LESSONS}/${lessonId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.accessToken}`,
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result;
+    const response = await api.put<StandardResponse<Lesson>>(
+      `/lessons/${lessonId}`,
+      data,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Update lesson failed:', error);
     throw error;
@@ -141,19 +103,14 @@ export const updateLesson = async (lessonId: string, data: LessonUpdateData): Pr
 };
 
 // Delete lesson
-export const deleteLesson = async (lessonId: string): Promise<void> => {
+export const deleteLesson = async (lessonId: string): Promise<StandardResponse<any>> => {
   try {
-    const session = await getSession();
-    const response = await fetch(`${API_ENDPOINTS.LESSONS}/${lessonId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${session?.accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
+    const response = await api.delete<StandardResponse<any>>(
+      `/lessons/${lessonId}`,
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Delete lesson failed:', error);
     throw error;
@@ -161,21 +118,15 @@ export const deleteLesson = async (lessonId: string): Promise<void> => {
 };
 
 // Reorder lesson
-export const reorderLesson = async (lessonId: string, newOrder: number): Promise<void> => {
+export const reorderLesson = async (lessonId: string, newOrder: number): Promise<StandardResponse<any>> => {
   try {
-    const session = await getSession();
-    const response = await fetch(`${API_ENDPOINTS.LESSONS}/${lessonId}/reorder`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.accessToken}`,
-      },
-      body: JSON.stringify({ new_order: newOrder }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
+    const response = await api.post<StandardResponse<any>>(
+      `/lessons/${lessonId}/reorder`,
+      { new_order: newOrder },
+      { requireAuth: true }
+    );
+    
+    return response;
   } catch (error) {
     console.error('Reorder lesson failed:', error);
     throw error;

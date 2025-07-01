@@ -1,13 +1,13 @@
 /**
  * User API client functions
  * 
- * IMPORTANT: The api client (from api-client.ts) automatically unwraps StandardResponse format.
- * When you call api.get<T>(), it returns T directly, not { success: boolean, data: T }.
- * The api client handles the unwrapping internally.
+ * IMPORTANT: The api client now returns full StandardResponse format.
+ * All methods return { success: boolean, data: T, message: string }
  */
 
 import { api } from './api-client';
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
+import { StandardResponse } from '@/lib/types/api';
 
 export interface DashboardUser {
   id: string;
@@ -97,15 +97,14 @@ export const usersApi = {
   /**
    * Get dashboard data for the authenticated user
    */
-  getDashboard: async (): Promise<DashboardData> => {
+  getDashboard: async (): Promise<StandardResponse<DashboardData>> => {
     try {
-      // The api client already unwraps StandardResponse and returns just the data
-      const data = await api.get<DashboardData>(
+      const response = await api.get<StandardResponse<DashboardData>>(
         API_ENDPOINTS.USERS.DASHBOARD,
         { requireAuth: true }
       );
       
-      return data;
+      return response;
     } catch (error) {
       console.error('Get dashboard failed:', error);
       throw error;
@@ -115,15 +114,14 @@ export const usersApi = {
   /**
    * Get current user profile
    */
-  getProfile: async (): Promise<UserProfile> => {
+  getProfile: async (): Promise<StandardResponse<UserProfile>> => {
     try {
-      // The api client already unwraps StandardResponse and returns just the data
-      const data = await api.get<UserProfile>(
+      const response = await api.get<StandardResponse<UserProfile>>(
         API_ENDPOINTS.USERS.PROFILE,
         { requireAuth: true }
       );
       
-      return data;
+      return response;
     } catch (error) {
       console.error('Get profile failed:', error);
       throw error;
@@ -133,16 +131,15 @@ export const usersApi = {
   /**
    * Update current user profile
    */
-  updateProfile: async (data: Partial<UserProfile>): Promise<UserProfile> => {
+  updateProfile: async (data: Partial<UserProfile>): Promise<StandardResponse<UserProfile>> => {
     try {
-      // The api client already unwraps StandardResponse and returns just the data
-      const updatedProfile = await api.put<UserProfile>(
+      const response = await api.put<StandardResponse<UserProfile>>(
         API_ENDPOINTS.USERS.UPDATE_PROFILE,
         data,
         { requireAuth: true }
       );
       
-      return updatedProfile;
+      return response;
     } catch (error) {
       console.error('Update profile failed:', error);
       throw error;
@@ -152,18 +149,14 @@ export const usersApi = {
   /**
    * Get user's enrolled courses
    */
-  getMyCourses: async () => {
+  getMyCourses: async (): Promise<StandardResponse<any>> => {
     try {
-      const result = await api.get(
+      const response = await api.get<StandardResponse<any>>(
         API_ENDPOINTS.USERS.COURSES,
         { requireAuth: true }
       );
       
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to load courses');
-      }
-      
-      return result.data;
+      return response;
     } catch (error) {
       console.error('Get my courses failed:', error);
       throw error;
@@ -173,18 +166,14 @@ export const usersApi = {
   /**
    * Get user's certificates
    */
-  getCertificates: async () => {
+  getCertificates: async (): Promise<StandardResponse<any>> => {
     try {
-      const result = await api.get(
+      const response = await api.get<StandardResponse<any>>(
         API_ENDPOINTS.USERS.CERTIFICATES,
         { requireAuth: true }
       );
       
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to load certificates');
-      }
-      
-      return result.data;
+      return response;
     } catch (error) {
       console.error('Get certificates failed:', error);
       throw error;
@@ -194,18 +183,14 @@ export const usersApi = {
   /**
    * Get user's learning progress
    */
-  getProgress: async () => {
+  getProgress: async (): Promise<StandardResponse<any>> => {
     try {
-      const result = await api.get(
+      const response = await api.get<StandardResponse<any>>(
         API_ENDPOINTS.USERS.PROGRESS,
         { requireAuth: true }
       );
       
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to load progress');
-      }
-      
-      return result.data;
+      return response;
     } catch (error) {
       console.error('Get progress failed:', error);
       throw error;

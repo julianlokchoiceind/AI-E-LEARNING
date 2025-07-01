@@ -51,7 +51,12 @@ export default function AdminFAQPage() {
         category: selectedCategory || undefined,
         per_page: 100,
       });
-      setFaqs(response.items);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      setFaqs(response.data?.items || []);
     } catch (error: any) {
       console.error('Failed to fetch FAQs:', error);
       toast.error(error.message || 'Operation Failed');
@@ -64,14 +69,22 @@ export default function AdminFAQPage() {
     try {
       if (editingFaq) {
         // Update existing FAQ
-        const updated = await faqAPI.updateFAQ(editingFaq._id, formData as FAQUpdateData);
-        setFaqs(faqs.map(f => f._id === updated._id ? updated : f));
-        toast.success(updated.message || 'Operation Failed');
+        const response = await faqAPI.updateFAQ(editingFaq._id, formData as FAQUpdateData);
+        if (response.success && response.data) {
+          setFaqs(faqs.map(f => f._id === response.data!._id ? response.data! : f));
+          toast.success(response.message);
+        } else {
+          throw new Error(response.message || 'Operation Failed');
+        }
       } else {
         // Create new FAQ
-        const created = await faqAPI.createFAQ(formData);
-        setFaqs([created, ...faqs]);
-        toast.success(created.message || 'Operation Failed');
+        const response = await faqAPI.createFAQ(formData);
+        if (response.success && response.data) {
+          setFaqs([response.data, ...faqs]);
+          toast.success(response.message);
+        } else {
+          throw new Error(response.message || 'Operation Failed');
+        }
       }
       
       resetForm();
@@ -86,8 +99,12 @@ export default function AdminFAQPage() {
 
     try {
       const response = await faqAPI.deleteFAQ(faqId);
-      setFaqs(faqs.filter(f => f._id !== faqId));
-      toast.success(response?.message || 'Operation Failed');
+      if (response.success) {
+        setFaqs(faqs.filter(f => f._id !== faqId));
+        toast.success(response.message);
+      } else {
+        throw new Error(response.message || 'Operation Failed');
+      }
     } catch (error: any) {
       console.error('Failed to delete FAQ:', error);
       toast.error(error.message || 'Operation Failed');
@@ -112,6 +129,10 @@ export default function AdminFAQPage() {
         action,
       });
       
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
       if (action === 'delete') {
         setFaqs(faqs.filter(f => !selectedFaqs.has(f._id)));
       } else {
@@ -124,7 +145,7 @@ export default function AdminFAQPage() {
       }
       
       setSelectedFaqs(new Set());
-      toast.success(response?.message || 'Operation Failed');
+      toast.success(response.message);
     } catch (error: any) {
       console.error('Failed to perform bulk action:', error);
       toast.error(error.message || 'Operation Failed');

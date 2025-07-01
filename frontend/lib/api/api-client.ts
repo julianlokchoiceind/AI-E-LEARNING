@@ -17,17 +17,26 @@ class ApiClient {
     console.log('[API-CLIENT] Constructor - baseUrl:', this.baseUrl);
   }
 
-  // Get auth token
-  private getAuthToken(): string | null {
+  // Get auth token from NextAuth session ONLY
+  private async getAuthToken(): Promise<string | null> {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('access_token');
+      try {
+        const { getSession } = await import('next-auth/react');
+        const session = await getSession();
+        
+        if (session?.accessToken) {
+          return session.accessToken as string;
+        }
+      } catch (error) {
+        console.warn('[API-CLIENT] Failed to get NextAuth session:', error);
+      }
     }
     return null;
   }
 
   // Add auth header if token exists
-  private addAuthHeader(headers: HeadersInit = {}): HeadersInit {
-    const token = this.getAuthToken();
+  private async addAuthHeader(headers: HeadersInit = {}): Promise<HeadersInit> {
+    const token = await this.getAuthToken();
     
     if (token) {
       return {
@@ -76,7 +85,7 @@ class ApiClient {
     });
 
     // Check if auth is required
-    if (requireAuth && !this.getAuthToken()) {
+    if (requireAuth && !(await this.getAuthToken())) {
       console.debug('[API-CLIENT] Auth required but no token found');
       throw new AppError(
         'Authentication required',
@@ -105,7 +114,7 @@ class ApiClient {
 
     // Add auth header if needed
     const finalHeaders = requireAuth 
-      ? this.addAuthHeader(requestHeaders)
+      ? await this.addAuthHeader(requestHeaders)
       : requestHeaders;
 
     console.debug('[API-CLIENT] Request headers:', finalHeaders);
@@ -138,18 +147,22 @@ class ApiClient {
         
         // Handle token expiration
         if (response.status === 401 && requireAuth) {
-          console.debug('[API-CLIENT] 401 error with auth required, attempting token refresh');
-          // Clear invalid token
-          localStorage.removeItem('access_token');
+          console.debug('[API-CLIENT] 401 error with auth required, redirecting to login');
           
-          // Try to refresh token
-          await this.refreshToken();
-          
-          // Retry the request once
-          if (retryCount === 0) {
-            console.debug('[API-CLIENT] Retrying request after token refresh');
-            return this.request(url, { ...options, retryCount: 1 });
+          // Clear NextAuth session and redirect to login
+          try {
+            const { signOut } = await import('next-auth/react');
+            await signOut({ redirect: true, callbackUrl: '/login' });
+          } catch (e) {
+            console.warn('[API-CLIENT] Failed to clear NextAuth session:', e);
+            // Fallback redirect
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login';
+            }
           }
+          
+          // No retry for 401 - redirect to login instead
+          throw error;
         }
         
         console.debug('[API-CLIENT] Throwing parsed error');
@@ -188,14 +201,9 @@ class ApiClient {
 
       console.debug('[API-CLIENT] Request successful, returning:', data);
       
-      // If response has standard format with data property, return the data
-      if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
-        console.debug('[API-CLIENT] Extracting data from StandardResponse:', data.data);
-        return data.data;
-      }
-      
-      // Otherwise return the whole response
-      console.debug('[API-CLIENT] Returning full response (no StandardResponse format)');
+      // Return the full response to maintain access to success, data, and message
+      // This allows frontend to display backend messages and handle responses consistently
+      console.debug('[API-CLIENT] Returning full response with StandardResponse format');
       return data;
     } catch (error) {
       console.debug('[API-CLIENT] Caught error:', {
@@ -230,41 +238,8 @@ class ApiClient {
     }
   }
 
-  // Refresh token
-  private async refreshToken(): Promise<void> {
-    try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (!refreshToken) {
-        throw new Error('No refresh token');
-      }
-
-      const response = await fetch(`${this.baseUrl}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ refresh_token: refreshToken })
-      });
-
-      if (!response.ok) {
-        throw new Error('Token refresh failed');
-      }
-
-      const data = await response.json();
-      
-      if (data.access_token) {
-        localStorage.setItem('access_token', data.access_token);
-      }
-    } catch (error) {
-      // Clear tokens on refresh failure
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      throw new AppError(
-        'Session expired. Please log in again.',
-        ErrorType.AUTHENTICATION
-      );
-    }
-  }
+  // NextAuth handles token refresh automatically
+  // No manual refresh needed
 
   // HTTP methods
   async get<T>(url: string, options?: RequestOptions): Promise<T> {

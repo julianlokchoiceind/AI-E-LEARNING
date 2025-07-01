@@ -13,11 +13,11 @@ from app.schemas.support_ticket import (
     TicketSearchQuery,
     SatisfactionRatingRequest,
     ContactFormRequest,
-    SupportTicketSchema,
-    TicketWithMessagesSchema,
-    TicketListSchema,
-    MessageSchema,
-    TicketStatsSchema
+    SupportTicket,
+    TicketWithMessages,
+    TicketListResponse,
+    TicketMessage,
+    TicketStats
 )
 from app.services.support_ticket_service import SupportTicketService
 from app.core.deps import get_current_user, get_admin_user
@@ -28,7 +28,7 @@ router = APIRouter()
 ticket_service = SupportTicketService()
 
 
-@router.post("/tickets", response_model=StandardResponse[SupportTicketSchema])
+@router.post("/tickets", response_model=StandardResponse[SupportTicket])
 async def create_ticket(
     ticket_data: TicketCreateRequest,
     current_user: User = Depends(get_current_user)
@@ -48,7 +48,7 @@ async def create_ticket(
         )
 
 
-@router.get("/tickets", response_model=StandardResponse[TicketListSchema])
+@router.get("/tickets", response_model=StandardResponse[TicketListResponse])
 async def get_tickets(
     q: Optional[str] = None,
     status: Optional[TicketStatus] = None,
@@ -90,7 +90,7 @@ async def get_tickets(
         )
 
 
-@router.get("/tickets/stats", response_model=StandardResponse[TicketStatsSchema])
+@router.get("/tickets/stats", response_model=StandardResponse[TicketStats])
 async def get_ticket_stats(
     current_user: User = Depends(get_current_user)
 ):
@@ -109,7 +109,7 @@ async def get_ticket_stats(
         )
 
 
-@router.get("/tickets/{ticket_id}", response_model=StandardResponse[TicketWithMessagesSchema])
+@router.get("/tickets/{ticket_id}", response_model=StandardResponse[TicketWithMessages])
 async def get_ticket(
     ticket_id: str,
     include_internal: bool = False,
@@ -147,7 +147,7 @@ async def get_ticket(
         )
 
 
-@router.put("/tickets/{ticket_id}", response_model=StandardResponse[SupportTicketSchema])
+@router.put("/tickets/{ticket_id}", response_model=StandardResponse[SupportTicket])
 async def update_ticket(
     ticket_id: str,
     update_data: TicketUpdateRequest,
@@ -177,7 +177,7 @@ async def update_ticket(
         )
 
 
-@router.post("/tickets/{ticket_id}/messages", response_model=StandardResponse[MessageSchema])
+@router.post("/tickets/{ticket_id}/messages", response_model=StandardResponse[TicketMessage])
 async def add_message(
     ticket_id: str,
     message_data: MessageCreateRequest,
@@ -207,7 +207,7 @@ async def add_message(
         )
 
 
-@router.post("/tickets/{ticket_id}/rate", response_model=StandardResponse[SupportTicketSchema])
+@router.post("/tickets/{ticket_id}/rate", response_model=StandardResponse[SupportTicket])
 async def rate_ticket(
     ticket_id: str,
     rating_data: SatisfactionRatingRequest,

@@ -49,7 +49,10 @@ const CourseAnalyticsPage = () => {
       }
 
       const data = await response.json();
-      setAnalytics(data);
+      if (!data.success) {
+        throw new Error(data.message || 'Operation Failed');
+      }
+      setAnalytics(data.data);
     } catch (error: any) {
       console.error('Failed to fetch analytics:', error);
       toast.error(error.message || 'Operation Failed');

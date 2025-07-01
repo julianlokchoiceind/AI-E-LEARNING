@@ -70,7 +70,12 @@ export default function UserManagement() {
         role: roleFilter,
         premiumOnly: premiumFilter === 'premium' ? true : undefined
       });
-      setUsers(response.users);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Operation Failed');
+      }
+      
+      setUsers(response.data?.users || []);
     } catch (error: any) {
       console.error('Failed to fetch users:', error);
       // Use backend error message
@@ -91,8 +96,10 @@ export default function UserManagement() {
       
       if (response.success) {
         // Use backend message if available
-        toast.success(response.message || 'Operation Failed');
+        toast.success(response.message);
         await fetchUsers(); // Refresh list
+      } else {
+        throw new Error(response.message || 'Operation Failed');
       }
     } catch (error: any) {
       // Always use backend error message
@@ -109,8 +116,10 @@ export default function UserManagement() {
       
       if (response.success) {
         // Use backend message if available
-        toast.success(response.message || 'Operation Failed');
+        toast.success(response.message);
         await fetchUsers(); // Refresh list
+      } else {
+        throw new Error(response.message || 'Operation Failed');
       }
     } catch (error: any) {
       // Always use backend error message
@@ -129,10 +138,12 @@ export default function UserManagement() {
       
       if (response.success) {
         // Use backend message if available
-        toast.success(response.message || 'Operation Failed');
+        toast.success(response.message);
         setShowDeleteModal(false);
         setSelectedUser(null);
         await fetchUsers(); // Refresh list
+      } else {
+        throw new Error(response.message || 'Operation Failed');
       }
     } catch (error: any) {
       // Always use backend error message
