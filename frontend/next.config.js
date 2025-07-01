@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const { withSentryConfig } = require('@sentry/nextjs');
+const path = require('path');
 
 const nextConfig = {
   // Performance optimizations
@@ -25,6 +26,18 @@ const nextConfig = {
   
   // Bundle optimization
   webpack: (config, { isServer }) => {
+    // FIX: Ensure path aliases work in production (Render deployment)
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, '.'),
+      '@/components': path.resolve(__dirname, 'components'),
+      '@/lib': path.resolve(__dirname, 'lib'),
+      '@/hooks': path.resolve(__dirname, 'hooks'),
+      '@/types': path.resolve(__dirname, 'types'),
+      '@/stores': path.resolve(__dirname, 'stores'),
+      '@/styles': path.resolve(__dirname, 'styles'),
+    };
+    
     // Optimize bundle size
     if (!isServer) {
       config.resolve.fallback = {
