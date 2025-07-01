@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
     COURSES: '/users/courses',
     CERTIFICATES: '/users/certificates',
     PROGRESS: '/users/progress',
+    EXPORT_PROGRESS: (format: string) => `/users/export-progress?format=${format}`,
   },
 
   // Courses
@@ -134,5 +135,27 @@ export const API_ENDPOINTS = {
     USER_PROGRESS: '/analytics/user-progress',
     COURSE_PERFORMANCE: '/analytics/course-performance',
     LEARNING_INSIGHTS: '/analytics/learning-insights',
+  },
+
+  // Support
+  SUPPORT: {
+    CONTACT: '/support/contact',
+    TICKETS: '/support/tickets',
+    TICKET_DETAIL: (id: string) => `/support/tickets/${id}`,
+    ADD_MESSAGE: (id: string) => `/support/tickets/${id}/messages`,
+    RATE_TICKET: (id: string) => `/support/tickets/${id}/rate`,
+    STATS: '/support/stats',
+  },
+
+  // Onboarding
+  ONBOARDING: {
+    STATUS: '/onboarding/status',
+    START: '/onboarding/start',
+    LEARNING_PATH: '/onboarding/learning-path',
+    PROFILE_SETUP: '/onboarding/profile-setup',
+    RECOMMENDATIONS: '/onboarding/recommendations',
+    COMPLETE: '/onboarding/complete',
+    PLATFORM_TOUR: '/onboarding/platform-tour',
+    SKIP: '/onboarding/skip',
   },
 } as const;

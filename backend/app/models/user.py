@@ -67,6 +67,56 @@ class Preferences(BaseModel):
     marketing_emails: bool = False
 
 
+class OnboardingStep(str, Enum):
+    WELCOME = "welcome"
+    LEARNING_PATH = "learning_path" 
+    PROFILE_SETUP = "profile_setup"
+    COURSE_RECOMMENDATIONS = "course_recommendations"
+    PLATFORM_TOUR = "platform_tour"
+    COMPLETED = "completed"
+
+
+class LearningPath(str, Enum):
+    PROGRAMMING_BASICS = "programming_basics"
+    AI_FUNDAMENTALS = "ai_fundamentals"
+    MACHINE_LEARNING = "machine_learning"
+    AI_TOOLS = "ai_tools"
+    PRODUCTION_AI = "production_ai"
+    FULL_STACK = "full_stack"
+
+
+class SkillLevel(str, Enum):
+    COMPLETE_BEGINNER = "complete_beginner"
+    SOME_PROGRAMMING = "some_programming"
+    EXPERIENCED_DEVELOPER = "experienced_developer"
+    AI_FAMILIAR = "ai_familiar"
+
+
+class TimeCommitment(str, Enum):
+    CASUAL = "casual"  # 1-3 hours/week
+    REGULAR = "regular"  # 4-8 hours/week
+    INTENSIVE = "intensive"  # 8+ hours/week
+
+
+class Onboarding(BaseModel):
+    is_completed: bool = False
+    current_step: OnboardingStep = OnboardingStep.WELCOME
+    skipped: bool = False
+    completed_at: Optional[datetime] = None
+    
+    # Learning preferences collected during onboarding
+    selected_paths: List[LearningPath] = Field(default_factory=list)
+    skill_level: Optional[SkillLevel] = None
+    time_commitment: Optional[TimeCommitment] = None
+    learning_goals: List[str] = Field(default_factory=list)
+    interests: List[str] = Field(default_factory=list)
+    career_goals: List[str] = Field(default_factory=list)
+    
+    # Progress tracking
+    steps_completed: List[OnboardingStep] = Field(default_factory=list)
+    started_at: Optional[datetime] = None
+
+
 class User(Document):
     # Authentication fields
     email: Indexed(EmailStr, unique=True)
@@ -95,6 +145,9 @@ class User(Document):
     
     # User preferences
     preferences: Preferences = Field(default_factory=Preferences)
+    
+    # Onboarding progress
+    onboarding: Onboarding = Field(default_factory=Onboarding)
     
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)

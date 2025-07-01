@@ -8,6 +8,8 @@ from fastapi import HTTPException, status
 from app.models.lesson import Lesson, VideoContent, UnlockConditions
 from app.models.course import Course
 from app.models.chapter import Chapter
+from app.models.progress import Progress
+from app.models.enrollment import Enrollment
 from app.schemas.lesson import LessonCreate, LessonUpdate, LessonReorder
 from app.services.chapter_service import chapter_service
 
@@ -98,7 +100,29 @@ class LessonService:
             Lesson.chapter_id == PydanticObjectId(chapter_id)
         ).sort("order").to_list()
         
-        # TODO: Add unlock status and progress for authenticated users
+        # Add unlock status and progress for authenticated users
+        if user_id:
+            # Get progress data for all lessons
+            progress_data = await Progress.find({
+                "user_id": user_id,
+                "lesson_id": {"$in": [str(lesson.id) for lesson in lessons]}
+            }).to_list()
+            
+            # Create progress map for quick lookup
+            progress_map = {str(p.lesson_id): p for p in progress_data}
+            
+            # Check if previous lessons are completed
+            for i, lesson in enumerate(lessons):
+                lesson_progress = progress_map.get(str(lesson.id))
+                
+                # Add progress data to lesson (as extra field)
+                lesson.progress = {
+                    "is_unlocked": i == 0 or (i > 0 and lessons[i-1].progress.get("is_completed", False)),
+                    "is_completed": lesson_progress.video_progress.is_completed if lesson_progress else False,
+                    "watch_percentage": lesson_progress.video_progress.watch_percentage if lesson_progress else 0,
+                    "current_position": lesson_progress.video_progress.current_position if lesson_progress else 0,
+                    "quiz_passed": lesson_progress.quiz_progress.is_passed if lesson_progress and lesson.has_quiz else None
+                }
         
         return lessons
     
@@ -136,8 +160,39 @@ class LessonService:
                 detail="Lesson not found"
             )
         
-        # TODO: Check if user has access to this lesson
-        # TODO: Add progress data for authenticated users
+        # Check if user has access to this lesson
+        if user_id:
+            # Check enrollment
+            enrollment = await Enrollment.find_one({
+                "user_id": user_id,
+                "course_id": str(lesson.course_id),
+                "is_active": True
+            })
+            
+            if not enrollment:
+                # Check if course is free or user has special access
+                course = await Course.get(lesson.course_id)
+                if not (course and course.pricing.is_free):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="You are not enrolled in this course"
+                    )
+            
+            # Add progress data for authenticated users
+            progress = await Progress.find_one({
+                "user_id": user_id,
+                "lesson_id": lesson_id
+            })
+            
+            # Add progress as extra field
+            lesson.progress = {
+                "is_completed": progress.video_progress.is_completed if progress else False,
+                "watch_percentage": progress.video_progress.watch_percentage if progress else 0,
+                "current_position": progress.video_progress.current_position if progress else 0,
+                "quiz_attempts": len(progress.quiz_progress.attempts) if progress and progress.quiz_progress else 0,
+                "quiz_best_score": progress.quiz_progress.best_score if progress and progress.quiz_progress else 0,
+                "quiz_passed": progress.quiz_progress.is_passed if progress and progress.quiz_progress else False
+            }
         
         return lesson
     

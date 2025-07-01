@@ -43,3 +43,6 @@ sentry-sdk[fastapi]
 python-dotenv
 pyyaml
 python-slugify
+
+# Report Generation
+reportlab

@@ -416,6 +416,177 @@ class EmailService:
             subject=subject,
             html_content=html_content
         )
+    
+    async def send_course_approval_email(
+        self,
+        to_email: str,
+        creator_name: str,
+        course_title: str,
+        course_id: str
+    ) -> bool:
+        """
+        Send email notification when course is approved.
+        
+        Args:
+            to_email: Creator email
+            creator_name: Creator name
+            course_title: Title of approved course
+            course_id: Course ID for direct link
+            
+        Returns:
+            bool: True if email sent successfully
+        """
+        subject = f"🎉 Your course '{course_title}' has been approved!"
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Course Approved! 🎉</h2>
+            <p>Hi {creator_name},</p>
+            <p>Great news! Your course "<strong>{course_title}</strong>" has been reviewed and approved.</p>
+            
+            <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin: 0 0 10px 0; color: #16a34a;">Your course is now live!</h3>
+                <p style="margin: 5px 0;">Students can now enroll and start learning from your course.</p>
+            </div>
+            
+            <div style="margin: 30px 0;">
+                <a href="{settings.FRONTEND_URL}/courses/{course_id}" 
+                   style="background-color: #10B981; color: white; padding: 12px 24px; 
+                          text-decoration: none; border-radius: 6px; display: inline-block;">
+                    View Your Course
+                </a>
+            </div>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e5e5;">
+            <p style="color: #666; font-size: 14px;">
+                Thank you for contributing to our learning community!<br>
+                The AI E-Learning Team
+            </p>
+        </div>
+        """
+        
+        return await self.send_email(
+            to_email=to_email,
+            subject=subject,
+            html_content=html_content
+        )
+    
+    async def send_course_rejection_email(
+        self,
+        to_email: str,
+        creator_name: str,
+        course_title: str,
+        reason: str,
+        course_id: str
+    ) -> bool:
+        """
+        Send email notification when course is rejected.
+        
+        Args:
+            to_email: Creator email
+            creator_name: Creator name
+            course_title: Title of rejected course
+            reason: Feedback/reason for rejection
+            course_id: Course ID for editing
+            
+        Returns:
+            bool: True if email sent successfully
+        """
+        subject = f"Course '{course_title}' needs revisions"
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Course Review Feedback</h2>
+            <p>Hi {creator_name},</p>
+            <p>Thank you for submitting your course "<strong>{course_title}</strong>" for review.</p>
+            <p>After careful review, we've identified some areas that need improvement before the course can be published.</p>
+            
+            <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin: 0 0 10px 0; color: #d97706;">Feedback from our review team:</h3>
+                <p style="margin: 5px 0; white-space: pre-wrap;">{reason}</p>
+            </div>
+            
+            <p>Please address the feedback above and resubmit your course for review.</p>
+            
+            <div style="margin: 30px 0;">
+                <a href="{settings.FRONTEND_URL}/creator/courses/{course_id}/edit" 
+                   style="background-color: #4F46E5; color: white; padding: 12px 24px; 
+                          text-decoration: none; border-radius: 6px; display: inline-block;">
+                    Edit Your Course
+                </a>
+            </div>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e5e5;">
+            <p style="color: #666; font-size: 14px;">
+                If you have any questions about the feedback, please don't hesitate to contact our support team.<br>
+                The AI E-Learning Team
+            </p>
+        </div>
+        """
+        
+        return await self.send_email(
+            to_email=to_email,
+            subject=subject,
+            html_content=html_content
+        )
+    
+    async def send_contact_form_email(
+        self,
+        from_name: str,
+        from_email: str,
+        subject: str,
+        message: str
+    ) -> bool:
+        """
+        Send contact form submission to admin email.
+        
+        Args:
+            from_name: Sender's name
+            from_email: Sender's email
+            subject: Contact form subject
+            message: Contact form message
+            
+        Returns:
+            bool: True if email sent successfully
+        """
+        admin_email = "info@choiceind.com"
+        email_subject = f"Contact Form: {subject}"
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>New Contact Form Submission</h2>
+            
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin: 0 0 15px 0; color: #1e40af;">Contact Details</h3>
+                <p><strong>Name:</strong> {from_name}</p>
+                <p><strong>Email:</strong> {from_email}</p>
+                <p><strong>Subject:</strong> {subject}</p>
+            </div>
+            
+            <div style="background-color: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin: 0 0 15px 0; color: #1e40af;">Message</h3>
+                <p style="white-space: pre-line; line-height: 1.6;">{message}</p>
+            </div>
+            
+            <div style="margin: 30px 0; padding: 15px; background-color: #fef3c7; border-radius: 6px;">
+                <p style="margin: 0; color: #92400e;">
+                    <strong>Reply to:</strong> {from_email}
+                </p>
+            </div>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e5e5;">
+            <p style="color: #666; font-size: 14px;">
+                This message was sent via the AI E-Learning Platform contact form.<br>
+                Please respond directly to the sender's email address.
+            </p>
+        </div>
+        """
+        
+        return await self.send_email(
+            to_email=admin_email,
+            subject=email_subject,
+            html_content=html_content
+        )
 
 
 # Create a singleton instance

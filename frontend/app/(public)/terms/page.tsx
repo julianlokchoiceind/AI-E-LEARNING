@@ -1,6 +1,6 @@
 "use client";
 
-import { useI18n } from '@/lib/i18n/useI18n';
+import { useI18n } from '@/lib/i18n/context';
 
 export default function TermsPage() {
   const { t } = useI18n();

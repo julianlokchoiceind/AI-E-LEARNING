@@ -14,12 +14,12 @@ from app.schemas.support_ticket import (
     TicketSearchQuery,
     SatisfactionRatingRequest
 )
-from app.services.email_service import EmailService
+from app.core.email import email_service
 
 
 class SupportTicketService:
     def __init__(self):
-        self.email_service = EmailService()
+        pass
 
     async def create_ticket(
         self,
@@ -358,7 +358,9 @@ class SupportTicketService:
 
     async def _notify_support_team(self, ticket: SupportTicket):
         """Send notification to support team about new ticket"""
-        # In production, this would notify support team via email/Slack
+        # TODO: Implement support team notification
+        # For now, we could send to admin email or use a support queue
+        # Example: await email_service.send_support_ticket_notification(...)
         pass
 
     async def _notify_ticket_update(self, ticket: SupportTicket, updated_by: User):

@@ -34,9 +34,10 @@ interface CourseCardProps {
     };
   };
   onEnroll?: (courseId: string) => void;
+  isEnrolling?: boolean;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll }) => {
+const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling = false }) => {
   const router = useRouter();
 
   const handleClick = () => {
@@ -170,8 +171,13 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll }) => {
           onClick={handleEnroll}
           className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium touch-manipulation"
           variant={course.pricing.is_free ? 'primary' : 'secondary'}
+          loading={isEnrolling}
+          disabled={isEnrolling}
         >
-          {course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now'}
+          {isEnrolling 
+            ? 'Enrolling...' 
+            : (course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now')
+          }
         </Button>
       </div>
     </Card>

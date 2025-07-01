@@ -3,7 +3,7 @@ API v1 router that includes all endpoints.
 """
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, courses, chapters, lessons, progress, enrollments, users, ai, quizzes, admin, payments, analytics, security, performance, faq, support, reviews, certificates
+from app.api.v1.endpoints import auth, courses, chapters, lessons, progress, enrollments, users, ai, quizzes, admin, payments, analytics, security, performance, faq, support, reviews, certificates, onboarding, test_sentry
 
 api_router = APIRouter()
 
@@ -15,6 +15,7 @@ api_router.include_router(lessons.router, tags=["lessons"])
 api_router.include_router(progress.router, prefix="/progress", tags=["progress"])
 api_router.include_router(enrollments.router, prefix="/enrollments", tags=["enrollments"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
+api_router.include_router(onboarding.router, prefix="/onboarding", tags=["onboarding"])
 api_router.include_router(ai.router, prefix="/ai", tags=["ai-assistant"])
 api_router.include_router(quizzes.router, prefix="/quizzes", tags=["quizzes"])
 api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
@@ -26,3 +27,7 @@ api_router.include_router(faq.router, prefix="/faq", tags=["faq"])
 api_router.include_router(support.router, prefix="/support", tags=["support"])
 api_router.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
 api_router.include_router(certificates.router, prefix="/certificates", tags=["certificates"])
+
+# Test endpoint for development only
+if True:  # Change to False in production
+    api_router.include_router(test_sentry.router, prefix="/test", tags=["testing"])

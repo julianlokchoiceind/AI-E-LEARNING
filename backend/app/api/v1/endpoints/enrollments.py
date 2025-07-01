@@ -36,11 +36,12 @@ async def enroll_in_course(
         try:
             # Get course details for email
             from app.core.database import get_database
+            from bson import ObjectId
             db = get_database()
-            course = await db.courses.find_one({"_id": course_id})
+            course = await db.courses.find_one({"_id": ObjectId(course_id)})
             
             if course:
-                await email_service.send_enrollment_confirmation_email(
+                await email_service.send_enrollment_confirmation(
                     to_email=current_user.email,
                     name=current_user.name,
                     course_title=course.get("title", "Course"),

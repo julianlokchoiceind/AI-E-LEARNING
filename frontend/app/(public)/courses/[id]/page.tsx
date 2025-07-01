@@ -11,6 +11,8 @@ import { PreviewVideoPlayer } from '@/components/feature/PreviewVideoPlayer';
 import { CourseReviews } from '@/components/feature/CourseReviews';
 import { CourseRating } from '@/components/feature/CourseRating';
 import { getCourseById, enrollInCourse } from '@/lib/api/courses';
+import { getCourseEnrollment } from '@/lib/api/enrollments';
+import { getChaptersWithLessons } from '@/lib/api/chapters';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
@@ -39,6 +41,20 @@ const CourseDetailPage = () => {
       const courseData = await getCourseById(courseId);
       setCourse(courseData);
       
+      // Check enrollment status if user is logged in
+      let enrollmentStatus = false;
+      if (user) {
+        try {
+          const enrollment = await getCourseEnrollment(courseId);
+          enrollmentStatus = !!enrollment;
+          setIsEnrolled(enrollmentStatus);
+        } catch (error) {
+          // User is not enrolled (404 error expected)
+          enrollmentStatus = false;
+          setIsEnrolled(false);
+        }
+      }
+      
       // Check access based on PRD pricing logic
       const checkAccess = () => {
         // 1. Free course - everyone has access
@@ -47,120 +63,23 @@ const CourseDetailPage = () => {
         // 2. Premium user - free access to all courses
         if (user?.premiumStatus) return true;
         
-        // 4. Check if user purchased this course
-        // TODO: This would require checking enrollment status
-        if (isEnrolled) return true;
+        // 3. Check if user purchased this course
+        if (enrollmentStatus) return true;
         
         return false;
       };
       
       setHasAccess(checkAccess());
       
-      // TODO: Fetch chapters for this course
-      // For now, using mock data
-      setChapters([
-        {
-          _id: '1',
-          course_id: courseId,
-          title: 'Getting Started',
-          description: 'Introduction to the course',
-          order: 1,
-          total_lessons: 3,
-          total_duration: 45,
-          status: 'published',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          lessons: [
-            {
-              _id: '1-1',
-              course_id: courseId,
-              chapter_id: '1',
-              title: 'Course Introduction',
-              description: 'Welcome to the course',
-              order: 1,
-              video: {
-                duration: 600, // 10 minutes in seconds
-                url: '',
-                youtube_id: '',
-                transcript: '',
-                captions: '',
-                thumbnail: ''
-              },
-              has_quiz: false,
-              quiz_required: false,
-              unlock_conditions: {
-                previous_lesson_required: false,
-                quiz_pass_required: false,
-                minimum_watch_percentage: 80
-              },
-              status: 'published',
-              is_free_preview: true,
-              is_completed: false,
-              is_locked: false,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            },
-            {
-              _id: '1-2',
-              course_id: courseId,
-              chapter_id: '1',
-              title: 'Setting Up Your Environment',
-              description: 'Install required tools',
-              order: 2,
-              video: {
-                duration: 1200, // 20 minutes in seconds
-                url: '',
-                youtube_id: '',
-                transcript: '',
-                captions: '',
-                thumbnail: ''
-              },
-              has_quiz: true,
-              quiz_required: true,
-              unlock_conditions: {
-                previous_lesson_required: true,
-                quiz_pass_required: false,
-                minimum_watch_percentage: 80
-              },
-              status: 'published',
-              is_free_preview: false,
-              is_completed: false,
-              is_locked: !hasAccess,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            },
-            {
-              _id: '1-3',
-              course_id: courseId,
-              chapter_id: '1',
-              title: 'Your First Project',
-              description: 'Build a simple project',
-              order: 3,
-              video: {
-                duration: 900, // 15 minutes in seconds
-                url: '',
-                youtube_id: '',
-                transcript: '',
-                captions: '',
-                thumbnail: ''
-              },
-              has_quiz: true,
-              quiz_required: true,
-              unlock_conditions: {
-                previous_lesson_required: true,
-                quiz_pass_required: true,
-                minimum_watch_percentage: 80
-              },
-              status: 'published',
-              is_free_preview: false,
-              is_completed: false,
-              is_locked: !hasAccess,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          ]
-        }
-      ]);
+      // Fetch real chapters with lessons
+      try {
+        const chaptersData = await getChaptersWithLessons(courseId);
+        setChapters(chaptersData);
+      } catch (error) {
+        console.error('Failed to fetch chapters:', error);
+        // Fallback to empty chapters array
+        setChapters([]);
+      }
     } catch (error: any) {
       console.error('Failed to fetch course details:', error);
       // Use backend error message

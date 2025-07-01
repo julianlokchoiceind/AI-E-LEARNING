@@ -8,7 +8,10 @@ import { Card } from '@/components/ui/Card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { InlineChatComponent } from '@/components/feature/InlineChatComponent';
 import { AccessDenied } from '@/components/feature/AccessDenied';
+import { ExportProgressModal } from '@/components/feature/ExportProgressModal';
+import { OnboardingWizard } from '@/components/feature/OnboardingWizard';
 import { usersApi } from '@/lib/api/users';
+import { useOnboarding } from '@/hooks/useOnboarding';
 import { formatDistanceToNow } from '@/lib/utils/formatters';
 import { LoadingSpinner, EmptyState, CourseCardSkeleton } from '@/components/ui/LoadingStates';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
@@ -51,11 +54,14 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showExportModal, setShowExportModal] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const accessError = searchParams.get('error');
   
   const { handleError } = useErrorHandler();
+  const { shouldShowOnboarding, refetchStatus } = useOnboarding();
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -119,6 +125,31 @@ export default function DashboardPage() {
       loadDashboardData();
     }
   }, [accessError, authLoading, user]);
+
+  // Show onboarding modal when needed
+  useEffect(() => {
+    if (shouldShowOnboarding && !authLoading && !loading) {
+      setShowOnboardingModal(true);
+    }
+  }, [shouldShowOnboarding, authLoading, loading]);
+
+  // Handle onboarding completion
+  const handleOnboardingComplete = async () => {
+    setShowOnboardingModal(false);
+    
+    // Refresh onboarding status
+    await refetchStatus();
+    
+    // Refresh dashboard data to show any new courses from onboarding
+    await refreshDashboard();
+    
+    toast.success('Welcome to the platform! Your personalized dashboard is ready.');
+  };
+
+  // Handle onboarding close (skip or manual close)
+  const handleOnboardingClose = () => {
+    setShowOnboardingModal(false);
+  };
 
   // Refresh function for manual data reload
   const refreshDashboard = async () => {
@@ -368,6 +399,18 @@ export default function DashboardPage() {
               >
                 Edit Profile
               </Link>
+              <button
+                onClick={() => setShowExportModal(true)}
+                className="block w-full text-center bg-blue-100 hover:bg-blue-200 py-2 rounded transition-colors text-blue-700"
+              >
+                📊 Export Progress
+              </button>
+              <button
+                onClick={() => setShowOnboardingModal(true)}
+                className="block w-full text-center bg-purple-100 hover:bg-purple-200 py-2 rounded transition-colors text-purple-700"
+              >
+                🚀 Platform Tour
+              </button>
             </div>
           </div>
         </div>
@@ -386,6 +429,19 @@ export default function DashboardPage() {
           />
         </div>
       </div>
+
+      {/* Export Progress Modal */}
+      <ExportProgressModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+      />
+
+      {/* Onboarding Wizard Modal */}
+      <OnboardingWizard
+        isOpen={showOnboardingModal}
+        onClose={handleOnboardingClose}
+        onComplete={handleOnboardingComplete}
+      />
     </div>
   );
 }

@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: Optional[str] = None
     
     # Sentry
-    SENTRY_DSN: Optional[str] = None
+    SENTRY_DSN: Optional[str] = "https://e361b6f5a71325c0649205ce514e1a31@o4509546120675328.ingest.us.sentry.io/4509546126114816"
     
     class Config:
         case_sensitive = True

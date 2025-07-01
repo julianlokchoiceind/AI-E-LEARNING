@@ -3,11 +3,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { useI18n } from '@/lib/i18n/useI18n';
+import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
 import { toast } from 'react-hot-toast';
 
 export default function ContactPage() {
-  const { t } = useI18n();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -29,8 +28,8 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement contact form submission to backend
-      const response = await fetch('/api/v1/contact', {
+      // Submit contact form to backend
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.SUPPORT.CONTACT}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,15 +39,17 @@ export default function ContactPage() {
 
       const data = await response.json();
       
-      if (response.ok) {
+      if (response.ok && data.success) {
         toast.success(data.message || 'Operation Failed');
         setFormData({ name: '', email: '', subject: '', message: '' });
       } else {
-        toast.error(data.message || 'Operation Failed');
+        // Log detailed error for debugging
+        console.error('Contact form submission failed:', data);
+        toast.error('Operation Failed');
       }
     } catch (error: any) {
       console.error('Contact form submission error:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error('Operation Failed');
     } finally {
       setIsSubmitting(false);
     }
@@ -61,10 +62,10 @@ export default function ContactPage() {
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              {t('contact.title', 'Contact Us')}
+              Contact Us
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              {t('contact.subtitle', 'Get in touch with our team. We\'d love to hear from you!')}
+              Get in touch with our team. We'd love to hear from you!
             </p>
           </div>
 
@@ -73,7 +74,7 @@ export default function ContactPage() {
             <div className="space-y-8">
               <div>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-                  {t('contact.info.title', 'Get in Touch')}
+                  Get in Touch
                 </h2>
                 
                 <div className="space-y-6">
@@ -97,9 +98,9 @@ export default function ContactPage() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">{t('contact.info.location', 'Location')}</h3>
+                      <h3 className="font-medium text-gray-900">Location</h3>
                       <p className="text-gray-600">
-                        {t('contact.info.address', 'Ho Chi Minh City, Vietnam')}
+                        Ho Chi Minh City, Vietnam
                       </p>
                     </div>
                   </div>
@@ -111,9 +112,9 @@ export default function ContactPage() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">{t('contact.info.support', 'Support')}</h3>
+                      <h3 className="font-medium text-gray-900">Support</h3>
                       <p className="text-gray-600">
-                        {t('contact.info.hours', '24/7 Online Support')}
+                        24/7 Online Support
                       </p>
                     </div>
                   </div>
@@ -123,16 +124,16 @@ export default function ContactPage() {
               {/* FAQ Link */}
               <div className="bg-blue-50 rounded-lg p-6">
                 <h3 className="font-medium text-gray-900 mb-2">
-                  {t('contact.faq.title', 'Frequently Asked Questions')}
+                  Frequently Asked Questions
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  {t('contact.faq.description', 'Find answers to common questions about our platform.')}
+                  Find answers to common questions about our platform.
                 </p>
                 <Button
                   variant="outline"
                   onClick={() => window.location.href = '/faq'}
                 >
-                  {t('contact.faq.button', 'View FAQ')}
+                  View FAQ
                 </Button>
               </div>
             </div>
@@ -140,13 +141,13 @@ export default function ContactPage() {
             {/* Contact Form */}
             <div className="bg-white rounded-lg shadow-lg p-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-                {t('contact.form.title', 'Send us a Message')}
+                Send us a Message
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('contact.form.name', 'Full Name')}
+                    Full Name
                   </label>
                   <Input
                     type="text"
@@ -155,13 +156,13 @@ export default function ContactPage() {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    placeholder={t('contact.form.namePlaceholder', 'Enter your full name')}
+                    placeholder="Enter your full name"
                   />
                 </div>
 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('contact.form.email', 'Email Address')}
+                    Email Address
                   </label>
                   <Input
                     type="email"
@@ -170,13 +171,13 @@ export default function ContactPage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    placeholder={t('contact.form.emailPlaceholder', 'Enter your email address')}
+                    placeholder="Enter your email address"
                   />
                 </div>
 
                 <div>
                   <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('contact.form.subject', 'Subject')}
+                    Subject
                   </label>
                   <Input
                     type="text"
@@ -185,13 +186,13 @@ export default function ContactPage() {
                     value={formData.subject}
                     onChange={handleInputChange}
                     required
-                    placeholder={t('contact.form.subjectPlaceholder', 'Enter the subject')}
+                    placeholder="Enter the subject"
                   />
                 </div>
 
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('contact.form.message', 'Message')}
+                    Message
                   </label>
                   <textarea
                     id="message"
@@ -201,7 +202,7 @@ export default function ContactPage() {
                     onChange={handleInputChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder={t('contact.form.messagePlaceholder', 'Enter your message')}
+                    placeholder="Enter your message"
                   />
                 </div>
 
@@ -211,8 +212,8 @@ export default function ContactPage() {
                   className="w-full"
                 >
                   {isSubmitting 
-                    ? t('contact.form.sending', 'Sending...')
-                    : t('contact.form.send', 'Send Message')
+                    ? 'Sending...'
+                    : 'Send Message'
                   }
                 </Button>
               </form>

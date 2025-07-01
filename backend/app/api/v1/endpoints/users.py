@@ -1,5 +1,6 @@
 from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import StreamingResponse
 from app.models.user import User
 from app.models.enrollment import Enrollment
 from app.models.progress import Progress
@@ -14,6 +15,14 @@ from datetime import datetime, timedelta
 from beanie import PydanticObjectId
 from app.core.performance import measure_performance
 from app.services.db_optimization import db_optimizer
+import csv
+import io
+import json
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import inch
 
 router = APIRouter()
 
@@ -249,3 +258,293 @@ async def get_my_courses_with_progress(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
+
+@router.get("/export-progress")
+async def export_learning_progress(
+    format: str = Query(..., pattern="^(csv|pdf)$", description="Export format: csv or pdf"),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Export user's complete learning progress in CSV or PDF format.
+    
+    Includes:
+    - Course enrollment details
+    - Individual lesson progress
+    - Quiz scores and attempts
+    - Completion dates and watch time
+    - Overall statistics
+    """
+    try:
+        user_id = str(current_user.id)
+        
+        # Get all user enrollments with course details
+        enrollments = await Enrollment.find({"user_id": user_id}).to_list()
+        
+        # Get detailed progress data
+        progress_data = []
+        total_courses = len(enrollments)
+        completed_courses = 0
+        total_hours = 0.0
+        total_lessons_completed = 0
+        
+        for enrollment in enrollments:
+            # Get course details
+            course = await Course.get(enrollment.course_id)
+            if not course:
+                continue
+                
+            # Get all progress records for this course
+            lesson_progresses = await Progress.find({
+                "user_id": user_id,
+                "course_id": enrollment.course_id
+            }).to_list()
+            
+            # Calculate course statistics
+            course_completed_lessons = sum(1 for p in lesson_progresses if p.is_completed)
+            course_total_watch_time = sum(p.video_progress.total_watch_time for p in lesson_progresses) / 3600  # Convert to hours
+            course_completion = enrollment.progress.completion_percentage
+            
+            # Update totals
+            if enrollment.progress.is_completed:
+                completed_courses += 1
+            total_hours += course_total_watch_time
+            total_lessons_completed += course_completed_lessons
+            
+            # Course-level data
+            course_data = {
+                "type": "course",
+                "course_title": course.title,
+                "course_category": course.category,
+                "course_level": course.level,
+                "enrollment_type": enrollment.enrollment_type,
+                "enrolled_date": enrollment.enrolled_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "completion_percentage": round(course_completion, 1),
+                "is_completed": enrollment.progress.is_completed,
+                "completed_date": enrollment.progress.completed_at.strftime("%Y-%m-%d %H:%M:%S") if enrollment.progress.completed_at else "Not completed",
+                "total_lessons": enrollment.progress.total_lessons,
+                "lessons_completed": course_completed_lessons,
+                "total_watch_time_hours": round(course_total_watch_time, 2),
+                "certificate_issued": enrollment.certificate.is_issued,
+                "certificate_date": enrollment.certificate.issued_at.strftime("%Y-%m-%d") if enrollment.certificate.issued_at else "Not issued",
+                "last_accessed": enrollment.last_accessed.strftime("%Y-%m-%d %H:%M:%S") if enrollment.last_accessed else "Never"
+            }
+            progress_data.append(course_data)
+            
+            # Add lesson-level data
+            for lesson_progress in lesson_progresses:
+                lesson_data = {
+                    "type": "lesson",
+                    "course_title": course.title,
+                    "lesson_id": lesson_progress.lesson_id,
+                    "watch_percentage": round(lesson_progress.video_progress.watch_percentage, 1),
+                    "watch_time_minutes": round(lesson_progress.video_progress.total_watch_time / 60, 2),
+                    "is_completed": lesson_progress.is_completed,
+                    "started_date": lesson_progress.started_at.strftime("%Y-%m-%d %H:%M:%S") if lesson_progress.started_at else "Not started",
+                    "completed_date": lesson_progress.completed_at.strftime("%Y-%m-%d %H:%M:%S") if lesson_progress.completed_at else "Not completed",
+                    "last_accessed": lesson_progress.last_accessed.strftime("%Y-%m-%d %H:%M:%S"),
+                    "quiz_attempts": len(lesson_progress.quiz_progress.attempts) if lesson_progress.quiz_progress else 0,
+                    "quiz_best_score": round(lesson_progress.quiz_progress.best_score, 1) if lesson_progress.quiz_progress else "No quiz",
+                    "quiz_passed": lesson_progress.quiz_progress.is_passed if lesson_progress.quiz_progress else "No quiz"
+                }
+                progress_data.append(lesson_data)
+        
+        # Generate summary statistics
+        summary_stats = {
+            "export_date": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "user_name": current_user.name,
+            "user_email": current_user.email,
+            "total_courses_enrolled": total_courses,
+            "courses_completed": completed_courses,
+            "courses_in_progress": total_courses - completed_courses,
+            "total_learning_hours": round(total_hours, 2),
+            "total_lessons_completed": total_lessons_completed,
+            "current_streak_days": current_user.stats.current_streak,
+            "longest_streak_days": current_user.stats.longest_streak,
+            "certificates_earned": current_user.stats.certificates_earned,
+            "member_since": current_user.created_at.strftime("%Y-%m-%d")
+        }
+        
+        if format == "csv":
+            return await generate_csv_export(progress_data, summary_stats, current_user.name)
+        elif format == "pdf":
+            return await generate_pdf_export(progress_data, summary_stats, current_user.name)
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to export progress: {str(e)}"
+        )
+
+async def generate_csv_export(progress_data: list, summary_stats: dict, user_name: str):
+    """Generate CSV export of learning progress."""
+    output = io.StringIO()
+    
+    # Write summary section
+    writer = csv.writer(output)
+    writer.writerow(["=== LEARNING PROGRESS EXPORT ==="])
+    writer.writerow([])
+    writer.writerow(["SUMMARY STATISTICS"])
+    writer.writerow(["Export Date", summary_stats["export_date"]])
+    writer.writerow(["Student Name", summary_stats["user_name"]])
+    writer.writerow(["Email", summary_stats["user_email"]])
+    writer.writerow(["Member Since", summary_stats["member_since"]])
+    writer.writerow([])
+    writer.writerow(["LEARNING STATISTICS"])
+    writer.writerow(["Total Courses Enrolled", summary_stats["total_courses_enrolled"]])
+    writer.writerow(["Courses Completed", summary_stats["courses_completed"]])
+    writer.writerow(["Courses In Progress", summary_stats["courses_in_progress"]])
+    writer.writerow(["Total Learning Hours", summary_stats["total_learning_hours"]])
+    writer.writerow(["Total Lessons Completed", summary_stats["total_lessons_completed"]])
+    writer.writerow(["Current Streak (Days)", summary_stats["current_streak_days"]])
+    writer.writerow(["Longest Streak (Days)", summary_stats["longest_streak_days"]])
+    writer.writerow(["Certificates Earned", summary_stats["certificates_earned"]])
+    writer.writerow([])
+    
+    # Write course progress section
+    writer.writerow(["=== COURSE PROGRESS ==="])
+    course_headers = [
+        "Course Title", "Category", "Level", "Enrollment Type", "Enrolled Date",
+        "Completion %", "Is Completed", "Completed Date", "Total Lessons",
+        "Lessons Completed", "Watch Time (Hours)", "Certificate Issued", "Certificate Date", "Last Accessed"
+    ]
+    writer.writerow(course_headers)
+    
+    for item in progress_data:
+        if item["type"] == "course":
+            writer.writerow([
+                item["course_title"], item["course_category"], item["course_level"],
+                item["enrollment_type"], item["enrolled_date"], item["completion_percentage"],
+                item["is_completed"], item["completed_date"], item["total_lessons"],
+                item["lessons_completed"], item["total_watch_time_hours"], 
+                item["certificate_issued"], item["certificate_date"], item["last_accessed"]
+            ])
+    
+    writer.writerow([])
+    
+    # Write lesson progress section
+    writer.writerow(["=== LESSON PROGRESS ==="])
+    lesson_headers = [
+        "Course Title", "Lesson ID", "Watch %", "Watch Time (Min)", "Is Completed",
+        "Started Date", "Completed Date", "Last Accessed", "Quiz Attempts", "Quiz Best Score", "Quiz Passed"
+    ]
+    writer.writerow(lesson_headers)
+    
+    for item in progress_data:
+        if item["type"] == "lesson":
+            writer.writerow([
+                item["course_title"], item["lesson_id"], item["watch_percentage"],
+                item["watch_time_minutes"], item["is_completed"], item["started_date"],
+                item["completed_date"], item["last_accessed"], item["quiz_attempts"],
+                item["quiz_best_score"], item["quiz_passed"]
+            ])
+    
+    output.seek(0)
+    
+    # Create filename with timestamp
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"learning_progress_{user_name.replace(' ', '_')}_{timestamp}.csv"
+    
+    return StreamingResponse(
+        io.BytesIO(output.getvalue().encode("utf-8")),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+async def generate_pdf_export(progress_data: list, summary_stats: dict, user_name: str):
+    """Generate PDF export of learning progress."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+    
+    # Build PDF content
+    story = []
+    styles = getSampleStyleSheet()
+    
+    # Title
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        spaceAfter=30,
+        alignment=1  # Center alignment
+    )
+    story.append(Paragraph("Learning Progress Report", title_style))
+    story.append(Spacer(1, 20))
+    
+    # Summary section
+    story.append(Paragraph("Summary Statistics", styles['Heading2']))
+    summary_data = [
+        ["Export Date", summary_stats["export_date"]],
+        ["Student Name", summary_stats["user_name"]],
+        ["Email", summary_stats["user_email"]],
+        ["Member Since", summary_stats["member_since"]],
+        ["", ""],
+        ["Total Courses Enrolled", str(summary_stats["total_courses_enrolled"])],
+        ["Courses Completed", str(summary_stats["courses_completed"])],
+        ["Courses In Progress", str(summary_stats["courses_in_progress"])],
+        ["Total Learning Hours", str(summary_stats["total_learning_hours"])],
+        ["Total Lessons Completed", str(summary_stats["total_lessons_completed"])],
+        ["Current Streak (Days)", str(summary_stats["current_streak_days"])],
+        ["Longest Streak (Days)", str(summary_stats["longest_streak_days"])],
+        ["Certificates Earned", str(summary_stats["certificates_earned"])]
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[3*inch, 3*inch])
+    summary_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+    ]))
+    story.append(summary_table)
+    story.append(Spacer(1, 20))
+    
+    # Course progress section
+    story.append(Paragraph("Course Progress", styles['Heading2']))
+    course_data = [["Course Title", "Category", "Level", "Completion %", "Status", "Certificate"]]
+    
+    for item in progress_data:
+        if item["type"] == "course":
+            status = "Completed" if item["is_completed"] else "In Progress"
+            certificate = "Issued" if item["certificate_issued"] else "Not Issued"
+            course_data.append([
+                item["course_title"][:30] + "..." if len(item["course_title"]) > 30 else item["course_title"],
+                item["course_category"],
+                item["course_level"],
+                f"{item['completion_percentage']}%",
+                status,
+                certificate
+            ])
+    
+    if len(course_data) > 1:  # Has data beyond headers
+        course_table = Table(course_data, colWidths=[2.5*inch, 1*inch, 1*inch, 0.8*inch, 1*inch, 1*inch])
+        course_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+        ]))
+        story.append(course_table)
+    else:
+        story.append(Paragraph("No course enrollments found.", styles['Normal']))
+    
+    story.append(Spacer(1, 20))
+    
+    # Footer
+    footer_text = f"Generated on {summary_stats['export_date']} | AI E-Learning Platform"
+    story.append(Paragraph(footer_text, styles['Normal']))
+    
+    # Build PDF
+    doc.build(story)
+    buffer.seek(0)
+    
+    # Create filename with timestamp
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"learning_progress_{user_name.replace(' ', '_')}_{timestamp}.pdf"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )

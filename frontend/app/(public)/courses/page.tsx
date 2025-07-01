@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, ChevronDown } from 'lucide-react';
 import CourseCard from '@/components/feature/CourseCard';
 import { Button } from '@/components/ui/Button';
 import { getCourses } from '@/lib/api/courses';
+import { enrollInCourse } from '@/lib/api/enrollments';
 import { CourseCardSkeleton, EmptyState, LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
 const CourseCatalogPage = () => {
@@ -18,8 +21,11 @@ const CourseCatalogPage = () => {
   const [priceFilter, setPriceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [showFilters, setShowFilters] = useState(false);
+  const [enrollingCourse, setEnrollingCourse] = useState<string | null>(null);
   
   const { handleError } = useErrorHandler();
+  const { user } = useAuth();
+  const router = useRouter();
 
   const categories = [
     { value: '', label: 'All Categories' },
@@ -51,14 +57,10 @@ const CourseCatalogPage = () => {
     { value: 'price-high', label: 'Price: High to Low' }
   ];
 
-  useEffect(() => {
-    fetchCourses();
-  }, [searchQuery, selectedCategory, selectedLevel, priceFilter, sortBy]);
-
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     setLoading(true);
     
-    await handleError(async () => {
+    const result = await handleError(async () => {
       const params = new URLSearchParams();
       
       if (searchQuery) params.append('search', searchQuery);
@@ -87,15 +89,58 @@ const CourseCatalogPage = () => {
       }
 
       const response = await getCourses(params.toString());
-      setCourses(response.courses || []);
+      return response;
     });
     
+    if (result) {
+      setCourses(result.courses || []);
+    }
+    
     setLoading(false);
-  };
+  }, [searchQuery, selectedCategory, selectedLevel, priceFilter, sortBy, handleError]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
 
   const handleEnroll = async (courseId: string) => {
-    // TODO: Implement enrollment logic
-    toast.success('Enrollment feature coming soon!');
+    // Check if user is logged in
+    if (!user) {
+      router.push('/login?redirect=' + encodeURIComponent(`/courses/${courseId}`));
+      return;
+    }
+
+    try {
+      setEnrollingCourse(courseId);
+      
+      // Find the course to check pricing
+      if (!courses || !Array.isArray(courses)) {
+        toast.error('Courses not loaded. Please refresh the page.');
+        return;
+      }
+      
+      const course = courses.find(c => c._id === courseId);
+      if (!course) {
+        toast.error('Course not found');
+        return;
+      }
+
+      // Check if it's a free course or user has premium access
+      if (course.pricing.is_free || user.premiumStatus) {
+        // Direct enrollment for free access
+        await enrollInCourse(courseId);
+        toast.success('Successfully enrolled in course!');
+        router.push(`/learn/${courseId}`);
+      } else {
+        // Redirect to payment for paid courses
+        router.push(`/checkout/course/${courseId}`);
+      }
+    } catch (error: any) {
+      console.error('Failed to enroll:', error);
+      toast.error(error.message || 'Failed to enroll in course');
+    } finally {
+      setEnrollingCourse(null);
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -238,6 +283,7 @@ const CourseCatalogPage = () => {
                 key={course._id}
                 course={course}
                 onEnroll={handleEnroll}
+                isEnrolling={enrollingCourse === course._id}
               />
             ))}
           </div>

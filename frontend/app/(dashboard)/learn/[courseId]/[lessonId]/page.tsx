@@ -8,6 +8,7 @@ import { QuizComponent } from '@/components/feature/QuizComponent';
 import { toast } from 'react-hot-toast';
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
 import { quizAPI } from '@/lib/api/quizzes';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Lesson {
   _id: string;
@@ -48,6 +49,7 @@ interface LessonProgress {
 export default function LessonPlayerPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
 
@@ -552,7 +554,7 @@ export default function LessonPlayerPage() {
       <SimpleChatWidget
         courseId={courseId}
         lessonId={lessonId}
-        userLevel="beginner" // TODO: Get from user profile
+        userLevel={user?.level || "beginner"} // Get from user profile with fallback
         position="bottom-right"
       />
     </div>

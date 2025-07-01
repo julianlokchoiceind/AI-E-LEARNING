@@ -10,11 +10,13 @@ from jose import JWTError, jwt
 from pydantic import EmailStr
 import secrets
 import logging
+import sentry_sdk
 
 from app.core.config import settings
 from app.core.database import get_database
 from app.core.email import email_service
 from app.core.rate_limit import limiter, AUTH_RATE_LIMITS
+from app.core.sentry_utils import track_user_context, capture_message
 from app.models.user import User
 from app.schemas.auth import (
     UserCreate,
@@ -247,8 +249,32 @@ async def verify_email(request: Request, token: str) -> StandardResponse[dict]:
     """
     db = get_database()
     
+    # ✨ SIMPLIFIED: Check for common prefetch patterns
+    user_agent = request.headers.get("user-agent", "").lower()
+    purpose_header = request.headers.get("purpose", "").lower()
+    
+    # Common email scanner/prefetch patterns
+    is_scanner = any([
+        "bot" in user_agent,
+        "crawler" in user_agent, 
+        "scanner" in user_agent,
+        "prefetch" in purpose_header,
+        "outlook" in user_agent and "safelinks" in user_agent,
+        request.headers.get("x-ms-exchange-organization-authsource") is not None
+    ])
+    
+    if is_scanner:
+        logger.info(f"🤖 Email scanner/bot detected for token: {token[:10]}...{token[-10:]}, User-Agent: {user_agent[:100]}")
+        return StandardResponse(
+            success=True,
+            data={},
+            message="Email scanner request handled"
+        )
+    
     # Find user with this token
-    logger.info(f"🔍 Looking for verification token: {token[:10]}...{token[-10:]}")
+    logger.info(f"🔍 Verify email endpoint called for token: {token[:10]}...{token[-10:]} at {datetime.utcnow().isoformat()}")
+    logger.info(f"🌐 Request from IP: {request.client.host if request.client else 'unknown'}, User-Agent: {user_agent[:100]}")
+        
     user = await db.users.find_one({"verification_token": token})
     
     if not user:
@@ -262,6 +288,15 @@ async def verify_email(request: Request, token: str) -> StandardResponse[dict]:
             detail="This verification link is invalid or has already been used. If you have already verified your email, please login. If you need a new verification link, please use the resend option."
         )
     
+    # Check if already verified
+    if user.get("is_verified", False):
+        logger.info(f"✅ User {user['email']} is already verified, skipping")
+        return StandardResponse(
+            success=True,
+            data={"email": user["email"]},
+            message="Email already verified"
+        )
+    
     # Check if token has expired
     if user.get("verification_token_expires"):
         if datetime.utcnow() > user["verification_token_expires"]:
@@ -270,9 +305,12 @@ async def verify_email(request: Request, token: str) -> StandardResponse[dict]:
                 detail="Verification token has expired. Please request a new one."
             )
     
-    # Update user verification status
-    await db.users.update_one(
-        {"_id": user["_id"]},
+    # ⚡ SIMPLE ATOMIC UPDATE: Prevents duplicate emails
+    update_result = await db.users.update_one(
+        {
+            "_id": user["_id"],
+            "is_verified": False  # Only update if still unverified
+        },
         {
             "$set": {
                 "is_verified": True,
@@ -282,6 +320,27 @@ async def verify_email(request: Request, token: str) -> StandardResponse[dict]:
             }
         }
     )
+    
+    # If no document was modified, user was already verified by another request
+    if update_result.modified_count == 0:
+        logger.info(f"🔄 User {user['email']} already verified by concurrent request")
+        return StandardResponse(
+            success=True,
+            data={"email": user["email"]},
+            message="Email already verified"
+        )
+    
+    # Send welcome email after successful verification
+    try:
+        logger.info(f"📧 Attempting to send welcome email to {user['email']} at {datetime.utcnow().isoformat()}")
+        await email_service.send_welcome_email(
+            to_email=user["email"],
+            name=user.get("name", user["email"].split("@")[0])
+        )
+        logger.info(f"✉️ Welcome email sent successfully to {user['email']} at {datetime.utcnow().isoformat()}")
+    except Exception as e:
+        logger.error(f"Failed to send welcome email to {user['email']}: {str(e)}")
+        # Don't fail the verification if email sending fails
     
     return StandardResponse(
         success=True,
@@ -322,6 +381,17 @@ async def oauth_login(request: Request, oauth_data: OAuthUserCreate) -> Standard
         user_doc["_id"] = result.inserted_id
         
         logger.info(f"New OAuth user created: {oauth_data.email} via {oauth_data.provider}")
+        
+        # Send welcome email to new OAuth users
+        try:
+            await email_service.send_welcome_email(
+                to_email=oauth_data.email,
+                name=oauth_data.name or oauth_data.email.split("@")[0]
+            )
+            logger.info(f"✉️ Welcome email sent to new OAuth user {oauth_data.email}")
+        except Exception as e:
+            logger.error(f"Failed to send welcome email to OAuth user: {str(e)}")
+            # Don't fail OAuth registration if email sending fails
     else:
         # Update existing user OAuth info
         await db.users.update_one(
@@ -337,6 +407,7 @@ async def oauth_login(request: Request, oauth_data: OAuthUserCreate) -> Standard
             }
         )
         user = await db.users.find_one({"_id": user["_id"]})
+        user_doc = user  # For consistency in token creation below
     
     # Create tokens
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -402,16 +473,76 @@ async def refresh_access_token(token_request: RefreshTokenRequest) -> StandardRe
 
 
 @router.post("/logout", response_model=StandardResponse[dict])
-async def logout() -> StandardResponse[dict]:
+async def logout(request: Request) -> StandardResponse[dict]:
     """
     Logout user (invalidate token).
+    Adds the current token to blacklist to prevent reuse.
     """
-    # TODO: Implement token blacklist
-    return StandardResponse(
-        success=True,
-        data={},
-        message="Successfully logged out"
-    )
+    from app.services.token_blacklist_service import token_blacklist_service
+    from datetime import datetime
+    
+    try:
+        # Extract token from Authorization header
+        authorization = request.headers.get("Authorization")
+        if not authorization:
+            # If no token provided, still return success (user might be logging out from frontend)
+            return StandardResponse(
+                success=True,
+                data={},
+                message="Successfully logged out"
+            )
+        
+        # Parse Bearer token
+        try:
+            scheme, token = authorization.split()
+            if scheme.lower() != "bearer":
+                raise ValueError("Invalid authorization scheme")
+        except ValueError:
+            return StandardResponse(
+                success=True,
+                data={},
+                message="Successfully logged out"
+            )
+        
+        # Decode token to get user info and expiry
+        try:
+            payload = jwt.decode(
+                token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+            )
+            user_id = payload.get("sub")
+            exp_timestamp = payload.get("exp")
+            
+            if user_id and exp_timestamp:
+                # Convert timestamp to datetime
+                expires_at = datetime.fromtimestamp(exp_timestamp)
+                
+                # Add token to blacklist
+                await token_blacklist_service.blacklist_token(
+                    token=token,
+                    user_id=user_id,
+                    expires_at=expires_at
+                )
+                
+                logger.info(f"User {user_id} logged out, token blacklisted")
+            
+        except JWTError as e:
+            # Token is invalid, but still allow logout
+            logger.warning(f"Invalid token during logout: {str(e)}")
+        
+        return StandardResponse(
+            success=True,
+            data={},
+            message="Successfully logged out"
+        )
+        
+    except Exception as e:
+        logger.error(f"Error during logout: {str(e)}")
+        # Even if blacklist fails, allow logout to complete
+        return StandardResponse(
+            success=True,
+            data={},
+            message="Successfully logged out"
+        )
 
 
 @router.post("/forgot-password", response_model=StandardResponse[dict])

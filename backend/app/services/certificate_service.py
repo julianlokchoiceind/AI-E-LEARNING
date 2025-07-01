@@ -1,8 +1,10 @@
 """
 Certificate service for managing course completion certificates
 """
+import os
 import hashlib
 import secrets
+import logging
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from bson import ObjectId
@@ -21,6 +23,8 @@ from app.schemas.certificate import (
     LinkedInShareData
 )
 from app.core.exceptions import NotFoundError, BadRequestError, ForbiddenError
+
+logger = logging.getLogger(__name__)
 
 
 class CertificateService:
@@ -109,6 +113,21 @@ class CertificateService:
         enrollment.certificate.final_score = final_score
         enrollment.certificate.verification_url = verification_url
         await enrollment.save()
+        
+        # Send certificate email
+        try:
+            from app.core.email import email_service
+            certificate_url = f"{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/certificates/{certificate.id}"
+            await email_service.send_certificate_email(
+                to_email=user.email,
+                name=user.name,
+                course_title=course.title,
+                certificate_url=certificate_url
+            )
+            logger.info(f"Certificate email sent to {user.email}")
+        except Exception as e:
+            logger.error(f"Failed to send certificate email: {str(e)}")
+            # Don't fail certificate generation if email fails
         
         return certificate
     

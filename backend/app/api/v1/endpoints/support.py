@@ -12,6 +12,7 @@ from app.schemas.support_ticket import (
     MessageCreateRequest,
     TicketSearchQuery,
     SatisfactionRatingRequest,
+    ContactFormRequest,
     TicketStandardResponse,
     TicketWithMessagesStandardResponse,
     TicketListStandardResponse,
@@ -20,6 +21,8 @@ from app.schemas.support_ticket import (
 )
 from app.services.support_ticket_service import SupportTicketService
 from app.core.deps import get_current_user, get_admin_user
+from app.core.email import email_service
+from app.schemas.base import StandardResponse
 
 router = APIRouter()
 ticket_service = SupportTicketService()
@@ -231,4 +234,28 @@ async def rate_ticket(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to rate ticket: {str(e)}"
+        )
+
+
+@router.post("/contact", response_model=StandardResponse[dict])
+async def submit_contact_form(contact_data: ContactFormRequest):
+    """Submit contact form - available to all users without authentication"""
+    try:
+        # Send contact email to admin
+        await email_service.send_contact_form_email(
+            from_name=contact_data.name,
+            from_email=contact_data.email,
+            subject=contact_data.subject,
+            message=contact_data.message
+        )
+        
+        return {
+            "success": True,
+            "data": {},
+            "message": "Thank you for your message! We'll get back to you soon."
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send contact message: {str(e)}"
         )

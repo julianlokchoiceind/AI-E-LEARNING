@@ -8,6 +8,7 @@ from beanie import PydanticObjectId
 from slugify import slugify
 from app.models.course import Course, CourseCategory, CourseLevel, CourseStatus, Pricing
 from app.models.user import User
+from app.models.enrollment import Enrollment
 from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse
 from app.core.exceptions import (
     NotFoundException,
@@ -253,8 +254,19 @@ class CourseService:
             }
         
         # 4. Check if user purchased this course
-        # TODO: Implement enrollment check when Enrollment model is created
-        # For now, return no access
+        enrollment = await Enrollment.find_one({
+            "user_id": str(user.id),
+            "course_id": str(course.id),
+            "is_active": True
+        })
+        
+        if enrollment:
+            return {
+                "has_access": True,
+                "is_enrolled": True
+            }
+        
+        # No access if none of the above conditions are met
         return {
             "has_access": False,
             "is_enrolled": False
@@ -295,8 +307,17 @@ class CourseService:
                 # Pro subscription
                 access_info = {"has_access": True, "is_enrolled": True}
             else:
-                # TODO: Check enrollments when implemented
-                access_info = {"has_access": False, "is_enrolled": False}
+                # Check if user has enrollment for this course
+                enrollment = await Enrollment.find_one({
+                    "user_id": str(user.id),
+                    "course_id": str(course.id),
+                    "is_active": True
+                })
+                
+                if enrollment:
+                    access_info = {"has_access": True, "is_enrolled": True}
+                else:
+                    access_info = {"has_access": False, "is_enrolled": False}
             
             result[str(course.id)] = access_info
         
@@ -313,7 +334,16 @@ class CourseService:
             raise ForbiddenException("You don't have permission to delete this course")
         
         # Check if course has enrollments
-        # TODO: Check enrollments when Enrollment model is created
+        enrollment_count = await Enrollment.find({
+            "course_id": str(course.id),
+            "is_active": True
+        }).count()
+        
+        if enrollment_count > 0:
+            raise BadRequestException(
+                f"Cannot delete course with {enrollment_count} active enrollments. "
+                "Archive the course instead or handle refunds first."
+            )
         
         # Soft delete by archiving
         course.status = CourseStatus.ARCHIVED

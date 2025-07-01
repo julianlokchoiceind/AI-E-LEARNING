@@ -167,12 +167,13 @@ class PaymentService:
                 course = await Course.get(payment.course_id)
                 
                 if user and course:
-                    await email_service.send_payment_confirmation_email(
+                    await email_service.send_payment_confirmation(
                         to_email=user.email,
                         name=user.name,
-                        course_title=course.title,
+                        payment_type="Course Purchase",
                         amount=payment.amount,
-                        currency=payment.currency
+                        currency=payment.currency,
+                        description=f"Course: {course.title}"
                     )
                     logger.info(f"Payment confirmation email sent to: {user.email}")
             
@@ -263,11 +264,13 @@ class PaymentService:
             await payment.insert()
             
             # Send confirmation email
-            await EmailService.send_subscription_confirmation(
-                user.email,
-                user.name,
-                plan_type,
-                29.0
+            await email_service.send_payment_confirmation(
+                to_email=user.email,
+                name=user.name,
+                payment_type="Pro Subscription",
+                amount=29.0,
+                currency="USD",
+                description="Monthly Pro Plan - Unlimited access to all courses"
             )
             
             return {

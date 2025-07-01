@@ -37,12 +37,10 @@ interface CourseResponse {
 
 interface CoursesListData {
   courses: CourseResponse[];
-  pagination: {
-    page: number;
-    size: number;
-    total: number;
-    pages: number;
-  };
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
 }
 
 interface CourseDetailData extends CourseResponse {
