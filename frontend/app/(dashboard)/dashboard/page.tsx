@@ -92,11 +92,11 @@ export default function DashboardPage() {
           if (response.success && response.data) {
             setDashboardData(response.data);
           } else {
-            throw new Error(response.message || 'Failed to load dashboard');
+            throw new Error(response.message || 'Something went wrong');
           }
         } catch (error: any) {
           console.error('Dashboard API error:', error);
-          toast.error(error.message || 'Operation Failed');
+          toast.error(error.message || 'Something went wrong');
           
           // Fallback to mock data if API fails
           const mockDashboardData: DashboardData = {
@@ -105,7 +105,7 @@ export default function DashboardPage() {
               name: user.name || 'User',
               email: user.email || 'user@example.com',
               role: user.role || 'student',
-              premium_status: user.premium_status || false,
+              premium_status: user.premiumStatus || false,
             },
             stats: {
               total_courses: 0,
@@ -121,7 +121,7 @@ export default function DashboardPage() {
           };
           
           setDashboardData(mockDashboardData);
-          toast.error((error as any)?.message || 'Operation Failed');
+          toast.error((error as any)?.message || 'Something went wrong');
         }
         
         setLoading(false);
@@ -166,7 +166,7 @@ export default function DashboardPage() {
       // Try to fetch real data from API
       const response = await usersApi.getDashboard();
       if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
       setDashboardData(response.data);
       toast.success(response.message);
@@ -180,7 +180,7 @@ export default function DashboardPage() {
           name: user.name || 'User',
           email: user.email || 'user@example.com',
           role: user.role || 'student',
-          premium_status: user.premium_status || false,
+          premium_status: user.premiumStatus || false,
         },
         stats: {
           total_courses: 0,
@@ -196,7 +196,7 @@ export default function DashboardPage() {
       };
       
       setDashboardData(mockDashboardData);
-      toast.error((error as any)?.message || 'Operation Failed');
+      toast.error((error as any)?.message || 'Something went wrong');
     }
     
     setLoading(false);

@@ -33,8 +33,8 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
         setIsLoading(true);
         const quizResponse = await quizAPI.getLessonQuiz(lessonId);
         
-        if (!quizResponse.success) {
-          throw new Error(quizResponse.message || 'Operation Failed');
+        if (!quizResponse.success || !quizResponse.data) {
+          throw new Error(quizResponse.message || 'Something went wrong');
         }
         
         const quizData = quizResponse.data;
@@ -54,7 +54,7 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
         }
       } catch (error: any) {
         console.error('Failed to fetch quiz:', error);
-        toast.error(error.message || 'Operation Failed');
+        toast.error(error.message || 'Something went wrong');
       } finally {
         setIsLoading(false);
       }
@@ -111,8 +111,8 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
 
       const response = await quizAPI.submitQuiz(quiz._id, submission);
       
-      if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Something went wrong');
       }
       
       const result = response.data;
@@ -145,7 +145,7 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
       }
     } catch (error: any) {
       console.error('Failed to submit quiz:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setIsSubmitting(false);
     }

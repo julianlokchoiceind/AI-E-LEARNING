@@ -63,7 +63,7 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
         if (onError) {
           onError(error.message || 'Payment failed');
         }
-        toast.error(error.message || 'Payment failed');
+        toast.error(error.message || 'Something went wrong');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         toast.success('Payment successful!');
         if (onSuccess) {

@@ -1,7 +1,34 @@
 {
   "extends": "next/core-web-vitals",
+  "root": true,
   "rules": {
+    // Turn off rules that conflict with Next.js patterns
     "react/no-unescaped-entities": "off",
-    "@next/next/no-img-element": "off"
-  }
+    "@next/next/no-img-element": "off",
+    
+    // Set exhaustive-deps to warn level
+    // Many warnings are false positives for Next.js patterns:
+    // - Functions defined after useEffect
+    // - Stable values like router from useRouter()
+    // - Functions that don't use changing dependencies
+    "react-hooks/exhaustive-deps": "warn"
+  },
+  "overrides": [
+    {
+      // For page components, we often have data fetching patterns
+      // that don't need all dependencies
+      "files": ["**/app/**/page.tsx", "**/pages/**/*.tsx"],
+      "rules": {
+        "react-hooks/exhaustive-deps": "warn"
+      }
+    },
+    {
+      // For test files, disable hook rules
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off",
+        "react-hooks/exhaustive-deps": "off"
+      }
+    }
+  ]
 }

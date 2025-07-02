@@ -68,6 +68,8 @@ const CreatorDashboardPage = () => {
     }
 
     fetchDashboardData();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, router]);
 
   const fetchDashboardData = async () => {
@@ -78,7 +80,7 @@ const CreatorDashboardPage = () => {
       const response = await getCourses(`creator_id=${user?.id}`);
       
       if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
       
       const courses = response.data?.courses || [];
@@ -136,7 +138,7 @@ const CreatorDashboardPage = () => {
     } catch (error: any) {
       console.error('Failed to fetch dashboard data:', error);
       // Always use backend message, only fallback to "Operation Failed" if no message
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }

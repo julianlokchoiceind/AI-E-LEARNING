@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from app.core.database import get_database
+from app.core.database import db
 from app.models.course import Course, CourseStatus
 from app.models.user import User, UserRole
 from app.core.exceptions import NotFoundException, ForbiddenException
@@ -29,9 +29,6 @@ class AdminService:
     async def get_dashboard_stats() -> AdminDashboardStats:
         """Get comprehensive admin dashboard statistics."""
         try:
-            # Get database instance
-            db = get_database()
-            
             # Get current time for date comparisons
             now = datetime.now(timezone.utc)
             today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)

@@ -62,7 +62,8 @@ export default function MyCoursesPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch enrollments');
+        const error = await response.json();
+        throw new Error(error.message || 'Something went wrong');
       }
 
       const result = await response.json();
@@ -71,7 +72,7 @@ export default function MyCoursesPage() {
       }
     } catch (error: any) {
       console.error('Enrollments fetch error:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }

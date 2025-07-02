@@ -45,16 +45,26 @@ export default function TicketDetailPage() {
 
   useEffect(() => {
     fetchTicket();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId]);
 
   useEffect(() => {
     scrollToBottom();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticket?.messages]);
 
   const fetchTicket = async () => {
     try {
       setLoading(true);
-      const data = await supportAPI.getTicket(ticketId);
+      const response = await supportAPI.getTicket(ticketId);
+      
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Something went wrong');
+      }
+      
+      const data = response.data;
       setTicket(data);
       
       // Show rating modal if resolved and not rated
@@ -63,7 +73,7 @@ export default function TicketDetailPage() {
       }
     } catch (error: any) {
       console.error('Failed to fetch ticket:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
       router.push('/support');
     } finally {
       setLoading(false);
@@ -82,10 +92,10 @@ export default function TicketDetailPage() {
       const response = await supportAPI.addMessage(ticketId, messageData);
       setMessage('');
       fetchTicket(); // Refresh to get new message
-      toast.success(response.message || 'Operation Failed');
+      toast.success(response.message || 'Something went wrong');
     } catch (error: any) {
       console.error('Failed to send message:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setSending(false);
     }
@@ -104,12 +114,12 @@ export default function TicketDetailPage() {
       };
       
       const response = await supportAPI.rateTicket(ticketId, ratingData);
-      toast.success(response.message || 'Operation Failed');
+      toast.success(response.message || 'Something went wrong');
       setShowRatingModal(false);
       fetchTicket(); // Refresh to show rating
     } catch (error: any) {
       console.error('Failed to rate ticket:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 

@@ -93,6 +93,8 @@ const LessonEditPage = () => {
 
   useEffect(() => {
     fetchLessonData();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
   const fetchLessonData = async () => {
@@ -110,39 +112,42 @@ const LessonEditPage = () => {
       const lessonResponse = await fetch(`/api/v1/lessons/${lessonId}`, {
         credentials: 'include'
       });
-      if (!lessonResponse.ok) throw new Error('Failed to fetch lesson');
+      if (!lessonResponse.ok) throw new Error('Something went wrong');
       
       const lessonData = await lessonResponse.json();
       if (!lessonData.success) {
-        throw new Error(lessonData.message || 'Operation Failed');
+        throw new Error(lessonData.message || 'Something went wrong');
       }
       setLesson(lessonData.data);
       setTitleInput(lessonData.data.title);
 
       // Try to fetch quiz for this lesson
       try {
-        const quizData = await quizAPI.getLessonQuiz(lessonId);
-        setQuiz(quizData);
-        
-        // Populate quiz form with existing data
-        setQuizData({
-          title: quizData.title,
-          description: quizData.description || '',
-          pass_percentage: quizData.config.pass_percentage,
-          max_attempts: quizData.config.max_attempts,
-          shuffle_questions: quizData.config.shuffle_questions,
-          shuffle_answers: quizData.config.shuffle_answers,
-          show_correct_answers: quizData.config.show_correct_answers,
-          immediate_feedback: quizData.config.immediate_feedback,
-          questions: quizData.questions
-        });
+        const quizResponse = await quizAPI.getLessonQuiz(lessonId);
+        if (quizResponse.success && quizResponse.data) {
+          const quiz = quizResponse.data;
+          setQuiz(quiz);
+          
+          // Populate quiz form with existing data
+          setQuizData({
+            title: quiz.title,
+            description: quiz.description || '',
+            pass_percentage: quiz.config.pass_percentage,
+            max_attempts: quiz.config.max_attempts,
+            shuffle_questions: quiz.config.shuffle_questions,
+            shuffle_answers: quiz.config.shuffle_answers,
+            show_correct_answers: quiz.config.show_correct_answers,
+            immediate_feedback: quiz.config.immediate_feedback,
+            questions: quiz.questions
+          });
+        }
       } catch (error) {
         // No quiz exists yet, that's okay
         console.log('No quiz found for this lesson');
       }
     } catch (error: any) {
       console.error('Failed to fetch lesson data:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
       router.push(`/creator/courses/${courseId}/edit`);
     } finally {
       setLoading(false);
@@ -256,8 +261,12 @@ const LessonEditPage = () => {
           questions: questionsPayload
         };
         const updated = await quizAPI.updateQuiz(quiz._id, updatePayload);
-        setQuiz(updated);
-        toast.success('Quiz updated successfully');
+        if (updated.success && updated.data) {
+          setQuiz(updated.data);
+          toast.success(updated.message || 'Something went wrong');
+        } else {
+          throw new Error(updated.message || 'Something went wrong');
+        }
       } else {
         // Create new quiz
         const createPayload = {
@@ -283,12 +292,16 @@ const LessonEditPage = () => {
           }))
         };
         const created = await quizAPI.createQuiz(createPayload);
-        setQuiz(created);
-        toast.success(created.message || 'Operation Failed');
+        if (created.success && created.data) {
+          setQuiz(created.data);
+          toast.success(created.message || 'Something went wrong');
+        } else {
+          throw new Error(created.message || 'Something went wrong');
+        }
       }
     } catch (error: any) {
       console.error('Failed to save quiz:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 

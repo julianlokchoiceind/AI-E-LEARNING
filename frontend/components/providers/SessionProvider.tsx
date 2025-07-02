@@ -11,13 +11,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setIsHydrated(true)
   }, [])
 
-  // Show loading skeleton during hydration to prevent mismatch
+  // Show minimal loading state during hydration
   if (!isHydrated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen bg-gray-50">
+        {/* Render children immediately but hidden to start hydration sooner */}
+        <div style={{ visibility: 'hidden' }}>
+          <NextAuthSessionProvider>
+            {children}
+          </NextAuthSessionProvider>
         </div>
       </div>
     )
@@ -25,10 +27,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <NextAuthSessionProvider
-      // Re-fetch session every 5 minutes
-      refetchInterval={5 * 60}
-      // Re-fetch session when window regains focus
-      refetchOnWindowFocus={true}
+      // Increase refetch interval to 30 minutes (session is valid for 30 days)
+      refetchInterval={30 * 60}
+      // Only refetch on window focus if session is older than 10 minutes
+      refetchOnWindowFocus={false}
+      // Skip initial session fetch if we have a valid session in storage
+      refetchWhenOffline={false}
     >
       {children}
     </NextAuthSessionProvider>

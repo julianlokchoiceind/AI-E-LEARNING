@@ -73,7 +73,7 @@ export class PaymentRetryHandler {
       }
     }
 
-    throw new Error('Maximum retry attempts exceeded');
+    throw new Error('Something went wrong');
   }
 
   private parseError(error: any): PaymentError {

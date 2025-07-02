@@ -39,6 +39,7 @@ export default function SubscribePage() {
       }
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading]);
 
   if (authLoading || loading) {

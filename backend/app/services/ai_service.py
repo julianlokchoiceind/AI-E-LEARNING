@@ -64,7 +64,7 @@ class AIService:
                 retries=2
             )
             
-            logger.info("PydanticAI agent initialized successfully with Claude 3.5 Sonnet")
+            # PydanticAI agent initialized successfully
             
         except Exception as e:
             logger.error(f"Failed to initialize AI service: {str(e)}")
@@ -307,7 +307,7 @@ class AIService:
         """Track AI usage for analytics and billing"""
         # This could store usage in database for analytics
         # For now, just log the usage
-        logger.info(f"AI usage tracked for user {user_id}")
+        # AI usage tracked
     
     async def _store_conversation(
         self,

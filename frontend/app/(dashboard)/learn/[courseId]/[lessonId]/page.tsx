@@ -76,6 +76,7 @@ export default function LessonPlayerPage() {
         clearInterval(progressUpdateInterval);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
   const fetchLessonData = async () => {
@@ -85,17 +86,17 @@ export default function LessonPlayerPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch lesson');
+        throw new Error('Something went wrong');
       }
 
       const data = await response.json();
       if (!data.success) {
-        throw new Error(data.message || 'Operation Failed');
+        throw new Error(data.message || 'Something went wrong');
       }
       setLesson(data.data);
     } catch (error: any) {
       console.error('Error fetching lesson:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 
@@ -110,11 +111,11 @@ export default function LessonPlayerPage() {
       if (!startResponse.ok) {
         const error = await startResponse.json();
         if (error.detail?.includes('Complete previous lessons')) {
-          toast.error('Please complete previous lessons first');
+          toast.error(error.detail || error.message || 'Something went wrong');
           router.back();
           return;
         }
-        throw new Error('Failed to start lesson');
+        throw new Error(error.message || 'Something went wrong');
       }
 
       // Get progress data
@@ -130,7 +131,7 @@ export default function LessonPlayerPage() {
       }
     } catch (error: any) {
       console.error('Error starting lesson:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -239,14 +240,14 @@ export default function LessonPlayerPage() {
 
   const checkForQuiz = async () => {
     try {
-      const quiz = await quizAPI.getLessonQuiz(lessonId);
-      if (quiz) {
+      const quizResponse = await quizAPI.getLessonQuiz(lessonId);
+      if (quizResponse.success && quizResponse.data) {
         setHasQuiz(true);
         
         // Check if quiz is already passed
         try {
-          const progress = await quizAPI.getQuizProgress(quiz._id);
-          if (progress.is_passed) {
+          const progressResponse = await quizAPI.getQuizProgress(quizResponse.data._id);
+          if (progressResponse.success && progressResponse.data && progressResponse.data.is_passed) {
             setQuizPassed(true);
           }
         } catch (error) {
@@ -301,7 +302,7 @@ export default function LessonPlayerPage() {
 
       if (response.ok) {
         const data = await response.json();
-        toast.success(data.message || 'Operation Failed');
+        toast.success(data.message || 'Something went wrong');
         
         // Update local progress state
         if (progress) {
@@ -352,7 +353,7 @@ export default function LessonPlayerPage() {
 
         if (response.ok) {
           const data = await response.json();
-          toast.success(data.message || 'Operation Failed');
+          toast.success(data.message || 'Something went wrong');
           
           // Update local progress state
           if (progress) {
@@ -389,7 +390,7 @@ export default function LessonPlayerPage() {
         console.error('Error completing lesson:', error);
       }
     } else {
-      toast.error('Operation Failed');
+      toast.error('Something went wrong');
     }
   };
 
@@ -566,7 +567,7 @@ export default function LessonPlayerPage() {
       <SimpleChatWidget
         courseId={courseId}
         lessonId={lessonId}
-        userLevel={user?.level || "beginner"} // Get from user profile with fallback
+        userLevel="beginner" // Default level - TODO: Get from user profile when available
         position="bottom-right"
       />
     </div>

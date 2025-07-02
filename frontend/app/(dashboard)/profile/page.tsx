@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -37,20 +37,14 @@ export default function ProfilePage() {
     linkedin: ''
   });
 
-  useEffect(() => {
-    if (user) {
-      fetchProfile();
-    }
-  }, [user]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setLoading(true);
     const result = await handleError(async () => {
       const response = await usersApi.getProfile();
       if (response.success && response.data) {
         return response.data;
       } else {
-        throw new Error(response.message || 'Failed to load profile');
+        throw new Error(response.message || 'Something went wrong');
       }
     });
 
@@ -66,7 +60,13 @@ export default function ProfilePage() {
       });
     }
     setLoading(false);
-  };
+  }, [handleError]);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user, fetchProfile]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -92,10 +92,10 @@ export default function ProfilePage() {
         }
       });
       if (response.success) {
-        toast.success(response.message || t('profile.updateSuccess'));
+        toast.success(response.message || 'Something went wrong');
         return true;
       } else {
-        throw new Error(response.message || 'Failed to update profile');
+        throw new Error(response.message || 'Something went wrong');
       }
     });
     setSaving(false);
@@ -120,11 +120,11 @@ export default function ProfilePage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">{t('profile.basicInfo')}</h2>
+          <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
           <div className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('profile.name')}
+                Name
               </label>
               <Input
                 id="name"
@@ -138,7 +138,7 @@ export default function ProfilePage() {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('profile.email')}
+                Email
               </label>
               <Input
                 id="email"
@@ -148,12 +148,12 @@ export default function ProfilePage() {
                 disabled
                 className="bg-gray-50"
               />
-              <p className="text-sm text-gray-500 mt-1">{t('profile.emailNote')}</p>
+              <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
             </div>
 
             <div>
               <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('profile.bio')}
+                Bio
               </label>
               <textarea
                 id="bio"
@@ -162,13 +162,13 @@ export default function ProfilePage() {
                 value={profileData.bio}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder={t('profile.bioPlaceholder')}
+                placeholder="Tell us about yourself"
               />
             </div>
 
             <div>
               <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('profile.location')}
+                Location
               </label>
               <Input
                 id="location"
@@ -176,7 +176,7 @@ export default function ProfilePage() {
                 type="text"
                 value={profileData.location}
                 onChange={handleInputChange}
-                placeholder={t('profile.locationPlaceholder')}
+                placeholder="City, Country"
               />
             </div>
           </div>
@@ -184,11 +184,11 @@ export default function ProfilePage() {
 
         {/* Social Links */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">{t('profile.socialLinks')}</h2>
+          <h2 className="text-xl font-semibold mb-4">Social Links</h2>
           <div className="space-y-4">
             <div>
               <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('profile.website')}
+                Website
               </label>
               <Input
                 id="website"
@@ -232,11 +232,11 @@ export default function ProfilePage() {
 
         {/* Account Settings */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">{t('profile.accountSettings')}</h2>
+          <h2 className="text-xl font-semibold mb-4">Account Settings</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium">{t('profile.role')}</h3>
+                <h3 className="font-medium">Role</h3>
                 <p className="text-sm text-gray-500">{user.role}</p>
               </div>
             </div>
@@ -244,8 +244,8 @@ export default function ProfilePage() {
             {user.premiumStatus && (
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium">{t('profile.premiumStatus')}</h3>
-                  <p className="text-sm text-green-600">{t('profile.premiumActive')}</p>
+                  <h3 className="font-medium">Premium Status</h3>
+                  <p className="text-sm text-green-600">Active</p>
                 </div>
               </div>
             )}
@@ -256,7 +256,7 @@ export default function ProfilePage() {
                 variant="outline"
                 onClick={() => window.location.href = '/billing'}
               >
-                {t('profile.manageBilling')}
+                Manage Billing
               </Button>
             </div>
           </div>
@@ -265,7 +265,7 @@ export default function ProfilePage() {
         {/* Submit Button */}
         <div className="flex justify-end">
           <Button type="submit" disabled={saving}>
-            {saving ? t('common.saving') : t('common.saveChanges')}
+            {saving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </form>

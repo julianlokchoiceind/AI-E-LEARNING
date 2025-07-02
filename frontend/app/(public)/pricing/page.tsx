@@ -38,7 +38,7 @@ export default function PricingPage() {
       router.push('/billing/subscribe');
     } catch (error: any) {
       console.error('Subscription error:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setIsProcessing(false);
     }

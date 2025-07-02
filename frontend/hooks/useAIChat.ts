@@ -167,16 +167,16 @@ export const useAIChat = ({
         // Handle different error types
         if (response.status === 429) {
           const errorData = data as ChatError;
-          throw new Error(errorData.error || 'Rate limit exceeded');
+          throw new Error(errorData.error || 'Something went wrong');
         } else if (response.status === 401) {
-          throw new Error('Authentication required');
+          throw new Error('Something went wrong');
         } else {
-          throw new Error(data.error || 'Failed to get AI response');
+          throw new Error(data.error || 'Something went wrong');
         }
       }
       
       if (!data.success) {
-        throw new Error(data.message || 'Operation Failed');
+        throw new Error(data.message || 'Something went wrong');
       }
 
       // Simulate typing delay for better UX
@@ -215,9 +215,9 @@ export const useAIChat = ({
       if (errorMessage.includes('rate limit')) {
         toast.error('You\'re sending messages too quickly. Please wait a moment.');
       } else if (errorMessage.includes('Authentication')) {
-        toast.error('Please log in to use the AI assistant.');
+        toast.error(errorMessage || 'Something went wrong');
       } else if (errorMessage.includes('credit balance')) {
-        toast.error('AI service is temporarily unavailable. Please try again later.');
+        toast.error(errorMessage || 'Something went wrong');
       } else {
         toast.error(errorMessage);
       }
@@ -337,13 +337,14 @@ export const useAIChat = ({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get conversation history');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Something went wrong');
       }
 
       const data = await response.json();
       
       if (!data.success) {
-        throw new Error(data.message || 'Operation Failed');
+        throw new Error(data.message || 'Something went wrong');
       }
       
       // Convert server history to messages
@@ -367,7 +368,7 @@ export const useAIChat = ({
 
     } catch (error: any) {
       console.error('Failed to get conversation history:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   }, []);
 
@@ -382,13 +383,14 @@ export const useAIChat = ({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to clear conversation history');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Something went wrong');
       }
 
       const data = await response.json();
       
       if (!data.success) {
-        throw new Error(data.message || 'Operation Failed');
+        throw new Error(data.message || 'Something went wrong');
       }
       
       clearMessages();
@@ -396,7 +398,7 @@ export const useAIChat = ({
 
     } catch (error: any) {
       console.error('Failed to clear conversation history:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   }, [clearMessages]);
 

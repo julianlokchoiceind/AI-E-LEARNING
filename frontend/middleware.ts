@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { 
   SUPPORTED_LOCALES,
   DEFAULT_LOCALE,
+  Locale,
   isValidLocale,
   getLocaleFromPath,
   getPathnameWithoutLocale,
@@ -51,11 +52,11 @@ function createMiddleware(req: NextRequest) {
 /**
  * Get preferred locale from request headers and cookies
  */
-function getPreferredLocale(request: NextRequest): string {
+function getPreferredLocale(request: NextRequest): Locale {
   // 1. Check cookie preference
   const cookieLocale = request.cookies.get('locale')?.value
   if (cookieLocale && isValidLocale(cookieLocale)) {
-    return cookieLocale
+    return cookieLocale as Locale
   }
   
   // 2. Check Accept-Language header
@@ -67,7 +68,7 @@ function getPreferredLocale(request: NextRequest): string {
       .filter(lang => isValidLocale(lang))
     
     if (browserLocales.length > 0) {
-      return browserLocales[0]
+      return browserLocales[0] as Locale
     }
   }
   

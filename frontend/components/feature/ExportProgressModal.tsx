@@ -28,7 +28,7 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
       // Get auth token
       const token = localStorage.getItem('access_token');
       if (!token) {
-        throw new Error('Authentication required');
+        throw new Error('Something went wrong');
       }
       
       // Make API call to export endpoint
@@ -41,7 +41,8 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error('Export failed');
+        const error = await response.json();
+        throw new Error(error.message || 'Something went wrong');
       }
 
       // Get the filename from the response headers
@@ -70,7 +71,7 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
       onClose();
     } catch (error: any) {
       console.error('Export failed:', error);
-      toast.error('Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setIsExporting(false);
     }

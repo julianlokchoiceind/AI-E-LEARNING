@@ -2,6 +2,10 @@
 Main FastAPI application entry point.
 Configures middleware, routes, and event handlers.
 """
+# Suppress Pydantic warnings
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._config")
+
 # Standard library imports
 import logging
 from contextlib import asynccontextmanager
@@ -24,16 +28,30 @@ from app.middleware.token_blacklist import TokenBlacklistMiddleware
 from app.services.db_optimization import db_optimizer
 from app.services.security_monitoring import security_monitor
 
-# Configure logging
+# Configure logging based on environment
+log_level = logging.INFO if settings.DEBUG else logging.INFO
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# Reduce Sentry SDK logging verbosity
-sentry_logger = logging.getLogger("sentry_sdk")
-sentry_logger.setLevel(logging.WARNING)
+# Reduce verbosity of third-party loggers
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+logging.getLogger("fastapi").setLevel(logging.WARNING)
+logging.getLogger("motor").setLevel(logging.WARNING)
+logging.getLogger("pymongo").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("sentry_sdk").setLevel(logging.ERROR)
+logging.getLogger("pydantic").setLevel(logging.ERROR)
+logging.getLogger("pydantic_core").setLevel(logging.ERROR)
+logging.getLogger("pydantic._internal").setLevel(logging.ERROR)
+logging.getLogger("passlib").setLevel(logging.ERROR)
+logging.getLogger("python_multipart").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("watchfiles").setLevel(logging.WARNING)
 
 
 # Initialize Sentry if DSN is provided
@@ -73,7 +91,7 @@ if settings.SENTRY_DSN:
     sentry_sdk.set_tag("app.component", "backend")
     sentry_sdk.set_tag("app.platform", "fastapi")
     
-    logger.info("Sentry error tracking initialized")
+    # Sentry initialized silently
 
 
 @asynccontextmanager
@@ -86,15 +104,15 @@ async def lifespan(app: FastAPI):
     logger.info("Starting up AI E-Learning Platform API...")
     try:
         db_client = await connect_to_mongo()
-        logger.info("MongoDB connection established successfully")
+        # MongoDB connected successfully
         
         # Initialize security monitor with database
         await security_monitor.init_db(db_client)
-        logger.info("Security monitoring initialized")
+        # Security monitoring initialized
         
         # Initialize database optimizer
         await db_optimizer.init_db(db_client)
-        logger.info("Database optimizer initialized")
+        # Database optimizer initialized
     except Exception as e:
         logger.error(f"MongoDB connection failed: {e}")
         # Không chạy in-memory mode, bắt buộc phải có MongoDB

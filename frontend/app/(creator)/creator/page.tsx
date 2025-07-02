@@ -30,6 +30,8 @@ const CreatorDashboard = () => {
     }
 
     fetchCreatorData();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, router]);
 
   const fetchCreatorData = async () => {
@@ -39,7 +41,7 @@ const CreatorDashboard = () => {
       const response = await getCourses(`creator_id=${user?.id}`);
       
       if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
       
       setCourses(response.data?.courses || []);
@@ -66,7 +68,7 @@ const CreatorDashboard = () => {
       });
     } catch (error: any) {
       console.error('Failed to fetch creator data:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }

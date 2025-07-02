@@ -64,6 +64,8 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
 
   useEffect(() => {
     fetchReviews();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, currentPage, sortBy, filterRating]);
 
   const fetchReviews = async () => {
@@ -78,7 +80,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
       });
       
       if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
       
       setReviews(response.data?.items || []);
@@ -95,7 +97,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
       }
     } catch (error: any) {
       console.error('Failed to fetch reviews:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -111,7 +113,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
         : await reviewAPI.createReview(courseId, formData);
       
       if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
       
       toast.success(response.message);
@@ -120,7 +122,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
       fetchReviews();
     } catch (error: any) {
       console.error('Failed to submit review:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 
@@ -134,14 +136,14 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
       const response = await reviewAPI.voteReview(reviewId, { is_helpful: isHelpful });
       
       if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
       
       toast.success(response.message);
       fetchReviews();
     } catch (error: any) {
       console.error('Failed to vote:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 
@@ -152,14 +154,14 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
       const response = await reviewAPI.deleteReview(reviewId);
       
       if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
       
       toast.success(response.message);
       fetchReviews();
     } catch (error: any) {
       console.error('Failed to delete review:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 
@@ -173,7 +175,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
       });
       
       if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
       
       toast.success(response.message);
@@ -183,7 +185,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
       setReportDetails('');
     } catch (error: any) {
       console.error('Failed to report review:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 

@@ -120,7 +120,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to get AI response');
+        throw new Error(data.error || 'Something went wrong');
       }
       
       // Simulate typing delay for better UX
@@ -143,7 +143,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       if (error.message.includes('rate limit')) {
         toast.error('You\'re sending messages too quickly. Please wait a moment.');
       } else {
-        toast.error(error.message || 'Operation Failed');
+        toast.error(error.message || 'Something went wrong');
       }
       
       // Add error message to chat

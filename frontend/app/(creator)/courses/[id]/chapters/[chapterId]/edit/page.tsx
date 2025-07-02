@@ -66,6 +66,7 @@ const ChapterEditPage = () => {
 
   useEffect(() => {
     fetchChapterData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapterId]);
 
   const fetchChapterData = async () => {
@@ -81,8 +82,8 @@ const ChapterEditPage = () => {
 
       // Fetch chapter details
       const chapterResponse = await getChapterById(chapterId);
-      if (!chapterResponse.success) {
-        throw new Error(chapterResponse.message || 'Operation Failed');
+      if (!chapterResponse.success || !chapterResponse.data) {
+        throw new Error(chapterResponse.message || 'Something went wrong');
       }
       setChapter(chapterResponse.data);
       setTitleInput(chapterResponse.data.title);
@@ -90,12 +91,20 @@ const ChapterEditPage = () => {
       // Fetch lessons in this chapter
       const lessonsResponse = await getLessonsByChapter(chapterId);
       if (!lessonsResponse.success) {
-        throw new Error(lessonsResponse.message || 'Operation Failed');
+        throw new Error(lessonsResponse.message || 'Something went wrong');
       }
-      setLessons(lessonsResponse.data || []);
+      const lessonData = lessonsResponse.data;
+      // Handle both array and object response
+      if (Array.isArray(lessonData)) {
+        setLessons(lessonData);
+      } else if (lessonData && 'lessons' in lessonData) {
+        setLessons(lessonData.lessons || []);
+      } else {
+        setLessons([]);
+      }
     } catch (error: any) {
       console.error('Failed to fetch chapter data:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
       router.push(`/creator/courses/${courseId}/edit`);
     } finally {
       setLoading(false);
@@ -130,11 +139,11 @@ const ChapterEditPage = () => {
       if (response.success && response.data) {
         // Redirect to lesson editor
         router.push(`/creator/courses/${courseId}/lessons/${response.data._id}/edit`);
-        toast.success(response.message || 'Operation Failed');
+        toast.success(response.message || 'Something went wrong');
       }
     } catch (error: any) {
       console.error('Failed to create lesson:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 

@@ -22,17 +22,23 @@ const CertificatesPage = () => {
   useEffect(() => {
     fetchCertificates();
     fetchStats();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
   const fetchCertificates = async () => {
     try {
       setLoading(true);
       const response = await certificateAPI.getMyCertificates(currentPage, 12);
-      setCertificates(response.items);
-      setTotalPages(response.total_pages);
+      if (response.success && response.data) {
+        setCertificates(response.data.items || []);
+        setTotalPages(response.data.total_pages || 1);
+      } else {
+        throw new Error(response.message || 'Something went wrong');
+      }
     } catch (error: any) {
       console.error('Failed to fetch certificates:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -40,8 +46,10 @@ const CertificatesPage = () => {
 
   const fetchStats = async () => {
     try {
-      const statsData = await certificateAPI.getMyCertificateStats();
-      setStats(statsData);
+      const statsResponse = await certificateAPI.getMyCertificateStats();
+      if (statsResponse.success && statsResponse.data) {
+        setStats(statsResponse.data);
+      }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     }

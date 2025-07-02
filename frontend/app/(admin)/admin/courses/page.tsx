@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -12,6 +13,9 @@ import {
   setCoursePrice,
   toggleCourseFree
 } from '@/lib/api/admin';
+import { createCourse } from '@/lib/api/courses';
+import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { useApiCall } from '@/hooks/useErrorHandler';
 import { toast } from 'react-hot-toast';
 import { 
   Search, 
@@ -61,7 +65,6 @@ interface Course {
 
 export default function CourseApproval() {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('review');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
@@ -69,50 +72,41 @@ export default function CourseApproval() {
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
-  const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
+  const router = useRouter();
+  
+  // Use useApiCall hooks for consistent loading state management
+  const { loading, execute: fetchCoursesExecute } = useApiCall();
+  const { loading: actionLoading, execute: executeAction } = useApiCall();
 
-  useEffect(() => {
-    fetchCourses();
-  }, []);
-
-  const fetchCourses = async () => {
-    try {
-      setLoading(true);
-      const response = await getAdminCourses({
+  const fetchCourses = useCallback(async () => {
+    await fetchCoursesExecute(
+      () => getAdminCourses({
         search: searchTerm,
         status: statusFilter,
         category: categoryFilter
-      });
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+      }),
+      {
+        onSuccess: (response: any) => {
+          setCourses(response.data?.courses || []);
+        }
       }
-      
-      setCourses(response.data?.courses || []);
-    } catch (error: any) {
-      console.error('Failed to fetch courses:', error);
-      toast.error(error.message || 'Operation Failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
+  }, [searchTerm, statusFilter, categoryFilter, fetchCoursesExecute]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
 
   const handleApproveCourse = async (courseId: string) => {
-    try {
-      setActionLoading({ ...actionLoading, [courseId]: true });
-      const response = await approveCourse(courseId);
-      
-      if (response.success) {
-        toast.success(response.message);
-        await fetchCourses(); // Refresh list
-      } else {
-        throw new Error(response.message || 'Operation Failed');
+    await executeAction(
+      () => approveCourse(courseId),
+      {
+        onSuccess: (response: any) => {
+          toast.success(response.message || 'Something went wrong');
+          fetchCourses(); // Refresh list
+        }
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Operation Failed');
-    } finally {
-      setActionLoading({ ...actionLoading, [courseId]: false });
-    }
+    );
   };
 
   const handleRejectCourse = async () => {
@@ -121,41 +115,41 @@ export default function CourseApproval() {
       return;
     }
     
-    try {
-      setActionLoading({ ...actionLoading, [selectedCourse._id]: true });
-      const response = await rejectCourse(selectedCourse._id, rejectionReason);
-      
-      if (response.success) {
-        toast.success(response.message);
-        setShowRejectModal(false);
-        setRejectionReason('');
-        setSelectedCourse(null);
-        await fetchCourses(); // Refresh list
-      } else {
-        throw new Error(response.message || 'Operation Failed');
+    await executeAction(
+      () => rejectCourse(selectedCourse._id, rejectionReason),
+      {
+        onSuccess: (response: any) => {
+          toast.success(response.message || 'Something went wrong');
+          setShowRejectModal(false);
+          setRejectionReason('');
+          setSelectedCourse(null);
+          fetchCourses(); // Refresh list
+        }
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Operation Failed');
-    } finally {
-      setActionLoading({ ...actionLoading, [selectedCourse._id]: false });
-    }
+    );
   };
 
   const handleToggleFree = async (courseId: string, currentStatus: boolean) => {
+    await executeAction(
+      () => toggleCourseFree(courseId, !currentStatus),
+      {
+        onSuccess: (response: any) => {
+          toast.success(response.message || 'Something went wrong');
+          fetchCourses(); // Refresh list
+        }
+      }
+    );
+  };
+
+  const handleCreateCourse = async () => {
     try {
-      setActionLoading({ ...actionLoading, [courseId]: true });
-      const response = await toggleCourseFree(courseId, !currentStatus);
-      
-      if (response.success) {
-        toast.success(response.message);
-        await fetchCourses(); // Refresh list
-      } else {
-        throw new Error(response.message || 'Operation Failed');
+      const response = await createCourse();
+      if (response.success && response.data?._id) {
+        toast.success(response.message || 'Something went wrong');
+        router.push(`/admin/courses/${response.data._id}/edit`);
       }
     } catch (error: any) {
-      toast.error(error.message || 'Operation Failed');
-    } finally {
-      setActionLoading({ ...actionLoading, [courseId]: false });
+      toast.error(error.message || 'Something went wrong');
     }
   };
 
@@ -206,10 +200,19 @@ export default function CourseApproval() {
           <h1 className="text-2xl font-bold text-gray-900">Course Management</h1>
           <p className="text-gray-600">Review and approve courses from content creators</p>
         </div>
-        <Button onClick={fetchCourses}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex space-x-3">
+          <Button 
+            onClick={handleCreateCourse}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            Create New Course
+          </Button>
+          <Button onClick={fetchCourses}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Quick Stats */}
@@ -324,7 +327,23 @@ export default function CourseApproval() {
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+            <LoadingSpinner size="lg" message="Loading courses..." />
+          </div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="flex justify-center items-center h-64">
+            <EmptyState
+              title="No courses found"
+              description="No courses match your current search and filter criteria"
+              action={{
+                label: 'Clear Filters',
+                onClick: () => {
+                  setSearchTerm('');
+                  setStatusFilter('review');
+                  setCategoryFilter('');
+                  fetchCourses();
+                }
+              }}
+            />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -420,7 +439,7 @@ export default function CourseApproval() {
                               size="sm"
                               variant="ghost"
                               onClick={() => handleApproveCourse(course._id)}
-                              loading={actionLoading[course._id]}
+                              loading={actionLoading}
                               className="text-green-600 hover:bg-green-50"
                             >
                               <Check className="h-4 w-4" />
@@ -445,7 +464,7 @@ export default function CourseApproval() {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleToggleFree(course._id, course.pricing.is_free)}
-                            loading={actionLoading[course._id]}
+                            loading={actionLoading}
                             className={`${course.pricing.is_free ? 'text-yellow-600' : 'text-blue-600'} hover:bg-blue-50`}
                           >
                             <Gift className="h-4 w-4" />
@@ -530,7 +549,7 @@ export default function CourseApproval() {
                 <>
                   <Button
                     onClick={() => handleApproveCourse(selectedCourse._id)}
-                    loading={actionLoading[selectedCourse._id]}
+                    loading={actionLoading}
                     className="bg-green-600 hover:bg-green-700"
                   >
                     <Check className="h-4 w-4 mr-2" />
@@ -551,7 +570,7 @@ export default function CourseApproval() {
               {selectedCourse.status === 'published' && (
                 <Button
                   onClick={() => handleToggleFree(selectedCourse._id, selectedCourse.pricing.is_free)}
-                  loading={actionLoading[selectedCourse._id]}
+                  loading={actionLoading}
                   variant="outline"
                 >
                   <Gift className="h-4 w-4 mr-2" />
@@ -594,7 +613,7 @@ export default function CourseApproval() {
             <div className="flex space-x-3">
               <Button
                 onClick={handleRejectCourse}
-                loading={actionLoading[selectedCourse._id]}
+                loading={actionLoading}
                 variant="outline"
                 className="text-red-600 border-red-200 hover:bg-red-50"
                 disabled={!rejectionReason.trim()}

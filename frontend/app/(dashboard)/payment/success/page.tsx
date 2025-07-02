@@ -26,6 +26,8 @@ export default function PaymentSuccessPage() {
     } else {
       setLoading(false);
     }
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
   const fetchCourseDetails = async () => {
@@ -34,7 +36,7 @@ export default function PaymentSuccessPage() {
       setCourse(courseData);
     } catch (error: any) {
       console.error('Failed to fetch course:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }

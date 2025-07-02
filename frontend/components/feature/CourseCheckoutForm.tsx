@@ -103,12 +103,12 @@ function CheckoutForm({
 
   const processPayment = async () => {
     if (!stripe || !elements) {
-      throw new Error('Payment system is still loading. Please wait a moment and try again.');
+      throw new Error('Something went wrong');
     }
 
     const cardElement = elements.getElement(CardElement);
     if (!cardElement) {
-      throw new Error('Payment form not properly loaded. Please refresh the page and try again.');
+      throw new Error('Something went wrong');
     }
 
     // Create payment method
@@ -131,8 +131,8 @@ function CheckoutForm({
     // Create payment intent
     const response = await createCoursePayment(course._id, paymentMethod.id);
     
-    if (!response.success) {
-      throw new Error(response.message || 'Operation Failed');
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Something went wrong');
     }
     
     const paymentResponse = response.data;

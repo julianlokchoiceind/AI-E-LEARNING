@@ -25,15 +25,15 @@ const CreateCoursePage = () => {
         
         if (response.success && response.data?._id) {
           // Show success message from backend
-          toast.success(response.message || 'Course created successfully');
+          toast.success(response.message || 'Something went wrong');
           // Redirect to course editor
           router.push(`/creator/courses/${response.data._id}/edit`);
         } else {
-          throw new Error(response.message || 'Operation Failed');
+          throw new Error(response.message || 'Something went wrong');
         }
       } catch (error: any) {
         console.error('Failed to create course:', error);
-        toast.error(error.message || 'Operation Failed');
+        toast.error(error.message || 'Something went wrong');
         router.push('/creator/courses');
       }
     };

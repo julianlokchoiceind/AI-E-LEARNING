@@ -42,6 +42,8 @@ const CreatorAnalyticsPage = () => {
     }
 
     fetchAnalytics();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, router, timeRange]);
 
   const fetchAnalytics = async () => {
@@ -57,13 +59,13 @@ const CreatorAnalyticsPage = () => {
 
       // Check responses and extract data
       if (!overviewResponse.success) {
-        throw new Error(overviewResponse.message || 'Operation Failed');
+        throw new Error(overviewResponse.message || 'Something went wrong');
       }
       if (!revenueResponse.success) {
-        throw new Error(revenueResponse.message || 'Operation Failed');
+        throw new Error(revenueResponse.message || 'Something went wrong');
       }
       if (!studentsResponse.success) {
-        throw new Error(studentsResponse.message || 'Operation Failed');
+        throw new Error(studentsResponse.message || 'Something went wrong');
       }
 
       setOverview(overviewResponse.data || null);
@@ -72,7 +74,7 @@ const CreatorAnalyticsPage = () => {
       
     } catch (error: any) {
       console.error('Failed to fetch analytics:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -83,13 +85,13 @@ const CreatorAnalyticsPage = () => {
       const response = await exportAnalytics(reportType, timeRange, 'csv');
       
       if (response.success) {
-        toast.success(response.message || 'Export successful');
+        toast.success(response.message || 'Something went wrong');
       } else {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
     } catch (error: any) {
       console.error('Export failed:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 

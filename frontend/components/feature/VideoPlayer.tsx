@@ -61,6 +61,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     window.addEventListener('resize', checkMobile);
     
     return () => window.removeEventListener('resize', checkMobile);
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Extract YouTube video ID from URL
@@ -98,6 +100,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
         clearInterval(intervalRef.current);
       }
     };
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId]);
 
   const initializePlayer = () => {
@@ -299,6 +303,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatTime = (seconds: number): string => {

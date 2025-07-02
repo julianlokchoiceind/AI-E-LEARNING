@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 import { 
   getAdminUsers, 
   toggleUserPremium, 
   updateUserRole, 
   deleteUser 
 } from '@/lib/api/admin';
+import { useApiCall } from '@/hooks/useErrorHandler';
 import { toast } from 'react-hot-toast';
 import { 
   Search, 
@@ -49,108 +51,79 @@ interface User {
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [premiumFilter, setPremiumFilter] = useState<string>('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
+  
+  // Use useApiCall hook for consistent loading state management
+  const { data: usersData, loading, execute: fetchUsersExecute } = useApiCall();
+  const { loading: actionLoading, execute: executeAction } = useApiCall();
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const response = await getAdminUsers({
+  const fetchUsers = useCallback(async () => {
+    const response = await fetchUsersExecute(
+      () => getAdminUsers({
         search: searchTerm,
         role: roleFilter,
         premiumOnly: premiumFilter === 'premium' ? true : undefined
-      });
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+      }),
+      {
+        onSuccess: (response: any) => {
+          // StandardResponse format has data field containing the actual data
+          setUsers(response.data?.users || []);
+        }
       }
-      
-      setUsers(response.data?.users || []);
-    } catch (error: any) {
-      console.error('Failed to fetch users:', error);
-      // Use backend error message
-      toast.error(error.message || 'Operation Failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
+  }, [searchTerm, roleFilter, premiumFilter, fetchUsersExecute]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleSearch = () => {
     fetchUsers();
   };
 
   const handleTogglePremium = async (userId: string, currentStatus: boolean) => {
-    try {
-      setActionLoading({ ...actionLoading, [userId]: true });
-      const response = await toggleUserPremium(userId, !currentStatus);
-      
-      if (response.success) {
-        // Use backend message if available
-        toast.success(response.message);
-        await fetchUsers(); // Refresh list
-      } else {
-        throw new Error(response.message || 'Operation Failed');
+    await executeAction(
+      () => toggleUserPremium(userId, !currentStatus),
+      {
+        onSuccess: (response: any) => {
+          toast.success(response.message || 'Something went wrong');
+          fetchUsers(); // Refresh list
+        }
       }
-    } catch (error: any) {
-      // Always use backend error message
-      toast.error(error.message || 'Operation Failed');
-    } finally {
-      setActionLoading({ ...actionLoading, [userId]: false });
-    }
+    );
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
-    try {
-      setActionLoading({ ...actionLoading, [userId]: true });
-      const response = await updateUserRole(userId, newRole);
-      
-      if (response.success) {
-        // Use backend message if available
-        toast.success(response.message);
-        await fetchUsers(); // Refresh list
-      } else {
-        throw new Error(response.message || 'Operation Failed');
+    await executeAction(
+      () => updateUserRole(userId, newRole),
+      {
+        onSuccess: (response: any) => {
+          toast.success(response.message || 'Something went wrong');
+          fetchUsers(); // Refresh list
+        }
       }
-    } catch (error: any) {
-      // Always use backend error message
-      toast.error(error.message || 'Operation Failed');
-    } finally {
-      setActionLoading({ ...actionLoading, [userId]: false });
-    }
+    );
   };
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     
-    try {
-      setActionLoading({ ...actionLoading, [selectedUser.id]: true });
-      const response = await deleteUser(selectedUser.id);
-      
-      if (response.success) {
-        // Use backend message if available
-        toast.success(response.message);
-        setShowDeleteModal(false);
-        setSelectedUser(null);
-        await fetchUsers(); // Refresh list
-      } else {
-        throw new Error(response.message || 'Operation Failed');
+    await executeAction(
+      () => deleteUser(selectedUser.id),
+      {
+        onSuccess: (response: any) => {
+          toast.success(response.message || 'Something went wrong');
+          setShowDeleteModal(false);
+          setSelectedUser(null);
+          fetchUsers(); // Refresh list
+        }
       }
-    } catch (error: any) {
-      // Always use backend error message
-      toast.error(error.message || 'Operation Failed');
-    } finally {
-      setActionLoading({ ...actionLoading, [selectedUser.id]: false });
-    }
+    );
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -250,7 +223,23 @@ export default function UserManagement() {
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+            <LoadingSpinner size="lg" message="Loading users..." />
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="flex justify-center items-center h-64">
+            <EmptyState
+              title="No users found"
+              description="No users match your current search and filter criteria"
+              action={{
+                label: 'Clear Filters',
+                onClick: () => {
+                  setSearchTerm('');
+                  setRoleFilter('');
+                  setPremiumFilter('');
+                  fetchUsers();
+                }
+              }}
+            />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -348,7 +337,7 @@ export default function UserManagement() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleTogglePremium(user.id, user.premium_status)}
-                          loading={actionLoading[user.id]}
+                          loading={actionLoading}
                           disabled={user.role === 'admin'}
                         >
                           <Crown className={`h-4 w-4 ${user.premium_status ? 'text-yellow-500' : 'text-gray-400'}`} />
@@ -447,7 +436,7 @@ export default function UserManagement() {
             <div className="flex space-x-3">
               <Button
                 onClick={() => handleTogglePremium(selectedUser.id, selectedUser.premium_status)}
-                loading={actionLoading[selectedUser.id]}
+                loading={actionLoading}
                 variant={selectedUser.premium_status ? "outline" : "primary"}
                 disabled={selectedUser.role === 'admin'}
               >
@@ -482,7 +471,7 @@ export default function UserManagement() {
             <div className="flex space-x-3">
               <Button
                 onClick={handleDeleteUser}
-                loading={actionLoading[selectedUser.id]}
+                loading={actionLoading}
                 variant="outline"
                 className="text-red-600 border-red-200 hover:bg-red-50"
               >

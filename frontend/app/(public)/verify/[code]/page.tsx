@@ -30,7 +30,15 @@ const CertificateVerificationPage = () => {
     try {
       setLoading(true);
       const result = await certificateAPI.verifyCertificate(code);
-      setVerification(result);
+      if (result.success && result.data) {
+        setVerification(result.data);
+      } else {
+        setVerification({
+          is_valid: false,
+          message: result.message || 'Failed to verify certificate',
+          certificate: undefined
+        });
+      }
     } catch (error) {
       console.error('Verification failed:', error);
       setVerification({

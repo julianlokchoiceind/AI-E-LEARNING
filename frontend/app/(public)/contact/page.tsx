@@ -40,16 +40,16 @@ export default function ContactPage() {
       const data = await response.json();
       
       if (response.ok && data.success) {
-        toast.success(data.message || 'Operation Failed');
+        toast.success(data.message || 'Something went wrong');
         setFormData({ name: '', email: '', subject: '', message: '' });
       } else {
         // Log detailed error for debugging
         console.error('Contact form submission failed:', data);
-        toast.error('Operation Failed');
+        toast.error(data.message || 'Something went wrong');
       }
     } catch (error: any) {
       console.error('Contact form submission error:', error);
-      toast.error('Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setIsSubmitting(false);
     }

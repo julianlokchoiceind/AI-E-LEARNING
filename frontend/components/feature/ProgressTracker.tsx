@@ -31,6 +31,8 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
 
   useEffect(() => {
     fetchCourseProgress();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
   const fetchCourseProgress = async () => {
@@ -46,7 +48,8 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch progress');
+        const error = await response.json();
+        throw new Error(error.message || 'Something went wrong');
       }
 
       const result = await response.json();

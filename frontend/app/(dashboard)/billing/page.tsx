@@ -45,6 +45,7 @@ export default function BillingPage() {
     if (user) {
       fetchBillingData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading]);
 
   const fetchBillingData = async () => {
@@ -60,7 +61,7 @@ export default function BillingPage() {
       setPaymentHistory(historyResponse.data);
     } catch (error: any) {
       console.error('Failed to fetch billing data:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -76,14 +77,14 @@ export default function BillingPage() {
       const response = await cancelSubscription(true);
       
       if (response.success) {
-        toast.success(response.message || 'Operation Failed');
+        toast.success(response.message || 'Something went wrong');
         await fetchBillingData(); // Refresh data
       } else {
         throw new Error('Cancellation failed');
       }
     } catch (error: any) {
       console.error('Cancellation failed:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setCanceling(false);
     }

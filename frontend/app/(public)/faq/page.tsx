@@ -41,7 +41,7 @@ export default function FAQPage() {
         }
       } catch (error: any) {
         console.error('Failed to fetch categories:', error);
-        toast.error(error.message || 'Operation Failed');
+        toast.error(error.message || 'Something went wrong');
       }
     };
     fetchCategories();
@@ -65,11 +65,11 @@ export default function FAQPage() {
           setFaqs(response.data.items);
           setTotalPages(Math.ceil(response.data.total / response.data.per_page));
         } else {
-          throw new Error(response.message || 'Failed to fetch FAQs');
+          throw new Error(response.message || 'Something went wrong');
         }
       } catch (error: any) {
         console.error('Failed to fetch FAQs:', error);
-        toast.error(error.message || 'Operation Failed');
+        toast.error(error.message || 'Something went wrong');
       } finally {
         setLoading(false);
       }
@@ -111,13 +111,19 @@ export default function FAQPage() {
     try {
       const result = await faqAPI.voteFAQ(faqId, { is_helpful: isHelpful });
       
+      if (!result.success || !result.data) {
+        throw new Error(result.message || 'Something went wrong');
+      }
+      
+      const voteData = result.data;
+      
       // Update local state
       setFaqs(faqs.map(faq => {
         if (faq._id === faqId) {
           return {
             ...faq,
-            helpful_votes: result.helpful_votes,
-            unhelpful_votes: result.unhelpful_votes,
+            helpful_votes: voteData.helpful_votes,
+            unhelpful_votes: voteData.unhelpful_votes,
           };
         }
         return faq;
@@ -129,10 +135,10 @@ export default function FAQPage() {
       setVotedFaqs(newVoted);
       localStorage.setItem('votedFaqs', JSON.stringify(Array.from(newVoted)));
 
-      toast.success(result.message || 'Operation Failed');
+      toast.success(result.message || 'Something went wrong');
     } catch (error: any) {
       console.error('Failed to vote:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 

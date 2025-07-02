@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, BarChart, Users, DollarSign, Clock, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -19,17 +19,7 @@ const CourseAnalyticsPage = () => {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30days');
 
-  useEffect(() => {
-    if (user?.role !== 'creator' && user?.role !== 'admin') {
-      toast.error('Access denied. Creator access required.');
-      router.push('/dashboard');
-      return;
-    }
-
-    fetchAnalytics();
-  }, [user, router, courseId, timeRange]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
@@ -45,21 +35,32 @@ const CourseAnalyticsPage = () => {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch analytics');
+        throw new Error('Something went wrong');
       }
 
       const data = await response.json();
       if (!data.success) {
-        throw new Error(data.message || 'Operation Failed');
+        throw new Error(data.message || 'Something went wrong');
       }
       setAnalytics(data.data);
     } catch (error: any) {
       console.error('Failed to fetch analytics:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId, timeRange]);
+
+  useEffect(() => {
+    if (user?.role !== 'creator' && user?.role !== 'admin') {
+      toast.error('Access denied. Creator access required.');
+      router.push('/dashboard');
+      return;
+    }
+
+    fetchAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, courseId, timeRange, fetchAnalytics]);
 
   if (loading) {
     return (

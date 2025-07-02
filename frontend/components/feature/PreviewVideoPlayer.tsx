@@ -39,6 +39,8 @@ export const PreviewVideoPlayer: React.FC<PreviewVideoPlayerProps> = ({
     window.addEventListener('resize', checkMobile);
     
     return () => window.removeEventListener('resize', checkMobile);
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Extract YouTube video ID from URL
@@ -70,6 +72,8 @@ export const PreviewVideoPlayer: React.FC<PreviewVideoPlayerProps> = ({
         player.destroy();
       }
     };
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId]);
 
   const initializePlayer = () => {

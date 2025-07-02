@@ -481,6 +481,8 @@ async def logout(request: Request) -> StandardResponse[dict]:
     from app.services.token_blacklist_service import token_blacklist_service
     from datetime import datetime
     
+    logger.info("🚪 Logout endpoint called")
+    
     try:
         # Extract token from Authorization header
         authorization = request.headers.get("Authorization")
@@ -517,13 +519,13 @@ async def logout(request: Request) -> StandardResponse[dict]:
                 expires_at = datetime.fromtimestamp(exp_timestamp)
                 
                 # Add token to blacklist
-                await token_blacklist_service.blacklist_token(
+                blacklist_result = await token_blacklist_service.blacklist_token(
                     token=token,
                     user_id=user_id,
                     expires_at=expires_at
                 )
                 
-                logger.info(f"User {user_id} logged out, token blacklisted")
+                logger.info(f"✅ User {user_id} logged out, token blacklisted: {blacklist_result}")
             
         except JWTError as e:
             # Token is invalid, but still allow logout

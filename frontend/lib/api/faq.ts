@@ -3,7 +3,7 @@
  */
 
 import { apiClient } from './api-client';
-import { StandardResponse } from '@/types/api';
+import { StandardResponse } from '@/lib/types/api';
 
 export interface FAQCategory {
   value: string;

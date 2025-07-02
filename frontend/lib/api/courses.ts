@@ -53,8 +53,9 @@ interface CourseDetailData extends CourseResponse {
 }
 
 interface CreateCourseData {
-  course: CourseResponse;
+  _id: string;
   redirect_url: string;
+  message: string;
 }
 
 // Get courses list with filters

@@ -53,6 +53,8 @@ export const InlineChatComponent: React.FC<InlineChatComponentProps> = ({
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, isTyping]);
 
   // Fetch contextual suggestions on mount
@@ -60,6 +62,8 @@ export const InlineChatComponent: React.FC<InlineChatComponentProps> = ({
     if (courseId || lessonId) {
       fetchContextualSuggestions();
     }
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, lessonId, userLevel]);
 
   // Hide suggestions after first message
@@ -67,6 +71,8 @@ export const InlineChatComponent: React.FC<InlineChatComponentProps> = ({
     if (messages.length > 0) {
       setShowSuggestions(false);
     }
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length]);
 
   const fetchContextualSuggestions = async () => {

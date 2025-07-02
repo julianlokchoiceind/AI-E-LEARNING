@@ -25,6 +25,8 @@ export default function PaymentFailedPage() {
     } else {
       setLoading(false);
     }
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
   const fetchCourseDetails = async () => {

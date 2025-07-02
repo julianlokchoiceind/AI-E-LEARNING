@@ -773,18 +773,25 @@ const ChapterEditor = () => {
 **🚨 CRITICAL ERROR HANDLING RULE:**
 ```typescript
 // MANDATORY: All error messages MUST follow this pattern:
-// 1. Always show backend message if available
-// 2. If no message, fallback to "Operation Failed"
-// 3. NEVER use custom error messages like "Failed to load", "Error occurred", etc.
+// 1. Backend MUST ALWAYS return a message
+// 2. If no message from backend = something is wrong
+// 3. ALL cases fallback to "Operation Failed" if no backend message
+// 4. This rule applies to SERVER-SIDE responses only (API calls)
 
-// ✅ CORRECT:
+// ✅ CORRECT - Both success and error fallback to "Operation Failed":
+toast.success(response.message || 'Operation Failed');
 toast.error(error.message || 'Operation Failed');
 setError(error.message || 'Operation Failed');
 
-// ❌ WRONG:
+// ❌ WRONG - Different fallback messages:
+toast.success(response.message || 'Operation successful');
 toast.error('Failed to load dashboard');
-setError('An unexpected error occurred');
 toast.error(error.message || 'Failed to fetch data');
+toast.success(response.message || 'Course approved successfully');
+setError('An unexpected error occurred');
+
+// Note: Client-side validation errors can use specific messages
+// Example: "Password must be at least 8 characters"
 ```
 
 ```typescript

@@ -36,11 +36,11 @@ export default function ResetPasswordPage() {
           router.push('/login?reset=true')
         }, 3000)
       } else {
-        throw new Error(response.message || 'Failed to reset password')
+        throw new Error(response.message || 'Something went wrong')
       }
     } catch (err: any) {
       // Always use backend error message
-      setError(err.message || 'Operation Failed')
+      setError(err.message || 'Something went wrong')
     } finally {
       setLoading(false)
     }

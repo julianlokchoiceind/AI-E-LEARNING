@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Clock, Users, BookOpen, PlayCircle, Check, Lock, Star } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -31,14 +31,15 @@ const CourseDetailPage = () => {
   const [hasAccess, setHasAccess] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'instructor' | 'reviews'>('overview');
 
-  useEffect(() => {
-    fetchCourseDetails();
-  }, [courseId, user]);
-
-  const fetchCourseDetails = async () => {
+  const fetchCourseDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const courseData = await getCourseById(courseId);
+      const courseResponse = await getCourseById(courseId);
+      if (!courseResponse.success || !courseResponse.data) {
+        throw new Error(courseResponse.message || 'Course not found');
+      }
+      
+      const courseData = courseResponse.data;
       setCourse(courseData);
       
       // Check enrollment status if user is logged in
@@ -73,8 +74,10 @@ const CourseDetailPage = () => {
       
       // Fetch real chapters with lessons
       try {
-        const chaptersData = await getChaptersWithLessons(courseId);
-        setChapters(chaptersData);
+        const chaptersResponse = await getChaptersWithLessons(courseId);
+        if (chaptersResponse.success && chaptersResponse.data) {
+          setChapters(chaptersResponse.data.chapters as Chapter[] || []);
+        }
       } catch (error) {
         console.error('Failed to fetch chapters:', error);
         // Fallback to empty chapters array
@@ -83,11 +86,15 @@ const CourseDetailPage = () => {
     } catch (error: any) {
       console.error('Failed to fetch course details:', error);
       // Use backend error message
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId, user]);
+
+  useEffect(() => {
+    fetchCourseDetails();
+  }, [courseId, user, fetchCourseDetails]);
 
   const handleEnroll = async () => {
     if (!user) {
@@ -105,7 +112,7 @@ const CourseDetailPage = () => {
         setIsEnrolled(true);
         setHasAccess(true);
         // Use backend message if available
-        toast.success(response.message || 'Operation Failed');
+        toast.success(response.message || 'Something went wrong');
         router.push(`/learn/${courseId}`);
       } else {
         // Redirect to payment
@@ -114,7 +121,7 @@ const CourseDetailPage = () => {
     } catch (error: any) {
       console.error('Failed to enroll:', error);
       // Use backend error message
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setEnrolling(false);
     }

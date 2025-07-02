@@ -71,12 +71,12 @@ export function SubscriptionCheckoutForm({
 
   const processSubscription = async () => {
     if (!stripe || !elements) {
-      throw new Error('Payment system not ready. Please try again.');
+      throw new Error('Something went wrong');
     }
 
     const cardElement = elements.getElement(CardElement);
     if (!cardElement) {
-      throw new Error('Card element not found');
+      throw new Error('Something went wrong');
     }
 
     // Create payment method
@@ -105,7 +105,7 @@ export function SubscriptionCheckoutForm({
     if (subscriptionResponse.success) {
       return subscriptionResponse;
     } else {
-      throw new Error(subscriptionResponse.message || 'Operation Failed');
+      throw new Error(subscriptionResponse.message || 'Something went wrong');
     }
   };
 

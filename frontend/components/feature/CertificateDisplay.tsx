@@ -26,13 +26,8 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
 
   const handleDownload = async () => {
     try {
-      const response = await certificateAPI.downloadCertificatePDF(certificate._id);
+      const blob = await certificateAPI.downloadCertificatePDF(certificate._id);
       
-      if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
-      }
-      
-      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -41,10 +36,10 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success(response.message);
+      toast.success('Certificate downloaded successfully');
     } catch (error: any) {
       console.error('Failed to download certificate:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 
@@ -52,8 +47,8 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
     try {
       const response = await certificateAPI.getLinkedInShareData(certificate._id);
       
-      if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Something went wrong');
       }
       
       const shareData = response.data;
@@ -64,10 +59,10 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
       )}`;
       
       window.open(linkedinUrl, '_blank', 'width=600,height=400');
-      toast.success(response.message);
+      toast.success(response.message || 'Something went wrong');
     } catch (error: any) {
       console.error('Failed to get LinkedIn share data:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 

@@ -25,6 +25,8 @@ const CreatorCoursesPage = () => {
     }
 
     fetchCourses();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, router]);
 
   const fetchCourses = async () => {
@@ -33,13 +35,13 @@ const CreatorCoursesPage = () => {
       const response = await getCourses(`creator_id=${user?.id}`);
       
       if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
       
       setCourses(response.data?.courses || []);
     } catch (error: any) {
       console.error('Failed to fetch courses:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -63,13 +65,13 @@ const CreatorCoursesPage = () => {
       
       if (response.success) {
         setCourses(courses.filter(c => c._id !== courseId));
-        toast.success(response.message || 'Course deleted successfully');
+        toast.success(response.message || 'Something went wrong');
       } else {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
     } catch (error: any) {
       console.error('Failed to delete course:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 

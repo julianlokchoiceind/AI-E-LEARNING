@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Search,
   Filter,
@@ -17,7 +17,9 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 import { supportAPI } from '@/lib/api/support';
+import { useApiCall } from '@/hooks/useErrorHandler';
 import {
   SupportTicket,
   TicketStats,
@@ -31,7 +33,6 @@ import {
 export default function AdminSupportPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [stats, setStats] = useState<TicketStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     status: '',
@@ -40,72 +41,62 @@ export default function AdminSupportPage() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  
+  // Use useApiCall hooks for consistent loading state management
+  const { loading: ticketsLoading, execute: fetchTicketsExecute } = useApiCall();
+  const { loading: statsLoading, execute: fetchStatsExecute } = useApiCall();
+  const { loading: updateLoading, execute: executeUpdate } = useApiCall();
+
+  const fetchTickets = useCallback(async () => {
+    const params: TicketSearchParams = {
+      q: searchQuery || undefined,
+      status: filters.status as any || undefined,
+      priority: filters.priority as any || undefined,
+      category: filters.category as any || undefined,
+      page: currentPage,
+      per_page: 20,
+      sort_by: 'created_at',
+      sort_order: 'desc',
+    };
+
+    await fetchTicketsExecute(
+      () => supportAPI.getTickets(params),
+      {
+        onSuccess: (response: any) => {
+          setTickets(response.data?.items || []);
+          setTotalPages(response.data?.total_pages || 1);
+        }
+      }
+    );
+  }, [searchQuery, filters, currentPage, fetchTicketsExecute]);
+
+  const fetchStats = useCallback(async () => {
+    await fetchStatsExecute(
+      () => supportAPI.getTicketStats(),
+      {
+        onSuccess: (response: any) => {
+          setStats(response.data);
+        }
+      }
+    );
+  }, [fetchStatsExecute]);
 
   // Fetch tickets and stats
   useEffect(() => {
     fetchTickets();
     fetchStats();
-  }, [searchQuery, filters, currentPage]);
-
-  const fetchTickets = async () => {
-    try {
-      setLoading(true);
-      const params: TicketSearchParams = {
-        q: searchQuery || undefined,
-        status: filters.status as any || undefined,
-        priority: filters.priority as any || undefined,
-        category: filters.category as any || undefined,
-        page: currentPage,
-        per_page: 20,
-        sort_by: 'created_at',
-        sort_order: 'desc',
-      };
-
-      const response = await supportAPI.getTickets(params);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
-      }
-      
-      setTickets(response.data?.items || []);
-      setTotalPages(response.data?.total_pages || 1);
-    } catch (error: any) {
-      console.error('Failed to fetch tickets:', error);
-      toast.error(error.message || 'Operation Failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStats = async () => {
-    try {
-      const response = await supportAPI.getTicketStats();
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
-      }
-      
-      setStats(response.data);
-    } catch (error: any) {
-      console.error('Failed to fetch stats:', error);
-      toast.error(error.message || 'Operation Failed');
-    }
-  };
+  }, [fetchTickets, fetchStats]);
 
   const handleQuickUpdate = async (ticketId: string, update: TicketUpdateData) => {
-    try {
-      const response = await supportAPI.updateTicket(ticketId, update);
-      
-      if (response.success) {
-        toast.success(response.message);
-        fetchTickets(); // Refresh list
-      } else {
-        throw new Error(response.message || 'Operation Failed');
+    await executeUpdate(
+      () => supportAPI.updateTicket(ticketId, update),
+      {
+        onSuccess: (response: any) => {
+          toast.success(response.message || 'Something went wrong');
+          fetchTickets(); // Refresh list
+        }
       }
-    } catch (error: any) {
-      console.error('Failed to update ticket:', error);
-      toast.error(error.message || 'Operation Failed');
-    }
+    );
   };
 
   const formatDate = (date: string) => {
@@ -256,9 +247,25 @@ export default function AdminSupportPage() {
       {/* Tickets Table */}
       <Card>
         <CardContent className="p-0">
-          {loading ? (
+          {ticketsLoading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <LoadingSpinner size="lg" message="Loading support tickets..." />
+            </div>
+          ) : tickets.length === 0 ? (
+            <div className="flex justify-center items-center h-64">
+              <EmptyState
+                title="No tickets found"
+                description="No support tickets match your current search and filter criteria"
+                action={{
+                  label: 'Clear Filters',
+                  onClick: () => {
+                    setSearchQuery('');
+                    setFilters({ status: '', priority: '', category: '' });
+                    setCurrentPage(1);
+                    fetchTickets();
+                  }
+                }}
+              />
             </div>
           ) : (
             <div className="overflow-x-auto">

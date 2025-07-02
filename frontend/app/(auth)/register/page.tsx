@@ -67,7 +67,7 @@ export default function RegisterPage() {
       if (response.success) {
         setSuccessMessage(response.message || 'Registration successful! Please check your email to verify your account.')
       } else {
-        throw new Error(response.message || 'Registration failed')
+        throw new Error(response.message || 'Something went wrong')
       }
       
       // Clear form
@@ -93,10 +93,10 @@ export default function RegisterPage() {
       
       // Always use the actual error message from backend, fallback to "Operation Failed"
       if (error instanceof Error) {
-        setError(error.message || 'Operation Failed')
+        setError(error.message || 'Something went wrong')
       } else {
         // This should never happen if error handler is working correctly
-        setError('Operation Failed')
+        setError('Something went wrong')
       }
     } finally {
       console.log('[REGISTER DEBUG] Form submission completed');

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, 
   Edit, 
@@ -16,12 +16,13 @@ import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { useApiCall } from '@/hooks/useErrorHandler';
 import { faqAPI, FAQ, FAQCreateData, FAQUpdateData } from '@/lib/api/faq';
 import { FAQ_CATEGORIES } from '@/lib/types/faq';
 
 export default function AdminFAQPage() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedFaqs, setSelectedFaqs] = useState<Set<string>>(new Set());
@@ -37,78 +38,64 @@ export default function AdminFAQPage() {
     is_published: true,
     slug: '',
   });
+  
+  // Use useApiCall hooks for consistent loading state management
+  const { loading, execute: fetchFAQsExecute } = useApiCall();
+  const { loading: actionLoading, execute: executeAction } = useApiCall();
 
   // Fetch FAQs
-  useEffect(() => {
-    fetchFAQs();
-  }, [searchQuery, selectedCategory]);
-
-  const fetchFAQs = async () => {
-    try {
-      setLoading(true);
-      const response = await faqAPI.getFAQs({
+  const fetchFAQs = useCallback(async () => {
+    await fetchFAQsExecute(
+      () => faqAPI.getFAQs({
         q: searchQuery || undefined,
         category: selectedCategory || undefined,
         per_page: 100,
-      });
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+      }),
+      {
+        onSuccess: (response: any) => {
+          setFaqs(response.data?.items || []);
+        }
       }
-      
-      setFaqs(response.data?.items || []);
-    } catch (error: any) {
-      console.error('Failed to fetch FAQs:', error);
-      toast.error(error.message || 'Operation Failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
+  }, [searchQuery, selectedCategory, fetchFAQsExecute]);
+
+  useEffect(() => {
+    fetchFAQs();
+  }, [fetchFAQs]);
 
   const handleCreateOrUpdate = async () => {
-    try {
-      if (editingFaq) {
-        // Update existing FAQ
-        const response = await faqAPI.updateFAQ(editingFaq._id, formData as FAQUpdateData);
-        if (response.success && response.data) {
-          setFaqs(faqs.map(f => f._id === response.data!._id ? response.data! : f));
-          toast.success(response.message);
-        } else {
-          throw new Error(response.message || 'Operation Failed');
-        }
-      } else {
-        // Create new FAQ
-        const response = await faqAPI.createFAQ(formData);
-        if (response.success && response.data) {
-          setFaqs([response.data, ...faqs]);
-          toast.success(response.message);
-        } else {
-          throw new Error(response.message || 'Operation Failed');
+    await executeAction(
+      () => editingFaq 
+        ? faqAPI.updateFAQ(editingFaq._id, formData as FAQUpdateData)
+        : faqAPI.createFAQ(formData),
+      {
+        onSuccess: (response: any) => {
+          if (response.data) {
+            if (editingFaq) {
+              setFaqs(faqs.map(f => f._id === response.data!._id ? response.data! : f));
+            } else {
+              setFaqs([response.data, ...faqs]);
+            }
+            toast.success(response.message || 'Something went wrong');
+          }
+          resetForm();
         }
       }
-      
-      resetForm();
-    } catch (error: any) {
-      console.error('Failed to save FAQ:', error);
-      toast.error(error.response?.data?.detail || error.message || 'Operation Failed');
-    }
+    );
   };
 
   const handleDelete = async (faqId: string) => {
     if (!confirm('Are you sure you want to delete this FAQ?')) return;
 
-    try {
-      const response = await faqAPI.deleteFAQ(faqId);
-      if (response.success) {
-        setFaqs(faqs.filter(f => f._id !== faqId));
-        toast.success(response.message);
-      } else {
-        throw new Error(response.message || 'Operation Failed');
+    await executeAction(
+      () => faqAPI.deleteFAQ(faqId),
+      {
+        onSuccess: (response: any) => {
+          setFaqs(faqs.filter(f => f._id !== faqId));
+          toast.success(response.message || 'Something went wrong');
+        }
       }
-    } catch (error: any) {
-      console.error('Failed to delete FAQ:', error);
-      toast.error(error.message || 'Operation Failed');
-    }
+    );
   };
 
   const handleBulkAction = async (action: 'publish' | 'unpublish' | 'delete') => {
@@ -123,33 +110,29 @@ export default function AdminFAQPage() {
 
     if (!confirm(confirmMessage)) return;
 
-    try {
-      const response = await faqAPI.bulkAction({
+    await executeAction(
+      () => faqAPI.bulkAction({
         faq_ids: Array.from(selectedFaqs),
         action,
-      });
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
-      }
-      
-      if (action === 'delete') {
-        setFaqs(faqs.filter(f => !selectedFaqs.has(f._id)));
-      } else {
-        setFaqs(faqs.map(f => {
-          if (selectedFaqs.has(f._id)) {
-            return { ...f, is_published: action === 'publish' };
+      }),
+      {
+        onSuccess: (response: any) => {
+          if (action === 'delete') {
+            setFaqs(faqs.filter(f => !selectedFaqs.has(f._id)));
+          } else {
+            setFaqs(faqs.map(f => {
+              if (selectedFaqs.has(f._id)) {
+                return { ...f, is_published: action === 'publish' };
+              }
+              return f;
+            }));
           }
-          return f;
-        }));
+          
+          setSelectedFaqs(new Set());
+          toast.success(response.message || 'Something went wrong');
+        }
       }
-      
-      setSelectedFaqs(new Set());
-      toast.success(response.message);
-    } catch (error: any) {
-      console.error('Failed to perform bulk action:', error);
-      toast.error(error.message || 'Operation Failed');
-    }
+    );
   };
 
   const startEdit = (faq: FAQ) => {
@@ -290,7 +273,27 @@ export default function AdminFAQPage() {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <LoadingSpinner size="lg" message="Loading FAQs..." />
+            </div>
+          ) : faqs.length === 0 ? (
+            <div className="flex justify-center items-center h-64">
+              <EmptyState
+                title="No FAQs found"
+                description="No FAQs match your current search and filter criteria"
+                action={{
+                  label: searchQuery || selectedCategory ? 'Clear Filters' : 'Add First FAQ',
+                  onClick: () => {
+                    if (searchQuery || selectedCategory) {
+                      setSearchQuery('');
+                      setSelectedCategory('');
+                      fetchFAQs();
+                    } else {
+                      resetForm();
+                      setShowCreateModal(true);
+                    }
+                  }
+                }}
+              />
             </div>
           ) : (
             <div className="overflow-x-auto">

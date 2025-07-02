@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
 import { parseErrorFromResponse, AppError, ErrorType, handleError } from '@/lib/utils/error-handler';
+import { debug, log, error } from '@/lib/utils/debug';
 
 interface RequestOptions extends RequestInit {
   timeout?: number;
@@ -14,7 +15,7 @@ class ApiClient {
   constructor(baseUrl?: string) {
     // Use the provided baseUrl or fall back to API_ENDPOINTS.BASE_URL
     this.baseUrl = baseUrl || API_ENDPOINTS.BASE_URL || 'http://localhost:8000/api/v1';
-    console.log('[API-CLIENT] Constructor - baseUrl:', this.baseUrl);
+    log('API-CLIENT', 'Constructor - baseUrl:', this.baseUrl);
   }
 
   // Get auth token from NextAuth session ONLY
@@ -76,7 +77,7 @@ class ApiClient {
     } = options;
 
     const fullUrl = `${this.baseUrl}${url}`;
-    console.debug('[API-CLIENT] Starting request:', {
+    debug('API-CLIENT', 'Starting request:', {
       fullUrl,
       method: fetchOptions.method || 'GET',
       requireAuth,
@@ -86,7 +87,7 @@ class ApiClient {
 
     // Check if auth is required
     if (requireAuth && !(await this.getAuthToken())) {
-      console.debug('[API-CLIENT] Auth required but no token found');
+      debug('API-CLIENT', 'Auth required but no token found');
       throw new AppError(
         'Authentication required',
         ErrorType.AUTHENTICATION
@@ -97,7 +98,7 @@ class ApiClient {
     const controller = this.createAbortController(timeout);
 
     // Prepare headers - set default content type only if not specified
-    const requestHeaders: HeadersInit = {
+    const baseHeaders = {
       ...(!Object.keys(headers).some(key => key.toLowerCase() === 'content-type') ? { 'Content-Type': 'application/json' } : {}),
       ...headers
     };
@@ -106,18 +107,19 @@ class ApiClient {
     const noCacheEndpoints = ['/auth/', '/users/me', '/profile', '/dashboard', '/admin/', '/payment'];
     const shouldNoCache = noCacheEndpoints.some(endpoint => url.includes(endpoint));
     
-    if (shouldNoCache) {
-      requestHeaders['Cache-Control'] = 'no-cache, no-store, must-revalidate';
-      requestHeaders['Pragma'] = 'no-cache';
-      requestHeaders['Expires'] = '0';
-    }
+    const requestHeaders: HeadersInit = shouldNoCache ? {
+      ...baseHeaders,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    } : baseHeaders;
 
     // Add auth header if needed
     const finalHeaders = requireAuth 
       ? await this.addAuthHeader(requestHeaders)
       : requestHeaders;
 
-    console.debug('[API-CLIENT] Request headers:', finalHeaders);
+    debug('API-CLIENT', 'Request headers:', finalHeaders);
 
     try {
       const response = await fetch(fullUrl, {
@@ -128,7 +130,7 @@ class ApiClient {
         ...(shouldNoCache ? { cache: 'no-store' } : {})
       } as RequestInit);
 
-      console.debug('[API-CLIENT] Response received:', {
+      debug('API-CLIENT', 'Response received:', {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,
@@ -137,9 +139,9 @@ class ApiClient {
 
       // Handle non-2xx responses
       if (!response.ok) {
-        console.debug('[API-CLIENT] Response not OK, parsing error...');
+        debug('API-CLIENT', 'Response not OK, parsing error...');
         const error = await parseErrorFromResponse(response);
-        console.debug('[API-CLIENT] Parsed error:', {
+        debug('API-CLIENT', 'Parsed error:', {
           message: error.message,
           type: error.type,
           details: error.details
@@ -147,7 +149,7 @@ class ApiClient {
         
         // Handle token expiration
         if (response.status === 401 && requireAuth) {
-          console.debug('[API-CLIENT] 401 error with auth required, redirecting to login');
+          debug('API-CLIENT', '401 error with auth required, redirecting to login');
           
           // Clear NextAuth session and redirect to login
           try {
@@ -165,13 +167,13 @@ class ApiClient {
           throw error;
         }
         
-        console.debug('[API-CLIENT] Throwing parsed error');
+        debug('API-CLIENT', 'Throwing parsed error');
         throw error;
       }
 
       // Parse JSON response
       const responseText = await response.text();
-      console.debug('[API-CLIENT] Response text:', responseText.substring(0, 500));
+      debug('API-CLIENT', 'Response text:', responseText.substring(0, 500));
       
       let data;
       try {
@@ -184,7 +186,7 @@ class ApiClient {
         );
       }
       
-      console.debug('[API-CLIENT] Parsed data:', {
+      debug('API-CLIENT', 'Parsed data:', {
         hasData: !!data,
         dataType: typeof data,
         dataKeys: data && typeof data === 'object' ? Object.keys(data) : []
@@ -192,21 +194,21 @@ class ApiClient {
       
       // Handle API response wrapper
       if (data.success === false) {
-        console.debug('[API-CLIENT] API returned success=false');
+        debug('API-CLIENT', 'API returned success=false');
         throw new AppError(
           data.message || 'Request failed',
           ErrorType.SERVER
         );
       }
 
-      console.debug('[API-CLIENT] Request successful, returning:', data);
+      debug('API-CLIENT', 'Request successful, returning:', data);
       
       // Return the full response to maintain access to success, data, and message
       // This allows frontend to display backend messages and handle responses consistently
-      console.debug('[API-CLIENT] Returning full response with StandardResponse format');
+      debug('API-CLIENT', 'Returning full response with StandardResponse format');
       return data;
     } catch (error) {
-      console.debug('[API-CLIENT] Caught error:', {
+      debug('API-CLIENT', 'Caught error:', {
         errorType: error?.constructor?.name,
         errorMessage: error instanceof Error ? error.message : String(error),
         isAppError: error instanceof AppError
@@ -214,7 +216,7 @@ class ApiClient {
 
       // Handle abort errors
       if (error instanceof Error && error.name === 'AbortError') {
-        console.debug('[API-CLIENT] Request aborted (timeout)');
+        debug('API-CLIENT', 'Request aborted (timeout)');
         throw new AppError(
           'Request timeout',
           ErrorType.NETWORK
@@ -223,14 +225,14 @@ class ApiClient {
 
       // Re-throw AppError instances
       if (error instanceof AppError) {
-        console.debug('[API-CLIENT] Re-throwing AppError');
+        debug('API-CLIENT', 'Re-throwing AppError');
         throw error;
       }
 
       // Handle other errors
-      console.debug('[API-CLIENT] Handling other error with handleError');
+      debug('API-CLIENT', 'Handling other error with handleError');
       const handledError = handleError(error, false);
-      console.debug('[API-CLIENT] Handled error:', {
+      debug('API-CLIENT', 'Handled error:', {
         message: handledError.message,
         type: handledError.type
       });
@@ -290,6 +292,43 @@ class ApiClient {
       ...options,
       method: 'DELETE'
     });
+  }
+
+  async download(url: string, options?: RequestOptions): Promise<Blob> {
+    // Use similar pattern to request method but return blob
+    const { requireAuth = true, timeout, headers = {}, ...fetchOptions } = options || {};
+    
+    // Create abort controller
+    const controller = this.createAbortController(timeout);
+
+    // Prepare headers
+    const baseHeaders = {
+      ...headers
+    };
+    
+    const requestHeaders: HeadersInit = baseHeaders;
+
+    // Add auth header if needed
+    const finalHeaders = requireAuth 
+      ? await this.addAuthHeader(requestHeaders)
+      : requestHeaders;
+
+    // Make request
+    const fullUrl = `${this.baseUrl}${url}`;
+    
+    const response = await fetch(fullUrl, {
+      ...fetchOptions,
+      method: 'GET',
+      headers: finalHeaders,
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const error = await parseErrorFromResponse(response);
+      throw error;
+    }
+
+    return response.blob();
   }
 
   // File upload

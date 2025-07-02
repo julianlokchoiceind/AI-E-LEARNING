@@ -30,14 +30,14 @@ export const useOnboarding = (): UseOnboardingReturn => {
       const response = await getOnboardingStatus();
       
       if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
       
       const onboardingStatus = response.data;
       setStatus(onboardingStatus);
     } catch (err: any) {
       console.error('Failed to fetch onboarding status:', err);
-      setError(err.message || 'Operation Failed');
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }

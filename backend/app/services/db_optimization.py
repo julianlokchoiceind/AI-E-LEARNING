@@ -89,6 +89,12 @@ class DatabaseOptimizer:
             {"collection": "faqs", "index": [("category", 1)], "options": {}},
             {"collection": "faqs", "index": [("is_published", 1)], "options": {}},
             {"collection": "faqs", "index": [("category", 1), ("priority", -1)], "options": {}},
+            
+            # Blacklisted tokens indexes
+            {"collection": "blacklisted_tokens", "index": [("token", 1)], "options": {"unique": True}},
+            {"collection": "blacklisted_tokens", "index": [("user_id", 1)], "options": {}},
+            {"collection": "blacklisted_tokens", "index": [("expires_at", 1)], "options": {}},
+            {"collection": "blacklisted_tokens", "index": [("blacklisted_at", -1)], "options": {}},
         ]
         
         created_count = 0

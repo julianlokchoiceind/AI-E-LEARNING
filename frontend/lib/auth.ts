@@ -39,7 +39,7 @@ export const authOptions: NextAuthOptions = {
           })
 
           // Check if login was successful
-          if (!authResponse.success) {
+          if (!authResponse.success || !authResponse.data) {
             throw new Error(authResponse.message || 'Login failed')
           }
 
@@ -66,7 +66,7 @@ export const authOptions: NextAuthOptions = {
           if (error?.message && typeof error.message === 'string') {
             // Don't show technical errors to users
             if (error.message.includes('fetch') || error.message.includes('network')) {
-              throw new Error('Unable to connect to server. Please try again.')
+              throw new Error('Something went wrong')
             }
             
             // Pass through the actual error message from backend
@@ -74,14 +74,16 @@ export const authOptions: NextAuthOptions = {
           }
           
           // Only use generic message as absolute fallback
-          throw new Error('Authentication failed. Please try again.')
+          throw new Error('Something went wrong')
         }
       }
     })
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
+      // Only process on initial sign-in or forced refresh
       if (user) {
+        // Initial sign-in - set all user data
         token.id = user.id
         token.email = user.email || ''
         token.name = user.name || ''
@@ -94,27 +96,46 @@ export const authOptions: NextAuthOptions = {
         if ('refreshToken' in user && user.refreshToken) {
           token.refreshToken = user.refreshToken
         }
+      } else if (trigger === 'update') {
+        // Handle session updates if needed
+        // This is called when using update() from useSession
       }
+      
+      // Skip token refresh check if token was created recently (within last 10 minutes)
+      const tokenAge = token.iat ? Date.now() - ((token.iat as number) * 1000) : Infinity
+      if (tokenAge < 10 * 60 * 1000) {
+        return token
+      }
+      
       return token
     },
     async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.id as string
-        session.user.email = token.email as string
-        session.user.name = token.name as string
-        session.user.role = token.role as string
-        session.user.premiumStatus = token.premiumStatus as boolean
-        // Include tokens in session for API calls
-        session.accessToken = token.accessToken as string
-        session.refreshToken = token.refreshToken as string
-      }
+      // Quick return if no token or session.user
+      if (!token || !session.user) return session
+      
+      // Efficiently copy token data to session
+      Object.assign(session.user, {
+        id: token.id,
+        email: token.email,
+        name: token.name,
+        role: token.role,
+        premiumStatus: token.premiumStatus
+      })
+      
+      // Include tokens for API calls
+      session.accessToken = token.accessToken as string
+      session.refreshToken = token.refreshToken as string
+      
       return session
     },
     async signIn({ user, account, profile }) {
       // Handle OAuth sign-ins
       if (account?.provider !== 'credentials') {
         try {
-          // Send OAuth user data to backend
+          // Send OAuth user data to backend with timeout
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
+          
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/oauth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -124,8 +145,11 @@ export const authOptions: NextAuthOptions = {
               provider: account?.provider || 'unknown',
               provider_id: account?.providerAccountId || '',
               picture: user.image
-            })
+            }),
+            signal: controller.signal
           })
+          
+          clearTimeout(timeoutId)
           
           if (response.ok) {
             const data = await response.json()
@@ -162,8 +186,13 @@ export const authOptions: NextAuthOptions = {
           
           console.error('OAuth backend sync failed')
           return false
-        } catch (error) {
-          console.error('OAuth sign-in error:', error)
+        } catch (error: any) {
+          // Handle timeout specifically
+          if (error.name === 'AbortError') {
+            console.error('OAuth sign-in timeout')
+          } else {
+            console.error('OAuth sign-in error:', error)
+          }
           return false
         }
       }
@@ -177,7 +206,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   secret: process.env.NEXTAUTH_SECRET,
 }

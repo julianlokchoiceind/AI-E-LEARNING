@@ -12,7 +12,8 @@ import type {
   ReviewVoteData,
   ReviewReportData,
   InstructorResponseData,
-  ReviewSearchParams
+  ReviewSearchParams,
+  ReviewListResponse
 } from '@/lib/types/review';
 
 export const reviewAPI = {
@@ -26,7 +27,7 @@ export const reviewAPI = {
   /**
    * Get reviews for a course
    */
-  async getCourseReviews(courseId: string, params?: ReviewSearchParams): Promise<StandardResponse<Review[]>> {
+  async getCourseReviews(courseId: string, params?: ReviewSearchParams): Promise<StandardResponse<ReviewListResponse>> {
     const queryParams = new URLSearchParams();
     queryParams.append('course_id', courseId);
     
@@ -38,7 +39,7 @@ export const reviewAPI = {
       });
     }
 
-    return apiClient.get<StandardResponse<Review[]>>(
+    return apiClient.get<StandardResponse<ReviewListResponse>>(
       `/reviews/courses/${courseId}/reviews?${queryParams.toString()}`
     );
   },

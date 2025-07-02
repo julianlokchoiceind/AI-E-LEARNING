@@ -31,12 +31,12 @@ export default function VerifyEmailPage() {
             router.push('/login?verified=true')
           }, 3000)
         } else {
-          throw new Error(response.message || 'Email verification failed')
+          throw new Error(response.message || 'Something went wrong')
         }
       })
       .catch((error) => {
         setStatus('error')
-        setMessage(error.message || 'Operation Failed')
+        setMessage(error.message || 'Something went wrong')
         
         // If the link was already used, show login button
         if (error.message?.includes('already been used')) {

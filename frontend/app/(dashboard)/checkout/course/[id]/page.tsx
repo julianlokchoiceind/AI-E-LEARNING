@@ -29,6 +29,7 @@ export default function CourseCheckoutPage() {
     if (user && courseId) {
       fetchCourseAndInitializePayment();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, courseId, authLoading]);
 
   const fetchCourseAndInitializePayment = async () => {
@@ -36,7 +37,12 @@ export default function CourseCheckoutPage() {
       setLoading(true);
       
       // Fetch course details
-      const courseData = await getCourseById(courseId);
+      const courseResponse = await getCourseById(courseId);
+      if (!courseResponse.success || !courseResponse.data) {
+        throw new Error(courseResponse.message || 'Course not found');
+      }
+      
+      const courseData = courseResponse.data;
       setCourse(courseData);
 
       // Check if course should be free for this user
@@ -54,7 +60,7 @@ export default function CourseCheckoutPage() {
 
     } catch (error: any) {
       console.error('Failed to fetch course:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
       router.push('/courses');
     } finally {
       setLoading(false);

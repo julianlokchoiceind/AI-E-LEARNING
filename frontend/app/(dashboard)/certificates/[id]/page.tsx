@@ -30,22 +30,28 @@ const CertificateViewPage = () => {
 
   useEffect(() => {
     fetchCertificate();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [certificateId]);
 
   const fetchCertificate = async () => {
     try {
       setLoading(true);
-      const cert = await certificateAPI.getCertificate(certificateId);
-      setCertificate(cert);
-      setUpdateData({
-        is_public: cert.is_public,
-        template_id: cert.template_id,
-        background_color: cert.background_color,
-        accent_color: cert.accent_color,
-      });
+      const certResponse = await certificateAPI.getCertificate(certificateId);
+      if (certResponse.success && certResponse.data) {
+        setCertificate(certResponse.data);
+        setUpdateData({
+          is_public: certResponse.data.is_public,
+          template_id: certResponse.data.template_id,
+          background_color: certResponse.data.background_color,
+          accent_color: certResponse.data.accent_color,
+        });
+      } else {
+        throw new Error(certResponse.message || 'Something went wrong');
+      }
     } catch (error: any) {
       console.error('Failed to fetch certificate:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
       router.push('/certificates');
     } finally {
       setLoading(false);
@@ -54,13 +60,17 @@ const CertificateViewPage = () => {
 
   const handleUpdate = async () => {
     try {
-      const updated = await certificateAPI.updateCertificate(certificateId, updateData);
-      setCertificate(updated);
+      const updatedResponse = await certificateAPI.updateCertificate(certificateId, updateData);
+      if (updatedResponse.success && updatedResponse.data) {
+        setCertificate(updatedResponse.data);
+      } else {
+        throw new Error(updatedResponse.message || 'Something went wrong');
+      }
       setShowEditModal(false);
-      toast.success(updated.message || 'Operation Failed');
+      toast.success(updatedResponse.message || 'Something went wrong');
     } catch (error: any) {
       console.error('Failed to update certificate:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 

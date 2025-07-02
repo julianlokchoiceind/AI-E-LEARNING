@@ -124,7 +124,6 @@ export const getAdminDashboardStats = async (): Promise<StandardResponse<AdminDa
     
     return response;
   } catch (error) {
-    console.error('Get admin dashboard stats failed:', error);
     throw error;
   }
 };
@@ -405,7 +404,7 @@ export const getAdminCourses = async (params?: {
   
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
         queryParams.append(key, String(value));
       }
     });
@@ -413,7 +412,7 @@ export const getAdminCourses = async (params?: {
 
   try {
     const response = await api.get<StandardResponse<any>>(
-      `/admin/courses?${queryParams.toString()}`,
+      `/courses?${queryParams.toString()}`,
       { requireAuth: true }
     );
     

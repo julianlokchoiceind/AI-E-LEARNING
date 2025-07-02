@@ -46,6 +46,8 @@ export default function SupportPage() {
   // Fetch tickets
   useEffect(() => {
     fetchTickets();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, selectedStatus, currentPage]);
 
   const fetchTickets = async () => {
@@ -61,11 +63,16 @@ export default function SupportPage() {
       };
 
       const response = await supportAPI.getTickets(params);
-      setTickets(response.items);
-      setTotalPages(response.total_pages);
+      
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Something went wrong');
+      }
+      
+      setTickets(response.data.items);
+      setTotalPages(response.data.total_pages);
     } catch (error: any) {
       console.error('Failed to fetch tickets:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -74,13 +81,13 @@ export default function SupportPage() {
   const handleCreateTicket = async () => {
     try {
       const response = await supportAPI.createTicket(formData);
-      toast.success(response.message || 'Operation Failed');
+      toast.success(response.message || 'Something went wrong');
       setShowCreateModal(false);
       resetForm();
       fetchTickets(); // Refresh list
     } catch (error: any) {
       console.error('Failed to create ticket:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 

@@ -25,11 +25,11 @@ export default function ForgotPasswordPage() {
         setSuccessMessage(response.message || 'Password reset email sent! Please check your inbox.')
         setSuccess(true)
       } else {
-        throw new Error(response.message || 'Failed to send reset email')
+        throw new Error(response.message || 'Something went wrong')
       }
     } catch (err: any) {
       // Always use backend error message
-      setError(err.message || 'Operation Failed')
+      setError(err.message || 'Something went wrong')
     } finally {
       setLoading(false)
     }

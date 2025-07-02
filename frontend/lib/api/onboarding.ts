@@ -97,7 +97,7 @@ export const getOnboardingStatus = async (): Promise<StandardResponse<Onboarding
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      throw new Error('Authentication required');
+      throw new Error('Something went wrong');
     }
     
     const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.ONBOARDING.STATUS}`, {
@@ -109,7 +109,8 @@ export const getOnboardingStatus = async (): Promise<StandardResponse<Onboarding
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
     }
 
     const result: StandardResponse<OnboardingStatus> = await response.json();
@@ -127,7 +128,7 @@ export const startOnboarding = async (skipOnboarding: boolean = false): Promise<
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      throw new Error('Authentication required');
+      throw new Error('Something went wrong');
     }
     
     const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.ONBOARDING.START}`, {
@@ -142,7 +143,8 @@ export const startOnboarding = async (skipOnboarding: boolean = false): Promise<
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
     }
 
     const result: StandardResponse<OnboardingStepResponse> = await response.json();
@@ -160,7 +162,7 @@ export const updateLearningPath = async (data: LearningPathRequest): Promise<Sta
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      throw new Error('Authentication required');
+      throw new Error('Something went wrong');
     }
     
     const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.ONBOARDING.LEARNING_PATH}`, {
@@ -173,7 +175,8 @@ export const updateLearningPath = async (data: LearningPathRequest): Promise<Sta
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
     }
 
     const result: StandardResponse<OnboardingStepResponse> = await response.json();
@@ -191,7 +194,7 @@ export const updateProfileSetup = async (data: ProfileSetupRequest): Promise<Sta
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      throw new Error('Authentication required');
+      throw new Error('Something went wrong');
     }
     
     const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.ONBOARDING.PROFILE_SETUP}`, {
@@ -204,7 +207,8 @@ export const updateProfileSetup = async (data: ProfileSetupRequest): Promise<Sta
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
     }
 
     const result: StandardResponse<OnboardingStepResponse> = await response.json();
@@ -222,7 +226,7 @@ export const getCourseRecommendations = async (): Promise<StandardResponse<Onboa
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      throw new Error('Authentication required');
+      throw new Error('Something went wrong');
     }
     
     const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.ONBOARDING.RECOMMENDATIONS}`, {
@@ -234,7 +238,8 @@ export const getCourseRecommendations = async (): Promise<StandardResponse<Onboa
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
     }
 
     const result: StandardResponse<OnboardingRecommendations> = await response.json();
@@ -252,7 +257,7 @@ export const completeOnboarding = async (data: OnboardingCompletionRequest): Pro
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      throw new Error('Authentication required');
+      throw new Error('Something went wrong');
     }
     
     const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.ONBOARDING.COMPLETE}`, {
@@ -265,7 +270,8 @@ export const completeOnboarding = async (data: OnboardingCompletionRequest): Pro
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
     }
 
     const result: StandardResponse<OnboardingStepResponse> = await response.json();
@@ -283,7 +289,7 @@ export const getPlatformTour = async (): Promise<StandardResponse<PlatformTour>>
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      throw new Error('Authentication required');
+      throw new Error('Something went wrong');
     }
     
     const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.ONBOARDING.PLATFORM_TOUR}`, {
@@ -295,7 +301,8 @@ export const getPlatformTour = async (): Promise<StandardResponse<PlatformTour>>
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
     }
 
     const result: StandardResponse<PlatformTour> = await response.json();
@@ -313,7 +320,7 @@ export const skipOnboarding = async (): Promise<StandardResponse<OnboardingStepR
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      throw new Error('Authentication required');
+      throw new Error('Something went wrong');
     }
     
     const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.ONBOARDING.SKIP}`, {
@@ -325,7 +332,8 @@ export const skipOnboarding = async (): Promise<StandardResponse<OnboardingStepR
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Something went wrong');
     }
 
     const result: StandardResponse<OnboardingStepResponse> = await response.json();

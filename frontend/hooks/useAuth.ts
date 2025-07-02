@@ -2,6 +2,7 @@
 
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { API_BASE_URL } from '@/lib/constants/api-endpoints'
 
 export function useAuth() {
   const { data: session, status } = useSession()
@@ -20,6 +21,21 @@ export function useAuth() {
   }
 
   const logout = async () => {
+    // Call backend logout endpoint to blacklist token
+    if (session?.accessToken) {
+      try {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.accessToken}`
+          }
+        })
+      } catch (error) {
+        console.error('Backend logout error:', error)
+      }
+    }
+    
+    // Then sign out from NextAuth
     await signOut({ callbackUrl: '/' })
   }
 

@@ -60,10 +60,14 @@ const CourseManagePage = () => {
     }
 
     fetchCourses();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, router]);
 
   useEffect(() => {
     filterAndSortCourses();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courses, searchTerm, filterStatus, sortBy]);
 
   const fetchCourses = async () => {
@@ -72,7 +76,7 @@ const CourseManagePage = () => {
       const response = await getCourses(`creator_id=${user?.id}`);
       
       if (!response.success) {
-        throw new Error(response.message || 'Operation Failed');
+        throw new Error(response.message || 'Something went wrong');
       }
       
       const formattedCourses = (response.data?.courses || []).map((course: any) => ({
@@ -92,7 +96,7 @@ const CourseManagePage = () => {
       setCourses(formattedCourses);
     } catch (error: any) {
       console.error('Failed to fetch courses:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -170,10 +174,10 @@ const CourseManagePage = () => {
       
       setCourses(courses.filter(c => !selectedCourses.includes(c.id)));
       setSelectedCourses([]);
-      toast.success(lastResponse?.message || 'Operation Failed');
+      toast.success(lastResponse?.message || 'Something went wrong');
     } catch (error: any) {
       console.error('Failed to delete courses:', error);
-      toast.error(error.message || 'Operation Failed');
+      toast.error(error.message || 'Something went wrong');
     }
   };
 

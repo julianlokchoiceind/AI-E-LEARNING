@@ -28,6 +28,8 @@ const PreviewLessonPage = () => {
 
   useEffect(() => {
     fetchPreviewData();
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, lessonId]);
 
   const fetchPreviewData = async () => {
@@ -36,15 +38,19 @@ const PreviewLessonPage = () => {
       setError(null);
       
       // Fetch course details
-      const courseData = await getCourseById(courseId);
-      setCourse(courseData);
+      const courseResponse = await getCourseById(courseId);
+      if (courseResponse.success && courseResponse.data) {
+        setCourse(courseResponse.data);
+      } else {
+        throw new Error(courseResponse.message || 'Something went wrong');
+      }
 
       // Fetch lesson preview data
       try {
         const lessonResponse = await getPreviewLesson(courseId, lessonId);
         
         if (!lessonResponse.success || !lessonResponse.data) {
-          setError('Lesson not found');
+          setError(lessonResponse.message || 'Something went wrong');
           return;
         }
 
@@ -61,8 +67,8 @@ const PreviewLessonPage = () => {
       }
     } catch (error: any) {
       console.error('Failed to fetch preview data:', error);
-      setError('Failed to load lesson preview');
-      toast.error(error.message || 'Operation Failed');
+      setError(error.message || 'Something went wrong');
+      toast.error(error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }

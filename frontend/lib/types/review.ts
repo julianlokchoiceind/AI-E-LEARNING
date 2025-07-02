@@ -97,6 +97,15 @@ export interface ReviewSearchParams {
   per_page?: number;
 }
 
+export interface ReviewListResponse {
+  items: Review[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+  stats?: ReviewStats;
+}
+
 export const REVIEW_SUB_RATINGS = [
   { key: 'content_quality', label: 'Content Quality', icon: '📚' },
   { key: 'instructor_quality', label: 'Instructor Quality', icon: '👨‍🏫' },
