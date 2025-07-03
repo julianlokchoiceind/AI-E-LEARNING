@@ -97,7 +97,7 @@ def create_refresh_jwt(subject: str, expires_delta: timedelta = None) -> str:
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=30)  # 30 days for refresh token
+        expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     
     to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
     encoded_jwt = jwt.encode(
