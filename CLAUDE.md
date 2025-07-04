@@ -775,13 +775,13 @@ const ChapterEditor = () => {
 // MANDATORY: All error messages MUST follow this pattern:
 // 1. Backend MUST ALWAYS return a message
 // 2. If no message from backend = something is wrong
-// 3. ALL cases fallback to "Operation Failed" if no backend message
+// 3. ALL cases fallback to "Something went wrong" if no backend message
 // 4. This rule applies to SERVER-SIDE responses only (API calls)
 
-// ✅ CORRECT - Both success and error fallback to "Operation Failed":
-toast.success(response.message || 'Operation Failed');
-toast.error(error.message || 'Operation Failed');
-setError(error.message || 'Operation Failed');
+// ✅ CORRECT - Both success and error fallback to "Something went wrong":
+toast.success(response.message || 'Something went wrong');
+toast.error(error.message || 'Something went wrong');
+setError(error.message || 'Something went wrong');
 
 // ❌ WRONG - Different fallback messages:
 toast.success(response.message || 'Operation successful');
@@ -792,6 +792,7 @@ setError('An unexpected error occurred');
 
 // Note: Client-side validation errors can use specific messages
 // Example: "Password must be at least 8 characters"
+// IMPORTANT: "Something went wrong" indicates a backend response issue
 ```
 
 ```typescript
@@ -842,14 +843,14 @@ try {
   const response = await someAPICall();
   if (response.success) {
     // Use backend success message
-    toast.success(response.message || 'Operation successful');
+    toast.success(response.message || 'Something went wrong');
   } else {
-    // Use backend error message, fallback to "Operation Failed"
-    throw new Error(response.message || 'Operation Failed');
+    // Use backend error message, fallback to "Something went wrong"
+    throw new Error(response.message || 'Something went wrong');
   }
 } catch (error: any) {
-  // ALWAYS use backend message first, fallback to "Operation Failed" 
-  toast.error(error.message || 'Operation Failed');
+  // ALWAYS use backend message first, fallback to "Something went wrong" 
+  toast.error(error.message || 'Something went wrong');
 }
 ```
 
