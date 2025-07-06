@@ -86,7 +86,10 @@ export const updateCourse = async (courseId: string, data: Partial<CourseRespons
   return api.put<StandardResponse<CourseDetailData>>(
     `/courses/${courseId}`,
     data,
-    { requireAuth: true }
+    { 
+      requireAuth: true,
+      timeout: 60000 // 60 seconds timeout for course updates
+    }
   );
 };
 

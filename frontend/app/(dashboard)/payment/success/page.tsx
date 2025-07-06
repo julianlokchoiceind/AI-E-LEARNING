@@ -1,46 +1,26 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { CheckCircle, ArrowRight, Download, Clock } from 'lucide-react';
-import { getCourseById } from '@/lib/api/courses';
+import { useCourseQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
   
-  const [course, setCourse] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  
   const courseId = searchParams.get('course_id');
   const paymentIntentId = searchParams.get('payment_intent');
-
-  useEffect(() => {
-    if (courseId) {
-      fetchCourseDetails();
-    } else {
-      setLoading(false);
-    }
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId]);
-
-  const fetchCourseDetails = async () => {
-    try {
-      const courseData = await getCourseById(courseId!);
-      setCourse(courseData);
-    } catch (error: any) {
-      console.error('Failed to fetch course:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+  // React Query hook - automatic caching and error handling
+  const { data: courseResponse, loading } = useCourseQuery(courseId!, !!courseId);
+  
+  // Extract course data from React Query response
+  const course = courseResponse?.data || null;
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);

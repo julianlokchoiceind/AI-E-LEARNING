@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { CourseCheckoutForm } from '@/components/feature/CourseCheckoutForm';
-import { getCourseById } from '@/lib/api/courses';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
+import { useCourseQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { Clock, Users, BookOpen, ArrowLeft, Shield, CreditCard } from 'lucide-react';
 
 export default function CourseCheckoutPage() {
@@ -17,55 +18,47 @@ export default function CourseCheckoutPage() {
   const { user, loading: authLoading } = useAuth();
   const courseId = params.id as string;
 
-  const [course, setCourse] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  // React Query hook - automatic data fetching and error handling
+  const { 
+    data: courseResponse, 
+    loading: courseLoading, 
+    error: courseError 
+  } = useCourseQuery(courseId, !!courseId && !!user);
+
+  const course = courseResponse?.data || null;
+  const loading = authLoading || courseLoading;
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.push(`/login?redirect=/checkout/course/${courseId}`);
       return;
     }
+  }, [user, authLoading, router, courseId]);
 
-    if (user && courseId) {
-      fetchCourseAndInitializePayment();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, courseId, authLoading]);
-
-  const fetchCourseAndInitializePayment = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch course details
-      const courseResponse = await getCourseById(courseId);
-      if (!courseResponse.success || !courseResponse.data) {
-        throw new Error(courseResponse.message || 'Course not found');
-      }
-      
-      const courseData = courseResponse.data;
-      setCourse(courseData);
-
+  useEffect(() => {
+    if (course && user) {
       // Check if course should be free for this user
-      if (courseData.pricing.is_free) {
-        toast.error('This course is free. Redirecting to course page...');
+      if (course.pricing.is_free) {
+        ToastService.error('This course is free. Redirecting to course page...');
         router.push(`/courses/${courseId}`);
         return;
       }
 
       if (user?.premiumStatus) {
-        toast.error('You already have access to this course. Redirecting...');
+        ToastService.error('You already have access to this course. Redirecting...');
         router.push(`/courses/${courseId}`);
         return;
       }
-
-    } catch (error: any) {
-      console.error('Failed to fetch course:', error);
-      toast.error(error.message || 'Something went wrong');
-      router.push('/courses');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [course, user, router, courseId]);
+
+  useEffect(() => {
+    if (courseError) {
+      console.error('Failed to fetch course:', courseError);
+      ToastService.error(courseError?.message || 'Something went wrong');
+      router.push('/courses');
+    }
+  }, [courseError, router]);
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -86,10 +79,10 @@ export default function CourseCheckoutPage() {
     }
   };
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <LoadingSpinner size="lg" message="Loading checkout..." />
       </div>
     );
   }
@@ -177,11 +170,11 @@ export default function CourseCheckoutPage() {
               <CourseCheckoutForm 
                 course={course}
                 onSuccess={() => {
-                  toast.success('Payment successful! Redirecting to course...');
+                  ToastService.success('Payment successful! Redirecting to course...');
                   router.push(`/learn/${courseId}`);
                 }}
                 onError={(error: string) => {
-                  toast.error(error);
+                  ToastService.error(error);
                 }}
               />
             </Card>

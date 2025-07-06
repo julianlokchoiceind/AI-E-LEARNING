@@ -10,9 +10,15 @@ import NavigationGuard from '@/components/feature/NavigationGuard';
 import { useAutosave } from '@/hooks/useAutosave';
 import { useEditorStore } from '@/stores/editorStore';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
-import { quizAPI, Quiz, QuizQuestion } from '@/lib/api/quizzes';
-import { updateLesson } from '@/lib/api/lessons';
+import { ToastService } from '@/lib/toast/ToastService';
+import { Quiz, QuizQuestion } from '@/lib/api/quizzes';
+import { 
+  useLessonByIdQuery, 
+  useUpdateLesson,
+  useLessonQuizQuery,
+  useCreateQuiz,
+  useUpdateQuiz
+} from '@/hooks/queries/useLearning';
 
 interface Lesson {
   _id: string;
@@ -58,12 +64,33 @@ const LessonEditPage = () => {
   const courseId = params.id as string;
   const lessonId = params.lessonId as string;
 
-  const [lesson, setLesson] = useState<Lesson | null>(null);
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  // React Query hooks for data fetching
+  const { 
+    data: lessonResponse, 
+    loading: lessonLoading, 
+    execute: refetchLesson 
+  } = useLessonByIdQuery(lessonId, !!lessonId);
+  
+  const { 
+    data: quizResponse, 
+    loading: quizLoading, 
+    execute: refetchQuiz 
+  } = useLessonQuizQuery(lessonId, !!lessonId);
+
+  // React Query mutations
+  const { mutate: updateLessonMutation, loading: updateLoading } = useUpdateLesson();
+  const { mutate: createQuizMutation, loading: createQuizLoading } = useCreateQuiz();
+  const { mutate: updateQuizMutation, loading: updateQuizLoading } = useUpdateQuiz();
+
+  // Local UI state
   const [activeTab, setActiveTab] = useState<'general' | 'quiz'>('general');
-  const [loading, setLoading] = useState(true);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
+
+  // Extract data from React Query responses
+  const lesson = lessonResponse?.success ? lessonResponse.data : null;
+  const quiz = quizResponse?.success ? quizResponse.data : null;
+  const loading = lessonLoading || quizLoading;
   
   // Quiz form state
   const [quizData, setQuizData] = useState<QuizFormData>({
@@ -78,91 +105,109 @@ const LessonEditPage = () => {
     questions: []
   });
 
-  // Auto-save hook for lesson data
+  // Auto-save hook with React Query mutation
   const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges } = useAutosave(
     lesson,
     {
       delay: 2000,
       onSave: async (data) => {
         if (!data || !data._id) return;
-        await updateLesson(data._id, data);
+        return new Promise<void>((resolve, reject) => {
+          updateLessonMutation({ lessonId: data._id, data }, {
+            onSuccess: (response) => {
+              if (response.success) {
+                resolve();
+              } else {
+                reject(new Error(response.message || 'Something went wrong'));
+              }
+            },
+            onError: (error: any) => {
+              reject(error);
+            }
+          });
+        });
       },
       enabled: !!lesson,
     }
   );
 
+  // Initialize title input when lesson loads
   useEffect(() => {
-    fetchLessonData();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonId]);
-
-  const fetchLessonData = async () => {
-    try {
-      setLoading(true);
-      
-      // Check permissions
-      if (user?.role !== 'creator' && user?.role !== 'admin') {
-        toast.error('You do not have permission to edit lessons');
-        router.push('/dashboard');
-        return;
-      }
-
-      // Fetch lesson details
-      const lessonResponse = await fetch(`/api/v1/lessons/${lessonId}`, {
-        credentials: 'include'
-      });
-      if (!lessonResponse.ok) throw new Error('Something went wrong');
-      
-      const lessonData = await lessonResponse.json();
-      if (!lessonData.success) {
-        throw new Error(lessonData.message || 'Something went wrong');
-      }
-      setLesson(lessonData.data);
-      setTitleInput(lessonData.data.title);
-
-      // Try to fetch quiz for this lesson
-      try {
-        const quizResponse = await quizAPI.getLessonQuiz(lessonId);
-        if (quizResponse.success && quizResponse.data) {
-          const quiz = quizResponse.data;
-          setQuiz(quiz);
-          
-          // Populate quiz form with existing data
-          setQuizData({
-            title: quiz.title,
-            description: quiz.description || '',
-            pass_percentage: quiz.config.pass_percentage,
-            max_attempts: quiz.config.max_attempts,
-            shuffle_questions: quiz.config.shuffle_questions,
-            shuffle_answers: quiz.config.shuffle_answers,
-            show_correct_answers: quiz.config.show_correct_answers,
-            immediate_feedback: quiz.config.immediate_feedback,
-            questions: quiz.questions
-          });
-        }
-      } catch (error) {
-        // No quiz exists yet, that's okay
-        console.log('No quiz found for this lesson');
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch lesson data:', error);
-      toast.error(error.message || 'Something went wrong');
-      router.push(`/creator/courses/${courseId}/edit`);
-    } finally {
-      setLoading(false);
+    if (lesson && lesson.title) {
+      setTitleInput(lesson.title);
     }
-  };
+  }, [lesson]);
+
+  // Initialize quiz form when quiz loads
+  useEffect(() => {
+    if (quiz) {
+      setQuizData({
+        title: quiz.title,
+        description: quiz.description || '',
+        pass_percentage: quiz.config.pass_percentage,
+        max_attempts: quiz.config.max_attempts,
+        shuffle_questions: quiz.config.shuffle_questions,
+        shuffle_answers: quiz.config.shuffle_answers,
+        show_correct_answers: quiz.config.show_correct_answers,
+        immediate_feedback: quiz.config.immediate_feedback,
+        questions: quiz.questions
+      });
+    }
+  }, [quiz]);
+
+  // Check permissions when user loads
+  useEffect(() => {
+    if (user && user.role !== 'creator' && user.role !== 'admin') {
+      ToastService.error('You do not have permission to edit lessons');
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
+  // Handle lesson loading errors
+  useEffect(() => {
+    if (lessonResponse && !lessonResponse.success) {
+      ToastService.error(lessonResponse.message || 'Something went wrong');
+      router.push(`/creator/courses/${courseId}/edit`);
+    }
+  }, [lessonResponse, router, courseId]);
 
   const handleTitleSave = () => {
-    if (titleInput.trim() && titleInput !== lesson?.title) {
-      setLesson(prev => prev ? { ...prev, title: titleInput.trim() } : null);
+    if (titleInput.trim() && titleInput !== lesson?.title && lesson) {
+      const updatedLesson = { ...lesson, title: titleInput.trim() };
+      updateLessonMutation({ lessonId: lesson._id, data: updatedLesson }, {
+        onSuccess: (response) => {
+          if (response.success) {
+            ToastService.success(response.message || 'Lesson title updated');
+            refetchLesson(); // Refresh lesson data
+          } else {
+            ToastService.error(response.message || 'Something went wrong');
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error.message || 'Something went wrong');
+        }
+      });
       setIsEditingTitle(false);
     }
   };
 
   const handleLessonUpdate = (field: string, value: any) => {
-    setLesson(prev => prev ? { ...prev, [field]: value } : null);
+    if (lesson) {
+      const updatedLesson = { ...lesson, [field]: value };
+      // Trigger autosave will handle the update
+      updateLessonMutation({ lessonId: lesson._id, data: updatedLesson }, {
+        onSuccess: (response) => {
+          if (response.success) {
+            refetchLesson(); // Refresh lesson data
+          } else {
+            ToastService.error(response.message || 'Something went wrong');
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error.message || 'Something went wrong');
+        }
+      });
+    }
   };
 
   const handleAddQuestion = () => {
@@ -206,102 +251,110 @@ const LessonEditPage = () => {
     }));
   };
 
-  const handleSaveQuiz = async () => {
-    try {
-      // Validate quiz data
-      if (!quizData.title.trim()) {
-        toast.error('Quiz title is required');
+  const handleSaveQuiz = () => {
+    // Validate quiz data
+    if (!quizData.title.trim()) {
+      ToastService.error('Quiz title is required');
+      return;
+    }
+    
+    if (quizData.questions.length === 0) {
+      ToastService.error('Add at least one question');
+      return;
+    }
+    
+    // Validate all questions
+    for (let i = 0; i < quizData.questions.length; i++) {
+      const q = quizData.questions[i];
+      if (!q.question.trim()) {
+        ToastService.error(`Question ${i + 1} text is required`);
         return;
       }
-      
-      if (quizData.questions.length === 0) {
-        toast.error('Add at least one question');
+      if (q.options.some(opt => !opt.trim())) {
+        ToastService.error(`All options in question ${i + 1} must be filled`);
         return;
       }
+    }
+    
+    const questionsPayload = quizData.questions.map(q => ({
+      question: q.question,
+      type: q.type || 'multiple_choice' as const,
+      options: q.options,
+      correct_answer: q.correct_answer ?? 0,
+      explanation: q.explanation,
+      points: q.points
+    }));
+    
+    if (quiz) {
+      // Update existing quiz using React Query mutation
+      const updatePayload = {
+        title: quizData.title,
+        description: quizData.description,
+        config: {
+          time_limit: null,
+          pass_percentage: quizData.pass_percentage,
+          max_attempts: quizData.max_attempts,
+          shuffle_questions: quizData.shuffle_questions,
+          shuffle_answers: quizData.shuffle_answers,
+          show_correct_answers: quizData.show_correct_answers,
+          immediate_feedback: quizData.immediate_feedback
+        },
+        questions: questionsPayload
+      };
       
-      // Validate all questions
-      for (let i = 0; i < quizData.questions.length; i++) {
-        const q = quizData.questions[i];
-        if (!q.question.trim()) {
-          toast.error(`Question ${i + 1} text is required`);
-          return;
+      updateQuizMutation({ lessonId: lesson._id, quiz: updatePayload }, {
+        onSuccess: (response) => {
+          if (response.success && response.data) {
+            ToastService.success(response.message || 'Quiz updated successfully');
+            refetchQuiz(); // Refresh quiz data
+          } else {
+            ToastService.error(response.message || 'Something went wrong');
+          }
+        },
+        onError: (error: any) => {
+          console.error('Failed to update quiz:', error);
+          ToastService.error(error.message || 'Something went wrong');
         }
-        if (q.options.some(opt => !opt.trim())) {
-          toast.error(`All options in question ${i + 1} must be filled`);
-          return;
-        }
-      }
+      });
+    } else {
+      // Create new quiz using React Query mutation
+      const createPayload = {
+        lesson_id: lessonId,
+        course_id: courseId,
+        title: quizData.title,
+        description: quizData.description,
+        config: {
+          time_limit: null,
+          pass_percentage: quizData.pass_percentage,
+          max_attempts: quizData.max_attempts,
+          shuffle_questions: quizData.shuffle_questions,
+          shuffle_answers: quizData.shuffle_answers,
+          show_correct_answers: quizData.show_correct_answers,
+          immediate_feedback: quizData.immediate_feedback
+        },
+        questions: questionsPayload.map(q => ({
+          question: q.question,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          explanation: q.explanation || undefined,
+          points: q.points
+        }))
+      };
       
-      // Calculate total points
-      const totalPoints = quizData.questions.reduce((sum, q) => sum + q.points, 0);
-      
-      const questionsPayload = quizData.questions.map(q => ({
-        question: q.question,
-        type: q.type || 'multiple_choice' as const,
-        options: q.options,
-        correct_answer: q.correct_answer ?? 0,
-        explanation: q.explanation,
-        points: q.points
-      }));
-      
-      if (quiz) {
-        // Update existing quiz
-        const updatePayload = {
-          title: quizData.title,
-          description: quizData.description,
-          config: {
-            time_limit: null,
-            pass_percentage: quizData.pass_percentage,
-            max_attempts: quizData.max_attempts,
-            shuffle_questions: quizData.shuffle_questions,
-            shuffle_answers: quizData.shuffle_answers,
-            show_correct_answers: quizData.show_correct_answers,
-            immediate_feedback: quizData.immediate_feedback
-          },
-          questions: questionsPayload
-        };
-        const updated = await quizAPI.updateQuiz(quiz._id, updatePayload);
-        if (updated.success && updated.data) {
-          setQuiz(updated.data);
-          toast.success(updated.message || 'Something went wrong');
-        } else {
-          throw new Error(updated.message || 'Something went wrong');
+      createQuizMutation({ lessonId: lesson._id, quiz: createPayload }, {
+        onSuccess: (response) => {
+          if (response.success && response.data) {
+            ToastService.success(response.message || 'Quiz created successfully');
+            refetchQuiz(); // Refresh quiz data
+          } else {
+            ToastService.error(response.message || 'Something went wrong');
+          }
+        },
+        onError: (error: any) => {
+          console.error('Failed to create quiz:', error);
+          ToastService.error(error.message || 'Something went wrong');
         }
-      } else {
-        // Create new quiz
-        const createPayload = {
-          lesson_id: lessonId,
-          course_id: courseId,
-          title: quizData.title,
-          description: quizData.description,
-          config: {
-            time_limit: null,
-            pass_percentage: quizData.pass_percentage,
-            max_attempts: quizData.max_attempts,
-            shuffle_questions: quizData.shuffle_questions,
-            shuffle_answers: quizData.shuffle_answers,
-            show_correct_answers: quizData.show_correct_answers,
-            immediate_feedback: quizData.immediate_feedback
-          },
-          questions: questionsPayload.map(q => ({
-            question: q.question,
-            options: q.options,
-            correct_answer: q.correct_answer,
-            explanation: q.explanation || undefined,
-            points: q.points
-          }))
-        };
-        const created = await quizAPI.createQuiz(createPayload);
-        if (created.success && created.data) {
-          setQuiz(created.data);
-          toast.success(created.message || 'Something went wrong');
-        } else {
-          throw new Error(created.message || 'Something went wrong');
-        }
-      }
-    } catch (error: any) {
-      console.error('Failed to save quiz:', error);
-      toast.error(error.message || 'Something went wrong');
+      });
     }
   };
 
@@ -377,8 +430,8 @@ const LessonEditPage = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={forceSave}
-                  loading={saveStatus === 'saving'}
+                  onClick={() => forceSave()}
+                  loading={saveStatus === 'saving' || updateLoading}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Save
@@ -461,13 +514,13 @@ const LessonEditPage = () => {
                           
                           // Validate YouTube URL
                           if (url && !isValidYouTubeUrl(url)) {
-                            toast.error('Please enter a valid YouTube URL');
+                            ToastService.error('Please enter a valid YouTube URL');
                           }
                         }}
                         onBlur={(e) => {
                           const url = e.target.value;
                           if (url && !isValidYouTubeUrl(url)) {
-                            toast.error('Invalid YouTube URL format. Please use: https://www.youtube.com/watch?v=... or https://youtu.be/...');
+                            ToastService.error('Invalid YouTube URL format. Please use: https://www.youtube.com/watch?v=... or https://youtu.be/...');
                           }
                         }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -734,6 +787,7 @@ const LessonEditPage = () => {
                         <Button
                           variant="primary"
                           onClick={handleSaveQuiz}
+                          loading={createQuizLoading || updateQuizLoading}
                         >
                           <Save className="w-4 h-4 mr-2" />
                           {quiz ? 'Update Quiz' : 'Save Quiz'}

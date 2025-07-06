@@ -10,9 +10,13 @@ import NavigationGuard from '@/components/feature/NavigationGuard';
 import { useAutosave } from '@/hooks/useAutosave';
 import { useEditorStore } from '@/stores/editorStore';
 import { useAuth } from '@/hooks/useAuth';
-import { getChapterById, updateChapter } from '@/lib/api/chapters';
-import { getLessonsByChapter, createLesson } from '@/lib/api/lessons';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
+import { 
+  useChapterByIdQuery, 
+  useUpdateChapter,
+  useChapterLessonsQuery,
+  useCreateLesson 
+} from '@/hooks/queries/useLearning';
 
 interface Chapter {
   _id: string;
@@ -45,106 +49,153 @@ const ChapterEditPage = () => {
   const courseId = params.id as string;
   const chapterId = params.chapterId as string;
 
-  const [chapter, setChapter] = useState<Chapter | null>(null);
-  const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [loading, setLoading] = useState(true);
+  // React Query hooks for data fetching
+  const { 
+    data: chapterResponse, 
+    loading: chapterLoading, 
+    execute: refetchChapter 
+  } = useChapterByIdQuery(chapterId, !!chapterId);
+  
+  const { 
+    data: lessonsResponse, 
+    loading: lessonsLoading, 
+    execute: refetchLessons 
+  } = useChapterLessonsQuery(chapterId, !!chapterId);
+
+  // React Query mutations
+  const { mutate: updateChapterMutation, loading: updateLoading } = useUpdateChapter();
+  const { mutate: createLessonMutation, loading: createLessonLoading } = useCreateLesson();
+
+  // Local UI state
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
 
-  // Auto-save hook
+  // Extract data from React Query responses
+  const chapter = chapterResponse?.success ? chapterResponse.data : null;
+  const lessons = lessonsResponse?.success 
+    ? (Array.isArray(lessonsResponse.data) 
+        ? lessonsResponse.data 
+        : lessonsResponse.data?.lessons || [])
+    : [];
+  const loading = chapterLoading || lessonsLoading;
+
+  // Auto-save hook with React Query mutation
   const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges } = useAutosave(
     chapter,
     {
       delay: 2000,
       onSave: async (data) => {
         if (!data || !data._id) return;
-        await updateChapter(data._id, data);
+        return new Promise((resolve, reject) => {
+          updateChapterMutation({ chapterId: data._id, data }, {
+            onSuccess: (response) => {
+              if (response.success) {
+                resolve(response);
+              } else {
+                reject(new Error(response.message || 'Something went wrong'));
+              }
+            },
+            onError: (error: any) => {
+              reject(error);
+            }
+          });
+        });
       },
       enabled: !!chapter,
     }
   );
 
+  // Initialize title input when chapter loads
   useEffect(() => {
-    fetchChapterData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chapterId]);
-
-  const fetchChapterData = async () => {
-    try {
-      setLoading(true);
-      
-      // Check permissions
-      if (user?.role !== 'creator' && user?.role !== 'admin') {
-        toast.error('You do not have permission to edit chapters');
-        router.push('/dashboard');
-        return;
-      }
-
-      // Fetch chapter details
-      const chapterResponse = await getChapterById(chapterId);
-      if (!chapterResponse.success || !chapterResponse.data) {
-        throw new Error(chapterResponse.message || 'Something went wrong');
-      }
-      setChapter(chapterResponse.data);
-      setTitleInput(chapterResponse.data.title);
-
-      // Fetch lessons in this chapter
-      const lessonsResponse = await getLessonsByChapter(chapterId);
-      if (!lessonsResponse.success) {
-        throw new Error(lessonsResponse.message || 'Something went wrong');
-      }
-      const lessonData = lessonsResponse.data;
-      // Handle both array and object response
-      if (Array.isArray(lessonData)) {
-        setLessons(lessonData);
-      } else if (lessonData && 'lessons' in lessonData) {
-        setLessons(lessonData.lessons || []);
-      } else {
-        setLessons([]);
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch chapter data:', error);
-      toast.error(error.message || 'Something went wrong');
-      router.push(`/creator/courses/${courseId}/edit`);
-    } finally {
-      setLoading(false);
+    if (chapter && chapter.title) {
+      setTitleInput(chapter.title);
     }
-  };
+  }, [chapter]);
+
+  // Check permissions when user loads
+  useEffect(() => {
+    if (user && user.role !== 'creator' && user.role !== 'admin') {
+      ToastService.error('You do not have permission to edit chapters');
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
+  // Handle chapter loading errors
+  useEffect(() => {
+    if (chapterResponse && !chapterResponse.success) {
+      ToastService.error(chapterResponse.message || 'Something went wrong');
+      router.push(`/creator/courses/${courseId}/edit`);
+    }
+  }, [chapterResponse, router, courseId]);
 
   const handleTitleSave = () => {
-    if (titleInput.trim() && titleInput !== chapter?.title) {
-      setChapter(prev => prev ? { ...prev, title: titleInput.trim() } : null);
+    if (titleInput.trim() && titleInput !== chapter?.title && chapter) {
+      // Trigger autosave with updated title
+      const updatedChapter = { ...chapter, title: titleInput.trim() };
+      updateChapterMutation({ chapterId: chapter._id, data: updatedChapter }, {
+        onSuccess: (response) => {
+          if (response.success) {
+            ToastService.success(response.message || 'Chapter title updated');
+            refetchChapter(); // Refresh chapter data
+          } else {
+            ToastService.error(response.message || 'Something went wrong');
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error.message || 'Something went wrong');
+        }
+      });
       setIsEditingTitle(false);
     }
   };
 
   const handleChapterUpdate = (field: string, value: any) => {
-    setChapter(prev => prev ? { ...prev, [field]: value } : null);
+    if (chapter) {
+      const updatedChapter = { ...chapter, [field]: value };
+      // Trigger autosave will handle the update
+      updateChapterMutation({ chapterId: chapter._id, data: updatedChapter }, {
+        onSuccess: (response) => {
+          if (response.success) {
+            refetchChapter(); // Refresh chapter data
+          } else {
+            ToastService.error(response.message || 'Something went wrong');
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error.message || 'Something went wrong');
+        }
+      });
+    }
   };
 
-  const handleCreateLesson = async () => {
-    try {
-      const lessonCount = lessons.length + 1;
-      const dateStr = new Date().toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: '2-digit' 
-      }).replace(/\//g, '');
-      
-      const response = await createLesson({ 
-        chapter_id: chapterId,
-        title: `Untitled Lesson #${lessonCount} (${dateStr})`
-      });
-      
-      if (response.success && response.data) {
-        // Redirect to lesson editor
-        router.push(`/creator/courses/${courseId}/lessons/${response.data._id}/edit`);
-        toast.success(response.message || 'Something went wrong');
+  const handleCreateLesson = () => {
+    const lessonCount = lessons.length + 1;
+    const dateStr = new Date().toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: '2-digit' 
+    }).replace(/\//g, '');
+    
+    const lessonData = { 
+      chapterId: chapterId,
+      title: `Untitled Lesson #${lessonCount} (${dateStr})`
+    };
+
+    createLessonMutation(lessonData, {
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          ToastService.success(response.message || 'Lesson created successfully');
+          // Redirect to lesson editor
+          router.push(`/creator/courses/${courseId}/lessons/${response.data._id}/edit`);
+        } else {
+          ToastService.error(response.message || 'Something went wrong');
+        }
+      },
+      onError: (error: any) => {
+        console.error('Failed to create lesson:', error);
+        ToastService.error(error.message || 'Something went wrong');
       }
-    } catch (error: any) {
-      console.error('Failed to create lesson:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    });
   };
 
   const handleEditLesson = (lessonId: string) => {
@@ -215,8 +266,8 @@ const ChapterEditPage = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={forceSave}
-                  loading={saveStatus === 'saving'}
+                  onClick={() => forceSave()}
+                  loading={saveStatus === 'saving' || updateLoading}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Save
@@ -277,6 +328,7 @@ const ChapterEditPage = () => {
                     variant="primary"
                     size="sm"
                     onClick={handleCreateLesson}
+                    loading={createLessonLoading}
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Lesson
@@ -290,6 +342,7 @@ const ChapterEditPage = () => {
                     <Button
                       variant="primary"
                       onClick={handleCreateLesson}
+                      loading={createLessonLoading}
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Create First Lesson
@@ -298,8 +351,8 @@ const ChapterEditPage = () => {
                 ) : (
                   <div className="space-y-3">
                     {lessons
-                      .sort((a, b) => a.order - b.order)
-                      .map((lesson, index) => (
+                      .sort((a: Lesson, b: Lesson) => a.order - b.order)
+                      .map((lesson: Lesson, index: number) => (
                         <div
                           key={lesson._id}
                           className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"

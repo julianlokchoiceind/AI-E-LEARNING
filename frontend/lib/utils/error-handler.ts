@@ -1,4 +1,4 @@
-import toast from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { debug, log, error as errorLog } from '@/lib/utils/debug';
 
 // Error types
@@ -264,14 +264,7 @@ export function showErrorToast(error: AppError) {
   const icon = getErrorIcon(error.type);
   const duration = error.severity === ErrorSeverity.CRITICAL ? 10000 : 5000;
 
-  toast.error(error.message, {
-    duration,
-    icon,
-    style: {
-      background: getErrorBackgroundColor(error.severity),
-      color: '#fff',
-    },
-  });
+  ToastService.error(error.message);
 }
 
 // Get error icon based on type
@@ -345,4 +338,43 @@ export function formatValidationErrors(errors: Record<string, string[]>): string
   return Object.entries(errors)
     .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
     .join('\n');
+}
+
+// Specific error messages for different operations
+export const ChapterErrors = {
+  CREATE_FAILED: 'Failed to create chapter',
+  UPDATE_FAILED: 'Failed to update chapter',
+  DELETE_FAILED: 'Failed to delete chapter',
+  FETCH_FAILED: 'Failed to fetch chapter',
+  REORDER_FAILED: 'Failed to reorder chapters',
+  NOT_FOUND: 'Chapter not found',
+  ACCESS_DENIED: 'Access denied to chapter',
+  VALIDATION_FAILED: 'Chapter validation failed'
+};
+
+export const LessonErrors = {
+  CREATE_FAILED: 'Failed to create lesson',
+  UPDATE_FAILED: 'Failed to update lesson', 
+  DELETE_FAILED: 'Failed to delete lesson',
+  FETCH_FAILED: 'Failed to fetch lesson',
+  REORDER_FAILED: 'Failed to reorder lessons',
+  NOT_FOUND: 'Lesson not found',
+  ACCESS_DENIED: 'Access denied to lesson',
+  VALIDATION_FAILED: 'Lesson validation failed',
+  VIDEO_INVALID: 'Invalid video URL',
+  UPLOAD_FAILED: 'Video upload failed'
+};
+
+// Enhanced error handling wrapper that replaces withErrorHandling
+export async function withErrorHandling<T>(
+  operation: () => Promise<T>,
+  operationName: string
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    const appError = handleError(error, false); // Don't show toast, let caller decide
+    console.error(`${operationName}:`, appError);
+    throw appError;
+  }
 }

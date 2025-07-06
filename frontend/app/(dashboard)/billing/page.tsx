@@ -8,15 +8,13 @@ import { Badge } from '@/components/ui/Badge';
 import { SubscriptionCard } from '@/components/ui/SubscriptionCard';
 import { PaymentHistory } from '@/components/ui/PaymentHistory';
 import { 
-  getSubscriptionStatus, 
-  getPaymentHistory, 
-  cancelSubscription,
   formatPrice,
   formatSubscriptionPeriod,
   getSubscriptionStatusColor
 } from '@/lib/api/payments';
+import { useBillingDashboardQuery, useCancelSubscription } from '@/hooks/queries/usePayments';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { 
   CreditCard, 
   Calendar, 
@@ -31,63 +29,38 @@ export default function BillingPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
-  const [paymentHistory, setPaymentHistory] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [canceling, setCanceling] = useState(false);
+  // React Query hooks for billing data
+  const {
+    subscriptionStatus,
+    paymentHistory,
+    loading,
+    refetchAll
+  } = useBillingDashboardQuery(!!user);
 
+  const { mutate: cancelSubscriptionMutation, loading: canceling } = useCancelSubscription();
+
+  // Check authentication
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login?redirect=/billing');
-      return;
     }
-
-    if (user) {
-      fetchBillingData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading]);
-
-  const fetchBillingData = async () => {
-    try {
-      setLoading(true);
-      
-      const [subscriptionResponse, historyResponse] = await Promise.all([
-        getSubscriptionStatus(),
-        getPaymentHistory(10, 0)
-      ]);
-
-      setSubscriptionStatus(subscriptionResponse);
-      setPaymentHistory(historyResponse.data);
-    } catch (error: any) {
-      console.error('Failed to fetch billing data:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, authLoading, router]);
 
   const handleCancelSubscription = async () => {
     if (!window.confirm('Are you sure you want to cancel your subscription? You\'ll lose access to Pro features at the end of your billing period.')) {
       return;
     }
 
-    try {
-      setCanceling(true);
-      const response = await cancelSubscription(true);
-      
-      if (response.success) {
-        toast.success(response.message || 'Something went wrong');
-        await fetchBillingData(); // Refresh data
-      } else {
-        throw new Error('Cancellation failed');
+    cancelSubscriptionMutation(true, {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Something went wrong');
+        // React Query will automatically invalidate and refetch billing data
+      },
+      onError: (error: any) => {
+        console.error('Cancellation failed:', error);
+        ToastService.error(error.message || 'Something went wrong');
       }
-    } catch (error: any) {
-      console.error('Cancellation failed:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setCanceling(false);
-    }
+    });
   };
 
   const handleUpgradeSubscription = () => {
@@ -299,8 +272,8 @@ export default function BillingPage() {
             <CreditCard className="w-5 h-5 text-gray-400" />
           </div>
           
-          {paymentHistory ? (
-            <PaymentHistory payments={paymentHistory.payments} />
+          {paymentHistory?.data?.payments ? (
+            <PaymentHistory payments={paymentHistory.data.payments} />
           ) : (
             <div className="text-center py-8">
               <CreditCard className="w-12 h-12 mx-auto mb-4 text-gray-300" />

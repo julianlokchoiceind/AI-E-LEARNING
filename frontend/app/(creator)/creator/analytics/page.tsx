@@ -6,15 +6,12 @@ import { BarChart, TrendingUp, Users, DollarSign, Clock, Award } from 'lucide-re
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { AnalyticsChart } from '@/components/feature/AnalyticsChart';
 import { 
-  getCreatorOverview, 
-  getCourseAnalytics, 
-  getStudentAnalytics, 
-  getRevenueAnalytics,
-  exportAnalytics 
-} from '@/lib/api/analytics';
+  useAnalyticsDashboardQuery,
+  useExportAnalytics
+} from '@/hooks/queries/useAnalytics';
 import type { 
   AnalyticsOverview, 
   CourseAnalytics, 
@@ -25,74 +22,48 @@ import type {
 const CreatorAnalyticsPage = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
-  const [revenue, setRevenue] = useState<RevenueAnalytics | null>(null);
-  const [students, setStudents] = useState<StudentAnalytics | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
-  const [courseAnalytics, setCourseAnalytics] = useState<CourseAnalytics | null>(null);
-  const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30days');
   const [activeTab, setActiveTab] = useState<'overview' | 'courses' | 'students' | 'revenue'>('overview');
 
+  // React Query hooks for analytics data - replaces manual API calls and state management
+  const { 
+    overview, 
+    revenue, 
+    students, 
+    loading, 
+    error, 
+    refetchAll 
+  } = useAnalyticsDashboardQuery(timeRange, !!user);
+
+  // Extract data from React Query responses
+  const overviewData = overview.data?.data || null;
+  const revenueData = revenue.data?.data || null;
+  const studentsData = students.data?.data || null;
+
+  // React Query mutation for analytics export
+  const { mutate: exportAnalyticsData, loading: isExporting } = useExportAnalytics();
+
   useEffect(() => {
     if (user?.role !== 'creator' && user?.role !== 'admin') {
-      toast.error('Access denied. Creator access required.');
+      ToastService.error('Access denied. Creator access required.');
       router.push('/dashboard');
       return;
     }
+    // React Query automatically handles data fetching when timeRange changes
+  }, [user, router]);
 
-    fetchAnalytics();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, router, timeRange]);
-
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch all analytics data in parallel
-      const [overviewResponse, revenueResponse, studentsResponse] = await Promise.all([
-        getCreatorOverview(timeRange),
-        getRevenueAnalytics(timeRange),
-        getStudentAnalytics(20, 0)
-      ]);
-
-      // Check responses and extract data
-      if (!overviewResponse.success) {
-        throw new Error(overviewResponse.message || 'Something went wrong');
+  // Handle analytics export using React Query mutation
+  const handleExport = (reportType: string) => {
+    exportAnalyticsData({ reportType, timeRange, format: 'csv' }, {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Analytics export completed successfully');
+      },
+      onError: (error: any) => {
+        console.error('Export failed:', error);
+        ToastService.error(error.message || 'Something went wrong');
       }
-      if (!revenueResponse.success) {
-        throw new Error(revenueResponse.message || 'Something went wrong');
-      }
-      if (!studentsResponse.success) {
-        throw new Error(studentsResponse.message || 'Something went wrong');
-      }
-
-      setOverview(overviewResponse.data || null);
-      setRevenue(revenueResponse.data || null);
-      setStudents(studentsResponse.data || null);
-      
-    } catch (error: any) {
-      console.error('Failed to fetch analytics:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleExport = async (reportType: string) => {
-    try {
-      const response = await exportAnalytics(reportType, timeRange, 'csv');
-      
-      if (response.success) {
-        toast.success(response.message || 'Something went wrong');
-      } else {
-        throw new Error(response.message || 'Something went wrong');
-      }
-    } catch (error: any) {
-      console.error('Export failed:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    });
   };
 
   if (loading) {
@@ -103,7 +74,18 @@ const CreatorAnalyticsPage = () => {
     );
   }
 
-  if (!overview) {
+  if (error) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-gray-600 text-lg">Failed to load analytics data</p>
+        <Button onClick={() => refetchAll()} className="mt-4">
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (!overviewData) {
     return (
       <div className="text-center py-16">
         <p className="text-gray-600 text-lg">No analytics data available</p>
@@ -159,6 +141,7 @@ const CreatorAnalyticsPage = () => {
                 variant="secondary"
                 size="sm"
                 onClick={() => handleExport('overview')}
+                loading={isExporting}
               >
                 Export Report
               </Button>
@@ -216,10 +199,10 @@ const CreatorAnalyticsPage = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sm text-gray-600">Total Revenue</p>
-                    <p className="text-2xl font-bold">${overview.overview.total_revenue?.toFixed(2) || 0}</p>
+                    <p className="text-2xl font-bold">${overviewData.overview.total_revenue?.toFixed(2) || 0}</p>
                     <p className="text-sm text-green-600">
-                      {revenue && revenue.summary.growth_rate > 0 
-                        ? `+${revenue.summary.growth_rate.toFixed(1)}% growth`
+                      {revenueData && revenueData.summary.growth_rate > 0 
+                        ? `+${revenueData.summary.growth_rate.toFixed(1)}% growth`
                         : 'Calculate growth'}
                     </p>
                   </div>
@@ -231,9 +214,9 @@ const CreatorAnalyticsPage = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sm text-gray-600">Total Students</p>
-                    <p className="text-2xl font-bold">{overview.overview.total_students || 0}</p>
+                    <p className="text-2xl font-bold">{overviewData.overview.total_students || 0}</p>
                     <p className="text-sm text-blue-600">
-                      {overview.overview.active_students || 0} active
+                      {overviewData.overview.active_students || 0} active
                     </p>
                   </div>
                   <Users className="w-8 h-8 text-blue-500" />
@@ -244,9 +227,9 @@ const CreatorAnalyticsPage = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sm text-gray-600">Completion Rate</p>
-                    <p className="text-2xl font-bold">{overview.overview.completion_rate?.toFixed(1) || 0}%</p>
+                    <p className="text-2xl font-bold">{overviewData.overview.completion_rate?.toFixed(1) || 0}%</p>
                     <p className="text-sm text-indigo-600">
-                      {overview.overview.total_courses || 0} courses
+                      {overviewData.overview.total_courses || 0} courses
                     </p>
                   </div>
                   <Award className="w-8 h-8 text-indigo-500" />
@@ -257,9 +240,9 @@ const CreatorAnalyticsPage = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-sm text-gray-600">Avg Rating</p>
-                    <p className="text-2xl font-bold">{overview.overview.average_rating?.toFixed(1) || 0} ⭐</p>
+                    <p className="text-2xl font-bold">{overviewData.overview.average_rating?.toFixed(1) || 0} ⭐</p>
                     <p className="text-sm text-yellow-600">
-                      {overview.overview.total_courses || 0} courses
+                      {overviewData.overview.total_courses || 0} courses
                     </p>
                   </div>
                   <TrendingUp className="w-8 h-8 text-yellow-500" />
@@ -270,9 +253,9 @@ const CreatorAnalyticsPage = () => {
             {/* Recent Activity */}
             <Card className="p-6 mb-8">
               <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-              {overview.recent_activity?.length > 0 ? (
+              {overviewData.recent_activity?.length > 0 ? (
                 <div className="space-y-3">
-                  {overview.recent_activity.map((activity, index) => (
+                  {overviewData.recent_activity.map((activity, index) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">{activity.user_name}</p>
@@ -295,35 +278,35 @@ const CreatorAnalyticsPage = () => {
         )}
 
         {/* Revenue Tab */}
-        {activeTab === 'revenue' && revenue && (
+        {activeTab === 'revenue' && revenueData && (
           <>
             {/* Revenue Summary */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <Card className="p-6">
                 <div>
                   <p className="text-sm text-gray-600">Total Revenue</p>
-                  <p className="text-2xl font-bold">${revenue.summary.total_revenue.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">${revenueData.summary.total_revenue.toFixed(2)}</p>
                 </div>
               </Card>
               
               <Card className="p-6">
                 <div>
                   <p className="text-sm text-gray-600">Total Transactions</p>
-                  <p className="text-2xl font-bold">{revenue.summary.total_transactions}</p>
+                  <p className="text-2xl font-bold">{revenueData.summary.total_transactions}</p>
                 </div>
               </Card>
               
               <Card className="p-6">
                 <div>
                   <p className="text-sm text-gray-600">Average Transaction</p>
-                  <p className="text-2xl font-bold">${revenue.summary.average_transaction.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">${revenueData.summary.average_transaction.toFixed(2)}</p>
                 </div>
               </Card>
               
               <Card className="p-6">
                 <div>
                   <p className="text-sm text-gray-600">Growth Rate</p>
-                  <p className="text-2xl font-bold">{revenue.summary.growth_rate.toFixed(1)}%</p>
+                  <p className="text-2xl font-bold">{revenueData.summary.growth_rate.toFixed(1)}%</p>
                 </div>
               </Card>
             </div>
@@ -333,7 +316,7 @@ const CreatorAnalyticsPage = () => {
               <AnalyticsChart
                 title="Revenue Trends"
                 type="line"
-                data={revenue.revenue_trends}
+                data={revenueData.revenue_trends}
                 dataKey="revenue"
                 xKey="date"
               />
@@ -341,7 +324,7 @@ const CreatorAnalyticsPage = () => {
               <AnalyticsChart
                 title="Revenue by Course"
                 type="bar"
-                data={revenue.revenue_by_course.slice(0, 5)}
+                data={revenueData.revenue_by_course.slice(0, 5)}
                 dataKey="revenue"
                 xKey="course"
               />
@@ -352,11 +335,11 @@ const CreatorAnalyticsPage = () => {
               <h3 className="text-lg font-semibold mb-4">Payment Types</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
-                  <p className="text-3xl font-bold">{revenue.payment_types.course_purchase}</p>
+                  <p className="text-3xl font-bold">{revenueData.payment_types.course_purchase}</p>
                   <p className="text-gray-600">One-time Purchases</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold">{revenue.payment_types.subscription}</p>
+                  <p className="text-3xl font-bold">{revenueData.payment_types.subscription}</p>
                   <p className="text-gray-600">Subscriptions</p>
                 </div>
               </div>
@@ -365,12 +348,12 @@ const CreatorAnalyticsPage = () => {
         )}
 
         {/* Students Tab */}
-        {activeTab === 'students' && students && (
+        {activeTab === 'students' && studentsData && (
           <>
             <Card className="p-6 mb-8">
               <h2 className="text-xl font-semibold mb-4">Student Analytics</h2>
               <div className="space-y-4">
-                {students.students.map((student) => (
+                {studentsData.students.map((student) => (
                   <div key={student.student.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div>
@@ -399,7 +382,7 @@ const CreatorAnalyticsPage = () => {
                 ))}
               </div>
               
-              {students.pagination.has_more && (
+              {studentsData.pagination.has_more && (
                 <div className="mt-4 text-center">
                   <Button variant="outline" size="sm">
                     Load More Students

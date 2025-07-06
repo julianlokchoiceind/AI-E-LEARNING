@@ -4,35 +4,36 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
+import { useApiMutation } from '@/hooks/useApiMutation'
 import { forgotPassword } from '@/lib/api/auth'
+import { ToastService } from '@/lib/toast/ToastService'
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
-  const [error, setError] = useState('')
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    
-    try {
-      const response = await forgotPassword(email)
-      if (response.success) {
-        setSuccessMessage(response.message || 'Password reset email sent! Please check your inbox.')
-        setSuccess(true)
-      } else {
-        throw new Error(response.message || 'Something went wrong')
+  // React Query mutation for forgot password - replaces manual API calls
+  const { mutate: sendResetEmail, loading } = useApiMutation(
+    (email: string) => forgotPassword(email),
+    {
+      onSuccess: (response) => {
+        const message = response.message || 'Password reset email sent! Please check your inbox.';
+        setSuccessMessage(message);
+        setSuccess(true);
+        ToastService.success(message);
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
       }
-    } catch (err: any) {
-      // Always use backend error message
-      setError(err.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
     }
+  )
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // React Query mutation handles API call with automatic error handling
+    sendResetEmail(email)
   }
   
   if (success) {
@@ -86,20 +87,6 @@ export default function ForgotPasswordPage() {
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-red-800">{error}</p>
-                </div>
-              </div>
-            </div>
-          )}
           
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">

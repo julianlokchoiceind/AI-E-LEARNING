@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
-import { getAdminAnalytics, AdminDashboardStats } from '@/lib/api/admin';
-import { useApiCall } from '@/hooks/useErrorHandler';
-import { toast } from 'react-hot-toast';
+import { useAdminOverviewQuery } from '@/hooks/queries/useAdminStats';
+import { ToastService } from '@/lib/toast/ToastService';
 import { 
   Users, 
   BookOpen, 
@@ -49,64 +48,84 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  
-  // Use useApiCall hook for consistent loading state management
-  const { loading, execute: fetchStatsExecute } = useApiCall();
+  // React Query hooks for admin overview data
+  const {
+    dashboardData,
+    systemHealth,
+    revenueData,
+    userGrowthData,
+    loading,
+    error,
+    refetchAll
+  } = useAdminOverviewQuery({ period: 'month' });
 
-  const fetchDashboardStats = useCallback(async () => {
-    await fetchStatsExecute(
-      () => getAdminAnalytics(),
-      {
-        onSuccess: (response: any) => {
-          const adminStats = response.data;
-          
-          // Transform AdminDashboardStats to DashboardStats format
-          const transformedStats: DashboardStats = {
-            users: {
-              total: adminStats?.total_users || 0,
-              new_today: adminStats?.new_users_today || 0,
-              active_this_week: adminStats?.active_users_this_week || 0,
-              premium_users: adminStats?.total_admins || 0
-            },
-            courses: {
-              total: adminStats?.total_courses || 0,
-              published: adminStats?.published_courses || 0,
-              pending_approval: adminStats?.pending_review_courses || 0,
-              total_enrollments: adminStats?.total_enrollments || 0
-            },
-            revenue: {
-              total_monthly: adminStats?.revenue_this_month || 0,
-              subscription_revenue: 0, // Not in AdminDashboardStats
-              course_sales_revenue: adminStats?.revenue_this_month || 0,
-              growth_percentage: 0 // Not in AdminDashboardStats
-            },
-            system: {
-              active_sessions: adminStats?.active_users_today || 0,
-              pending_support_tickets: 0, // Not in AdminDashboardStats
-              server_status: 'Healthy',
-              last_backup: '2 hours ago'
-            }
-          };
-          
-          setStats(transformedStats);
-        }
+  // Transform API data to component format using memoization
+  const stats = useMemo(() => {
+    if (!dashboardData?.data) return null;
+
+    const adminStats = dashboardData.data;
+    const revenue = revenueData?.data;
+    const growth = userGrowthData?.data;
+    const health = systemHealth?.data;
+
+    const transformedStats: DashboardStats = {
+      users: {
+        total: adminStats?.total_users || 0,
+        new_today: adminStats?.new_users_today || 0,
+        active_this_week: adminStats?.active_users_this_week || 0,
+        premium_users: adminStats?.total_admins || 0
+      },
+      courses: {
+        total: adminStats?.total_courses || 0,
+        published: adminStats?.published_courses || 0,
+        pending_approval: adminStats?.pending_review_courses || 0,
+        total_enrollments: adminStats?.total_enrollments || 0
+      },
+      revenue: {
+        total_monthly: revenue?.total_monthly || adminStats?.revenue_this_month || 0,
+        subscription_revenue: revenue?.subscription_revenue || 0,
+        course_sales_revenue: revenue?.course_sales || adminStats?.revenue_this_month || 0,
+        growth_percentage: revenue?.growth_percentage || 0
+      },
+      system: {
+        active_sessions: adminStats?.active_users_today || 0,
+        pending_support_tickets: health?.pending_tickets || 0,
+        server_status: health?.status || 'Healthy',
+        last_backup: health?.last_backup || '2 hours ago'
       }
-    );
-  }, [fetchStatsExecute]);
+    };
 
-  useEffect(() => {
-    fetchDashboardStats();
-  }, [fetchDashboardStats]);
+    return transformedStats;
+  }, [dashboardData, revenueData, userGrowthData, systemHealth]);
 
   const handleRefresh = async () => {
-    await fetchDashboardStats();
+    try {
+      await refetchAll();
+      ToastService.success('Dashboard data refreshed successfully');
+    } catch (error) {
+      ToastService.error('Failed to refresh dashboard data');
+    }
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <LoadingSpinner size="lg" message="Loading admin dashboard..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <EmptyState
+          title="Failed to load dashboard"
+          description={error.message || 'Something went wrong while loading the admin dashboard'}
+          action={{
+            label: 'Try Again',
+            onClick: handleRefresh
+          }}
+        />
       </div>
     );
   }

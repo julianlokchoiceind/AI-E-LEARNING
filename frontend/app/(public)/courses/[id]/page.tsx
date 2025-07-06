@@ -10,120 +10,77 @@ import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
 import { PreviewVideoPlayer } from '@/components/feature/PreviewVideoPlayer';
 import { CourseReviews } from '@/components/feature/CourseReviews';
 import { CourseRating } from '@/components/feature/CourseRating';
-import { getCourseById, enrollInCourse } from '@/lib/api/courses';
-import { getCourseEnrollment } from '@/lib/api/enrollments';
-import { getChaptersWithLessons } from '@/lib/api/chapters';
+import { useCourseQuery, useEnrollInCourse } from '@/hooks/queries/useCourses';
+import { useEnrollmentQuery } from '@/hooks/queries/useEnrollments';
+import { useChaptersWithLessonsQuery } from '@/hooks/queries/useChapters';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
+import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 
 const CourseDetailPage = () => {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const courseId = params.id as string;
 
-  const [course, setCourse] = useState<any>(null);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [enrolling, setEnrolling] = useState(false);
-  const [isEnrolled, setIsEnrolled] = useState(false);
-  const [hasAccess, setHasAccess] = useState(false);
+  // React Query hooks - automatic caching and state management
+  const { data: courseResponse, loading: courseLoading } = useCourseQuery(courseId);
+  const { data: enrollmentResponse, loading: enrollmentLoading } = useEnrollmentQuery(courseId, !!user);
+  const { data: chaptersResponse, loading: chaptersLoading } = useChaptersWithLessonsQuery(courseId);
+  const { mutate: enrollMutation, loading: enrolling } = useEnrollInCourse();
+
+  // Extract data from React Query responses
+  const course = courseResponse?.data || null;
+  const isEnrolled = !!enrollmentResponse?.data;
+  const chapters = chaptersResponse?.data?.chapters || [];
+
+  // Combined loading state
+  const loading = authLoading || courseLoading || chaptersLoading;
+
+  // UI state only
   const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'instructor' | 'reviews'>('overview');
 
-  const fetchCourseDetails = useCallback(async () => {
-    try {
-      setLoading(true);
-      const courseResponse = await getCourseById(courseId);
-      if (!courseResponse.success || !courseResponse.data) {
-        throw new Error(courseResponse.message || 'Course not found');
-      }
-      
-      const courseData = courseResponse.data;
-      setCourse(courseData);
-      
-      // Check enrollment status if user is logged in
-      let enrollmentStatus = false;
-      if (user) {
-        try {
-          const enrollment = await getCourseEnrollment(courseId);
-          enrollmentStatus = !!enrollment;
-          setIsEnrolled(enrollmentStatus);
-        } catch (error) {
-          // User is not enrolled (404 error expected)
-          enrollmentStatus = false;
-          setIsEnrolled(false);
-        }
-      }
-      
-      // Check access based on PRD pricing logic
-      const checkAccess = () => {
-        // 1. Free course - everyone has access
-        if (courseData.pricing.is_free) return true;
-        
-        // 2. Premium user - free access to all courses
-        if (user?.premiumStatus) return true;
-        
-        // 3. Check if user purchased this course
-        if (enrollmentStatus) return true;
-        
-        return false;
-      };
-      
-      setHasAccess(checkAccess());
-      
-      // Fetch real chapters with lessons
-      try {
-        const chaptersResponse = await getChaptersWithLessons(courseId);
-        if (chaptersResponse.success && chaptersResponse.data) {
-          setChapters(chaptersResponse.data.chapters as Chapter[] || []);
-        }
-      } catch (error) {
-        console.error('Failed to fetch chapters:', error);
-        // Fallback to empty chapters array
-        setChapters([]);
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch course details:', error);
-      // Use backend error message
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  }, [courseId, user]);
+  // Calculate access based on PRD pricing logic
+  const hasAccess = React.useMemo(() => {
+    if (!course) return false;
+    
+    // 1. Free course - everyone has access
+    if (course.pricing?.is_free) return true;
+    
+    // 2. Premium user - free access to all courses
+    if (user?.premiumStatus) return true;
+    
+    // 3. Check if user purchased this course
+    if (isEnrolled) return true;
+    
+    return false;
+  }, [course, user, isEnrolled]);
 
-  useEffect(() => {
-    fetchCourseDetails();
-  }, [courseId, user, fetchCourseDetails]);
 
-  const handleEnroll = async () => {
+  const handleEnroll = () => {
     if (!user) {
       router.push('/login?redirect=' + encodeURIComponent(`/courses/${courseId}`));
       return;
     }
 
-    try {
-      setEnrolling(true);
-      
-      // Check if it's a free course or user has access
-      if (course.pricing.is_free || user.premiumStatus) {
-        // Direct enrollment for free access
-        const response = await enrollInCourse(courseId);
-        setIsEnrolled(true);
-        setHasAccess(true);
-        // Use backend message if available
-        toast.success(response.message || 'Something went wrong');
-        router.push(`/learn/${courseId}`);
-      } else {
-        // Redirect to payment
-        router.push(`/checkout/course/${courseId}`);
-      }
-    } catch (error: any) {
-      console.error('Failed to enroll:', error);
-      // Use backend error message
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setEnrolling(false);
+    // Check if it's a free course or user has access
+    if (course?.pricing?.is_free || user.premiumStatus) {
+      // Direct enrollment for free access using React Query mutation
+      enrollMutation({ courseId }, {
+        onSuccess: (response) => {
+          // React Query will automatically invalidate and refetch enrollment data
+          ToastService.success(response.message || 'Something went wrong');
+          router.push(`/learn/${courseId}`);
+        },
+        onError: (error: any) => {
+          console.error('Failed to enroll:', error);
+          ToastService.error(error.message || 'Something went wrong');
+        }
+      });
+    } else {
+      // Redirect to payment
+      router.push(`/checkout/course/${courseId}`);
     }
   };
 
@@ -148,16 +105,23 @@ const CourseDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" message="Loading course details..." />
       </div>
     );
   }
 
   if (!course) {
     return (
-      <div className="text-center py-16">
-        <p className="text-gray-600 text-lg">Course not found</p>
+      <div className="container mx-auto px-4 py-8">
+        <EmptyState
+          title="Course not found"
+          description="The course you're looking for doesn't exist or has been removed."
+          action={{
+            label: 'Browse Courses',
+            onClick: () => router.push('/courses')
+          }}
+        />
       </div>
     );
   }
@@ -380,7 +344,7 @@ const CourseDetailPage = () => {
           <div className="max-w-4xl">
             <h2 className="text-2xl font-bold mb-6">Course Curriculum</h2>
             <div className="space-y-4">
-              {chapters.map((chapter) => (
+              {chapters.map((chapter: any) => (
                 <Card key={chapter._id} className="overflow-hidden">
                   <div className="p-4 bg-gray-50">
                     <h3 className="font-semibold text-lg">{chapter.title}</h3>
@@ -389,7 +353,7 @@ const CourseDetailPage = () => {
                     </p>
                   </div>
                   <div className="divide-y">
-                    {(chapter.lessons || []).map((lesson) => (
+                    {(chapter.lessons || []).map((lesson: any) => (
                       <div
                         key={lesson._id}
                         className="p-4 flex items-center justify-between hover:bg-gray-50"

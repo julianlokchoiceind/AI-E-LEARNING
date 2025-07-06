@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
-import { toast } from 'react-hot-toast';
+import { useExportProgress } from '@/hooks/queries/useStudent';
+import { ToastService } from '@/lib/toast/ToastService';
 import { Download, FileText, Table } from 'lucide-react';
 
 interface ExportProgressModalProps {
@@ -19,62 +19,40 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
   onClose,
 }) => {
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('csv');
-  const [isExporting, setIsExporting] = useState(false);
+  
+  // React Query mutation for export - automatic loading states and error handling
+  const { mutate: exportProgress, loading: isExporting } = useExportProgress();
 
-  const handleExport = async () => {
-    try {
-      setIsExporting(true);
-      
-      // Get auth token
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        throw new Error('Something went wrong');
-      }
-      
-      // Make API call to export endpoint
-      const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.USERS.EXPORT_PROGRESS(selectedFormat)}`, {
-        method: 'GET',
-        headers: {
-          'Accept': selectedFormat === 'pdf' ? 'application/pdf' : 'text/csv',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+  const handleExport = () => {
+    // Use React Query mutation for API call
+    exportProgress({ format: selectedFormat }, {
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          // The API returns blob data for file download
+          const blob = response.data;
+          const filename = `learning_progress_${new Date().toISOString().split('T')[0]}.${selectedFormat}`;
+          
+          // Create blob and download
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Something went wrong');
-      }
-
-      // Get the filename from the response headers
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `learning_progress_${new Date().toISOString().split('T')[0]}.${selectedFormat}`;
-      
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename=([^;]+)/);
-        if (filenameMatch) {
-          filename = filenameMatch[1].replace(/['"]/g, '');
+          ToastService.success(response.message || `Your ${selectedFormat.toUpperCase()} export is ready!`);
+          onClose();
+        } else {
+          ToastService.error(response.message || 'Something went wrong');
         }
+      },
+      onError: (error: any) => {
+        console.error('Export failed:', error);
+        ToastService.error(error.message || 'Something went wrong');
       }
-
-      // Create blob and download
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast.success(`Your ${selectedFormat.toUpperCase()} export is ready!`);
-      onClose();
-    } catch (error: any) {
-      console.error('Export failed:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setIsExporting(false);
-    }
+    });
   };
 
   const formatOptions = [

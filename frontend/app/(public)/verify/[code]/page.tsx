@@ -1,67 +1,50 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { CheckCircle, XCircle, AlertTriangle, Search } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { CertificateDisplay } from '@/components/feature/CertificateDisplay';
-import { certificateAPI } from '@/lib/api/certificates';
+import { useVerifyCertificateQuery } from '@/hooks/queries/useCertificates';
 import { CertificateVerification } from '@/lib/types/certificate';
 
 const CertificateVerificationPage = () => {
   const params = useParams();
   const verificationCode = params.code as string;
-
-  const [verification, setVerification] = useState<CertificateVerification | null>(null);
-  const [loading, setLoading] = useState(true);
   const [manualCode, setManualCode] = useState('');
-  const [manualSearchLoading, setManualSearchLoading] = useState(false);
+  const [manualSearchCode, setManualSearchCode] = useState('');
 
-  useEffect(() => {
-    if (verificationCode) {
-      verifyCertificate(verificationCode);
-    } else {
-      setLoading(false);
-    }
-  }, [verificationCode]);
+  // React Query hook for automatic verification from URL
+  const { 
+    data: urlVerificationResponse, 
+    loading: urlLoading 
+  } = useVerifyCertificateQuery(verificationCode, !!verificationCode);
 
-  const verifyCertificate = async (code: string) => {
-    try {
-      setLoading(true);
-      const result = await certificateAPI.verifyCertificate(code);
-      if (result.success && result.data) {
-        setVerification(result.data);
-      } else {
-        setVerification({
-          is_valid: false,
-          message: result.message || 'Failed to verify certificate',
-          certificate: undefined
-        });
-      }
-    } catch (error) {
-      console.error('Verification failed:', error);
-      setVerification({
-        is_valid: false,
-        message: 'Failed to verify certificate. Please check the code and try again.',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // React Query hook for manual verification
+  const { 
+    data: manualVerificationResponse, 
+    loading: manualLoading,
+    execute: executeManualVerification 
+  } = useVerifyCertificateQuery(manualSearchCode, false);
+
+  // Determine which verification result to show
+  const verification = manualVerificationResponse?.data || urlVerificationResponse?.data || null;
+  const loading = urlLoading || manualLoading;
 
   const handleManualVerification = async () => {
     if (!manualCode.trim()) return;
     
-    setManualSearchLoading(true);
-    await verifyCertificate(manualCode.trim().toUpperCase());
-    setManualSearchLoading(false);
+    const searchCode = manualCode.trim().toUpperCase();
+    setManualSearchCode(searchCode);
+    await executeManualVerification();
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <LoadingSpinner size="lg" message="Verifying certificate..." />
       </div>
     );
   }
@@ -98,8 +81,8 @@ const CertificateVerificationPage = () => {
                 </div>
                 <Button
                   onClick={handleManualVerification}
-                  disabled={!manualCode.trim() || manualSearchLoading}
-                  loading={manualSearchLoading}
+                  disabled={!manualCode.trim() || manualLoading}
+                  loading={manualLoading}
                   className="w-full"
                 >
                   <Search className="h-4 w-4 mr-2" />
@@ -225,8 +208,8 @@ const CertificateVerificationPage = () => {
                     />
                     <Button
                       onClick={handleManualVerification}
-                      disabled={!manualCode.trim() || manualSearchLoading}
-                      loading={manualSearchLoading}
+                      disabled={!manualCode.trim() || manualLoading}
+                      loading={manualLoading}
                     >
                       Verify
                     </Button>

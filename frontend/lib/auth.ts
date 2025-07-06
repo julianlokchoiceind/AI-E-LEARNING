@@ -4,6 +4,8 @@ import GitHubProvider from 'next-auth/providers/github'
 import AzureADProvider from 'next-auth/providers/azure-ad'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { loginUser } from '@/lib/api/auth'
+import { api } from '@/lib/api/api-client'
+import { StandardResponse } from '@/lib/types/api'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -101,10 +103,57 @@ export const authOptions: NextAuthOptions = {
         // This is called when using update() from useSession
       }
       
-      // Skip token refresh check if token was created recently (within last 10 minutes)
-      const tokenAge = token.iat ? Date.now() - ((token.iat as number) * 1000) : Infinity
-      if (tokenAge < 10 * 60 * 1000) {
-        return token
+      // Check if access token needs refresh
+      if (token.accessToken) {
+        try {
+          // Parse JWT to check expiry
+          const tokenParts = (token.accessToken as string).split('.')
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+            const currentTime = Math.floor(Date.now() / 1000)
+            const expiryTime = payload.exp
+            
+            // Refresh if token expires within 5 minutes
+            if (expiryTime && (expiryTime - currentTime) < 300) {
+              console.log('🔄 NextAuth JWT: Token near expiry, attempting refresh...')
+              
+              if (token.refreshToken) {
+                try {
+                  // Call backend refresh endpoint
+                  const refreshData = await api.post<StandardResponse<any>>('/auth/refresh', {
+                    refresh_token: token.refreshToken
+                  })
+                  
+                  if (refreshData.success && refreshData.data) {
+                    console.log('✅ NextAuth JWT: Token refreshed successfully')
+                    
+                    // Update token with new values
+                    token.accessToken = refreshData.data.access_token
+                    token.refreshToken = refreshData.data.refresh_token
+                    
+                    // Decode new token to update user info
+                    const newTokenParts = refreshData.data.access_token.split('.')
+                    if (newTokenParts.length === 3) {
+                      const newPayload = JSON.parse(Buffer.from(newTokenParts[1], 'base64').toString())
+                      
+                      // Update user info from new token
+                      token.email = newPayload.email || token.email
+                      token.name = newPayload.name || token.name
+                      token.role = newPayload.role || token.role
+                      token.premiumStatus = newPayload.premium_status || token.premiumStatus
+                    }
+                    
+                    return token
+                  }
+                } catch (refreshError) {
+                  console.error('❌ NextAuth JWT: Token refresh failed:', refreshError)
+                }
+              }
+            }
+          }
+        } catch (parseError) {
+          console.error('❌ NextAuth JWT: Token parse error:', parseError)
+        }
       }
       
       return token
@@ -132,33 +181,20 @@ export const authOptions: NextAuthOptions = {
       // Handle OAuth sign-ins
       if (account?.provider !== 'credentials') {
         try {
-          // Send OAuth user data to backend with timeout
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
-          
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/oauth`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: user.email,
-              name: user.name || user.email?.split('@')[0],
-              provider: account?.provider || 'unknown',
-              provider_id: account?.providerAccountId || '',
-              picture: user.image
-            }),
-            signal: controller.signal
+          // Send OAuth user data to backend
+          const data = await api.post<StandardResponse<any>>('/auth/oauth', {
+            email: user.email,
+            name: user.name || user.email?.split('@')[0],
+            provider: account?.provider || 'unknown',
+            provider_id: account?.providerAccountId || '',
+            picture: user.image
           })
           
-          clearTimeout(timeoutId)
-          
-          if (response.ok) {
-            const data = await response.json()
-            
-            // Check if OAuth backend sync was successful
-            if (!data.success) {
-              console.error('OAuth backend sync failed:', data.message)
-              return false
-            }
+          // Check if OAuth backend sync was successful
+          if (!data.success) {
+            console.error('OAuth backend sync failed:', data.message)
+            return false
+          }
             
             // Decode JWT to get user info
             if (data.data && data.data.access_token) {
@@ -178,21 +214,12 @@ export const authOptions: NextAuthOptions = {
               }
             }
             
-            // Store tokens in user object to pass to JWT callback
-            user.accessToken = data.data.access_token
-            user.refreshToken = data.data.refresh_token
-            return true
-          }
-          
-          console.error('OAuth backend sync failed')
-          return false
+          // Store tokens in user object to pass to JWT callback
+          user.accessToken = data.data.access_token
+          user.refreshToken = data.data.refresh_token
+          return true
         } catch (error: any) {
-          // Handle timeout specifically
-          if (error.name === 'AbortError') {
-            console.error('OAuth sign-in timeout')
-          } else {
-            console.error('OAuth sign-in error:', error)
-          }
+          console.error('OAuth sign-in error:', error)
           return false
         }
       }

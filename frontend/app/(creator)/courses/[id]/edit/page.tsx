@@ -7,15 +7,30 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SaveStatusIndicator } from '@/components/ui/SaveStatusIndicator';
 import NavigationGuard from '@/components/feature/NavigationGuard';
-import ChapterCard from '@/components/feature/ChapterCard';
-import DraggableChapterCard from '@/components/feature/DraggableChapterCard';
+import DroppableChapterList from '@/components/feature/DroppableChapterList';
+import CreateChapterModal, { ChapterResponse } from '@/components/feature/CreateChapterModal';
+import CreateLessonModal, { LessonResponse } from '@/components/feature/CreateLessonModal';
+import EditChapterModal, { ChapterEditData } from '@/components/feature/EditChapterModal';
+import DeleteChapterModal, { ChapterDeleteData } from '@/components/feature/DeleteChapterModal';
+import EditLessonModal, { LessonEditData } from '@/components/feature/EditLessonModal';
+import DeleteLessonModal, { LessonDeleteData } from '@/components/feature/DeleteLessonModal';
 import { useAutosave } from '@/hooks/useAutosave';
 import { useEditorStore } from '@/stores/editorStore';
 import { useAuth } from '@/hooks/useAuth';
-import { getCourseById, updateCourse } from '@/lib/api/courses';
-import { getChaptersByCourse, getChaptersWithLessons, createChapter, updateChapter, deleteChapter } from '@/lib/api/chapters';
-import { reorderLesson } from '@/lib/api/lessons';
-import { toast } from 'react-hot-toast';
+import { 
+  useCourseEditorQuery, 
+  useCourseChaptersQuery, 
+  useUpdateCourse,
+  useCreateChapter,
+  useUpdateChapter,
+  useDeleteChapter,
+  useReorderChapters,
+  useCreateLesson,
+  useUpdateLesson,
+  useDeleteLesson,
+  useReorderLessons
+} from '@/hooks/queries/useCreatorCourses';
+import { ToastService } from '@/lib/toast/ToastService';
 
 const CourseBuilderPage = () => {
   const params = useParams();
@@ -32,67 +47,110 @@ const CourseBuilderPage = () => {
     reset,
   } = useEditorStore();
 
-  const [chapters, setChapters] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // React Query hooks for data fetching
+  const { 
+    data: courseResponse, 
+    loading: courseLoading, 
+    execute: refetchCourse 
+  } = useCourseEditorQuery(courseId);
+  
+  const { 
+    data: chaptersResponse, 
+    loading: chaptersLoading, 
+    execute: refetchChapters 
+  } = useCourseChaptersQuery(courseId);
+
+  // React Query mutations
+  const { mutate: updateCourseMutation } = useUpdateCourse();
+  const { mutate: createChapterMutation } = useCreateChapter();
+  const { mutate: deleteChapterMutation } = useDeleteChapter();
+  const { mutate: reorderChaptersMutation } = useReorderChapters();
+  const { mutate: createLessonMutation } = useCreateLesson();
+  const { mutate: deleteLessonMutation } = useDeleteLesson();
+  const { mutate: reorderLessonsMutation } = useReorderLessons();
+
+  // Extract data from React Query responses
+  const chapters = chaptersResponse?.data?.chapters || [];
+  const loading = courseLoading || chaptersLoading;
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
+  const [isChapterModalOpen, setIsChapterModalOpen] = useState(false);
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [isEditChapterModalOpen, setIsEditChapterModalOpen] = useState(false);
+  const [isDeleteChapterModalOpen, setIsDeleteChapterModalOpen] = useState(false);
+  const [isEditLessonModalOpen, setIsEditLessonModalOpen] = useState(false);
+  const [isDeleteLessonModalOpen, setIsDeleteLessonModalOpen] = useState(false);
+  const [selectedChapterId, setSelectedChapterId] = useState<string>('');
+  const [selectedChapterForEdit, setSelectedChapterForEdit] = useState<ChapterEditData | null>(null);
+  const [selectedChapterForDelete, setSelectedChapterForDelete] = useState<ChapterDeleteData | null>(null);
+  const [selectedLessonForEdit, setSelectedLessonForEdit] = useState<LessonEditData | null>(null);
+  const [selectedLessonForDelete, setSelectedLessonForDelete] = useState<LessonDeleteData | null>(null);
 
-  // Auto-save hook
+  // Auto-save hook with React Query mutation
   const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges } = useAutosave(
     courseData,
     {
-      delay: 2000,
+      delay: 5000, // Increased delay to 5 seconds to reduce timeout issues
       onSave: async (data) => {
-        if (!data || !data._id) return;
-        await updateCourse(data._id, data);
+        console.log('🔧 Course onSave called (React Query):', { 
+          hasData: !!data, 
+          hasId: !!data?._id,
+          courseId: data?._id 
+        });
+        
+        if (!data || !data._id) {
+          console.error('🔧 Course save failed: missing data or ID', { data });
+          throw new Error('Course data or ID is missing');
+        }
+        
+        console.log('🔧 Calling React Query updateCourse mutation...');
+        
+        // Use React Query mutation with Promise wrapper for useAutosave compatibility
+        return new Promise((resolve, reject) => {
+          updateCourseMutation(
+            { courseId: data._id, courseData: data },
+            {
+              onSuccess: (response) => {
+                console.log('🔧 Course save response (React Query):', response);
+                resolve(response);
+              },
+              onError: (error: any) => {
+                console.error('🔧 Course save error (React Query):', error);
+                reject(error);
+              }
+            }
+          );
+        });
       },
       enabled: !!courseData,
     }
   );
 
+  // Initialize course data when React Query data is available
   useEffect(() => {
-    fetchCourseData();
+    // Check permissions
+    if (user && user.role !== 'creator' && user.role !== 'admin') {
+      ToastService.error('You do not have permission to edit courses');
+      router.push('/dashboard');
+      return;
+    }
+
+    // Initialize courseData when React Query response is available
+    if (courseResponse?.success && courseResponse.data) {
+      setCourseData(courseResponse.data);
+      setTitleInput(courseResponse.data.title);
+    } else if (courseResponse && !courseResponse.success) {
+      ToastService.error(courseResponse.message || 'Course not found');
+      router.push('/creator/courses');
+    }
+  }, [courseResponse, user, router, setCourseData]);
+
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
       reset(); // Clean up on unmount
     };
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId]);
-
-  const fetchCourseData = async () => {
-    try {
-      setLoading(true);
-      
-      // Check permissions
-      if (user?.role !== 'creator' && user?.role !== 'admin') {
-        toast.error('You do not have permission to edit courses');
-        router.push('/dashboard');
-        return;
-      }
-
-      // Fetch course details
-      const courseResponse = await getCourseById(courseId);
-      if (!courseResponse.success || !courseResponse.data) {
-        throw new Error(courseResponse.message || 'Course not found');
-      }
-      setCourseData(courseResponse.data);
-      setTitleInput(courseResponse.data.title);
-
-      // Fetch chapters with lessons
-      const chaptersWithLessons = await getChaptersWithLessons(courseId);
-      if (chaptersWithLessons.success && chaptersWithLessons.data) {
-        setChapters(chaptersWithLessons.data.chapters || []);
-      } else {
-        setChapters([]);
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch course data:', error);
-      toast.error(error.message || 'Something went wrong');
-      router.push('/creator/courses');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [reset]);
 
   const handleTitleSave = () => {
     if (titleInput.trim() && titleInput !== courseData?.title) {
@@ -101,173 +159,247 @@ const CourseBuilderPage = () => {
     }
   };
 
-  const handleCreateChapter = async () => {
-    try {
-      const response = await createChapter({ course_id: courseId });
-      if (response.success && response.data) {
-        setChapters([...chapters, response.data]);
-        toast.success(response.message || 'Something went wrong');
-      }
-    } catch (error: any) {
-      console.error('Failed to create chapter:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+  const handleCreateChapter = () => {
+    setIsChapterModalOpen(true);
   };
 
-  const handleCreateLesson = async (chapterId: string) => {
-    try {
-      const { createLesson } = await import('@/lib/api/lessons');
-      const response = await createLesson({ 
-        chapter_id: chapterId,
-        title: `Untitled Lesson ${new Date().toLocaleDateString()}`
-      });
-      
-      // Update local state - add lesson to the chapter
-      setChapters(prevChapters => {
-        return prevChapters.map(chapter => {
-          if (chapter._id === chapterId) {
-            const updatedLessons = [...(chapter.lessons || []), response];
-            return {
-              ...chapter,
-              lessons: updatedLessons,
-              total_lessons: updatedLessons.length
-            };
-          }
-          return chapter;
-        });
-      });
-      
-      // Redirect to lesson editor
-      if (response.success && response.data) {
-        router.push(`/creator/courses/${courseId}/lessons/${response.data._id}/edit`);
-        toast.success(response.message || 'Something went wrong');
-      }
-    } catch (error: any) {
-      console.error('Failed to create lesson:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+  const handleChapterCreated = (newChapter: ChapterResponse) => {
+    // React Query will automatically invalidate and refetch chapters
+    // No manual state update needed
+    refetchChapters();
+  };
+
+  const handleCreateLesson = (chapterId: string) => {
+    console.log('🔍 handleCreateLesson (creator):', { chapterId, type: typeof chapterId });
+    
+    // Use setTimeout to ensure React state updates are complete
+    setTimeout(() => {
+      setSelectedChapterId(chapterId);
+      setIsLessonModalOpen(true);
+    }, 0);
+  };
+
+  const handleLessonCreated = (newLesson: LessonResponse) => {
+    // React Query will automatically invalidate and refetch chapters with lessons
+    // No manual state update needed
+    refetchChapters();
   };
 
   const handleChapterEdit = (chapterId: string) => {
+    // Find the chapter to edit
+    const chapterToEdit = chapters.find((ch: any) => ch._id === chapterId);
+    if (chapterToEdit) {
+      setSelectedChapterForEdit({
+        _id: chapterToEdit._id,
+        title: chapterToEdit.title,
+        description: chapterToEdit.description || '',
+        order: chapterToEdit.order,
+        course_id: chapterToEdit.course_id
+      });
+      setIsEditChapterModalOpen(true);
+    }
+  };
+
+  const handleChapterEditDetailed = (chapterId: string) => {
     router.push(`/creator/courses/${courseId}/chapters/${chapterId}/edit`);
   };
 
-  const handleChapterDelete = async (chapterId: string) => {
-    if (!confirm('Are you sure you want to delete this chapter?')) return;
+  const handleChapterUpdated = (updatedChapter: ChapterEditData) => {
+    // React Query will automatically invalidate and refetch chapters
+    // No manual state update needed
+    refetchChapters();
+  };
 
-    try {
-      const response = await deleteChapter(chapterId);
-      setChapters(chapters.filter(ch => ch._id !== chapterId));
-      toast.success(response.message || 'Something went wrong');
-    } catch (error: any) {
-      console.error('Failed to delete chapter:', error);
-      toast.error(error.message || 'Something went wrong');
+  const handleChapterDelete = (chapterId: string) => {
+    // Find the chapter to delete
+    const chapterToDelete = chapters.find((ch: any) => ch._id === chapterId);
+    if (chapterToDelete) {
+      setSelectedChapterForDelete({
+        _id: chapterToDelete._id,
+        title: chapterToDelete.title,
+        description: chapterToDelete.description,
+        total_lessons: chapterToDelete.total_lessons || 0
+      });
+      setIsDeleteChapterModalOpen(true);
     }
+  };
+
+  const handleConfirmChapterDelete = async (chapterId: string) => {
+    console.log('🔧 Delete chapter starting (React Query):', { chapterId });
+    
+    // Use React Query mutation with Promise wrapper
+    return new Promise<void>((resolve, reject) => {
+      deleteChapterMutation(chapterId, {
+        onSuccess: (response) => {
+          console.log('🔧 Delete chapter success (React Query):', response);
+          ToastService.success(response.message || 'Chapter deleted successfully');
+          // React Query will automatically invalidate and refetch chapters
+          resolve();
+        },
+        onError: (error: any) => {
+          console.error('🔧 Failed to delete chapter (React Query):', error);
+          ToastService.error(error.message || 'Something went wrong');
+          reject(error);
+        }
+      });
+    });
   };
 
   const handleLessonEdit = (lessonId: string) => {
+    // Find the lesson to edit across all chapters
+    let lessonToEdit: any = null;
+    let chapterOfLesson: any = null;
+
+    for (const chapter of chapters) {
+      if (chapter.lessons) {
+        const foundLesson = chapter.lessons.find((lesson: any) => lesson._id === lessonId);
+        if (foundLesson) {
+          lessonToEdit = foundLesson;
+          chapterOfLesson = chapter;
+          break;
+        }
+      }
+    }
+
+    if (lessonToEdit && chapterOfLesson) {
+      setSelectedLessonForEdit({
+        _id: lessonToEdit._id,
+        chapter_id: chapterOfLesson._id,
+        course_id: courseId,
+        title: lessonToEdit.title,
+        description: lessonToEdit.description,
+        order: lessonToEdit.order,
+        video: lessonToEdit.video,
+        content: lessonToEdit.content,
+        resources: lessonToEdit.resources,
+        status: lessonToEdit.status || 'draft'
+      });
+      setIsEditLessonModalOpen(true);
+    }
+  };
+
+  const handleLessonEditDetailed = (lessonId: string) => {
     router.push(`/creator/courses/${courseId}/lessons/${lessonId}/edit`);
   };
 
-  const handleLessonDelete = async (lessonId: string) => {
-    if (!confirm('Are you sure you want to delete this lesson?')) return;
+  const handleLessonUpdated = (updatedLesson: LessonEditData) => {
+    // React Query will automatically invalidate and refetch chapters with lessons
+    // No manual state update needed
+    refetchChapters();
+  };
 
-    try {
-      // Import deleteLesson from lessons API
-      const { deleteLesson } = await import('@/lib/api/lessons');
-      const response = await deleteLesson(lessonId);
-      
-      // Update local state - remove lesson from the chapter
-      setChapters(prevChapters => {
-        return prevChapters.map(chapter => {
-          const updatedLessons = chapter.lessons.filter((l: any) => l._id !== lessonId);
-          return {
-            ...chapter,
-            lessons: updatedLessons,
-            total_lessons: updatedLessons.length
-          };
-        });
+  const handleLessonDelete = (lessonId: string) => {
+    // Find the lesson to delete across all chapters
+    let lessonToDelete: any = null;
+    let chapterOfLesson: any = null;
+
+    for (const chapter of chapters) {
+      if (chapter.lessons) {
+        const foundLesson = chapter.lessons.find((lesson: any) => lesson._id === lessonId);
+        if (foundLesson) {
+          lessonToDelete = foundLesson;
+          chapterOfLesson = chapter;
+          break;
+        }
+      }
+    }
+
+    if (lessonToDelete && chapterOfLesson) {
+      setSelectedLessonForDelete({
+        _id: lessonToDelete._id,
+        title: lessonToDelete.title,
+        description: lessonToDelete.description,
+        chapter_title: chapterOfLesson.title,
+        order: lessonToDelete.order,
+        video: lessonToDelete.video,
+        content: lessonToDelete.content,
+        status: lessonToDelete.status || 'draft'
       });
-      
-      toast.success(response.message || 'Something went wrong');
-    } catch (error: any) {
-      console.error('Failed to delete lesson:', error);
-      toast.error(error.message || 'Something went wrong');
+      setIsDeleteLessonModalOpen(true);
     }
   };
 
-  const handleChapterReorder = async (chapterId: string, direction: 'up' | 'down') => {
-    // Find chapter index
-    const index = chapters.findIndex(ch => ch._id === chapterId);
-    if (index === -1) return;
-
-    // Check bounds
-    if (direction === 'up' && index === 0) return;
-    if (direction === 'down' && index === chapters.length - 1) return;
-
-    // Create new array with swapped chapters
-    const newChapters = [...chapters];
-    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+  const handleConfirmLessonDelete = async (lessonId: string) => {
+    console.log('🔧 Delete lesson starting (React Query):', { lessonId });
     
-    // Swap orders
-    const tempOrder = newChapters[index].order;
-    newChapters[index].order = newChapters[swapIndex].order;
-    newChapters[swapIndex].order = tempOrder;
-    
-    // Swap positions in array
-    [newChapters[index], newChapters[swapIndex]] = [newChapters[swapIndex], newChapters[index]];
-    
-    setChapters(newChapters);
-
-    // Update both chapters in backend
-    try {
-      await Promise.all([
-        updateChapter(newChapters[index]._id, { order: newChapters[index].order }),
-        updateChapter(newChapters[swapIndex]._id, { order: newChapters[swapIndex].order })
-      ]);
-    } catch (error: any) {
-      console.error('Failed to reorder chapters:', error);
-      toast.error(error.message || 'Something went wrong');
-      // Revert on error
-      setChapters(chapters);
-    }
+    // Use React Query mutation with Promise wrapper
+    return new Promise<void>((resolve, reject) => {
+      deleteLessonMutation(lessonId, {
+        onSuccess: (response) => {
+          console.log('🔧 Delete lesson success (React Query):', response);
+          ToastService.success(response.message || 'Lesson deleted successfully');
+          // React Query will automatically invalidate and refetch chapters
+          resolve();
+        },
+        onError: (error: any) => {
+          console.error('🔧 Failed to delete lesson (React Query):', error);
+          ToastService.error(error.message || 'Something went wrong');
+          reject(error);
+        }
+      });
+    });
   };
 
-  const handleLessonReorder = async (chapterId: string, lessonId: string, newOrder: number) => {
-    try {
-      const response = await reorderLesson(lessonId, newOrder);
-      
-      // Update local state - find the chapter and update its lessons
-      setChapters(prevChapters => {
-        return prevChapters.map(chapter => {
-          if (chapter._id === chapterId) {
-            // Re-fetch lessons for this chapter or update locally
-            const updatedLessons = [...chapter.lessons];
-            const lessonIndex = updatedLessons.findIndex(l => l._id === lessonId);
-            if (lessonIndex !== -1) {
-              const [movedLesson] = updatedLessons.splice(lessonIndex, 1);
-              updatedLessons.splice(newOrder - 1, 0, movedLesson);
-              
-              // Update order values
-              updatedLessons.forEach((lesson, index) => {
-                lesson.order = index + 1;
-              });
-            }
-            
-            return {
-              ...chapter,
-              lessons: updatedLessons,
-            };
+  const handleChaptersReorder = async (reorderedChapters: any[]) => {
+    console.log('🔧 Reorder chapters starting (React Query):', { count: reorderedChapters.length });
+    
+    // Prepare data for bulk reorder API
+    const reorderData = {
+      chapter_orders: reorderedChapters.map((chapter, index) => ({
+        chapter_id: chapter._id,
+        new_order: index + 1
+      }))
+    };
+
+    // Use React Query mutation with Promise wrapper
+    return new Promise<void>((resolve, reject) => {
+      reorderChaptersMutation(
+        { courseId, reorderData },
+        {
+          onSuccess: (response) => {
+            console.log('🔧 Reorder chapters success (React Query):', response);
+            // React Query will automatically invalidate and refetch chapters
+            resolve();
+          },
+          onError: (error: any) => {
+            console.error('🔧 Failed to reorder chapters (React Query):', error);
+            ToastService.error(error.message || 'Something went wrong');
+            reject(error);
           }
-          return chapter;
-        });
-      });
-      
-      toast.success(response.message || 'Something went wrong');
-    } catch (error: any) {
-      console.error('Failed to reorder lesson:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+        }
+      );
+    });
+  };
+
+  const handleLessonsReorder = async (chapterId: string, reorderedLessons: any[]) => {
+    console.log('🔧 Reorder lessons starting (React Query):', { chapterId, count: reorderedLessons.length });
+    
+    // Prepare data for bulk reorder API
+    const reorderData = {
+      lesson_orders: reorderedLessons.map((lesson, index) => ({
+        lesson_id: lesson._id,
+        new_order: index + 1
+      }))
+    };
+
+    // Use React Query mutation with Promise wrapper
+    return new Promise<void>((resolve, reject) => {
+      reorderLessonsMutation(
+        { chapterId, reorderData },
+        {
+          onSuccess: (response) => {
+            console.log('🔧 Reorder lessons success (React Query):', response);
+            // React Query will automatically invalidate and refetch chapters
+            resolve();
+          },
+          onError: (error: any) => {
+            console.error('🔧 Failed to reorder lessons (React Query):', error);
+            ToastService.error(error.message || 'Something went wrong');
+            reject(error);
+          }
+        }
+      );
+    });
   };
 
   if (loading) {
@@ -325,11 +457,13 @@ const CourseBuilderPage = () => {
               </div>
 
               <div className="flex items-center gap-4">
-                <SaveStatusIndicator
-                  status={saveStatus}
-                  lastSavedAt={lastSavedAt}
-                  error={error}
-                />
+                {saveStatus !== 'saving' && (
+                  <SaveStatusIndicator
+                    status={saveStatus}
+                    lastSavedAt={lastSavedAt}
+                    error={error}
+                  />
+                )}
                 
                 <Button
                   variant="outline"
@@ -342,11 +476,18 @@ const CourseBuilderPage = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={forceSave}
+                  onClick={() => forceSave()}
                   loading={saveStatus === 'saving'}
+                  disabled={saveStatus === 'saving'}
                 >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save
+                  {saveStatus === 'saving' ? (
+                    'Saving...'
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -361,7 +502,13 @@ const CourseBuilderPage = () => {
               <Card className="p-4">
                 <nav className="space-y-2">
                   <button
-                    onClick={() => setActiveTab('general')}
+                    onClick={() => {
+                      console.log('🔧 Tab switch to General - hasUnsavedChanges:', hasUnsavedChanges);
+                      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
+                        return;
+                      }
+                      setActiveTab('general');
+                    }}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'general'
                         ? 'bg-blue-100 text-blue-700'
@@ -373,7 +520,13 @@ const CourseBuilderPage = () => {
                   </button>
                   
                   <button
-                    onClick={() => setActiveTab('chapters')}
+                    onClick={() => {
+                      console.log('🔧 Tab switch to Chapters - hasUnsavedChanges:', hasUnsavedChanges);
+                      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
+                        return;
+                      }
+                      setActiveTab('chapters');
+                    }}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'chapters'
                         ? 'bg-blue-100 text-blue-700'
@@ -385,7 +538,13 @@ const CourseBuilderPage = () => {
                   </button>
                   
                   <button
-                    onClick={() => setActiveTab('settings')}
+                    onClick={() => {
+                      console.log('🔧 Tab switch to Settings - hasUnsavedChanges:', hasUnsavedChanges);
+                      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
+                        return;
+                      }
+                      setActiveTab('settings');
+                    }}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'settings'
                         ? 'bg-blue-100 text-blue-700'
@@ -536,25 +695,17 @@ const CourseBuilderPage = () => {
                       </Button>
                     </Card>
                   ) : (
-                    <div className="space-y-4">
-                      {chapters
-                        .sort((a, b) => a.order - b.order)
-                        .map((chapter) => (
-                          <DraggableChapterCard
-                            key={chapter._id}
-                            chapter={chapter}
-                            isEnrolled={true}
-                            isEditable={true}
-                            onEdit={handleChapterEdit}
-                            onDelete={handleChapterDelete}
-                            onReorder={handleChapterReorder}
-                            onLessonReorder={handleLessonReorder}
-                            onLessonEdit={handleLessonEdit}
-                            onLessonDelete={handleLessonDelete}
-                            onCreateLesson={handleCreateLesson}
-                          />
-                        ))}
-                    </div>
+                    <DroppableChapterList
+                      chapters={chapters}
+                      onChaptersReorder={handleChaptersReorder}
+                      onEdit={handleChapterEdit}
+                      onDelete={handleChapterDelete}
+                      onLessonEdit={handleLessonEdit}
+                      onLessonDelete={handleLessonDelete}
+                      onCreateLesson={handleCreateLesson}
+                      onLessonsReorder={handleLessonsReorder}
+                      isEditable={true}
+                    />
                   )}
                 </div>
               )}
@@ -659,6 +810,55 @@ const CourseBuilderPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Chapter Creation Modal */}
+      <CreateChapterModal
+        isOpen={isChapterModalOpen}
+        onClose={() => setIsChapterModalOpen(false)}
+        courseId={courseId}
+        onChapterCreated={handleChapterCreated}
+      />
+
+      {/* Lesson Creation Modal */}
+      <CreateLessonModal
+        isOpen={isLessonModalOpen}
+        onClose={() => setIsLessonModalOpen(false)}
+        chapterId={selectedChapterId}
+        courseId={courseId}
+        onLessonCreated={handleLessonCreated}
+      />
+
+      {/* Chapter Edit Modal */}
+      <EditChapterModal
+        isOpen={isEditChapterModalOpen}
+        onClose={() => setIsEditChapterModalOpen(false)}
+        chapter={selectedChapterForEdit}
+        onChapterUpdated={handleChapterUpdated}
+      />
+
+      {/* Chapter Delete Modal */}
+      <DeleteChapterModal
+        isOpen={isDeleteChapterModalOpen}
+        onClose={() => setIsDeleteChapterModalOpen(false)}
+        chapter={selectedChapterForDelete}
+        onConfirmDelete={handleConfirmChapterDelete}
+      />
+
+      {/* Lesson Edit Modal */}
+      <EditLessonModal
+        isOpen={isEditLessonModalOpen}
+        onClose={() => setIsEditLessonModalOpen(false)}
+        lesson={selectedLessonForEdit}
+        onLessonUpdated={handleLessonUpdated}
+      />
+
+      {/* Lesson Delete Modal */}
+      <DeleteLessonModal
+        isOpen={isDeleteLessonModalOpen}
+        onClose={() => setIsDeleteLessonModalOpen(false)}
+        lesson={selectedLessonForDelete}
+        onConfirmDelete={handleConfirmLessonDelete}
+      />
     </NavigationGuard>
   );
 };

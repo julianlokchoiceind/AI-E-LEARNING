@@ -4,9 +4,9 @@ import React, { useRef } from 'react';
 import { Download, Share2, CheckCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { CertificateWithDetails } from '@/lib/types/certificate';
-import { certificateAPI } from '@/lib/api/certificates';
+import { useDownloadCertificate, useLinkedInShareData } from '@/hooks/queries/useCertificates';
 
 interface CertificateDisplayProps {
   certificate: CertificateWithDetails;
@@ -15,6 +15,10 @@ interface CertificateDisplayProps {
 
 export function CertificateDisplay({ certificate, showActions = true }: CertificateDisplayProps) {
   const certificateRef = useRef<HTMLDivElement>(null);
+  
+  // React Query mutations for certificate actions
+  const { mutate: downloadCertificate, loading: downloading } = useDownloadCertificate();
+  const { mutate: getLinkedInData, loading: sharing } = useLinkedInShareData();
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -24,46 +28,50 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
     });
   };
 
-  const handleDownload = async () => {
-    try {
-      const blob = await certificateAPI.downloadCertificatePDF(certificate._id);
-      
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `certificate_${certificate.certificate_number}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success('Certificate downloaded successfully');
-    } catch (error: any) {
-      console.error('Failed to download certificate:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+  const handleDownload = () => {
+    downloadCertificate(certificate._id, {
+      onSuccess: (response) => {
+        if (!response.data) return;
+        const url = window.URL.createObjectURL(response.data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `certificate_${certificate.certificate_number}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        ToastService.success('Certificate downloaded successfully');
+      },
+      onError: (error: any) => {
+        console.error('Failed to download certificate:', error);
+        ToastService.error(error.message || 'Something went wrong');
+      }
+    });
   };
 
-  const handleShareLinkedIn = async () => {
-    try {
-      const response = await certificateAPI.getLinkedInShareData(certificate._id);
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Something went wrong');
+  const handleShareLinkedIn = () => {
+    getLinkedInData(certificate._id, {
+      onSuccess: (response) => {
+        if (!response.success || !response.data) {
+          ToastService.error(response.message || 'Something went wrong');
+          return;
+        }
+        
+        const shareData = response.data;
+        
+        // LinkedIn share URL
+        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+          shareData.certificate_url
+        )}`;
+        
+        window.open(linkedinUrl, '_blank', 'width=600,height=400');
+        ToastService.success(response.message || 'Something went wrong');
+      },
+      onError: (error: any) => {
+        console.error('Failed to get LinkedIn share data:', error);
+        ToastService.error(error.message || 'Something went wrong');
       }
-      
-      const shareData = response.data;
-      
-      // LinkedIn share URL
-      const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-        shareData.certificate_url
-      )}`;
-      
-      window.open(linkedinUrl, '_blank', 'width=600,height=400');
-      toast.success(response.message || 'Something went wrong');
-    } catch (error: any) {
-      console.error('Failed to get LinkedIn share data:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    });
   };
 
   const handleShare = async () => {
@@ -82,7 +90,7 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
     } else {
       // Copy to clipboard
       navigator.clipboard.writeText(shareUrl);
-      toast.success('Certificate link copied to clipboard');
+      ToastService.success('Certificate link copied to clipboard');
     }
   };
 
@@ -172,12 +180,22 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
       {/* Actions */}
       {showActions && (
         <div className="mt-6 flex flex-wrap gap-4 justify-center">
-          <Button onClick={handleDownload} variant="primary">
+          <Button 
+            onClick={handleDownload}
+            loading={downloading}
+            disabled={downloading}
+            variant="primary"
+          >
             <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
           
-          <Button onClick={handleShareLinkedIn} variant="secondary">
+          <Button 
+            onClick={handleShareLinkedIn}
+            loading={sharing}
+            disabled={sharing}
+            variant="secondary"
+          >
             <ExternalLink className="h-4 w-4 mr-2" />
             Share on LinkedIn
           </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Plus, 
   Edit, 
@@ -10,19 +10,24 @@ import {
   EyeOff,
   ChevronDown
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
-import { useApiCall } from '@/hooks/useErrorHandler';
-import { faqAPI, FAQ, FAQCreateData, FAQUpdateData } from '@/lib/api/faq';
+import { 
+  useFAQsQuery,
+  useCreateFAQ,
+  useUpdateFAQ,
+  useDeleteFAQ,
+  useBulkFAQActions
+} from '@/hooks/queries/useFAQ';
+import { FAQ, FAQCreateData, FAQUpdateData } from '@/lib/api/faq';
 import { FAQ_CATEGORIES } from '@/lib/types/faq';
 
 export default function AdminFAQPage() {
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedFaqs, setSelectedFaqs] = useState<Set<string>>(new Set());
@@ -39,68 +44,78 @@ export default function AdminFAQPage() {
     slug: '',
   });
   
-  // Use useApiCall hooks for consistent loading state management
-  const { loading, execute: fetchFAQsExecute } = useApiCall();
-  const { loading: actionLoading, execute: executeAction } = useApiCall();
+  // React Query hooks for FAQ management
+  const { data: faqsData, loading, execute: refetchFAQs } = useFAQsQuery({
+    search: searchQuery,
+    category: selectedCategory,
+    limit: 100
+  });
+  
+  const { mutate: createFAQMutation, loading: createLoading } = useCreateFAQ();
+  const { mutate: updateFAQMutation, loading: updateLoading } = useUpdateFAQ();
+  const { mutate: deleteFAQMutation, loading: deleteLoading } = useDeleteFAQ();
+  const { mutate: bulkActionMutation, loading: bulkLoading } = useBulkFAQActions();
+  
+  // Combined loading state for actions
+  const actionLoading = createLoading || updateLoading || deleteLoading || bulkLoading;
+  
+  // Extract FAQs from React Query response
+  const faqs = useMemo(() => {
+    return faqsData?.data?.items || faqsData?.data?.faqs || [];
+  }, [faqsData]);
 
-  // Fetch FAQs
-  const fetchFAQs = useCallback(async () => {
-    await fetchFAQsExecute(
-      () => faqAPI.getFAQs({
-        q: searchQuery || undefined,
-        category: selectedCategory || undefined,
-        per_page: 100,
-      }),
-      {
-        onSuccess: (response: any) => {
-          setFaqs(response.data?.items || []);
-        }
-      }
-    );
-  }, [searchQuery, selectedCategory, fetchFAQsExecute]);
-
-  useEffect(() => {
-    fetchFAQs();
-  }, [fetchFAQs]);
+  // No manual fetchFAQs needed - React Query handles this automatically
+  // refetchFAQs is available for manual refresh if needed
 
   const handleCreateOrUpdate = async () => {
-    await executeAction(
-      () => editingFaq 
-        ? faqAPI.updateFAQ(editingFaq._id, formData as FAQUpdateData)
-        : faqAPI.createFAQ(formData),
-      {
-        onSuccess: (response: any) => {
-          if (response.data) {
-            if (editingFaq) {
-              setFaqs(faqs.map(f => f._id === response.data!._id ? response.data! : f));
-            } else {
-              setFaqs([response.data, ...faqs]);
-            }
-            toast.success(response.message || 'Something went wrong');
-          }
+    if (editingFaq) {
+      updateFAQMutation({ faqId: editingFaq._id, data: formData as FAQUpdateData }, {
+        onSuccess: (response) => {
+          ToastService.success(response.message || 'FAQ updated successfully');
           resetForm();
+          // React Query will automatically invalidate and refetch FAQs
+        },
+        onError: (error: any) => {
+          ToastService.error(error.message || 'Something went wrong');
         }
-      }
-    );
+      });
+    } else {
+      // Ensure category is always defined
+      const finalFormData = {
+        ...formData,
+        category: formData.category || 'general'
+      };
+      
+      createFAQMutation(finalFormData, {
+        onSuccess: (response) => {
+          ToastService.success(response.message || 'FAQ created successfully');
+          resetForm();
+          // React Query will automatically invalidate and refetch FAQs
+        },
+        onError: (error: any) => {
+          ToastService.error(error.message || 'Something went wrong');
+        }
+      });
+    }
   };
 
   const handleDelete = async (faqId: string) => {
     if (!confirm('Are you sure you want to delete this FAQ?')) return;
 
-    await executeAction(
-      () => faqAPI.deleteFAQ(faqId),
-      {
-        onSuccess: (response: any) => {
-          setFaqs(faqs.filter(f => f._id !== faqId));
-          toast.success(response.message || 'Something went wrong');
-        }
+    deleteFAQMutation(faqId, {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'FAQ deleted successfully');
+        // React Query will automatically invalidate and refetch FAQs
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
       }
-    );
+    });
   };
 
   const handleBulkAction = async (action: 'publish' | 'unpublish' | 'delete') => {
     if (selectedFaqs.size === 0) {
-      toast.error('Please select FAQs first');
+      ToastService.error('Please select FAQs first');
       return;
     }
 
@@ -110,29 +125,16 @@ export default function AdminFAQPage() {
 
     if (!confirm(confirmMessage)) return;
 
-    await executeAction(
-      () => faqAPI.bulkAction({
-        faq_ids: Array.from(selectedFaqs),
-        action,
-      }),
-      {
-        onSuccess: (response: any) => {
-          if (action === 'delete') {
-            setFaqs(faqs.filter(f => !selectedFaqs.has(f._id)));
-          } else {
-            setFaqs(faqs.map(f => {
-              if (selectedFaqs.has(f._id)) {
-                return { ...f, is_published: action === 'publish' };
-              }
-              return f;
-            }));
-          }
-          
-          setSelectedFaqs(new Set());
-          toast.success(response.message || 'Something went wrong');
-        }
+    bulkActionMutation({ action, faqIds: Array.from(selectedFaqs) }, {
+      onSuccess: (response) => {
+        setSelectedFaqs(new Set());
+        ToastService.success(response.message || `Bulk ${action} completed successfully`);
+        // React Query will automatically invalidate and refetch FAQs
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
       }
-    );
+    });
   };
 
   const startEdit = (faq: FAQ) => {
@@ -179,7 +181,7 @@ export default function AdminFAQPage() {
     if (selectedFaqs.size === faqs.length) {
       setSelectedFaqs(new Set());
     } else {
-      setSelectedFaqs(new Set(faqs.map(f => f._id)));
+      setSelectedFaqs(new Set(faqs.map((f: any) => f._id)));
     }
   };
 
@@ -221,7 +223,7 @@ export default function AdminFAQPage() {
                 className="px-4 py-2 border rounded-md"
               >
                 <option value="">All Categories</option>
-                {FAQ_CATEGORIES.map(cat => (
+                {FAQ_CATEGORIES.map((cat: any) => (
                   <option key={cat.value} value={cat.value}>
                     {cat.icon} {cat.label}
                   </option>
@@ -240,6 +242,7 @@ export default function AdminFAQPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => handleBulkAction('publish')}
+                    loading={bulkLoading}
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     Publish
@@ -248,6 +251,7 @@ export default function AdminFAQPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => handleBulkAction('unpublish')}
+                    loading={bulkLoading}
                   >
                     <EyeOff className="h-4 w-4 mr-1" />
                     Unpublish
@@ -257,6 +261,7 @@ export default function AdminFAQPage() {
                     variant="outline"
                     className="text-red-600 hover:bg-red-50"
                     onClick={() => handleBulkAction('delete')}
+                    loading={bulkLoading}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete
@@ -286,7 +291,7 @@ export default function AdminFAQPage() {
                     if (searchQuery || selectedCategory) {
                       setSearchQuery('');
                       setSelectedCategory('');
-                      fetchFAQs();
+                      // React Query will automatically refetch when filters change
                     } else {
                       resetForm();
                       setShowCreateModal(true);
@@ -317,7 +322,7 @@ export default function AdminFAQPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {faqs.map((faq) => {
+                  {faqs.map((faq: any) => {
                     const categoryInfo = FAQ_CATEGORIES.find(c => c.value === faq.category);
                     return (
                       <tr key={faq._id} className="hover:bg-gray-50">
@@ -363,6 +368,7 @@ export default function AdminFAQPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => startEdit(faq)}
+                              disabled={actionLoading}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -371,6 +377,7 @@ export default function AdminFAQPage() {
                               variant="ghost"
                               className="text-red-600 hover:bg-red-50"
                               onClick={() => handleDelete(faq._id)}
+                              loading={deleteLoading}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -428,7 +435,7 @@ export default function AdminFAQPage() {
                 onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
                 className="w-full px-3 py-2 border rounded-md"
               >
-                {FAQ_CATEGORIES.map(cat => (
+                {FAQ_CATEGORIES.map((cat: any) => (
                   <option key={cat.value} value={cat.value}>
                     {cat.icon} {cat.label}
                   </option>
@@ -495,6 +502,7 @@ export default function AdminFAQPage() {
             <Button 
               onClick={handleCreateOrUpdate}
               disabled={!formData.question || !formData.answer}
+              loading={actionLoading}
             >
               {editingFaq ? 'Update' : 'Create'}
             </Button>

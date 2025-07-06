@@ -3,7 +3,7 @@
 import React, { Component, ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { AlertTriangle, RefreshCw, CreditCard, HelpCircle } from 'lucide-react';
 
 interface PaymentErrorBoundaryState {
@@ -77,7 +77,7 @@ export class PaymentErrorBoundary extends Component<
 
   handleContactSupport = () => {
     // Navigate to support or open chat
-    toast('Opening support chat...');
+    ToastService.success('Opening support chat...');
     // Implementation would depend on support system
     window.open('/contact?issue=payment', '_blank');
   };

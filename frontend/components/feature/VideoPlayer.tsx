@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize, Settings, X } from 'lucide-react';
 
 interface VideoPlayerProps {
@@ -163,7 +163,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const onPlayerError = (event: any) => {
     console.error('YouTube Player Error:', event.data);
-    toast.error('Error loading video. Please try again.');
+    ToastService.error('Error loading video. Please try again.');
   };
 
   const startProgressTracking = () => {
@@ -193,7 +193,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           if (onComplete) {
             onComplete();
           }
-          toast.success('Lesson completed! Next lesson unlocked.');
+          ToastService.success('Lesson completed! Next lesson unlocked.');
         }
       }
     }, 1000); // Update every second

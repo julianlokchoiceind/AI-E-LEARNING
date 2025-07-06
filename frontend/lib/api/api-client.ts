@@ -10,7 +10,7 @@ interface RequestOptions extends RequestInit {
 
 class ApiClient {
   private baseUrl: string;
-  private defaultTimeout: number = 30000; // 30 seconds
+  private defaultTimeout: number = 60000; // 🔧 FIX: Increase to 60 seconds for course operations
 
   constructor(baseUrl?: string) {
     // Use the provided baseUrl or fall back to API_ENDPOINTS.BASE_URL
@@ -147,9 +147,67 @@ class ApiClient {
           details: error.details
         });
         
-        // Handle token expiration
+        // Handle token expiration - attempt refresh before logout
+        if (response.status === 401 && requireAuth && retryCount === 0) {
+          debug('API-CLIENT', '401 error with auth required, attempting token refresh...');
+          
+          try {
+            // Get current session
+            const { getSession } = await import('next-auth/react');
+            const session = await getSession();
+            
+            if (session?.refreshToken) {
+              debug('API-CLIENT', 'Found refresh token, calling backend refresh...');
+              
+              // Call backend refresh endpoint
+              const refreshResponse = await fetch(`${this.baseUrl}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh_token: session.refreshToken })
+              });
+              
+              if (refreshResponse.ok) {
+                const refreshData = await refreshResponse.json();
+                debug('API-CLIENT', 'Token refresh successful');
+                
+                if (refreshData.success && refreshData.data) {
+                  // Update NextAuth session with new tokens
+                  const { getSession } = await import('next-auth/react');
+                  const currentSession = await getSession();
+                  
+                  if (currentSession) {
+                    // Try to update session - this is a simplified approach
+                    // In production, you'd want a more robust session update mechanism
+                    (currentSession as any).accessToken = refreshData.data.access_token;
+                    (currentSession as any).refreshToken = refreshData.data.refresh_token;
+                    
+                    debug('API-CLIENT', 'Session updated, retrying original request...');
+                    
+                    // Retry original request with new token
+                    return this.request(url, {
+                      ...options,
+                      retryCount: 1, // Prevent infinite retry
+                      requireAuth
+                    });
+                  }
+                }
+              } else {
+                debug('API-CLIENT', 'Token refresh failed, response not OK');
+              }
+            } else {
+              debug('API-CLIENT', 'No refresh token available');
+            }
+          } catch (refreshError) {
+            debug('API-CLIENT', 'Token refresh error:', refreshError);
+          }
+          
+          // If refresh fails, then logout
+          debug('API-CLIENT', 'Token refresh failed, logging out user');
+        }
+        
+        // Handle immediate logout for non-recoverable 401 or after failed refresh
         if (response.status === 401 && requireAuth) {
-          debug('API-CLIENT', '401 error with auth required, redirecting to login');
+          debug('API-CLIENT', 'Logging out user due to authentication failure');
           
           // Clear NextAuth session and redirect to login
           try {
@@ -163,7 +221,6 @@ class ApiClient {
             }
           }
           
-          // No retry for 401 - redirect to login instead
           throw error;
         }
         
@@ -240,8 +297,7 @@ class ApiClient {
     }
   }
 
-  // NextAuth handles token refresh automatically
-  // No manual refresh needed
+  // Token refresh is handled by NextAuth JWT callback and API client retry logic
 
   // HTTP methods
   async get<T>(url: string, options?: RequestOptions): Promise<T> {
@@ -355,6 +411,26 @@ class ApiClient {
     return !!this.getAuthToken();
   }
 
+  // 🔧 FIX: Add health check to verify backend is running
+  async healthCheck(): Promise<boolean> {
+    try {
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 5000); // 5 second timeout for health check
+      
+      const response = await fetch(`${this.baseUrl}/health`, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      debug('API-CLIENT', 'Health check response:', response.status);
+      return response.ok;
+    } catch (error) {
+      debug('API-CLIENT', 'Health check failed:', error);
+      return false;
+    }
+  }
+
   // Clear authentication
   clearAuth(): void {
     localStorage.removeItem('access_token');
@@ -374,5 +450,13 @@ export const api = {
   delete: apiClient.delete.bind(apiClient),
   upload: apiClient.upload.bind(apiClient),
   isAuthenticated: apiClient.isAuthenticated.bind(apiClient),
-  clearAuth: apiClient.clearAuth.bind(apiClient)
+  clearAuth: apiClient.clearAuth.bind(apiClient),
+  healthCheck: apiClient.healthCheck.bind(apiClient),
+  
+  // AI Assistant functions
+  chatWithAI: (data: { message: string; context?: any }) => 
+    apiClient.post('/ai/chat', data, { requireAuth: true }),
+  
+  getBatchLessonProgress: (lessonIds: string[]) =>
+    apiClient.post('/progress/lessons/batch', { lesson_ids: lessonIds }, { requireAuth: true })
 };

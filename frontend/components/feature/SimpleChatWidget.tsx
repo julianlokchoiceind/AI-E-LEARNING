@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, MessageCircle, X, Settings, Target, Languages, Brain, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAIChat } from '@/hooks/useAIChat';
+import { useAISuggestionsQuery } from '@/hooks/queries/useAI';
 
 interface SimpleChatWidgetProps {
   courseId?: string;
@@ -30,7 +31,23 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [quickSuggestions, setQuickSuggestions] = useState<string[]>([]);
+  // React Query hook for AI suggestions - replaces manual fetch
+  const { data: suggestionsResponse } = useAISuggestionsQuery(
+    {
+      course_id: courseId,
+      lesson_id: lessonId,
+      user_level: userLevel
+    },
+    !!(courseId || lessonId) // Only fetch when we have context
+  );
+
+  // Extract suggestions from React Query response or use fallback
+  const quickSuggestions = suggestionsResponse?.data?.suggestions?.slice(0, 4) || [
+    enableEnhancedFeatures ? "What should I focus on in this lesson?" : "Explain this concept in simple terms",
+    enableEnhancedFeatures ? "Can you explain this concept?" : "Give me a code example", 
+    enableEnhancedFeatures ? "How does this relate to my goals?" : "What should I learn next?",
+    enableEnhancedFeatures ? "Give me a practical example" : "Help me understand this better"
+  ];
   const [showQuickSuggestions, setShowQuickSuggestions] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showLearningGoals, setShowLearningGoals] = useState(false);
@@ -90,8 +107,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
         } How can I assist you today?`
       });
       
-      // Fetch contextual suggestions
-      fetchQuickSuggestions();
+      // AI suggestions are now automatically fetched via React Query
     }
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -106,60 +122,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
 
-  const fetchQuickSuggestions = async () => {
-    if (!courseId && !lessonId) return;
-
-    try {
-      // Use enhanced suggestions if enhanced features are enabled
-      const endpoint = enableEnhancedFeatures ? '/api/v1/ai/enhanced-suggestions' : '/api/v1/ai/suggestions';
-      
-      const requestBody = enableEnhancedFeatures ? {
-        course_id: courseId,
-        lesson_id: lessonId,
-        chapter_id: chapterId,
-        user_level: userLevel,
-        lesson_progress: videoProgress || 0,
-        learning_goals: learningGoals,
-        previous_questions: contextHistory.slice(-3),
-        difficulty_preference: difficultyPreference,
-        language_preference: languagePreference
-      } : {
-        course_id: courseId,
-        lesson_id: lessonId,
-        user_level: userLevel
-      };
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          const suggestions = enableEnhancedFeatures ? 
-            data.data.suggestions : 
-            data.data.suggestions;
-          setQuickSuggestions(suggestions.slice(0, 4)); // Show max 4 in widget
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch quick suggestions:', error);
-      // Fallback to default suggestions
-      if (enableEnhancedFeatures) {
-        setQuickSuggestions([
-          "What should I focus on in this lesson?",
-          "Can you explain this concept?",
-          "How does this relate to my goals?",
-          "Give me a practical example"
-        ]);
-      }
-    }
-  };
+  // Removed manual fetchQuickSuggestions - already using React Query via useAISuggestionsQuery
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -423,7 +386,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
           <div className="border-t border-gray-100 p-2">
             <p className="text-xs text-gray-500 mb-2">Quick questions:</p>
             <div className="space-y-1">
-              {quickSuggestions.map((suggestion, index) => (
+              {quickSuggestions.map((suggestion: any, index: number) => (
                 <Button
                   key={index}
                   variant="ghost"

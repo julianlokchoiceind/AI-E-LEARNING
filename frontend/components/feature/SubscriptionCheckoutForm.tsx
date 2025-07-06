@@ -7,9 +7,10 @@ import {
   CardElement
 } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/Button';
-import { createSubscription, SubscriptionType } from '@/lib/api/payments';
+import { SubscriptionType } from '@/lib/api/payments';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
+import { useCreateSubscription } from '@/hooks/queries/usePayments';
 import { Lock, CheckCircle, Crown, AlertTriangle } from 'lucide-react';
 import { SubscriptionRetryHandler, getRecoveryStrategy } from '@/lib/utils/paymentRetry';
 
@@ -41,6 +42,9 @@ export function SubscriptionCheckoutForm({
   const [recoveryStrategy, setRecoveryStrategy] = useState<any>(null);
   
   const retryHandler = new SubscriptionRetryHandler();
+  
+  // React Query mutation for subscription creation
+  const { mutate: createSubscriptionMutation, loading: subscriptionLoading } = useCreateSubscription();
 
   const cardElementOptions = {
     style: {
@@ -96,17 +100,12 @@ export function SubscriptionCheckoutForm({
       throw error;
     }
 
-    // Create subscription
-    const subscriptionResponse = await createSubscription(
-      paymentMethod.id,
-      SubscriptionType.PRO
-    );
-
-    if (subscriptionResponse.success) {
-      return subscriptionResponse;
-    } else {
-      throw new Error(subscriptionResponse.message || 'Something went wrong');
-    }
+    // Return payment method for subscription creation
+    return {
+      success: true,
+      data: { paymentMethod },
+      message: 'Payment method created successfully'
+    };
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -127,17 +126,18 @@ export function SubscriptionCheckoutForm({
     setRecoveryStrategy(null);
 
     try {
-      const subscriptionResponse = await retryHandler.executeWithRetry(
+      // Step 1: Create payment method with retry handling
+      const paymentMethodResponse = await retryHandler.executeWithRetry(
         processSubscription,
         async (error, attempt) => {
           setRetryCount(attempt);
           const strategy = getRecoveryStrategy(error.code);
           setRecoveryStrategy(strategy);
           
-          console.warn(`Subscription attempt ${attempt} failed:`, error);
+          console.warn(`Payment method creation attempt ${attempt} failed:`, error);
           
           if (strategy.canRetry) {
-            toast.error(`${error.message} - Retrying... (${attempt}/3)`);
+            ToastService.error(`${error.message} - Retrying... (${attempt}/3)`);
             return true; // Continue retrying
           } else {
             setPaymentError(error.message);
@@ -146,20 +146,39 @@ export function SubscriptionCheckoutForm({
         }
       );
 
-      // Subscription successful
-      toast.success(subscriptionResponse.message);
-      
-      // Give a moment for backend to process
-      setTimeout(() => {
-        onSuccess();
-      }, 1500);
+      // Step 2: Create subscription using React Query mutation
+      createSubscriptionMutation(
+        {
+          paymentMethodId: paymentMethodResponse.data.paymentMethod.id,
+          subscriptionType: SubscriptionType.PRO
+        },
+        {
+          onSuccess: (response) => {
+            if (response.success) {
+              ToastService.success(response.message || 'Subscription created successfully');
+              setTimeout(() => {
+                onSuccess();
+              }, 1500);
+            } else {
+              throw new Error(response.message || 'Something went wrong');
+            }
+          },
+          onError: (error: any) => {
+            console.error('Subscription creation failed:', error);
+            const strategy = getRecoveryStrategy(error.code || 'SUBSCRIPTION_ERROR');
+            setRecoveryStrategy(strategy);
+            setPaymentError(error.message || 'Subscription creation failed');
+            onError(error.message || 'Subscription failed');
+          }
+        }
+      );
       
     } catch (error: any) {
-      console.error('Subscription failed after retries:', error);
+      console.error('Payment method creation failed after retries:', error);
       const strategy = getRecoveryStrategy(error.code);
       setRecoveryStrategy(strategy);
-      setPaymentError(error.message || 'Subscription failed after multiple attempts');
-      onError(error.message || 'Subscription failed');
+      setPaymentError(error.message || 'Payment setup failed after multiple attempts');
+      onError(error.message || 'Payment setup failed');
     } finally {
       setIsLoading(false);
     }

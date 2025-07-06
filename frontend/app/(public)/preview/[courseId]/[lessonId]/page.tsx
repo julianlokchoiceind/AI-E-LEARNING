@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Clock, PlayCircle, BookOpen, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -8,11 +8,12 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { PreviewVideoPlayer } from '@/components/feature/PreviewVideoPlayer';
 import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
-import { getCourseById } from '@/lib/api/courses';
-import { getPreviewLesson } from '@/lib/api/lessons';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
+import { useCourseQuery } from '@/hooks/queries/useCourses';
+import { usePreviewLessonQuery } from '@/hooks/queries/useLessons';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
 import { Course, Lesson } from '@/lib/types/course';
+import { ToastService } from '@/lib/toast/ToastService';
 
 const PreviewLessonPage = () => {
   const params = useParams();
@@ -21,58 +22,28 @@ const PreviewLessonPage = () => {
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
 
-  const [course, setCourse] = useState<Course | null>(null);
-  const [lesson, setLesson] = useState<Lesson | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // React Query hooks - automatic data fetching, caching, and error handling
+  const { 
+    data: courseResponse, 
+    loading: courseLoading, 
+    error: courseError 
+  } = useCourseQuery(courseId, !!courseId);
 
-  useEffect(() => {
-    fetchPreviewData();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId, lessonId]);
+  const { 
+    data: lessonResponse, 
+    loading: lessonLoading, 
+    error: lessonError 
+  } = usePreviewLessonQuery(courseId, lessonId, !!courseId && !!lessonId);
 
-  const fetchPreviewData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Fetch course details
-      const courseResponse = await getCourseById(courseId);
-      if (courseResponse.success && courseResponse.data) {
-        setCourse(courseResponse.data);
-      } else {
-        throw new Error(courseResponse.message || 'Something went wrong');
-      }
+  // Extract data from React Query responses
+  const course = courseResponse?.data || null;
+  const lesson = lessonResponse?.data || null;
+  const loading = courseLoading || lessonLoading;
 
-      // Fetch lesson preview data
-      try {
-        const lessonResponse = await getPreviewLesson(courseId, lessonId);
-        
-        if (!lessonResponse.success || !lessonResponse.data) {
-          setError(lessonResponse.message || 'Something went wrong');
-          return;
-        }
-
-        if (!lessonResponse.data.is_free_preview) {
-          setError('This lesson is not available for preview');
-          return;
-        }
-
-        setLesson(lessonResponse.data);
-      } catch (lessonError) {
-        console.error('Preview lesson not found:', lessonError);
-        setError('Preview not available for this lesson');
-        return;
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch preview data:', error);
-      setError(error.message || 'Something went wrong');
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Handle errors
+  const error = courseError || lessonError || 
+    (lessonResponse && !lessonResponse.success ? lessonResponse.message : null) ||
+    (lesson && !lesson.is_free_preview ? 'This lesson is not available for preview' : null);
 
   const handleEnrollClick = () => {
     if (!user) {
@@ -92,7 +63,7 @@ const PreviewLessonPage = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <LoadingSpinner size="lg" message="Loading lesson preview..." />
       </div>
     );
   }
@@ -206,7 +177,7 @@ const PreviewLessonPage = () => {
                   Lesson Resources
                 </h3>
                 <div className="space-y-3">
-                  {lesson.resources.map((resource, index) => (
+                  {lesson.resources.map((resource: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <h4 className="font-medium">{resource.title}</h4>

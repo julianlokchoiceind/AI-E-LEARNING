@@ -727,11 +727,13 @@ frontend/
 | Feature Type | Mandatory Pattern | Reference Files |
 |--------------|-------------------|-----------------|
 | **CRUD Forms** | `useAutosave` + `NavigationGuard` + `SaveStatusIndicator` | `/courses/[id]/edit/page.tsx` |
-| **API Calls** | `try/catch` + `loading states` + `error boundaries` | `/lib/api/*.ts` |
+| **API Calls** | `useApiQuery` + `useApiMutation` + `NO direct fetch()` | `/hooks/useApiQuery.ts`, `/hooks/useApiMutation.ts` |
 | **Authentication** | `NextAuth` + `useAuth` hook + `JWT verification` | `/hooks/useAuth.ts` |
-| **Data Fetching** | `React Query` + `loading/error/success` states | `/hooks/useAPI.ts` |
+| **Data Fetching** | `React Query` + `loading/error/success` states | `/hooks/useApiQuery.ts` |
+| **Mutations** | `useApiMutation` + `ToastService` + `error handling` | `/hooks/useApiMutation.ts` |
+| **User Feedback** | `ToastService` + `NEVER alert()` + `'Something went wrong' fallback` | `/lib/toast/service.ts` |
 | **Form Validation** | `Zod schemas` + `react-hook-form` | `/lib/validators/*.ts` |
-| **Error Handling** | `ErrorBoundary` + `toast notifications` + `Sentry logging` | `/components/ErrorBoundary.tsx` |
+| **Error Handling** | `ErrorBoundary` + `ToastService` + `Sentry logging` | `/components/ErrorBoundary.tsx` |
 
 #### **🎯 GOLDEN RULE: COPY-PASTE CONSISTENCY**
 ```typescript

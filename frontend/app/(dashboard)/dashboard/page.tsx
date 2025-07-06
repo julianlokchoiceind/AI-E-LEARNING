@@ -10,12 +10,11 @@ import { InlineChatComponent } from '@/components/feature/InlineChatComponent';
 import { AccessDenied } from '@/components/feature/AccessDenied';
 import { ExportProgressModal } from '@/components/feature/ExportProgressModal';
 import { OnboardingWizard } from '@/components/feature/OnboardingWizard';
-import { usersApi } from '@/lib/api/users';
+import { useStudentDashboardQuery } from '@/hooks/queries/useStudent';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { formatDistanceToNow } from '@/lib/utils/formatters';
 import { LoadingSpinner, EmptyState, CourseCardSkeleton } from '@/components/ui/LoadingStates';
-import { useErrorHandler } from '@/hooks/useErrorHandler';
-import toast from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 
 interface DashboardData {
   user: {
@@ -52,16 +51,19 @@ interface DashboardData {
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showExportModal, setShowExportModal] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const accessError = searchParams.get('error');
   
-  const { handleError } = useErrorHandler();
+  // React Query hook - automatic caching and state management
+  const { data: dashboardResponse, loading, execute: refetchDashboard } = useStudentDashboardQuery();
+  
   const { shouldShowOnboarding, refetchStatus } = useOnboarding();
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  
+  // Extract dashboard data from React Query response
+  const dashboardData = dashboardResponse?.data || null;
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -74,62 +76,13 @@ export default function DashboardPage() {
   useEffect(() => {
     // Show access denied message if redirected from unauthorized route
     if (accessError === 'access_denied') {
-      toast.error('Access denied: You do not have permission to access that page');
+      ToastService.error('Access denied: You do not have permission to access that page');
       // Clean the URL without causing redirect loop
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
       window.history.replaceState({}, '', url);
     }
-    
-    // Only fetch dashboard data when user is available and not loading
-    if (!authLoading && user) {
-      const loadDashboardData = async () => {
-        setLoading(true);
-        
-        try {
-          // Try to fetch real data from API
-          const response = await usersApi.getDashboard();
-          if (response.success && response.data) {
-            setDashboardData(response.data);
-          } else {
-            throw new Error(response.message || 'Something went wrong');
-          }
-        } catch (error: any) {
-          console.error('Dashboard API error:', error);
-          toast.error(error.message || 'Something went wrong');
-          
-          // Fallback to mock data if API fails
-          const mockDashboardData: DashboardData = {
-            user: {
-              id: user.id || 'mock-id',
-              name: user.name || 'User',
-              email: user.email || 'user@example.com',
-              role: user.role || 'student',
-              premium_status: user.premiumStatus || false,
-            },
-            stats: {
-              total_courses: 0,
-              completed_courses: 0,
-              in_progress_courses: 0,
-              total_hours_learned: 0,
-              current_streak: 0,
-              longest_streak: 0,
-            },
-            recent_courses: [],
-            upcoming_lessons: [],
-            certificates_earned: 0,
-          };
-          
-          setDashboardData(mockDashboardData);
-          toast.error((error as any)?.message || 'Something went wrong');
-        }
-        
-        setLoading(false);
-      };
-      
-      loadDashboardData();
-    }
-  }, [accessError, authLoading, user]);
+  }, [accessError]);
 
   // Show onboarding modal when needed
   useEffect(() => {
@@ -146,9 +99,9 @@ export default function DashboardPage() {
     await refetchStatus();
     
     // Refresh dashboard data to show any new courses from onboarding
-    await refreshDashboard();
+    await refetchDashboard();
     
-    toast.success('Welcome to the platform! Your personalized dashboard is ready.');
+    ToastService.success('Welcome to the platform! Your personalized dashboard is ready.');
   };
 
   // Handle onboarding close (skip or manual close)
@@ -156,50 +109,18 @@ export default function DashboardPage() {
     setShowOnboardingModal(false);
   };
 
-  // Refresh function for manual data reload
+  // Refresh function for manual data reload - now uses React Query
   const refreshDashboard = async () => {
     if (!user) return;
     
-    setLoading(true);
-    
     try {
-      // Try to fetch real data from API
-      const response = await usersApi.getDashboard();
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
-      }
-      setDashboardData(response.data);
-      toast.success(response.message);
+      // React Query refetch - automatic error handling and caching
+      await refetchDashboard();
+      ToastService.success('Dashboard refreshed');
     } catch (error) {
+      // Error handling is automatic via React Query
       console.error('Dashboard refresh error:', error);
-      
-      // Fallback to mock data if API fails
-      const mockDashboardData: DashboardData = {
-        user: {
-          id: user.id || 'mock-id',
-          name: user.name || 'User',
-          email: user.email || 'user@example.com',
-          role: user.role || 'student',
-          premium_status: user.premiumStatus || false,
-        },
-        stats: {
-          total_courses: 0,
-          completed_courses: 0,
-          in_progress_courses: 0,
-          total_hours_learned: 0,
-          current_streak: 0,
-          longest_streak: 0,
-        },
-        recent_courses: [],
-        upcoming_lessons: [],
-        certificates_earned: 0,
-      };
-      
-      setDashboardData(mockDashboardData);
-      toast.error((error as any)?.message || 'Something went wrong');
     }
-    
-    setLoading(false);
   };
 
   if (authLoading || loading) {
@@ -306,7 +227,7 @@ export default function DashboardPage() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {dashboardData.recent_courses.map((course) => (
+              {dashboardData.recent_courses.map((course: any) => (
                 <Card key={course.id} className="p-4">
                   <div className="flex items-center gap-4">
                     {course.thumbnail ? (
@@ -358,7 +279,7 @@ export default function DashboardPage() {
               </Card>
             ) : (
               <div className="space-y-3">
-                {dashboardData.upcoming_lessons.map((lesson, index) => (
+                {dashboardData.upcoming_lessons.map((lesson: any, index: number) => (
                   <Card key={index} className="p-4">
                     <p className="font-medium text-sm">{lesson.lesson_title}</p>
                     <p className="text-xs text-gray-500 mt-1">

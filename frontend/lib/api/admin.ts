@@ -479,3 +479,116 @@ export const setCoursePrice = async (courseId: string, price: number): Promise<S
     throw error;
   }
 };
+
+/**
+ * Get platform analytics
+ */
+export const getPlatformAnalytics = async (filters?: {
+  period?: string;
+  startDate?: string;
+  endDate?: string;
+}): Promise<StandardResponse<any>> => {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.period) params.append('period', filters.period);
+    if (filters?.startDate) params.append('start_date', filters.startDate);
+    if (filters?.endDate) params.append('end_date', filters.endDate);
+
+    const response = await api.get<StandardResponse<any>>(
+      `/admin/analytics/platform${params.toString() ? `?${params}` : ''}`,
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Get platform analytics failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get user growth stats
+ */
+export const getUserGrowthStats = async (filters?: {
+  period?: string;
+}): Promise<StandardResponse<any>> => {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.period) params.append('period', filters.period);
+
+    const response = await api.get<StandardResponse<any>>(
+      `/admin/analytics/user-growth${params.toString() ? `?${params}` : ''}`,
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Get user growth stats failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get revenue stats
+ */
+export const getRevenueStats = async (filters?: {
+  period?: string;
+  startDate?: string;
+  endDate?: string;
+}): Promise<StandardResponse<any>> => {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.period) params.append('period', filters.period);
+    if (filters?.startDate) params.append('start_date', filters.startDate);
+    if (filters?.endDate) params.append('end_date', filters.endDate);
+
+    const response = await api.get<StandardResponse<any>>(
+      `/admin/analytics/revenue${params.toString() ? `?${params}` : ''}`,
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Get revenue stats failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get course stats
+ */
+export const getCourseStats = async (filters?: {
+  period?: string;
+}): Promise<StandardResponse<any>> => {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.period) params.append('period', filters.period);
+
+    const response = await api.get<StandardResponse<any>>(
+      `/admin/analytics/courses${params.toString() ? `?${params}` : ''}`,
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Get course stats failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get system health metrics
+ */
+export const getSystemHealth = async (): Promise<StandardResponse<any>> => {
+  try {
+    const response = await api.get<StandardResponse<any>>(
+      '/admin/system/health',
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Get system health failed:', error);
+    throw error;
+  }
+};

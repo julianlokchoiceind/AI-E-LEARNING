@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useApiMutation } from '@/hooks/useApiMutation'
 import { registerUser } from '@/lib/api/auth'
+import { ToastService } from '@/lib/toast/ToastService'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -14,98 +16,45 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: ''
   })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
   
-  // Debug: Check API connectivity on mount
-  useEffect(() => {
-    console.log('[REGISTER DEBUG] Component mounted');
-    console.log('[REGISTER DEBUG] API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1');
-    
-    // Test API connectivity
-    fetch((process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1') + '/health')
-      .then(res => {
-        console.log('[REGISTER DEBUG] Health check response status:', res.status);
-        return res.text();
-      })
-      .then(text => {
-        console.log('[REGISTER DEBUG] Health check response:', text);
-      })
-      .catch(err => {
-        console.error('[REGISTER DEBUG] Health check failed:', err);
-      });
-  }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setSuccessMessage('')
-    
-    console.log('[REGISTER DEBUG] Form submission started');
-    console.log('[REGISTER DEBUG] Form data:', formData);
-    
-    // Let backend handle all validation
-    setIsLoading(true)
-    
-    try {
-      console.log('[REGISTER DEBUG] Calling registerUser API...');
-      
-      // Call backend API to create user
-      // Include confirmPassword for backend validation
-      const response = await registerUser({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        // @ts-ignore - backend expects this for validation
-        confirm_password: formData.confirmPassword
-      })
-      
-      console.log('[REGISTER DEBUG] Registration successful:', response)
-      
-      // Use backend success message from StandardResponse
-      if (response.success) {
-        setSuccessMessage(response.message || 'Registration successful! Please check your email to verify your account.')
-      } else {
-        throw new Error(response.message || 'Something went wrong')
+  // React Query mutation for registration - replaces manual API calls and error handling
+  const { mutate: register, loading: isLoading } = useApiMutation(
+    (data: any) => registerUser({
+      name: data.name,
+      email: data.email,
+      password: data.password
+    }),
+    {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Registration successful! Please check your email to verify your account.');
+        
+        // Clear form
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: ''
+        });
+        
+        // Redirect to login after 2 seconds
+        setTimeout(() => {
+          router.push('/login?registered=true');
+        }, 2000);
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
       }
-      
-      // Clear form
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
-      })
-      
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        console.log('[REGISTER DEBUG] Redirecting to login page...');
-        router.push('/login?registered=true')
-      }, 3000)
-    } catch (error) {
-      console.error('[REGISTER DEBUG] Registration error caught:', error);
-      console.error('[REGISTER DEBUG] Error type:', error?.constructor?.name);
-      console.error('[REGISTER DEBUG] Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : 'No stack trace'
-      });
-      
-      // Always use the actual error message from backend, fallback to "Operation Failed"
-      if (error instanceof Error) {
-        setError(error.message || 'Something went wrong')
-      } else {
-        // This should never happen if error handler is working correctly
-        setError('Something went wrong')
-      }
-    } finally {
-      console.log('[REGISTER DEBUG] Form submission completed');
-      setIsLoading(false)
     }
+  )
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // React Query mutation handles API call with automatic error handling
+    register(formData)
   }
 
   const handleSocialSignUp = (provider: string) => {
-    setIsLoading(true)
     signIn(provider, { callbackUrl: '/dashboard' })
   }
 
@@ -125,18 +74,6 @@ export default function RegisterPage() {
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
-          
-          {successMessage && (
-            <div className="rounded-md bg-green-50 p-4">
-              <p className="text-sm text-green-800">{successMessage}</p>
-            </div>
-          )}
-          
           <div className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">

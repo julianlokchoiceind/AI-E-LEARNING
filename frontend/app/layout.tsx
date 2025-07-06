@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { headers } from 'next/headers'
 import { Toaster } from 'react-hot-toast'
 import { SessionProvider } from '@/components/providers/SessionProvider'
+import { QueryProvider } from '@/components/providers/QueryProvider'
 import { I18nProvider } from '@/lib/i18n/context'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { getLocaleFromPath, isValidLocale, DEFAULT_LOCALE, getTextDirection } from '@/lib/i18n/config'
@@ -74,31 +75,35 @@ export default function RootLayout({
       
       <body className={inter.className}>
         <ErrorBoundary>
-          <I18nProvider initialLocale={locale}>
-            <SessionProvider>
-              <Toaster 
-                position="top-right"
-                toastOptions={{
-                  duration: 5000,
-                  style: {
-                    background: '#363636',
-                    color: '#fff',
-                  },
-                  success: {
+          <SessionProvider>
+            <QueryProvider>
+              <I18nProvider initialLocale={locale}>
+                <Toaster
+                  position="top-right"
+                  toastOptions={{
+                    duration: 4000,
                     style: {
-                      background: '#10b981',
+                      background: '#363636',
+                      color: '#fff',
                     },
-                  },
-                  error: {
-                    style: {
-                      background: '#ef4444',
+                    success: {
+                      duration: 3000,
+                      style: {
+                        background: '#10b981',
+                      },
                     },
-                  },
-                }}
-              />
-              {children}
-            </SessionProvider>
-          </I18nProvider>
+                    error: {
+                      duration: 4000,
+                      style: {
+                        background: '#ef4444',
+                      },
+                    },
+                  }}
+                />
+                {children}
+              </I18nProvider>
+            </QueryProvider>
+          </SessionProvider>
         </ErrorBoundary>
       </body>
     </html>

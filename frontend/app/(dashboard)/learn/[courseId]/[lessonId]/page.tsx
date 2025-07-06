@@ -5,10 +5,22 @@ import { useParams, useRouter } from 'next/navigation';
 import { VideoPlayer } from '@/components/feature/VideoPlayer';
 import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
 import { QuizComponent } from '@/components/feature/QuizComponent';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
-import { quizAPI } from '@/lib/api/quizzes';
 import { useAuth } from '@/hooks/useAuth';
+import { 
+  useLessonQuery, 
+  useLessonProgressQuery, 
+  useCourseChaptersQuery,
+  useStartLesson,
+  useUpdateLessonProgress,
+  useMarkLessonComplete,
+  useBatchLessonProgressQuery
+} from '@/hooks/queries/useLearning';
+import {
+  useLessonQuizQuery,
+  useQuizProgressQuery
+} from '@/hooks/queries/useQuizzes';
 
 interface Lesson {
   _id: string;
@@ -53,344 +65,185 @@ export default function LessonPlayerPage() {
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
 
-  const [lesson, setLesson] = useState<Lesson | null>(null);
-  const [progress, setProgress] = useState<Progress | null>(null);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
+  // React Query hooks - automatic caching and state management
+  const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId);
+  const { data: progressResponse, loading: progressLoading, execute: refetchProgress } = useLessonProgressQuery(lessonId);
+  const { data: chaptersResponse, loading: chaptersLoading } = useCourseChaptersQuery(courseId);
+  const { mutate: startLesson } = useStartLesson();
+  const { mutate: updateProgress } = useUpdateLessonProgress();
+  const { mutate: markComplete } = useMarkLessonComplete();
+
+  // Extract data from React Query responses
+  const lesson = lessonResponse?.data || null;
+  const progress = progressResponse?.data || null;
+  const chapters = chaptersResponse?.data || [];
+  
+  // Calculate all lesson IDs for batch progress fetching
+  const allLessonIds = chapters.flatMap((chapter: Chapter) => 
+    chapter.lessons.map((lesson: Lesson) => lesson._id)
+  );
+  
+  // Batch fetch lesson progress using React Query - replaces manual fetchAllLessonsProgress
+  const { data: batchProgressData, loading: batchProgressLoading } = useBatchLessonProgressQuery(
+    allLessonIds,
+    chapters.length > 0 // Only fetch when chapters are loaded
+  );
+  
+  // Convert batch progress data to Map for efficient lookup
+  const lessonsProgress = new Map<string, LessonProgress>();
+  if (batchProgressData && Array.isArray(batchProgressData)) {
+    batchProgressData.forEach((progressItem: any) => {
+      lessonsProgress.set(progressItem.lesson_id, {
+        lesson_id: progressItem.lesson_id,
+        is_completed: progressItem.is_completed,
+        is_unlocked: progressItem.is_unlocked
+      });
+    });
+  }
+  
+  // React Query hooks for quiz data - replaces manual quiz API calls
+  const { data: quizResponse, loading: quizLoading } = useLessonQuizQuery(lessonId, !!lessonId);
+  const { data: quizProgressResponse, loading: quizProgressLoading } = useQuizProgressQuery(
+    quizResponse?.data?._id, 
+    !!quizResponse?.data?._id
+  );
+
+  // Extract quiz data from React Query responses
+  const hasQuiz = !!(quizResponse?.success && quizResponse?.data);
+  const quizPassed = !!(quizProgressResponse?.success && quizProgressResponse?.data?.is_passed);
+
+  // UI state only
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [nextLesson, setNextLesson] = useState<Lesson | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [progressUpdateInterval, setProgressUpdateInterval] = useState<NodeJS.Timeout | null>(null);
-  const [hasQuiz, setHasQuiz] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
-  const [quizPassed, setQuizPassed] = useState(false);
-  const [lessonsProgress, setLessonsProgress] = useState<Map<string, LessonProgress>>(new Map());
+
+  // Combined loading state - includes batch progress and quiz loading
+  const loading = lessonLoading || progressLoading || chaptersLoading || batchProgressLoading || quizLoading || quizProgressLoading;
 
   useEffect(() => {
-    fetchLessonData();
-    startLesson();
-    fetchCourseStructure();
-    checkForQuiz();
-
-    return () => {
-      if (progressUpdateInterval) {
-        clearInterval(progressUpdateInterval);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonId]);
-
-  const fetchLessonData = async () => {
-    try {
-      const response = await fetch(`${API_ENDPOINTS.LESSONS}/${lessonId}`, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Something went wrong');
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.message || 'Something went wrong');
-      }
-      setLesson(data.data);
-    } catch (error: any) {
-      console.error('Error fetching lesson:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
-  };
-
-  const startLesson = async () => {
-    try {
-      // Start lesson to create progress record
-      const startResponse = await fetch(`${API_ENDPOINTS.BASE_URL}/progress/lessons/${lessonId}/start`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (!startResponse.ok) {
-        const error = await startResponse.json();
-        if (error.detail?.includes('Complete previous lessons')) {
-          toast.error(error.detail || error.message || 'Something went wrong');
-          router.back();
-          return;
-        }
-        throw new Error(error.message || 'Something went wrong');
-      }
-
-      // Get progress data
-      const progressResponse = await fetch(`${API_ENDPOINTS.BASE_URL}/progress/lessons/${lessonId}/progress`, {
-        credentials: 'include',
-      });
-
-      if (progressResponse.ok) {
-        const data = await progressResponse.json();
-        if (data.success && data.data) {
-          setProgress(data.data);
-        }
-      }
-    } catch (error: any) {
-      console.error('Error starting lesson:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCourseStructure = async () => {
-    try {
-      const response = await fetch(`${API_ENDPOINTS.CHAPTERS}/courses/${courseId}/chapters-with-lessons`, {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          const chaptersData = data.data;
-          setChapters(chaptersData);
-          
-          // Fetch progress for all lessons
-          await fetchAllLessonsProgress(chaptersData);
-          
-          // Find current chapter and next lesson
-          for (const chapter of chaptersData) {
-            const lessonIndex = chapter.lessons.findIndex((l: Lesson) => l._id === lessonId);
-            if (lessonIndex !== -1) {
-              setCurrentChapter(chapter);
-              
-              // Check for next lesson in same chapter
-              if (lessonIndex < chapter.lessons.length - 1) {
-                setNextLesson(chapter.lessons[lessonIndex + 1]);
-              } else {
-                // Check for first lesson in next chapter
-                const chapterIndex = chaptersData.findIndex((c: Chapter) => c._id === chapter._id);
-                if (chapterIndex < chaptersData.length - 1 && chaptersData[chapterIndex + 1].lessons.length > 0) {
-                setNextLesson(chaptersData[chapterIndex + 1].lessons[0]);
-              }
-            }
-            break;
-          }
-        }
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching course structure:', error);
-    }
-  };
-
-  const fetchAllLessonsProgress = async (chapters: Chapter[]) => {
-    try {
-      const progressMap = new Map<string, LessonProgress>();
-      
-      // Collect all lesson IDs
-      const allLessonIds: string[] = [];
-      chapters.forEach(chapter => {
-        chapter.lessons.forEach(lesson => {
-          allLessonIds.push(lesson._id);
-        });
-      });
-      
-      // Fetch progress for all lessons
-      const progressPromises = allLessonIds.map(async (lessonId) => {
-        try {
-          const response = await fetch(`${API_ENDPOINTS.BASE_URL}/progress/lessons/${lessonId}/progress`, {
-            credentials: 'include',
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.data) {
-              return {
-                lesson_id: lessonId,
-                is_completed: data.data.is_completed,
-                is_unlocked: data.data.is_unlocked
-              };
-            }
-          }
-          
-          // If no progress exists, lesson is locked (except first lesson)
-          const isFirstLesson = chapters[0]?.lessons[0]?._id === lessonId;
-          return {
-            lesson_id: lessonId,
-            is_completed: false,
-            is_unlocked: isFirstLesson
-          };
-        } catch (error) {
-          // Default to locked if error
-          return {
-            lesson_id: lessonId,
-            is_completed: false,
-            is_unlocked: false
-          };
-        }
-      });
-      
-      const progressResults = await Promise.all(progressPromises);
-      
-      // Build progress map
-      progressResults.forEach(progress => {
-        progressMap.set(progress.lesson_id, progress);
-      });
-      
-      setLessonsProgress(progressMap);
-    } catch (error) {
-      console.error('Error fetching lessons progress:', error);
-    }
-  };
-
-  const checkForQuiz = async () => {
-    try {
-      const quizResponse = await quizAPI.getLessonQuiz(lessonId);
-      if (quizResponse.success && quizResponse.data) {
-        setHasQuiz(true);
-        
-        // Check if quiz is already passed
-        try {
-          const progressResponse = await quizAPI.getQuizProgress(quizResponse.data._id);
-          if (progressResponse.success && progressResponse.data && progressResponse.data.is_passed) {
-            setQuizPassed(true);
-          }
-        } catch (error) {
-          // No progress yet, that's okay
-        }
-      }
-    } catch (error) {
-      // No quiz for this lesson, that's okay
-      console.log('No quiz for this lesson');
-    }
-  };
-
-  const handleVideoProgress = async (percentage: number) => {
-    try {
-      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/progress/lessons/${lessonId}/progress`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+    // Start lesson when lesson data is available - React Query handles data fetching automatically
+    if (lesson && !progress) {
+      startLesson({ lessonId }, {
+        onSuccess: () => {
+          // Progress will be refetched automatically by React Query
+          refetchProgress();
         },
-        credentials: 'include',
-        body: JSON.stringify({
-          watch_percentage: percentage,
-          current_position: 0, // VideoPlayer should provide this
-        }),
+        onError: (error: any) => {
+          if (error.message?.includes('Complete previous lessons')) {
+            ToastService.error(error.message || 'Something went wrong');
+            router.back();
+            return;
+          }
+          console.error('Error starting lesson:', error);
+        }
       });
+    }
+    
+    // Quiz data is now automatically fetched via React Query hooks
+    // No need for manual checkForQuiz() calls
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson, lessonId]);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          setProgress(data.data);
+  // React Query data processing - automatic lesson navigation setup
+  useEffect(() => {
+    if (chapters.length > 0) {
+      // Process chapters data to find current chapter and next lesson
+      for (const chapter of chapters) {
+        const lessonIndex = chapter.lessons.findIndex((l: Lesson) => l._id === lessonId);
+        if (lessonIndex !== -1) {
+          setCurrentChapter(chapter);
+          
+          // Check for next lesson in same chapter
+          if (lessonIndex < chapter.lessons.length - 1) {
+            setNextLesson(chapter.lessons[lessonIndex + 1]);
+          } else {
+            // Check for first lesson in next chapter
+            const chapterIndex = chapters.findIndex((c: Chapter) => c._id === chapter._id);
+            if (chapterIndex < chapters.length - 1 && chapters[chapterIndex + 1].lessons.length > 0) {
+              setNextLesson(chapters[chapterIndex + 1].lessons[0]);
+            }
+          }
+          break;
         }
       }
-    } catch (error) {
-      console.error('Error updating progress:', error);
+      
+      // Note: Lesson progress is now automatically fetched via useBatchLessonProgressQuery
+      // No need for manual fetchAllLessonsProgress calls
     }
+  }, [chapters, lessonId]);
+
+  // ✅ COMPLETED: Replaced manual fetchAllLessonsProgress with React Query useBatchLessonProgressQuery
+  // This eliminates multiple individual API calls and provides automatic caching and error handling
+
+  // ✅ MIGRATED: Quiz data is now automatically fetched via React Query hooks
+  // useLessonQuizQuery and useQuizProgressQuery replace manual API calls
+  // This provides automatic caching, error handling, and loading states
+
+  const handleVideoProgress = (percentage: number) => {
+    // React Query mutation handles API call with automatic error handling
+    updateProgress({ 
+      lessonId, 
+      progress: {
+        watchPercentage: percentage,
+        currentPosition: 0, // VideoPlayer should provide this
+        totalWatchTime: 0 // VideoPlayer should provide this
+      }
+    }, {
+      onSuccess: () => {
+        // Progress data will be automatically refetched by React Query
+      },
+      onError: (error: any) => {
+        console.error('Error updating progress:', error);
+      }
+    });
   };
 
-  const handleVideoComplete = async () => {
+  const handleVideoComplete = () => {
     // If there's a quiz and it hasn't been passed yet, show it
     if (hasQuiz && !quizPassed) {
       setShowQuiz(true);
-      toast.success('Great job! Now complete the quiz to finish this lesson.');
+      ToastService.success('Great job! Now complete the quiz to finish this lesson.');
       return;
     }
 
-    // Otherwise, complete the lesson
-    try {
-      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/progress/lessons/${lessonId}/complete`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        toast.success(data.message || 'Something went wrong');
-        
-        // Update local progress state
-        if (progress) {
-          setProgress({
-            ...progress,
-            is_completed: true,
-            video_progress: {
-              ...progress.video_progress,
-              is_completed: true,
-            },
-          });
-        }
-        
-        // Update lesson progress in sidebar
-        const updatedProgress = new Map(lessonsProgress);
-        updatedProgress.set(lessonId, {
-          lesson_id: lessonId,
-          is_completed: true,
-          is_unlocked: true
-        });
-        
-        // Unlock next lesson if exists
-        if (nextLesson) {
-          updatedProgress.set(nextLesson._id, {
-            lesson_id: nextLesson._id,
-            is_completed: false,
-            is_unlocked: true
-          });
-        }
-        
-        setLessonsProgress(updatedProgress);
+    // Otherwise, complete the lesson using React Query mutation
+    markComplete({ 
+      lessonId, 
+      courseId, 
+      quizScore: undefined 
+    }, {
+      onSuccess: (response: any) => {
+        // React Query will automatically refresh progress data via cache invalidation
+        // No need to manually update lessonsProgress - useBatchLessonProgressQuery will refetch
+        ToastService.success(response.message || 'Something went wrong');
+      },
+      onError: (error: any) => {
+        console.error('Error completing lesson:', error);
+        ToastService.error(error.message || 'Something went wrong');
       }
-    } catch (error) {
-      console.error('Error completing lesson:', error);
-    }
+    });
   };
 
-  const handleQuizComplete = async (passed: boolean) => {
+  const handleQuizComplete = (passed: boolean) => {
     if (passed) {
-      setQuizPassed(true);
-      
-      // Now complete the lesson
-      try {
-        const response = await fetch(`${API_ENDPOINTS.BASE_URL}/progress/lessons/${lessonId}/complete`, {
-          method: 'POST',
-          credentials: 'include',
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          toast.success(data.message || 'Something went wrong');
-          
-          // Update local progress state
-          if (progress) {
-            setProgress({
-              ...progress,
-              is_completed: true,
-              video_progress: {
-                ...progress.video_progress,
-                is_completed: true,
-              },
-            });
-          }
-          
-          // Update lesson progress in sidebar
-          const updatedProgress = new Map(lessonsProgress);
-          updatedProgress.set(lessonId, {
-            lesson_id: lessonId,
-            is_completed: true,
-            is_unlocked: true
-          });
-          
-          // Unlock next lesson if exists
-          if (nextLesson) {
-            updatedProgress.set(nextLesson._id, {
-              lesson_id: nextLesson._id,
-              is_completed: false,
-              is_unlocked: true
-            });
-          }
-          
-          setLessonsProgress(updatedProgress);
+      // Quiz passed - complete the lesson using React Query mutation
+      markComplete({ 
+        lessonId, 
+        courseId, 
+        quizScore: 100 // Assuming passed = 100% score
+      }, {
+        onSuccess: (response: any) => {
+          // React Query will automatically refresh progress data via cache invalidation
+          // No need to manually update lessonsProgress - useBatchLessonProgressQuery will refetch
+          ToastService.success(response.message || 'Something went wrong');
+        },
+        onError: (error: any) => {
+          console.error('Error completing lesson:', error);
+          ToastService.error(error.message || 'Something went wrong');
         }
-      } catch (error) {
-        console.error('Error completing lesson:', error);
-      }
+      });
     } else {
-      toast.error('Something went wrong');
+      ToastService.error('Something went wrong');
     }
   };
 
@@ -440,13 +293,13 @@ export default function LessonPlayerPage() {
           </div>
 
           <div className="p-4">
-            {chapters.map((chapter) => (
+            {chapters.map((chapter: any) => (
               <div key={chapter._id} className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-2">
                   Chapter {chapter.order}: {chapter.title}
                 </h3>
                 <div className="space-y-1">
-                  {chapter.lessons.map((chapterLesson) => {
+                  {chapter.lessons.map((chapterLesson: any) => {
                     const isCurrentLesson = chapterLesson._id === lessonId;
                     const lessonProgress = lessonsProgress.get(chapterLesson._id);
                     const isCompleted = lessonProgress?.is_completed || false;
@@ -457,7 +310,7 @@ export default function LessonPlayerPage() {
                         key={chapterLesson._id}
                         onClick={() => {
                           if (!isUnlocked && !isCurrentLesson) {
-                            toast.error('Please complete previous lessons first');
+                            ToastService.error('Please complete previous lessons first');
                             return;
                           }
                           navigateToLesson(chapterLesson._id);

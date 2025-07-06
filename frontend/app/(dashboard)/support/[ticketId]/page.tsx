@@ -12,13 +12,17 @@ import {
   Shield,
   Star
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
-import { supportAPI } from '@/lib/api/support';
+import { 
+  useSupportTicketQuery,
+  useCreateSupportMessage,
+  useRateSupportTicket
+} from '@/hooks/queries/useSupport';
 import {
   TicketWithMessages,
   MessageCreateData,
@@ -35,92 +39,89 @@ export default function TicketDetailPage() {
   const ticketId = params.ticketId as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  const [ticket, setTicket] = useState<TicketWithMessages | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
+  // React Query hooks for support ticket management
+  const { 
+    data: ticketResponse, 
+    loading, 
+    error: ticketError,
+    refetch: refetchTicket 
+  } = useSupportTicketQuery(ticketId);
+  
+  const { mutate: sendMessage, loading: sending } = useCreateSupportMessage();
+  const { mutate: rateTicket, loading: submittingRating } = useRateSupportTicket();
+  
+  const ticket = ticketResponse?.data || null;
   const [message, setMessage] = useState('');
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [rating, setRating] = useState(0);
   const [ratingComment, setRatingComment] = useState('');
 
+  // Handle ticket error
   useEffect(() => {
-    fetchTicket();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketId]);
+    if (ticketError) {
+      ToastService.error('Failed to load ticket');
+      router.push('/support');
+    }
+  }, [ticketError, router]);
 
   useEffect(() => {
     scrollToBottom();
     
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticket?.messages]);
-
-  const fetchTicket = async () => {
-    try {
-      setLoading(true);
-      const response = await supportAPI.getTicket(ticketId);
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Something went wrong');
-      }
-      
-      const data = response.data;
-      setTicket(data);
-      
-      // Show rating modal if resolved and not rated
-      if (data.status === 'resolved' && !data.satisfaction_rating) {
-        setShowRatingModal(true);
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch ticket:', error);
-      toast.error(error.message || 'Something went wrong');
-      router.push('/support');
-    } finally {
-      setLoading(false);
+    // Show rating modal if resolved and not rated
+    if (ticket?.status === 'resolved' && !ticket.satisfaction_rating) {
+      setShowRatingModal(true);
     }
-  };
+  }, [ticket?.messages, ticket?.status, ticket?.satisfaction_rating]);
 
-  const handleSendMessage = async () => {
+
+  const handleSendMessage = () => {
     if (!message.trim()) return;
 
-    try {
-      setSending(true);
-      const messageData: MessageCreateData = {
-        message: message.trim(),
-      };
-      
-      const response = await supportAPI.addMessage(ticketId, messageData);
-      setMessage('');
-      fetchTicket(); // Refresh to get new message
-      toast.success(response.message || 'Something went wrong');
-    } catch (error: any) {
-      console.error('Failed to send message:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setSending(false);
-    }
+    const messageData: MessageCreateData = {
+      message: message.trim(),
+    };
+    
+    sendMessage(
+      { ticketId, messageData },
+      {
+        onSuccess: (response) => {
+          setMessage('');
+          refetchTicket(); // Refresh to get new message
+          ToastService.success(response.message || 'Something went wrong');
+        },
+        onError: (error: any) => {
+          console.error('Failed to send message:', error);
+          ToastService.error(error.message || 'Something went wrong');
+        }
+      }
+    );
   };
 
-  const handleRateTicket = async () => {
+  const handleRateTicket = () => {
     if (rating === 0) {
-      toast.error('Please select a rating');
+      ToastService.error('Please select a rating');
       return;
     }
 
-    try {
-      const ratingData: SatisfactionRatingData = {
-        rating,
-        comment: ratingComment.trim() || undefined,
-      };
-      
-      const response = await supportAPI.rateTicket(ticketId, ratingData);
-      toast.success(response.message || 'Something went wrong');
-      setShowRatingModal(false);
-      fetchTicket(); // Refresh to show rating
-    } catch (error: any) {
-      console.error('Failed to rate ticket:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    const ratingData: SatisfactionRatingData = {
+      rating,
+      comment: ratingComment.trim() || undefined,
+    };
+    
+    rateTicket(
+      { ticketId, ratingData },
+      {
+        onSuccess: (response) => {
+          ToastService.success(response.message || 'Something went wrong');
+          setShowRatingModal(false);
+          refetchTicket(); // Refresh to show rating
+        },
+        onError: (error: any) => {
+          console.error('Failed to rate ticket:', error);
+          ToastService.error(error.message || 'Something went wrong');
+        }
+      }
+    );
   };
 
   const scrollToBottom = () => {
@@ -214,7 +215,7 @@ export default function TicketDetailPage() {
       <Card className="mb-6">
         <CardContent className="p-0">
           <div className="h-[500px] overflow-y-auto p-6 space-y-4">
-            {ticket.messages.map((msg) => {
+            {ticket.messages.map((msg: any) => {
               const isSupport = msg.sender_role === 'support';
               
               return (
@@ -358,6 +359,7 @@ export default function TicketDetailPage() {
             </Button>
             <Button
               onClick={handleRateTicket}
+              loading={submittingRating}
               disabled={rating === 0}
             >
               Submit Rating

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Check, Loader2, AlertCircle } from 'lucide-react';
+import { Check, Loader2, AlertCircle, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
 
 interface SaveStatusIndicatorProps {
   status: SaveStatus;
@@ -37,6 +37,7 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
           'text-gray-500': status === 'saving',
           'text-green-600': status === 'saved',
           'text-red-600': status === 'error',
+          'text-orange-600': status === 'conflict',
         },
         className
       )}
@@ -61,6 +62,13 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
         <>
           <AlertCircle className="w-4 h-4" />
           <span>{error || 'Save failed'}</span>
+        </>
+      )}
+      
+      {status === 'conflict' && (
+        <>
+          <AlertTriangle className="w-4 h-4" />
+          <span>{error || 'Conflict detected'}</span>
         </>
       )}
     </div>

@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/hooks/useAuth';
-import { createSubscription, SubscriptionType } from '@/lib/api/payments';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { loadStripe } from '@stripe/stripe-js';
 
 const stripePromise = loadStripe(
@@ -20,14 +19,14 @@ export default function PricingPage() {
 
   const handleProSubscription = async () => {
     if (!user) {
-      toast.error('Please login to subscribe');
+      ToastService.error('Please login to subscribe');
       router.push('/login');
       return;
     }
 
     // Check premium status instead of subscription object
     if (user.premiumStatus) {
-      toast('You already have premium access');
+      ToastService.success('You already have premium access');
       return;
     }
 
@@ -38,7 +37,7 @@ export default function PricingPage() {
       router.push('/billing/subscribe');
     } catch (error: any) {
       console.error('Subscription error:', error);
-      toast.error(error.message || 'Something went wrong');
+      ToastService.error(error.message || 'Something went wrong');
     } finally {
       setIsProcessing(false);
     }

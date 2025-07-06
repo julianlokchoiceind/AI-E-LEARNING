@@ -24,6 +24,79 @@
 
 ---
 
+## 🔥 **MANDATORY DEVELOPMENT PATTERNS**
+
+### **🚨 CRITICAL: These patterns are NON-NEGOTIABLE for all Phase 1 development**
+
+### **1. React Query Data Fetching (NO Direct API Calls)**
+```typescript
+// ❌ NEVER do this in components:
+const data = await fetch('/api/courses');
+
+// ✅ ALWAYS use React Query hooks:
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { useApiMutation } from '@/hooks/useApiMutation';
+
+// For data fetching
+const { data, isLoading, error } = useApiQuery<StandardResponse<Course[]>>({
+  endpoint: '/courses',
+  queryKey: ['courses']
+});
+
+// For mutations
+const { mutate: createCourse } = useApiMutation<CreateCourseData, StandardResponse<Course>>({
+  endpoint: '/courses',
+  method: 'POST',
+  onSuccess: (response) => {
+    if (!response.success) {
+      throw new Error(response.message || 'Something went wrong');
+    }
+    ToastService.success(response.message || 'Something went wrong');
+  },
+  onError: (error: any) => {
+    ToastService.error(error.message || 'Something went wrong');
+  }
+});
+```
+
+### **2. Toast Service Pattern (NO alert() or confirm())**
+```typescript
+// ❌ NEVER use:
+alert('Course created');
+confirm('Delete this course?');
+
+// ✅ ALWAYS use ToastService:
+import { ToastService } from '@/lib/toast/service';
+
+// All messages MUST have 'Something went wrong' fallback
+ToastService.success(response.message || 'Something went wrong');
+ToastService.error(error.message || 'Something went wrong');
+```
+
+### **3. StandardResponse Pattern**
+```typescript
+// Backend always returns:
+interface StandardResponse<T> {
+  success: boolean;
+  data?: T;
+  message: string;
+}
+
+// Frontend always checks:
+if (!response.success) {
+  throw new Error(response.message || 'Something went wrong');
+}
+```
+
+### **4. Component State Management**
+- **Data fetching**: React Query (useApiQuery/useApiMutation)
+- **Local UI state**: useState
+- **Form state**: react-hook-form
+- **Global state**: Zustand stores
+- **NEVER**: Manual API state management
+
+---
+
 ## 📅 **WEEK-BY-WEEK BREAKDOWN**
 
 ---

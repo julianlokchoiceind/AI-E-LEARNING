@@ -166,3 +166,12 @@ export const faqAPI = {
     return response;
   },
 };
+
+// Export individual functions for React Query hooks
+export const getFAQs = faqAPI.getFAQs;
+export const createFAQ = faqAPI.createFAQ;
+export const updateFAQ = faqAPI.updateFAQ;
+export const deleteFAQ = faqAPI.deleteFAQ;
+export const voteFAQ = faqAPI.voteFAQ;
+export const searchFAQs = faqAPI.getFAQs; // Alias for consistency
+export const getFAQCategories = faqAPI.getCategories;

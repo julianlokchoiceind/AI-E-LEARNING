@@ -7,10 +7,10 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { CertificateDisplay } from '@/components/feature/CertificateDisplay';
-import { certificateAPI } from '@/lib/api/certificates';
-import { progressAPI } from '@/lib/api/progress';
 import { CertificateWithDetails } from '@/lib/types/certificate';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
+import { useCourseCompletionCheck } from '@/hooks/queries/useAI';
+import { useDownloadCertificate, useLinkedInShareData } from '@/hooks/queries/useCertificates';
 
 interface CourseCompletionCelebrationProps {
   isOpen: boolean;
@@ -28,9 +28,13 @@ export function CourseCompletionCelebration({
   enrollmentId
 }: CourseCompletionCelebrationProps) {
   const [certificate, setCertificate] = useState<CertificateWithDetails | null>(null);
-  const [loading, setLoading] = useState(false);
   const [certificateGenerated, setCertificateGenerated] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
+
+  // React Query mutations - fully migrated from manual API calls
+  const { mutate: checkCompletion, loading } = useCourseCompletionCheck();
+  const { mutate: downloadCertificate, loading: downloading } = useDownloadCertificate();
+  const { mutate: getLinkedInData, loading: sharing } = useLinkedInShareData();
 
   useEffect(() => {
     if (isOpen) {
@@ -40,108 +44,102 @@ export function CourseCompletionCelebration({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, courseId]);
 
-  const checkForCertificate = async () => {
-    try {
-      setLoading(true);
-      
-      // Check if course is completed and get certificate
-      const response = await fetch(`/api/v1/progress/courses/${courseId}/check-completion`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+  const checkForCertificate = () => {
+    checkCompletion(
+      { courseId },
+      {
+        onSuccess: (response) => {
+          if (response.success && response.data) {
+            setCertificate(response.data);
+            setCertificateGenerated(true);
+            ToastService.success(response.message || 'Something went wrong');
+          }
         },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data) {
-          setCertificate(result.data);
-          setCertificateGenerated(true);
-          toast.success(result.message);
+        onError: (error: any) => {
+          console.error('Failed to check course completion:', error);
+          ToastService.error(error.message || 'Something went wrong');
         }
       }
-    } catch (error) {
-      console.error('Failed to check course completion:', error);
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
-  const generateCertificate = async () => {
+  const generateCertificate = () => {
     if (!enrollmentId) {
-      toast.error('Enrollment information not found');
+      ToastService.error('Enrollment information not found');
       return;
     }
 
-    try {
-      setLoading(true);
-      const response = await certificateAPI.generateCertificate({
-        enrollment_id: enrollmentId,
-        template_id: 'default'
-      });
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
+    // Use completion check to generate certificate
+    checkCompletion(
+      { courseId },
+      {
+        onSuccess: (response) => {
+          if (response.success && response.data) {
+            setCertificate(response.data);
+            setCertificateGenerated(true);
+            ToastService.success(response.message || 'Something went wrong');
+          } else {
+            ToastService.error(response.message || 'Something went wrong');
+          }
+        },
+        onError: (error: any) => {
+          console.error('Failed to generate certificate:', error);
+          ToastService.error(error.message || 'Something went wrong');
+        }
       }
-      
-      const cert = response.data;
-      setCertificate(cert);
-      setCertificateGenerated(true);
-      toast.success(response.message);
-    } catch (error: any) {
-      console.error('Failed to generate certificate:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   const handleViewCertificate = () => {
     setShowCertificate(true);
   };
 
-  const handleDownloadCertificate = async () => {
+  const handleDownloadCertificate = () => {
     if (!certificate) return;
 
-    try {
-      const blob = await certificateAPI.downloadCertificatePDF(certificate._id);
-      
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `certificate_${certificate.certificate_number}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast.success('Certificate downloaded successfully');
-    } catch (error: any) {
-      console.error('Failed to download certificate:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    downloadCertificate(certificate._id, {
+      onSuccess: (response) => {
+        if (!response.data) return;
+        const url = window.URL.createObjectURL(response.data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `certificate_${certificate.certificate_number}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        ToastService.success('Certificate downloaded successfully');
+      },
+      onError: (error: any) => {
+        console.error('Failed to download certificate:', error);
+        ToastService.error(error.message || 'Something went wrong');
+      }
+    });
   };
 
-  const handleShareLinkedIn = async () => {
+  const handleShareLinkedIn = () => {
     if (!certificate) return;
 
-    try {
-      const response = await certificateAPI.getLinkedInShareData(certificate._id);
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Something went wrong');
+    getLinkedInData(certificate._id, {
+      onSuccess: (response) => {
+        if (!response.success || !response.data) {
+          ToastService.error(response.message || 'Something went wrong');
+          return;
+        }
+        
+        const shareData = response.data;
+        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+          shareData.certificate_url
+        )}`;
+        
+        window.open(linkedinUrl, '_blank', 'width=600,height=400');
+        ToastService.success(response.message || 'Something went wrong');
+      },
+      onError: (error: any) => {
+        console.error('Failed to get LinkedIn share data:', error);
+        ToastService.error(error.message || 'Something went wrong');
       }
-      
-      const shareData = response.data;
-      const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-        shareData.certificate_url
-      )}`;
-      
-      window.open(linkedinUrl, '_blank', 'width=600,height=400');
-      toast.success(response.message || 'Something went wrong');
-    } catch (error: any) {
-      console.error('Failed to get LinkedIn share data:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    });
   };
 
   return (
@@ -216,11 +214,21 @@ export function CourseCompletionCelebration({
                       <Award className="h-4 w-4 mr-2" />
                       View Certificate
                     </Button>
-                    <Button onClick={handleDownloadCertificate} variant="outline">
+                    <Button 
+                      onClick={handleDownloadCertificate} 
+                      loading={downloading}
+                      disabled={downloading}
+                      variant="outline"
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Download PDF
                     </Button>
-                    <Button onClick={handleShareLinkedIn} variant="outline">
+                    <Button 
+                      onClick={handleShareLinkedIn}
+                      loading={sharing}
+                      disabled={sharing}
+                      variant="outline"
+                    >
                       <ExternalLink className="h-4 w-4 mr-2" />
                       Share on LinkedIn
                     </Button>

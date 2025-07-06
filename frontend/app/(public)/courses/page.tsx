@@ -1,31 +1,40 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Search, Filter, ChevronDown } from 'lucide-react';
 import CourseCard from '@/components/feature/CourseCard';
 import { Button } from '@/components/ui/Button';
-import { getCourses } from '@/lib/api/courses';
-import { enrollInCourse } from '@/lib/api/enrollments';
 import { CourseCardSkeleton, EmptyState, LoadingSpinner } from '@/components/ui/LoadingStates';
-import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useCoursesQuery, useEnrollInCourse } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 
 const CourseCatalogPage = () => {
-  const [courses, setCourses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // UI state only - data fetching handled by React Query
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('');
   const [priceFilter, setPriceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [showFilters, setShowFilters] = useState(false);
-  const [enrollingCourse, setEnrollingCourse] = useState<string | null>(null);
   
-  const { handleError } = useErrorHandler();
   const { user } = useAuth();
   const router = useRouter();
+  
+  // React Query hooks - automatic caching and state management
+  const { data: coursesData, loading, execute: refetchCourses } = useCoursesQuery({
+    search: searchQuery,
+    category: selectedCategory,
+    level: selectedLevel,
+    pricing: priceFilter === 'all' ? undefined : (priceFilter as "free" | "paid"),
+    sort: sortBy as "rating" | "popular" | "newest" | "price",
+  });
+  
+  const { mutate: enrollInCourse, loading: enrollingCourse } = useEnrollInCourse();
+  
+  // Extract courses from React Query response
+  const courses = coursesData?.courses || [];
 
   const categories = [
     { value: '', label: 'All Categories' },
@@ -57,95 +66,42 @@ const CourseCatalogPage = () => {
     { value: 'price-high', label: 'Price: High to Low' }
   ];
 
-  const fetchCourses = useCallback(async () => {
-    setLoading(true);
-    
-    const result = await handleError(async () => {
-      const params = new URLSearchParams();
-      
-      if (searchQuery) params.append('search', searchQuery);
-      if (selectedCategory) params.append('category', selectedCategory);
-      if (selectedLevel) params.append('level', selectedLevel);
-      if (priceFilter === 'free') params.append('is_free', 'true');
-      if (priceFilter === 'paid') params.append('is_free', 'false');
-      
-      // Sort parameter
-      switch (sortBy) {
-        case 'newest':
-          params.append('sort', '-created_at');
-          break;
-        case 'popular':
-          params.append('sort', '-stats.total_enrollments');
-          break;
-        case 'rating':
-          params.append('sort', '-stats.average_rating');
-          break;
-        case 'price-low':
-          params.append('sort', 'pricing.price');
-          break;
-        case 'price-high':
-          params.append('sort', '-pricing.price');
-          break;
-      }
+  // No manual fetchCourses needed - React Query handles this automatically
 
-      const response = await getCourses(params.toString());
-      return response;
-    });
-    
-    if (result && result.success && result.data) {
-      setCourses(result.data.courses || []);
-    }
-    
-    setLoading(false);
-  }, [searchQuery, selectedCategory, selectedLevel, priceFilter, sortBy, handleError]);
-
-  useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
-
-  const handleEnroll = async (courseId: string) => {
+  const handleEnroll = (courseId: string) => {
     // Check if user is logged in
     if (!user) {
       router.push('/login?redirect=' + encodeURIComponent(`/courses/${courseId}`));
       return;
     }
 
-    try {
-      setEnrollingCourse(courseId);
-      
-      // Find the course to check pricing
-      if (!courses || !Array.isArray(courses)) {
-        toast.error('Courses not loaded. Please refresh the page.');
-        return;
-      }
-      
-      const course = courses.find(c => c._id === courseId);
-      if (!course) {
-        toast.error('Course not found');
-        return;
-      }
+    // Find the course to check pricing
+    const course = courses.find((c: any) => c._id === courseId);
+    if (!course) {
+      ToastService.error('Course not found');
+      return;
+    }
 
-      // Check if it's a free course or user has premium access
-      if (course.pricing.is_free || user.premiumStatus) {
-        // Direct enrollment for free access
-        await enrollInCourse(courseId);
-        toast.success('Successfully enrolled in course!');
-        router.push(`/learn/${courseId}`);
-      } else {
-        // Redirect to payment for paid courses
-        router.push(`/checkout/course/${courseId}`);
-      }
-    } catch (error: any) {
-      console.error('Failed to enroll:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setEnrollingCourse(null);
+    // Check if it's a free course or user has premium access
+    if (course.pricing.is_free || user.premiumStatus) {
+      // Direct enrollment for free access - React Query mutation handles error/success
+      enrollInCourse({ courseId }, {
+        onSuccess: () => {
+          // React Query will show success toast automatically
+          router.push(`/learn/${courseId}`);
+        },
+        // Error handling is automatic via useApiMutation
+      });
+    } else {
+      // Redirect to payment for paid courses
+      router.push(`/checkout/course/${courseId}`);
     }
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchCourses();
+    // No manual trigger needed - React Query automatically refetches when searchQuery changes
+    // If manual refetch is needed, use: refetchCourses();
   };
 
   return (
@@ -278,12 +234,12 @@ const CourseCatalogPage = () => {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {courses.map((course) => (
+            {courses.map((course: any) => (
               <CourseCard
                 key={course._id}
                 course={course}
                 onEnroll={handleEnroll}
-                isEnrolling={enrollingCourse === course._id}
+                isEnrolling={enrollingCourse}
               />
             ))}
           </div>

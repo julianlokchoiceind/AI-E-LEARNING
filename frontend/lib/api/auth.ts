@@ -158,3 +158,91 @@ export async function resendVerificationEmail(email: string): Promise<StandardRe
   )
   return response
 }
+
+// =============================================================================
+// MISSING FUNCTIONS - Add complete user profile and session management
+// =============================================================================
+
+export interface UserProfileData {
+  name?: string;
+  bio?: string;
+  avatar?: string;
+  location?: string;
+  linkedin?: string;
+  github?: string;
+  website?: string;
+  title?: string;
+}
+
+export interface UserPreferencesData {
+  language?: string;
+  timezone?: string;
+  email_notifications?: boolean;
+  push_notifications?: boolean;
+  marketing_emails?: boolean;
+}
+
+export interface ChangePasswordData {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+/**
+ * Get user profile information
+ */
+export async function getUserProfile(): Promise<StandardResponse<UserResponse & { profile?: UserProfileData }>> {
+  const response = await api.get<StandardResponse<UserResponse & { profile?: UserProfileData }>>('/auth/profile')
+  return response
+}
+
+/**
+ * Update user profile information
+ */
+export async function updateProfile(data: UserProfileData): Promise<StandardResponse<UserResponse>> {
+  const response = await api.put<StandardResponse<UserResponse>>('/auth/profile', data)
+  return response
+}
+
+/**
+ * Change user password
+ */
+export async function changePassword(data: ChangePasswordData): Promise<StandardResponse<{ message: string }>> {
+  const response = await api.put<StandardResponse<{ message: string }>>('/auth/change-password', data)
+  return response
+}
+
+/**
+ * Get user preferences
+ */
+export async function getUserPreferences(): Promise<StandardResponse<UserPreferencesData>> {
+  const response = await api.get<StandardResponse<UserPreferencesData>>('/auth/preferences')
+  return response
+}
+
+/**
+ * Update user preferences
+ */
+export async function updateUserPreferences(data: UserPreferencesData): Promise<StandardResponse<UserPreferencesData>> {
+  const response = await api.put<StandardResponse<UserPreferencesData>>('/auth/preferences', data)
+  return response
+}
+
+/**
+ * Check current session validity
+ */
+export async function checkSession(): Promise<StandardResponse<UserResponse>> {
+  const response = await api.get<StandardResponse<UserResponse>>('/auth/me')
+  return response
+}
+
+// =============================================================================
+// EXPORT ALIASES - Fix naming mismatches for React Query hooks
+// =============================================================================
+
+/**
+ * Alias exports to match expected import names in useAuth.ts
+ */
+export const login = loginUser;
+export const register = registerUser;
+export const resendVerification = resendVerificationEmail;

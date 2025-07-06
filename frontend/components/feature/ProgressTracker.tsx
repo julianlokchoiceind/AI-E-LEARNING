@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
+import { useCourseProgressQuery } from '@/hooks/queries/useLearning';
 
 interface ProgressTrackerProps {
   courseId: string;
@@ -26,58 +26,39 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   variant = 'default',
   onProgressUpdate
 }) => {
-  const [progress, setProgress] = useState<CourseProgress | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Use React Query for course progress
+  const { data: progressResponse, loading } = useCourseProgressQuery(courseId, !!courseId);
 
-  useEffect(() => {
-    fetchCourseProgress();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId]);
-
-  const fetchCourseProgress = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(
-        `${API_ENDPOINTS.BASE_URL}/progress/courses/${courseId}/progress`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Something went wrong');
-      }
-
-      const result = await response.json();
-      if (result.success && result.data) {
-        // Calculate progress from lesson data
-        const lessons = result.data;
-        const totalLessons = lessons.length;
-        const completedLessons = lessons.filter((l: any) => l.is_completed).length;
-        const completionPercentage = totalLessons > 0 
-          ? Math.round((completedLessons / totalLessons) * 100) 
-          : 0;
-
-        const progressData: CourseProgress = {
-          total_lessons: totalLessons,
-          completed_lessons: completedLessons,
-          completion_percentage: completionPercentage,
-          is_completed: completionPercentage === 100
-        };
-
-        setProgress(progressData);
-        onProgressUpdate?.(progressData);
-      }
-    } catch (error) {
-      console.error('Progress fetch error:', error);
-    } finally {
-      setLoading(false);
+  // Calculate progress from React Query data
+  const progress = useMemo(() => {
+    if (!progressResponse?.success || !progressResponse.data) {
+      return null;
     }
-  };
+
+    // Calculate progress from lesson data
+    const lessons = progressResponse.data;
+    const totalLessons = lessons.length;
+    const completedLessons = lessons.filter((l: any) => l.is_completed).length;
+    const completionPercentage = totalLessons > 0 
+      ? Math.round((completedLessons / totalLessons) * 100) 
+      : 0;
+
+    const progressData: CourseProgress = {
+      total_lessons: totalLessons,
+      completed_lessons: completedLessons,
+      completion_percentage: completionPercentage,
+      is_completed: completionPercentage === 100
+    };
+
+    return progressData;
+  }, [progressResponse]);
+
+  // Trigger callback when progress updates
+  useEffect(() => {
+    if (progress && onProgressUpdate) {
+      onProgressUpdate(progress);
+    }
+  }, [progress, onProgressUpdate]);
 
   if (loading) {
     return (

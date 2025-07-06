@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { SubscriptionCheckoutForm } from '@/components/feature/SubscriptionCheckoutForm';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { ArrowLeft, Shield, Crown, Check } from 'lucide-react';
 
 const stripePromise = loadStripe(
@@ -33,7 +33,7 @@ export default function SubscribePage() {
     if (user) {
       // Premium users have free access
       if (user.premiumStatus) {
-        toast.success('You have premium access to all courses');
+        ToastService.success('You have premium access to all courses');
         router.push('/billing');
         return;
       }
@@ -152,11 +152,11 @@ export default function SubscribePage() {
               <SubscriptionCheckoutForm 
                 plan={currentPlan}
                 onSuccess={() => {
-                  toast.success('Subscription successful! Welcome to Pro!');
+                  ToastService.success('Subscription successful! Welcome to Pro!');
                   router.push('/dashboard');
                 }}
                 onError={(error: string) => {
-                  toast.error(error);
+                  ToastService.error(error);
                 }}
               />
             </Elements>

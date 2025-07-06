@@ -1,4 +1,4 @@
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 
 export interface PaymentRetryOptions {
   maxRetries: number;
@@ -58,9 +58,8 @@ export class PaymentRetryHandler {
         this.retryCount++;
         
         // Show retry toast
-        toast.loading(
-          `Payment attempt ${this.retryCount}/${this.options.maxRetries + 1} failed. Retrying...`,
-          { duration: 2000 }
+        ToastService.loading(
+          `Payment attempt ${this.retryCount}/${this.options.maxRetries + 1} failed. Retrying...`
         );
 
         // Calculate delay with exponential backoff
@@ -186,7 +185,7 @@ export async function retryPaymentOperation<T>(
     console.warn(`Payment attempt ${attempt} failed:`, error);
     
     // Show user-friendly error message
-    toast.error(`${error.message}${error.suggestedAction ? ` - ${error.suggestedAction}` : ''}`);
+    ToastService.error(`${error.message}${error.suggestedAction ? ` - ${error.suggestedAction}` : ''}`);
     
     return true; // Continue retrying
   });

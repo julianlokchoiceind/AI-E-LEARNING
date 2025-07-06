@@ -1,15 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { LoadingSpinner } from '@/components/ui/LoadingStates';
-import { usersApi } from '@/lib/api/users';
-import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useUserProfileManagement } from '@/hooks/queries/useUserProfile';
 import { useI18n } from '@/lib/i18n/context';
-import toast from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 
 interface ProfileData {
   name: string;
@@ -24,9 +23,15 @@ interface ProfileData {
 export default function ProfilePage() {
   const { t } = useI18n();
   const { user, loading: authLoading } = useAuth();
-  const { handleError } = useErrorHandler();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  
+  // React Query hooks for profile management
+  const {
+    profile,
+    loading,
+    updateProfile,
+    updating
+  } = useUserProfileManagement(!!user);
+  
   const [profileData, setProfileData] = useState<ProfileData>({
     name: '',
     email: '',
@@ -37,36 +42,20 @@ export default function ProfilePage() {
     linkedin: ''
   });
 
-  const fetchProfile = useCallback(async () => {
-    setLoading(true);
-    const result = await handleError(async () => {
-      const response = await usersApi.getProfile();
-      if (response.success && response.data) {
-        return response.data;
-      } else {
-        throw new Error(response.message || 'Something went wrong');
-      }
-    });
-
-    if (result) {
+  // Initialize form data when profile data is loaded from React Query
+  useEffect(() => {
+    if (profile) {
       setProfileData({
-        name: result.name || '',
-        email: result.email || '',
-        bio: result.profile?.bio || '',
-        location: result.profile?.location || '',
-        website: result.profile?.website || '',
-        github: result.profile?.github || '',
-        linkedin: result.profile?.linkedin || ''
+        name: profile.name || '',
+        email: profile.email || '',
+        bio: profile.profile?.bio || '',
+        location: profile.profile?.location || '',
+        website: profile.profile?.website || '',
+        github: profile.profile?.github || '',
+        linkedin: profile.profile?.linkedin || ''
       });
     }
-    setLoading(false);
-  }, [handleError]);
-
-  useEffect(() => {
-    if (user) {
-      fetchProfile();
-    }
-  }, [user, fetchProfile]);
+  }, [profile]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -78,27 +67,25 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
 
-    const result = await handleError(async () => {
-      const response = await usersApi.updateProfile({
-        name: profileData.name,
-        profile: {
-          bio: profileData.bio,
-          location: profileData.location,
-          website: profileData.website,
-          github: profileData.github,
-          linkedin: profileData.linkedin
-        }
-      });
-      if (response.success) {
-        toast.success(response.message || 'Something went wrong');
-        return true;
-      } else {
-        throw new Error(response.message || 'Something went wrong');
+    updateProfile({
+      name: profileData.name,
+      profile: {
+        bio: profileData.bio,
+        location: profileData.location,
+        website: profileData.website,
+        github: profileData.github,
+        linkedin: profileData.linkedin
+      }
+    }, {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Something went wrong');
+        // React Query will automatically invalidate and refetch profile data
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
       }
     });
-    setSaving(false);
   };
 
   if (authLoading || loading) {
@@ -264,8 +251,8 @@ export default function ProfilePage() {
 
         {/* Submit Button */}
         <div className="flex justify-end">
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Saving...' : 'Save Changes'}
+          <Button type="submit" disabled={updating}>
+            {updating ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </form>

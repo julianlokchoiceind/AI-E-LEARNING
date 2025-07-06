@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { 
   Search,
   Filter,
@@ -12,14 +12,17 @@ import {
   Users,
   BarChart3
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
-import { supportAPI } from '@/lib/api/support';
-import { useApiCall } from '@/hooks/useErrorHandler';
+import { 
+  useSupportTicketsQuery, 
+  useSupportStatsQuery, 
+  useUpdateSupportTicket 
+} from '@/hooks/queries/useSupport';
 import {
   SupportTicket,
   TicketStats,
@@ -31,8 +34,6 @@ import {
 } from '@/lib/types/support';
 
 export default function AdminSupportPage() {
-  const [tickets, setTickets] = useState<SupportTicket[]>([]);
-  const [stats, setStats] = useState<TicketStats | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     status: '',
@@ -40,63 +41,39 @@ export default function AdminSupportPage() {
     category: '',
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   
-  // Use useApiCall hooks for consistent loading state management
-  const { loading: ticketsLoading, execute: fetchTicketsExecute } = useApiCall();
-  const { loading: statsLoading, execute: fetchStatsExecute } = useApiCall();
-  const { loading: updateLoading, execute: executeUpdate } = useApiCall();
+  // React Query hooks for data fetching
+  const { 
+    data: ticketsResponse, 
+    loading: ticketsLoading,
+    error: ticketsError 
+  } = useSupportTicketsQuery({
+    search: searchQuery,
+    status: filters.status as any || undefined,
+    priority: filters.priority as any || undefined,
+    category: filters.category as any || undefined,
+    page: currentPage,
+    limit: 20
+  });
 
-  const fetchTickets = useCallback(async () => {
-    const params: TicketSearchParams = {
-      q: searchQuery || undefined,
-      status: filters.status as any || undefined,
-      priority: filters.priority as any || undefined,
-      category: filters.category as any || undefined,
-      page: currentPage,
-      per_page: 20,
-      sort_by: 'created_at',
-      sort_order: 'desc',
-    };
+  const { 
+    data: statsResponse, 
+    loading: statsLoading 
+  } = useSupportStatsQuery();
 
-    await fetchTicketsExecute(
-      () => supportAPI.getTickets(params),
-      {
-        onSuccess: (response: any) => {
-          setTickets(response.data?.items || []);
-          setTotalPages(response.data?.total_pages || 1);
-        }
-      }
-    );
-  }, [searchQuery, filters, currentPage, fetchTicketsExecute]);
+  const updateTicketMutation = useUpdateSupportTicket();
 
-  const fetchStats = useCallback(async () => {
-    await fetchStatsExecute(
-      () => supportAPI.getTicketStats(),
-      {
-        onSuccess: (response: any) => {
-          setStats(response.data);
-        }
-      }
-    );
-  }, [fetchStatsExecute]);
-
-  // Fetch tickets and stats
-  useEffect(() => {
-    fetchTickets();
-    fetchStats();
-  }, [fetchTickets, fetchStats]);
+  const tickets = ticketsResponse?.data?.items || [];
+  const totalPages = ticketsResponse?.data?.total_pages || 1;
+  const stats = statsResponse?.data;
 
   const handleQuickUpdate = async (ticketId: string, update: TicketUpdateData) => {
-    await executeUpdate(
-      () => supportAPI.updateTicket(ticketId, update),
-      {
-        onSuccess: (response: any) => {
-          toast.success(response.message || 'Something went wrong');
-          fetchTickets(); // Refresh list
-        }
-      }
-    );
+    try {
+      await updateTicketMutation.mutateAsync({ ticketId, data: update as any });
+      ToastService.success('Ticket updated successfully');
+    } catch (error: any) {
+      ToastService.error(error.message || 'Something went wrong');
+    }
   };
 
   const formatDate = (date: string) => {
@@ -262,7 +239,6 @@ export default function AdminSupportPage() {
                     setSearchQuery('');
                     setFilters({ status: '', priority: '', category: '' });
                     setCurrentPage(1);
-                    fetchTickets();
                   }
                 }}
               />
@@ -282,7 +258,7 @@ export default function AdminSupportPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {tickets.map((ticket) => {
+                  {tickets.map((ticket: any) => {
                     const categoryInfo = TICKET_CATEGORIES.find(c => c.value === ticket.category);
                     
                     return (
@@ -404,7 +380,7 @@ export default function AdminSupportPage() {
                       <span className="text-sm">
                         {catInfo?.icon} {catInfo?.label || category}
                       </span>
-                      <span className="font-medium">{count}</span>
+                      <span className="font-medium">{String(count)}</span>
                     </div>
                   );
                 })}
@@ -425,7 +401,7 @@ export default function AdminSupportPage() {
                       <Badge variant={priInfo?.color as any}>
                         {priInfo?.label || priority}
                       </Badge>
-                      <span className="font-medium">{count}</span>
+                      <span className="font-medium">{String(count)}</span>
                     </div>
                   );
                 })}

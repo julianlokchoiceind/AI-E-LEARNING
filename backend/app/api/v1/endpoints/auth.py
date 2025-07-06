@@ -8,6 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from pydantic import EmailStr
+from bson import ObjectId
 import secrets
 import logging
 import sentry_sdk
@@ -449,10 +450,25 @@ async def refresh_access_token(token_request: RefreshTokenRequest) -> StandardRe
             detail="Invalid refresh token"
         )
     
-    # Create new access token
+    # Get user data to include in new access token
+    db = get_database()
+    user = await db.users.find_one({"_id": ObjectId(payload.get("sub"))})
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+    
+    # Create new access token with user claims
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        subject=payload.get("sub"), expires_delta=access_token_expires
+        subject=payload.get("sub"), 
+        expires_delta=access_token_expires,
+        email=user.get("email", ""),
+        name=user.get("name", user.get("email", "").split("@")[0]),
+        role=user.get("role", "student"),
+        premium_status=user.get("premium_status", False)
     )
     
     # Create new refresh token (rotate refresh tokens for security)

@@ -51,13 +51,15 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/chapters/${id}`,
     LESSONS: (id: string) => `/chapters/${id}/lessons`,
     REORDER: (id: string) => `/chapters/${id}/reorder`,
+    BULK_REORDER: (courseId: string) => `/courses/${courseId}/chapters/reorder`,
+    LESSONS_REORDER: (chapterId: string) => `/chapters/${chapterId}/lessons/reorder`,
   },
 
   // Lessons
   LESSONS: {
     LIST: '/lessons',
     DETAIL: (id: string) => `/lessons/${id}`,
-    CREATE: '/lessons',
+    CREATE: (chapterId: string, courseId: string) => `/chapters/${chapterId}/lessons?course_id=${courseId}`,
     UPDATE: (id: string) => `/lessons/${id}`,
     DELETE: (id: string) => `/lessons/${id}`,
     START: (id: string) => `/lessons/${id}/start`,

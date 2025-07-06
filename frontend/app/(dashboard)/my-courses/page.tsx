@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
-import toast from 'react-hot-toast';
+import { useMyCoursesQuery } from '@/hooks/queries/useStudent';
+import { ToastService } from '@/lib/toast/ToastService';
 
 interface EnrolledCourse {
   id: string;
@@ -43,43 +43,17 @@ type SortType = 'recent' | 'progress' | 'title';
 
 export default function MyCoursesPage() {
   const { user, loading: authLoading } = useAuth();
-  const [enrollments, setEnrollments] = useState<EnrolledCourse[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
   const [sort, setSort] = useState<SortType>('recent');
 
-  useEffect(() => {
-    fetchEnrollments();
-  }, []);
-
-  const fetchEnrollments = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/users/my-courses`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Something went wrong');
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        setEnrollments(result.data);
-      }
-    } catch (error: any) {
-      console.error('Enrollments fetch error:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // React Query hook - automatic caching and state management
+  const { data: coursesResponse, loading, execute: refetchCourses } = useMyCoursesQuery();
+  
+  // Extract enrollments from React Query response
+  const enrollments = coursesResponse?.data || [];
 
   // Filter courses
-  const filteredCourses = enrollments.filter(enrollment => {
+  const filteredCourses = enrollments.filter((enrollment: any) => {
     if (filter === 'all') return true;
     if (filter === 'completed') return enrollment.progress.is_completed;
     if (filter === 'in-progress') return !enrollment.progress.is_completed;
@@ -139,7 +113,7 @@ export default function MyCoursesPage() {
                 : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
-            In Progress ({enrollments.filter(e => !e.progress.is_completed).length})
+            In Progress ({enrollments.filter((e: any) => !e.progress.is_completed).length})
           </button>
           <button
             onClick={() => setFilter('completed')}
@@ -149,7 +123,7 @@ export default function MyCoursesPage() {
                 : 'bg-gray-100 hover:bg-gray-200'
             }`}
           >
-            Completed ({enrollments.filter(e => e.progress.is_completed).length})
+            Completed ({enrollments.filter((e: any) => e.progress.is_completed).length})
           </button>
         </div>
 
@@ -279,20 +253,20 @@ export default function MyCoursesPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-green-600">
-                {enrollments.filter(e => e.progress.is_completed).length}
+                {enrollments.filter((e: any) => e.progress.is_completed).length}
               </p>
               <p className="text-sm text-gray-600">Completed</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-blue-600">
-                {enrollments.filter(e => !e.progress.is_completed).length}
+                {enrollments.filter((e: any) => !e.progress.is_completed).length}
               </p>
               <p className="text-sm text-gray-600">In Progress</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-purple-600">
                 {Math.round(
-                  enrollments.reduce((sum, e) => sum + e.progress.total_watch_time, 0) / 3600
+                  enrollments.reduce((sum: number, e: any) => sum + e.progress.total_watch_time, 0) / 3600
                 )}h
               </p>
               <p className="text-sm text-gray-600">Total Watch Time</p>

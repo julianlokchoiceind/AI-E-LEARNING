@@ -1,64 +1,45 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Trophy, Award, Clock, TrendingUp, Download, BookOpen } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { CertificateCard } from '@/components/feature/CertificateCard';
 import { useAuth } from '@/hooks/useAuth';
-import { certificateAPI } from '@/lib/api/certificates';
-import { CertificateWithDetails, CertificateStats } from '@/lib/types/certificate';
-import { toast } from 'react-hot-toast';
+import { CertificateWithDetails } from '@/lib/types/certificate';
+import { useCertificatesQuery, useCertificateStatsQuery } from '@/hooks/queries/useCertificates';
 
 const CertificatesPage = () => {
   const { user } = useAuth();
-  const [certificates, setCertificates] = useState<CertificateWithDetails[]>([]);
-  const [stats, setStats] = useState<CertificateStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  useEffect(() => {
-    fetchCertificates();
-    fetchStats();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage]);
-
-  const fetchCertificates = async () => {
-    try {
-      setLoading(true);
-      const response = await certificateAPI.getMyCertificates(currentPage, 12);
-      if (response.success && response.data) {
-        setCertificates(response.data.items || []);
-        setTotalPages(response.data.total_pages || 1);
-      } else {
-        throw new Error(response.message || 'Something went wrong');
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch certificates:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStats = async () => {
-    try {
-      const statsResponse = await certificateAPI.getMyCertificateStats();
-      if (statsResponse.success && statsResponse.data) {
-        setStats(statsResponse.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    }
-  };
-
-  const filteredCertificates = certificates.filter(cert => {
-    if (selectedCategory === 'all') return true;
-    return cert.course_category === selectedCategory;
+  // React Query hooks for certificates data - replaces manual API calls
+  const { 
+    data: certificatesResponse, 
+    loading: certificatesLoading, 
+    error: certificatesError 
+  } = useCertificatesQuery({
+    page: currentPage,
+    per_page: 12,
+    category: selectedCategory === 'all' ? undefined : selectedCategory
   });
+
+  const { 
+    data: statsResponse, 
+    loading: statsLoading 
+  } = useCertificateStatsQuery();
+
+  // Extract data from React Query responses
+  const certificates = certificatesResponse?.data?.items || [];
+  const totalPages = certificatesResponse?.data?.total_pages || 1;
+  const stats = statsResponse?.data || null;
+  const loading = certificatesLoading || statsLoading;
+
+
+
+  // React Query handles filtering through API parameters
+  const filteredCertificates = certificates;
 
   const getCategoryDisplay = (category: string) => {
     const categoryMap: { [key: string]: string } = {
@@ -71,6 +52,27 @@ const CertificatesPage = () => {
     return categoryMap[category] || category;
   };
 
+  // Handle error state
+  if (certificatesError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="text-center py-12">
+            <p className="text-red-600">Something went wrong</p>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+              className="mt-4"
+            >
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Handle loading state
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -160,7 +162,7 @@ const CertificatesPage = () => {
                 size="sm"
                 onClick={() => setSelectedCategory(category)}
               >
-                {getCategoryDisplay(category)} ({count})
+                {getCategoryDisplay(category)} ({count as number})
               </Button>
             ))}
           </div>
@@ -184,7 +186,7 @@ const CertificatesPage = () => {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCertificates.map((certificate) => (
+            {filteredCertificates.map((certificate: any) => (
               <CertificateCard key={certificate._id} certificate={certificate} />
             ))}
           </div>
@@ -230,11 +232,11 @@ const CertificatesPage = () => {
                         <div
                           className="bg-blue-600 h-2 rounded-full"
                           style={{
-                            width: `${(count / stats.total_certificates) * 100}%`
+                            width: `${((count as number) / stats.total_certificates) * 100}%`
                           }}
                         />
                       </div>
-                      <span className="text-sm font-medium w-8">{count}</span>
+                      <span className="text-sm font-medium w-8">{count as number}</span>
                     </div>
                   </div>
                 ))}

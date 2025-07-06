@@ -9,9 +9,9 @@ import {
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/Button';
-import { createCoursePayment } from '@/lib/api/payments';
+import { useCreateCoursePayment } from '@/hooks/queries/usePayments';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { CreditCard, Lock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { PaymentErrorBoundary } from './PaymentErrorBoundary';
 import { CoursePaymentRetryHandler, getRecoveryStrategy } from '@/lib/utils/paymentRetry';
@@ -65,6 +65,9 @@ function CheckoutForm({
   const stripe = useStripe();
   const elements = useElements();
   const { user } = useAuth();
+  
+  // React Query mutation for course payment
+  const { mutateAsync: createPayment, loading: paymentProcessing } = useCreateCoursePayment();
   
   const [isLoading, setIsLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string>('');
@@ -128,8 +131,8 @@ function CheckoutForm({
       throw error;
     }
 
-    // Create payment intent
-    const response = await createCoursePayment(course._id, paymentMethod.id);
+    // Create payment intent using React Query mutation
+    const response = await createPayment({ courseId: course._id, paymentMethodId: paymentMethod.id });
     
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Something went wrong');
@@ -191,7 +194,7 @@ function CheckoutForm({
           console.warn(`Payment attempt ${attempt} failed:`, error);
           
           if (strategy.canRetry) {
-            toast.error(`${error.message} - Retrying... (${attempt}/3)`);
+            ToastService.error(`${error.message} - Retrying... (${attempt}/3)`);
             return true; // Continue retrying
           } else {
             setPaymentError(error.message);
@@ -201,7 +204,7 @@ function CheckoutForm({
       );
 
       // Payment successful
-      toast.success('Payment successful! Enrolling you in the course...');
+      ToastService.success('Payment successful! Enrolling you in the course...');
       
       // Give a moment for webhook processing
       setTimeout(() => {

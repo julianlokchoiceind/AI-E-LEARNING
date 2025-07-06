@@ -33,20 +33,15 @@ const NavigationGuard: React.FC<NavigationGuardProps> = ({
 
   // Warn on route change
   useEffect(() => {
-    const handleRouteChange = (url: string) => {
-      if (hasUnsavedChanges && !window.confirm(message)) {
-        // Cancel navigation
-        router.push(window.location.pathname);
-        throw 'Route change aborted.';
-      }
-    };
-
     // Listen for route changes
     const originalPush = router.push;
     router.push = (...args: Parameters<typeof router.push>) => {
       if (hasUnsavedChanges) {
         const url = typeof args[0] === 'string' ? args[0] : (args[0] as any)?.pathname || '';
-        handleRouteChange(url);
+        if (!window.confirm(message)) {
+          // Cancel navigation by not calling originalPush
+          return Promise.resolve(true);
+        }
       }
       return originalPush.apply(router, args);
     };

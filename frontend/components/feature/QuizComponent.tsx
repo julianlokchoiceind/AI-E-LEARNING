@@ -1,14 +1,19 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { Clock, CheckCircle, XCircle, RotateCcw, Trophy } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { Label } from '@/components/ui/Label';
 import { ProgressBar as Progress } from '@/components/ui/ProgressBar';
-import { quizAPI, Quiz, QuizProgress, QuizAnswerSubmit, QuizAttemptResult } from '@/lib/api/quizzes';
+import { QuizAnswerSubmit, QuizAttemptResult } from '@/lib/api/quizzes';
+import { 
+  useLessonQuizQuery,
+  useQuizProgressQuery,
+  useSubmitQuiz
+} from '@/hooks/queries/useLearning';
 
 interface QuizComponentProps {
   lessonId: string;
@@ -16,52 +21,40 @@ interface QuizComponentProps {
 }
 
 export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [progress, setProgress] = useState<QuizProgress | null>(null);
+  // React Query hooks for data fetching
+  const { data: quizResponse, loading: quizLoading } = useLessonQuizQuery(lessonId, !!lessonId);
+  const { data: progressResponse, loading: progressLoading } = useQuizProgressQuery(
+    quizResponse?.data?._id, 
+    !!quizResponse?.data?._id
+  );
+  const { mutate: submitQuizMutation, loading: isSubmitting } = useSubmitQuiz();
+
+  // Extract data from React Query responses
+  const quiz = quizResponse?.success ? quizResponse.data : null;
+  const progress = progressResponse?.success ? progressResponse.data : null;
+  const isLoading = quizLoading || progressLoading;
+
+  // UI state only
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [attemptResult, setAttemptResult] = useState<QuizAttemptResult | null>(null);
   const [startTime, setStartTime] = useState<number>(Date.now());
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch quiz and progress
+  // Initialize answers array when quiz loads
   useEffect(() => {
-    const fetchQuizData = async () => {
-      try {
-        setIsLoading(true);
-        const quizResponse = await quizAPI.getLessonQuiz(lessonId);
-        
-        if (!quizResponse.success || !quizResponse.data) {
-          throw new Error(quizResponse.message || 'Something went wrong');
-        }
-        
-        const quizData = quizResponse.data;
-        setQuiz(quizData);
-        
-        // Initialize answers array
-        setSelectedAnswers(new Array(quizData.questions.length).fill(-1));
-        
-        // Try to get progress
-        try {
-          const progressResponse = await quizAPI.getQuizProgress(quizData._id);
-          if (progressResponse.success) {
-            setProgress(progressResponse.data);
-          }
-        } catch (error) {
-          // No progress yet, that's okay
-        }
-      } catch (error: any) {
-        console.error('Failed to fetch quiz:', error);
-        toast.error(error.message || 'Something went wrong');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (quiz && quiz.questions) {
+      setSelectedAnswers(new Array(quiz.questions.length).fill(-1));
+    }
+  }, [quiz]);
 
-    fetchQuizData();
-  }, [lessonId]);
+  // Handle quiz loading errors
+  useEffect(() => {
+    if (quizResponse && !quizResponse.success) {
+      console.error('Failed to fetch quiz:', quizResponse.message);
+      ToastService.error(quizResponse.message || 'Something went wrong');
+    }
+  }, [quizResponse]);
 
   // Calculate current question
   const currentQuestion = useMemo(() => {
@@ -89,66 +82,52 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
     }
   };
 
-  // Submit quiz
-  const handleSubmit = async () => {
+  // Submit quiz using React Query mutation
+  const handleSubmit = () => {
     if (!quiz) return;
 
     // Check if all questions are answered
     const unansweredCount = selectedAnswers.filter(a => a === -1).length;
     if (unansweredCount > 0) {
-      toast.error(`Please answer all questions. ${unansweredCount} questions remaining.`);
+      ToastService.error(`Please answer all questions. ${unansweredCount} questions remaining.`);
       return;
     }
 
-    try {
-      setIsSubmitting(true);
-      const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-      
-      const submission: QuizAnswerSubmit = {
-        answers: selectedAnswers,
-        time_taken: timeTaken
-      };
+    const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+    
+    const submission: QuizAnswerSubmit = {
+      answers: selectedAnswers,
+      time_taken: timeTaken
+    };
 
-      const response = await quizAPI.submitQuiz(quiz._id, submission);
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Something went wrong');
-      }
-      
-      const result = response.data;
-      setAttemptResult(result);
-      setShowResults(true);
+    // Use React Query mutation for API call
+    submitQuizMutation({ lessonId, answers: submission.answers }, {
+      onSuccess: (response) => {
+        if (response.success && response.data) {
+          const result = response.data;
+          setAttemptResult(result);
+          setShowResults(true);
 
-      // Update progress
-      if (progress) {
-        const updatedProgress = {
-          ...progress,
-          attempts: [...progress.attempts, result],
-          total_attempts: progress.total_attempts + 1,
-          best_score: Math.max(progress.best_score, result.score),
-          is_passed: progress.is_passed || result.passed,
-          can_retry: progress.total_attempts + 1 < quiz.config.max_attempts
-        };
-        setProgress(updatedProgress);
-      }
+          // Notify parent component
+          if (onComplete) {
+            onComplete(result.passed);
+          }
 
-      // Notify parent component
-      if (onComplete) {
-        onComplete(result.passed);
+          // Show result message
+          if (result.passed) {
+            ToastService.success(response.message || 'Something went wrong');
+          } else {
+            ToastService.error(response.message || 'Something went wrong');
+          }
+        } else {
+          ToastService.error(response.message || 'Something went wrong');
+        }
+      },
+      onError: (error: any) => {
+        console.error('Failed to submit quiz:', error);
+        ToastService.error(error.message || 'Something went wrong');
       }
-
-      // Show result message
-      if (result.passed) {
-        toast.success(response.message);
-      } else {
-        toast.error(response.message);
-      }
-    } catch (error: any) {
-      console.error('Failed to submit quiz:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   // Retry quiz
@@ -258,7 +237,9 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
 
             {/* Action Buttons */}
             <div className="flex gap-4 justify-center">
-              {progress && progress.can_retry && !attemptResult.passed && (
+              {progress && 
+               progress.total_attempts < quiz.config.max_attempts && 
+               !attemptResult.passed && (
                 <Button onClick={handleRetry} variant="outline">
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Try Again ({quiz.config.max_attempts - progress.total_attempts} attempts left)
@@ -310,7 +291,7 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
                 onValueChange={(value) => handleAnswerSelect(parseInt(value))}
               >
                 <div className="space-y-3">
-                  {currentQuestion.options.map((option, index) => (
+                  {currentQuestion.options.map((option: any, index: number) => (
                     <div
                       key={index}
                       className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer"

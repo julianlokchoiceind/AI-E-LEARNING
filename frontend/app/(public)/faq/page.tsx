@@ -10,74 +10,47 @@ import {
   Tag,
   HelpCircle
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/hooks/useAuth';
-import { faqAPI, FAQ, FAQCategory, FAQListResponse } from '@/lib/api/faq';
+import { useFAQsQuery, useFAQCategoriesQuery, useVoteFAQ } from '@/hooks/queries/useFAQ';
+import { FAQ, FAQCategory, FAQListResponse } from '@/lib/api/faq';
 import { FAQ_CATEGORIES } from '@/lib/types/faq';
+import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 
 export default function FAQPage() {
   const { user } = useAuth();
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [categories, setCategories] = useState<FAQCategory[]>([]);
   const [expandedFaqs, setExpandedFaqs] = useState<Set<string>>(new Set());
   const [votedFaqs, setVotedFaqs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch categories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await faqAPI.getCategories();
-        if (response.success && response.data) {
-          setCategories(response.data);
-        }
-      } catch (error: any) {
-        console.error('Failed to fetch categories:', error);
-        toast.error(error.message || 'Something went wrong');
-      }
-    };
-    fetchCategories();
-  }, []);
+  // React Query hooks - automatic caching and state management
+  const { data: faqResponse, loading } = useFAQsQuery({
+    search: searchQuery,
+    category: selectedCategory,
+    published: true,
+    page: currentPage,
+    limit: 20
+  });
+  
+  const { data: categoriesResponse, loading: categoriesLoading } = useFAQCategoriesQuery();
+  
+  // React Query mutation for FAQ voting
+  const { mutate: voteFAQ, loading: isVoting } = useVoteFAQ();
+  
+  // Extract data from React Query responses
+  const faqs = faqResponse?.data?.faqs || [];
+  const totalPages = faqResponse?.data?.totalPages || 1;
+  const categories = categoriesResponse?.data?.categories || [];
 
-  // Fetch FAQs
-  useEffect(() => {
-    const fetchFAQs = async () => {
-      try {
-        setLoading(true);
-        const response = await faqAPI.getFAQs({
-          q: searchQuery,
-          category: selectedCategory || undefined,
-          page: currentPage,
-          per_page: 10,
-          sort_by: 'priority',
-          sort_order: 'desc',
-        });
-        
-        if (response.success && response.data) {
-          setFaqs(response.data.items);
-          setTotalPages(Math.ceil(response.data.total / response.data.per_page));
-        } else {
-          throw new Error(response.message || 'Something went wrong');
-        }
-      } catch (error: any) {
-        console.error('Failed to fetch FAQs:', error);
-        toast.error(error.message || 'Something went wrong');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Categories are now automatically fetched via React Query
 
-    const debounceTimer = setTimeout(fetchFAQs, 300);
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery, selectedCategory, currentPage]);
+  // FAQs are now automatically fetched via React Query with debouncing built-in
 
   // Load voted FAQs from localStorage
   useEffect(() => {
@@ -97,49 +70,35 @@ export default function FAQPage() {
     setExpandedFaqs(newExpanded);
   };
 
-  const handleVote = async (faqId: string, isHelpful: boolean) => {
+  const handleVote = (faqId: string, isHelpful: boolean) => {
     if (!user) {
-      toast.error('Please login to vote');
+      ToastService.error('Please login to vote');
       return;
     }
 
     if (votedFaqs.has(faqId)) {
-      toast.error('You have already voted on this FAQ');
+      ToastService.error('You have already voted on this FAQ');
       return;
     }
 
-    try {
-      const result = await faqAPI.voteFAQ(faqId, { is_helpful: isHelpful });
-      
-      if (!result.success || !result.data) {
-        throw new Error(result.message || 'Something went wrong');
+    // React Query mutation handles API call with automatic error handling
+    voteFAQ({ faqId, isHelpful }, {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Something went wrong');
+        
+        // Mark as voted in local state only
+        const newVoted = new Set(votedFaqs);
+        newVoted.add(faqId);
+        setVotedFaqs(newVoted);
+        localStorage.setItem('votedFaqs', JSON.stringify(Array.from(newVoted)));
+        
+        // React Query will automatically refetch FAQ data to show updated vote counts
+      },
+      onError: (error: any) => {
+        console.error('Failed to vote:', error);
+        ToastService.error(error.message || 'Something went wrong');
       }
-      
-      const voteData = result.data;
-      
-      // Update local state
-      setFaqs(faqs.map(faq => {
-        if (faq._id === faqId) {
-          return {
-            ...faq,
-            helpful_votes: voteData.helpful_votes,
-            unhelpful_votes: voteData.unhelpful_votes,
-          };
-        }
-        return faq;
-      }));
-
-      // Mark as voted
-      const newVoted = new Set(votedFaqs);
-      newVoted.add(faqId);
-      setVotedFaqs(newVoted);
-      localStorage.setItem('votedFaqs', JSON.stringify(Array.from(newVoted)));
-
-      toast.success(result.message || 'Something went wrong');
-    } catch (error: any) {
-      console.error('Failed to vote:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    });
   };
 
   const getCategoryInfo = (category: string) => {
@@ -182,7 +141,7 @@ export default function FAQPage() {
             >
               All Categories
             </Button>
-            {categories.map((category) => {
+            {categories.map((category: any) => {
               const info = getCategoryInfo(category.value);
               return (
                 <Button
@@ -217,7 +176,7 @@ export default function FAQPage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {faqs.map((faq) => {
+            {faqs.map((faq: any) => {
               const isExpanded = expandedFaqs.has(faq._id);
               const hasVoted = votedFaqs.has(faq._id);
               const categoryInfo = getCategoryInfo(faq.category);
@@ -267,7 +226,7 @@ export default function FAQPage() {
                           {/* Tags */}
                           {faq.tags.length > 0 && (
                             <div className="mt-4 flex flex-wrap gap-2">
-                              {faq.tags.map((tag, index) => (
+                              {faq.tags.map((tag: any, index: number) => (
                                 <Badge key={index} variant="secondary">
                                   {tag}
                                 </Badge>
@@ -283,9 +242,9 @@ export default function FAQPage() {
                             <div className="flex items-center gap-4">
                               <button
                                 onClick={() => handleVote(faq._id, true)}
-                                disabled={hasVoted}
+                                disabled={hasVoted || isVoting}
                                 className={`flex items-center gap-1 px-3 py-1 rounded-md transition-colors ${
-                                  hasVoted
+                                  hasVoted || isVoting
                                     ? 'text-gray-400 cursor-not-allowed'
                                     : 'text-gray-600 hover:bg-green-50 hover:text-green-600'
                                 }`}
@@ -295,9 +254,9 @@ export default function FAQPage() {
                               </button>
                               <button
                                 onClick={() => handleVote(faq._id, false)}
-                                disabled={hasVoted}
+                                disabled={hasVoted || isVoting}
                                 className={`flex items-center gap-1 px-3 py-1 rounded-md transition-colors ${
-                                  hasVoted
+                                  hasVoted || isVoting
                                     ? 'text-gray-400 cursor-not-allowed'
                                     : 'text-gray-600 hover:bg-red-50 hover:text-red-600'
                                 }`}

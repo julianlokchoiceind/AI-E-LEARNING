@@ -1,14 +1,13 @@
 /**
  * Hook for managing onboarding state and flow
- * Following PRD specifications and memory guidelines
+ * Migrated to React Query for better caching and state management
  */
 
-import { useState, useEffect } from 'react';
-import { getOnboardingStatus, OnboardingStatus } from '@/lib/api/onboarding';
+import { useOnboardingStatusQuery } from '@/hooks/queries/useStudent';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface UseOnboardingReturn {
-  status: OnboardingStatus | null;
+  status: any | null;
   loading: boolean;
   error: string | null;
   shouldShowOnboarding: boolean;
@@ -17,35 +16,23 @@ export interface UseOnboardingReturn {
 
 export const useOnboarding = (): UseOnboardingReturn => {
   const { user, loading: authLoading } = useAuth();
-  const [status, setStatus] = useState<OnboardingStatus | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
+  // React Query hook - automatic caching and state management
+  const { 
+    data: onboardingResponse, 
+    loading, 
+    execute 
+  } = useOnboardingStatusQuery(!!user && !authLoading);
 
-  const fetchOnboardingStatus = async () => {
-    if (!user || authLoading) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await getOnboardingStatus();
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
-      }
-      
-      const onboardingStatus = response.data;
-      setStatus(onboardingStatus);
-    } catch (err: any) {
-      console.error('Failed to fetch onboarding status:', err);
-      setError(err.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
+  // Wrapper to match expected signature
+  const refetchStatus = async (): Promise<void> => {
+    await execute();
   };
 
-  useEffect(() => {
-    fetchOnboardingStatus();
-  }, [user, authLoading]);
+  // Extract status from React Query response
+  const status = onboardingResponse?.success ? onboardingResponse.data : null;
+  const error = onboardingResponse && !onboardingResponse.success ? 
+    (onboardingResponse.message || 'Something went wrong') : null;
 
   // Determine if onboarding should be shown
   const shouldShowOnboarding = Boolean(
@@ -58,9 +45,9 @@ export const useOnboarding = (): UseOnboardingReturn => {
 
   return {
     status,
-    loading,
+    loading: authLoading || loading,
     error,
     shouldShowOnboarding,
-    refetchStatus: fetchOnboardingStatus
+    refetchStatus
   };
 };

@@ -1,22 +1,22 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
-import { 
-  getAdminCourses, 
-  approveCourse, 
-  rejectCourse, 
-  setCoursePrice,
-  toggleCourseFree
-} from '@/lib/api/admin';
-import { createCourse } from '@/lib/api/courses';
+import DeleteCourseModal, { CourseDeleteData } from '@/components/feature/DeleteCourseModal';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
-import { useApiCall } from '@/hooks/useErrorHandler';
-import { toast } from 'react-hot-toast';
+import { 
+  useAdminCoursesQuery, 
+  useApproveCourse, 
+  useRejectCourse, 
+  useToggleCourseFree, 
+  useDeleteCourse,
+  useCreateCourse 
+} from '@/hooks/queries/useAdminCourses';
+import { ToastService } from '@/lib/toast/ToastService';
 import { 
   Search, 
   Filter, 
@@ -32,7 +32,9 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle,
-  Gift
+  Gift,
+  Edit3,
+  Trash2
 } from 'lucide-react';
 
 interface Course {
@@ -64,93 +66,96 @@ interface Course {
 }
 
 export default function CourseApproval() {
-  const [courses, setCourses] = useState<Course[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('review');
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedCourseForDelete, setSelectedCourseForDelete] = useState<CourseDeleteData | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const router = useRouter();
   
-  // Use useApiCall hooks for consistent loading state management
-  const { loading, execute: fetchCoursesExecute } = useApiCall();
-  const { loading: actionLoading, execute: executeAction } = useApiCall();
+  // React Query hooks for data fetching and mutations
+  const { data: coursesData, loading, execute: fetchCourses } = useAdminCoursesQuery({
+    search: searchTerm,
+    status: statusFilter,
+    category: categoryFilter
+  });
+  
+  const { mutate: approveCourse, loading: approveLoading } = useApproveCourse();
+  const { mutate: rejectCourse, loading: rejectLoading } = useRejectCourse();
+  const { mutate: toggleFree, loading: toggleLoading } = useToggleCourseFree();
+  const { mutate: deleteCourseAction, loading: deleteLoading } = useDeleteCourse();
+  const { mutate: createCourseAction, loading: createLoading } = useCreateCourse();
+  
+  // Combined loading state for actions
+  const actionLoading = approveLoading || rejectLoading || toggleLoading || deleteLoading || createLoading;
+  
+  // Extract courses from response data
+  const courses = coursesData?.courses || [];
 
-  const fetchCourses = useCallback(async () => {
-    await fetchCoursesExecute(
-      () => getAdminCourses({
-        search: searchTerm,
-        status: statusFilter,
-        category: categoryFilter
-      }),
-      {
-        onSuccess: (response: any) => {
-          setCourses(response.data?.courses || []);
-        }
-      }
-    );
-  }, [searchTerm, statusFilter, categoryFilter, fetchCoursesExecute]);
+  // No need for manual useEffect - React Query handles data fetching automatically
+  // fetchCourses is available from useAdminCoursesQuery for manual refresh if needed
 
-  useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
-
-  const handleApproveCourse = async (courseId: string) => {
-    await executeAction(
-      () => approveCourse(courseId),
-      {
-        onSuccess: (response: any) => {
-          toast.success(response.message || 'Something went wrong');
-          fetchCourses(); // Refresh list
-        }
-      }
-    );
+  const handleApproveCourse = (courseId: string) => {
+    approveCourse(courseId);
   };
 
-  const handleRejectCourse = async () => {
+  const handleRejectCourse = () => {
     if (!selectedCourse || !rejectionReason.trim()) {
-      toast.error('Please provide a rejection reason');
+      ToastService.error('Please provide a rejection reason');
       return;
     }
     
-    await executeAction(
-      () => rejectCourse(selectedCourse._id, rejectionReason),
-      {
-        onSuccess: (response: any) => {
-          toast.success(response.message || 'Something went wrong');
-          setShowRejectModal(false);
-          setRejectionReason('');
-          setSelectedCourse(null);
-          fetchCourses(); // Refresh list
-        }
+    rejectCourse({ courseId: selectedCourse._id, reason: rejectionReason }, {
+      onSuccess: () => {
+        setShowRejectModal(false);
+        setRejectionReason('');
+        setSelectedCourse(null);
       }
-    );
+    });
   };
 
-  const handleToggleFree = async (courseId: string, currentStatus: boolean) => {
-    await executeAction(
-      () => toggleCourseFree(courseId, !currentStatus),
-      {
-        onSuccess: (response: any) => {
-          toast.success(response.message || 'Something went wrong');
-          fetchCourses(); // Refresh list
-        }
-      }
-    );
+  const handleToggleFree = (courseId: string, currentStatus: boolean) => {
+    toggleFree({ courseId, isFree: !currentStatus });
   };
 
-  const handleCreateCourse = async () => {
-    try {
-      const response = await createCourse();
-      if (response.success && response.data?._id) {
-        toast.success(response.message || 'Something went wrong');
-        router.push(`/admin/courses/${response.data._id}/edit`);
+  const handleDeleteCourse = (course: Course) => {
+    setSelectedCourseForDelete({
+      _id: course._id,
+      title: course.title,
+      description: course.description,
+      total_lessons: course.total_lessons,
+      total_chapters: course.total_chapters,
+      creator_name: course.creator_name,
+      status: course.status
+    });
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDeleteCourse = async (courseId: string) => {
+    deleteCourseAction(courseId, {
+      onSuccess: () => {
+        setShowDeleteModal(false);
+        setSelectedCourseForDelete(null);
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Something went wrong');
-    }
+    });
+  };
+
+  const handleCreateCourse = () => {
+    createCourseAction({}, {
+      onSuccess: (response) => {
+        if (response.success && response.data?._id) {
+          ToastService.success(response.message || 'Something went wrong');
+          router.push(`/admin/courses/${response.data._id}/edit`);
+        }
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
+      }
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -181,7 +186,7 @@ export default function CourseApproval() {
     }
   };
 
-  const filteredCourses = courses.filter(course => {
+  const filteredCourses = courses.filter((course: Course) => {
     const matchesSearch = searchTerm === '' || 
       course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.creator_name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -208,7 +213,7 @@ export default function CourseApproval() {
             <BookOpen className="w-4 h-4 mr-2" />
             Create New Course
           </Button>
-          <Button onClick={fetchCourses}>
+          <Button onClick={() => fetchCourses()}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
@@ -222,7 +227,7 @@ export default function CourseApproval() {
             <Clock className="h-8 w-8 text-yellow-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {courses.filter(c => c.status === 'review').length}
+                {courses.filter((c: Course) => c.status === 'review').length}
               </p>
               <p className="text-sm text-gray-600">Pending Review</p>
             </div>
@@ -234,7 +239,7 @@ export default function CourseApproval() {
             <CheckCircle className="h-8 w-8 text-green-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {courses.filter(c => c.status === 'published').length}
+                {courses.filter((c: Course) => c.status === 'published').length}
               </p>
               <p className="text-sm text-gray-600">Published</p>
             </div>
@@ -246,7 +251,7 @@ export default function CourseApproval() {
             <AlertTriangle className="h-8 w-8 text-red-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {courses.filter(c => c.status === 'rejected').length}
+                {courses.filter((c: Course) => c.status === 'rejected').length}
               </p>
               <p className="text-sm text-gray-600">Rejected</p>
             </div>
@@ -258,7 +263,7 @@ export default function CourseApproval() {
             <Gift className="h-8 w-8 text-blue-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {courses.filter(c => c.pricing.is_free).length}
+                {courses.filter((c: Course) => c.pricing.is_free).length}
               </p>
               <p className="text-sm text-gray-600">Free Courses</p>
             </div>
@@ -310,7 +315,7 @@ export default function CourseApproval() {
           </select>
 
           {/* Search Button */}
-          <Button onClick={fetchCourses} className="w-full">
+          <Button onClick={() => fetchCourses()} className="w-full">
             <Filter className="w-4 h-4 mr-2" />
             Apply Filters
           </Button>
@@ -338,9 +343,8 @@ export default function CourseApproval() {
                 label: 'Clear Filters',
                 onClick: () => {
                   setSearchTerm('');
-                  setStatusFilter('review');
+                  setStatusFilter('');
                   setCategoryFilter('');
-                  fetchCourses();
                 }
               }}
             />
@@ -371,7 +375,7 @@ export default function CourseApproval() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCourses.map((course) => (
+                {filteredCourses.map((course: Course) => (
                   <tr key={course._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
@@ -422,6 +426,7 @@ export default function CourseApproval() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center space-x-2">
+                        {/* View Action */}
                         <Button
                           size="sm"
                           variant="ghost"
@@ -429,8 +434,29 @@ export default function CourseApproval() {
                             setSelectedCourse(course);
                             setShowCourseModal(true);
                           }}
+                          className="text-blue-600 hover:bg-blue-50"
                         >
                           <Eye className="h-4 w-4" />
+                        </Button>
+
+                        {/* Edit Action */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => router.push(`/admin/courses/${course._id}/edit`)}
+                          className="text-gray-600 hover:bg-gray-50"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+
+                        {/* Delete Action */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteCourse(course)}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                         
                         {course.status === 'review' && (
@@ -632,6 +658,14 @@ export default function CourseApproval() {
           </div>
         </Modal>
       )}
+
+      {/* Delete Course Modal */}
+      <DeleteCourseModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        course={selectedCourseForDelete}
+        onConfirmDelete={handleConfirmDeleteCourse}
+      />
     </div>
   );
 }

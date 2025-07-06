@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LoadingButton } from '@/components/ui/LoadingStates'
-import { useErrorHandler } from '@/hooks/useErrorHandler'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 
 export default function LoginPage() {
@@ -16,11 +15,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [localError, setLocalError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
-  
-  const { handleError } = useErrorHandler({
-    redirectOnAuth: false,
-    showToast: false
-  })
 
   useEffect(() => {
     // Check for success messages in URL params
@@ -43,30 +37,28 @@ export default function LoginPage() {
     setIsLoading(true)
     setLocalError('')
     
-    await handleError(
-      async () => {
-        const result = await signIn('credentials', {
-          email,
-          password,
-          redirect: false,
-        })
-        
-        if (result?.error) {
-          // Use the actual error message from NextAuth
-          throw new Error(result.error)
-        } else if (result?.ok) {
-          // Wait a moment for session to establish, then redirect
-          setTimeout(() => {
-            router.push('/dashboard')
-          }, 100)
-        }
-      },
-      (error) => {
-        setLocalError(error.message)
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+      
+      if (result?.error) {
+        // Use the actual error message from NextAuth or fallback
+        setLocalError(result.error || 'Something went wrong')
+      } else if (result?.ok) {
+        // Wait a moment for session to establish, then redirect
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 100)
       }
-    )
-    
-    setIsLoading(false)
+    } catch (error: any) {
+      console.error('Login error:', error)
+      setLocalError(error.message || 'Something went wrong')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleSocialLogin = (provider: string) => {

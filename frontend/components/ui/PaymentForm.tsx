@@ -9,7 +9,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/Button';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 
 // Initialize Stripe
 const stripePromise = loadStripe(
@@ -63,9 +63,9 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
         if (onError) {
           onError(error.message || 'Payment failed');
         }
-        toast.error(error.message || 'Something went wrong');
+        ToastService.error(error.message || 'Something went wrong');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        toast.success('Payment successful!');
+        ToastService.success('Payment successful!');
         if (onSuccess) {
           onSuccess();
         }
@@ -76,7 +76,7 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
       if (onError) {
         onError(message);
       }
-      toast.error(message);
+      ToastService.error(message);
     } finally {
       setIsProcessing(false);
     }

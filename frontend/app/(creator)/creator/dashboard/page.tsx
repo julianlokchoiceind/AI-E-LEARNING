@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   TrendingUp, 
@@ -17,9 +17,9 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/hooks/useAuth';
-import { getCourses } from '@/lib/api/courses';
+import { useCreatorDashboardQuery } from '@/hooks/queries/useCreatorCourses';
 import { formatDate, formatCurrency } from '@/lib/utils/formatters';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 
 interface DashboardStats {
   totalCourses: number;
@@ -46,103 +46,91 @@ interface RecentCourse {
 const CreatorDashboardPage = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalCourses: 0,
-    publishedCourses: 0,
-    draftCourses: 0,
-    totalStudents: 0,
-    activeStudents: 0,
-    totalRevenue: 0,
-    monthlyRevenue: 0,
-    averageRating: 0,
-    totalReviews: 0
-  });
-  const [recentCourses, setRecentCourses] = useState<RecentCourse[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // React Query hook for dashboard data
+  const { 
+    data: dashboardResponse, 
+    loading, 
+    execute: refetchDashboard 
+  } = useCreatorDashboardQuery(user?.id || '', !!user?.id);
 
+  // Check permissions
   useEffect(() => {
-    if (!user || (user.role !== 'creator' && user.role !== 'admin')) {
-      toast.error('Access denied. Creator access required.');
+    if (user && user.role !== 'creator' && user.role !== 'admin') {
+      ToastService.error('Access denied. Creator access required.');
       router.push('/dashboard');
-      return;
     }
-
-    fetchDashboardData();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, router]);
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch creator's courses
-      const response = await getCourses(`creator_id=${user?.id}`);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
-      }
-      
-      const courses = response.data?.courses || [];
-
-      // Calculate statistics
-      const publishedCourses = courses.filter((c: any) => c.status === 'published');
-      const draftCourses = courses.filter((c: any) => c.status === 'draft');
-      
-      // Aggregate stats from courses
-      let totalStudents = 0;
-      let totalRevenue = 0;
-      let totalRatings = 0;
-      let totalReviews = 0;
-
-      publishedCourses.forEach((course: any) => {
-        totalStudents += course.stats?.total_enrollments || 0;
-        totalRevenue += course.stats?.total_revenue || 0;
-        totalRatings += (course.stats?.average_rating || 0) * (course.stats?.total_reviews || 0);
-        totalReviews += course.stats?.total_reviews || 0;
-      });
-
-      const averageRating = totalReviews > 0 ? totalRatings / totalReviews : 0;
-
-      // Calculate monthly revenue (simplified - last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      // For now, estimate monthly revenue as 10% of total (in real app, would fetch from payments)
-      const monthlyRevenue = totalRevenue * 0.1;
-
-      setStats({
-        totalCourses: courses.length,
-        publishedCourses: publishedCourses.length,
-        draftCourses: draftCourses.length,
-        totalStudents,
-        activeStudents: Math.floor(totalStudents * 0.3), // Estimate 30% active
-        totalRevenue,
-        monthlyRevenue,
-        averageRating,
-        totalReviews
-      });
-
-      // Set recent courses (last 5)
-      const recent = courses.slice(0, 5).map((course: any) => ({
-        id: course._id,
-        title: course.title,
-        status: course.status,
-        students: course.stats?.total_enrollments || 0,
-        revenue: course.stats?.total_revenue || 0,
-        rating: course.stats?.average_rating || 0,
-        lastUpdated: course.updated_at
-      }));
-
-      setRecentCourses(recent);
-    } catch (error: any) {
-      console.error('Failed to fetch dashboard data:', error);
-      // Always use backend message, only fallback to "Operation Failed" if no message
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
+  // Memoized computed stats and courses from React Query data
+  const { stats, recentCourses } = useMemo(() => {
+    if (!dashboardResponse?.success || !dashboardResponse.data?.courses) {
+      return {
+        stats: {
+          totalCourses: 0,
+          publishedCourses: 0,
+          draftCourses: 0,
+          totalStudents: 0,
+          activeStudents: 0,
+          totalRevenue: 0,
+          monthlyRevenue: 0,
+          averageRating: 0,
+          totalReviews: 0
+        },
+        recentCourses: []
+      };
     }
-  };
+
+    const courses = dashboardResponse.data.courses;
+
+    // Calculate statistics
+    const publishedCourses = courses.filter((c: any) => c.status === 'published');
+    const draftCourses = courses.filter((c: any) => c.status === 'draft');
+    
+    // Aggregate stats from courses
+    let totalStudents = 0;
+    let totalRevenue = 0;
+    let totalRatings = 0;
+    let totalReviews = 0;
+
+    publishedCourses.forEach((course: any) => {
+      totalStudents += course.stats?.total_enrollments || 0;
+      totalRevenue += course.stats?.total_revenue || 0;
+      totalRatings += (course.stats?.average_rating || 0) * (course.stats?.total_reviews || 0);
+      totalReviews += course.stats?.total_reviews || 0;
+    });
+
+    const averageRating = totalReviews > 0 ? totalRatings / totalReviews : 0;
+
+    // Calculate monthly revenue (simplified - last 30 days)
+    // For now, estimate monthly revenue as 10% of total (in real app, would fetch from payments)
+    const monthlyRevenue = totalRevenue * 0.1;
+
+    const computedStats = {
+      totalCourses: courses.length,
+      publishedCourses: publishedCourses.length,
+      draftCourses: draftCourses.length,
+      totalStudents,
+      activeStudents: Math.floor(totalStudents * 0.3), // Estimate 30% active
+      totalRevenue,
+      monthlyRevenue,
+      averageRating,
+      totalReviews
+    };
+
+    // Set recent courses (last 5)
+    const recent = courses.slice(0, 5).map((course: any) => ({
+      id: course._id,
+      title: course.title,
+      status: course.status,
+      students: course.stats?.total_enrollments || 0,
+      revenue: course.stats?.total_revenue || 0,
+      rating: course.stats?.average_rating || 0,
+      lastUpdated: course.updated_at
+    }));
+
+    return { stats: computedStats, recentCourses: recent };
+  }, [dashboardResponse]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -289,7 +277,7 @@ const CreatorDashboardPage = () => {
           
           {recentCourses.length > 0 ? (
             <div className="space-y-4">
-              {recentCourses.map((course) => (
+              {recentCourses.map((course: any) => (
                 <div
                   key={course.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"

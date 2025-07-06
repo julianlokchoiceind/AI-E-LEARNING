@@ -7,15 +7,22 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SaveStatusIndicator } from '@/components/ui/SaveStatusIndicator';
 import NavigationGuard from '@/components/feature/NavigationGuard';
-import ChapterCard from '@/components/feature/ChapterCard';
-import DraggableChapterCard from '@/components/feature/DraggableChapterCard';
+import DroppableChapterList from '@/components/feature/DroppableChapterList';
+import CreateChapterModal, { ChapterResponse } from '@/components/feature/CreateChapterModal';
+import CreateLessonModal, { LessonResponse } from '@/components/feature/CreateLessonModal';
+import EditChapterModal, { ChapterEditData } from '@/components/feature/EditChapterModal';
+import DeleteChapterModal, { ChapterDeleteData } from '@/components/feature/DeleteChapterModal';
+import EditLessonModal, { LessonEditData } from '@/components/feature/EditLessonModal';
+import DeleteLessonModal, { LessonDeleteData } from '@/components/feature/DeleteLessonModal';
 import { useAutosave } from '@/hooks/useAutosave';
 import { useEditorStore } from '@/stores/editorStore';
 import { useAuth } from '@/hooks/useAuth';
-import { getCourseById, updateCourse } from '@/lib/api/courses';
-import { getChaptersByCourse, getChaptersWithLessons, createChapter, updateChapter, deleteChapter } from '@/lib/api/chapters';
-import { reorderLesson } from '@/lib/api/lessons';
-import { toast } from 'react-hot-toast';
+import { useUpdateCourse } from '@/hooks/queries/useCreatorCourses';
+import { useCourseQuery } from '@/hooks/queries/useCourses';
+import { useChaptersWithLessonsQuery, useDeleteChapter, useReorderChapters } from '@/hooks/queries/useChapters';
+import { useDeleteLesson, useReorderLessons } from '@/hooks/queries/useLessons';
+import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { ToastService } from '@/lib/toast/ToastService';
 
 const CourseBuilderPage = () => {
   const params = useParams();
@@ -33,66 +40,75 @@ const CourseBuilderPage = () => {
   } = useEditorStore();
 
   const [chapters, setChapters] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // React Query hooks - automatic caching and state management
+  const { data: courseResponse, loading: courseLoading, refetch: refetchCourse } = useCourseQuery(courseId);
+  const { data: chaptersResponse, loading: chaptersLoading, refetch: refetchChapters } = useChaptersWithLessonsQuery(courseId);
+  const { mutateAsync: updateCourseAction } = useUpdateCourse();
+  
+  // React Query mutations for chapter and lesson operations
+  const { mutateAsync: deleteChapterMutation } = useDeleteChapter();
+  const { mutateAsync: deleteLessonMutation } = useDeleteLesson();
+  const { mutateAsync: reorderChaptersMutation } = useReorderChapters();
+  const { mutateAsync: reorderLessonsMutation } = useReorderLessons();
+  
+  // Combined loading state
+  const loading = courseLoading || chaptersLoading;
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
+  const [isChapterModalOpen, setIsChapterModalOpen] = useState(false);
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [isEditChapterModalOpen, setIsEditChapterModalOpen] = useState(false);
+  const [isDeleteChapterModalOpen, setIsDeleteChapterModalOpen] = useState(false);
+  const [isEditLessonModalOpen, setIsEditLessonModalOpen] = useState(false);
+  const [isDeleteLessonModalOpen, setIsDeleteLessonModalOpen] = useState(false);
+  const [selectedChapterId, setSelectedChapterId] = useState<string>('');
+  const [selectedChapterForEdit, setSelectedChapterForEdit] = useState<ChapterEditData | null>(null);
+  const [selectedChapterForDelete, setSelectedChapterForDelete] = useState<ChapterDeleteData | null>(null);
+  const [selectedLessonForEdit, setSelectedLessonForEdit] = useState<LessonEditData | null>(null);
+  const [selectedLessonForDelete, setSelectedLessonForDelete] = useState<LessonDeleteData | null>(null);
 
   // Auto-save hook
   const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges } = useAutosave(
     courseData,
     {
-      delay: 2000,
+      delay: 5000, // Increased delay to 5 seconds to reduce timeout issues
       onSave: async (data) => {
         if (!data || !data._id) return;
-        await updateCourse(data._id, data);
+        await updateCourseAction({ courseId: data._id, courseData: data });
       },
       enabled: !!courseData,
     }
   );
 
+  // Initialize data from React Query responses
   useEffect(() => {
-    fetchCourseData();
+    if (courseResponse?.data) {
+      setCourseData(courseResponse.data);
+      setTitleInput(courseResponse.data.title);
+    }
+  }, [courseResponse, setCourseData]);
+  
+  useEffect(() => {
+    if (chaptersResponse?.data?.chapters) {
+      setChapters(chaptersResponse.data.chapters);
+    }
+  }, [chaptersResponse]);
+  
+  useEffect(() => {
     return () => {
       reset(); // Clean up on unmount
     };
-    
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId]);
+  }, []);
 
-  const fetchCourseData = async () => {
-    try {
-      setLoading(true);
-      
-      // Check permissions
-      if (user?.role !== 'creator' && user?.role !== 'admin') {
-        toast.error('You do not have permission to edit courses');
-        router.push('/dashboard');
-        return;
-      }
-
-      // Fetch course details
-      const courseResponse = await getCourseById(courseId);
-      if (!courseResponse.success || !courseResponse.data) {
-        throw new Error(courseResponse.message || 'Course not found');
-      }
-      setCourseData(courseResponse.data);
-      setTitleInput(courseResponse.data.title);
-
-      // Fetch chapters with lessons
-      const chaptersWithLessons = await getChaptersWithLessons(courseId);
-      if (chaptersWithLessons.success && chaptersWithLessons.data) {
-        setChapters(chaptersWithLessons.data.chapters || []);
-      } else {
-        setChapters([]);
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch course data:', error);
-      toast.error(error.message || 'Something went wrong');
-      router.push('/creator/courses');
-    } finally {
-      setLoading(false);
+  // Permission check
+  useEffect(() => {
+    if (user && user.role !== 'creator' && user.role !== 'admin') {
+      ToastService.error('You do not have permission to edit courses');
+      router.push('/dashboard');
     }
-  };
+  }, [user, router]);
 
   const handleTitleSave = () => {
     if (titleInput.trim() && titleInput !== courseData?.title) {
@@ -101,81 +117,299 @@ const CourseBuilderPage = () => {
     }
   };
 
-  const handleCreateChapter = async () => {
-    try {
-      const response = await createChapter({ course_id: courseId });
-      if (response.success && response.data) {
-        setChapters([...chapters, response.data]);
-        toast.success(response.message || 'Something went wrong');
-      }
-    } catch (error: any) {
-      console.error('Failed to create chapter:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+  const handleCreateChapter = () => {
+    setIsChapterModalOpen(true);
   };
 
-  const handleCreateLesson = async (chapterId: string) => {
-    try {
-      const { createLesson } = await import('@/lib/api/lessons');
-      const response = await createLesson({ 
-        chapter_id: chapterId,
-        title: `Untitled Lesson ${new Date().toLocaleDateString()}`
-      });
-      
-      // Update local state - add lesson to the chapter
-      setChapters(prevChapters => {
-        return prevChapters.map(chapter => {
-          if (chapter._id === chapterId) {
-            const updatedLessons = [...(chapter.lessons || []), response];
-            return {
-              ...chapter,
-              lessons: updatedLessons,
-              total_lessons: updatedLessons.length
-            };
-          }
-          return chapter;
-        });
-      });
-      
-      // Redirect to lesson editor
-      if (response.success && response.data) {
-        router.push(`/creator/courses/${courseId}/lessons/${response.data._id}/edit`);
-        toast.success(response.message || 'Something went wrong');
-      }
-    } catch (error: any) {
-      console.error('Failed to create lesson:', error);
-      toast.error(error.message || 'Something went wrong');
+  const handleChapterCreated = (newChapter: ChapterResponse) => {
+    console.log('🔧 ADMIN handleChapterCreated - Raw chapter response:', {
+      fullObject: newChapter,
+      _id: newChapter._id,
+      id: (newChapter as any).id,
+      hasId: !!((newChapter as any).id),
+      has_id: !!(newChapter._id),
+      allKeys: Object.keys(newChapter)
+    });
+    
+    // 🔧 FIX: Backend returns 'id' field, but UI expects '_id' field
+    const backendId = (newChapter as any).id;
+    const frontendId = newChapter._id;
+    const finalId = backendId || frontendId;
+    
+    if (!finalId) {
+      console.error('🚨 CRITICAL: No valid ID found in chapter response!', newChapter);
+      ToastService.error('Chapter created but no ID returned from backend. Please refresh the page.');
+      return;
     }
+    
+    const transformedChapter = {
+      ...newChapter,
+      _id: finalId, // Use backend 'id' first, fallback to '_id'
+      lessons: [],
+      total_lessons: 0,
+      total_duration: 0
+    };
+    
+    console.log('🔧 ADMIN handleChapterCreated - Transformed chapter:', {
+      originalBackendId: backendId,
+      originalFrontendId: frontendId,
+      finalMappedId: transformedChapter._id,
+      title: transformedChapter.title,
+      hasValidId: !!transformedChapter._id,
+      transformedChapter: transformedChapter
+    });
+    
+    setChapters(prev => {
+      const newChapters = [...prev, transformedChapter];
+      console.log('🔧 ADMIN Updated chapters array:', {
+        oldCount: prev.length,
+        newCount: newChapters.length,
+        lastChapter: newChapters[newChapters.length - 1],
+        lastChapterId: newChapters[newChapters.length - 1]?._id
+      });
+      return newChapters;
+    });
+    // Auto-save will handle the course update automatically
+  };
+
+  const handleCreateLesson = (chapterId: string) => {
+    console.log('🔍 handleCreateLesson:', { chapterId, type: typeof chapterId });
+    
+    // Use setTimeout to ensure React state updates are complete
+    setTimeout(() => {
+      setSelectedChapterId(chapterId);
+      setIsLessonModalOpen(true);
+    }, 0);
+  };
+
+  const handleLessonCreated = (newLesson: LessonResponse) => {
+    console.log('🔧 ADMIN handleLessonCreated - Raw lesson response:', {
+      fullObject: newLesson,
+      _id: newLesson._id,
+      id: (newLesson as any).id,
+      hasId: !!((newLesson as any).id),
+      has_id: !!(newLesson._id),
+      allKeys: Object.keys(newLesson)
+    });
+    
+    // 🔧 FIX: Backend returns 'id' field, but UI expects '_id' field
+    const backendId = (newLesson as any).id;
+    const frontendId = newLesson._id;
+    const finalId = backendId || frontendId;
+    
+    if (!finalId) {
+      console.error('🚨 CRITICAL: No valid ID found in lesson response!', newLesson);
+      ToastService.error('Lesson created but no ID returned from backend. Please refresh the page.');
+      return;
+    }
+    
+    const transformedLesson = {
+      ...newLesson,
+      _id: finalId, // Use backend 'id' first, fallback to '_id'
+    };
+    
+    console.log('🔧 ADMIN handleLessonCreated - Transformed lesson:', {
+      originalBackendId: backendId,
+      originalFrontendId: frontendId,
+      finalMappedId: transformedLesson._id,
+      title: transformedLesson.title,
+      hasValidId: !!transformedLesson._id,
+      transformedLesson: transformedLesson
+    });
+    
+    // Update local state - add lesson to the appropriate chapter
+    setChapters(prevChapters => {
+      return prevChapters.map(chapter => {
+        if (chapter._id === transformedLesson.chapter_id) {
+          const updatedLessons = [...(chapter.lessons || []), transformedLesson];
+          console.log('🔧 ADMIN Updated lessons in chapter:', {
+            chapterTitle: chapter.title,
+            oldLessonCount: chapter.lessons?.length || 0,
+            newLessonCount: updatedLessons.length,
+            lastLesson: updatedLessons[updatedLessons.length - 1],
+            lastLessonId: updatedLessons[updatedLessons.length - 1]?._id
+          });
+          return {
+            ...chapter,
+            lessons: updatedLessons,
+            total_lessons: updatedLessons.length
+          };
+        }
+        return chapter;
+      });
+    });
+    // Auto-save will handle the course update automatically
   };
 
   const handleChapterEdit = (chapterId: string) => {
-    router.push(`/creator/courses/${courseId}/chapters/${chapterId}/edit`);
+    // Find the chapter to edit
+    const chapterToEdit = chapters.find(ch => ch._id === chapterId);
+    if (chapterToEdit) {
+      setSelectedChapterForEdit({
+        _id: chapterToEdit._id,
+        title: chapterToEdit.title,
+        description: chapterToEdit.description || '',
+        order: chapterToEdit.order,
+        course_id: chapterToEdit.course_id
+      });
+      setIsEditChapterModalOpen(true);
+    }
   };
 
-  const handleChapterDelete = async (chapterId: string) => {
-    if (!confirm('Are you sure you want to delete this chapter?')) return;
+  const handleChapterEditDetailed = (chapterId: string) => {
+    router.push(`/admin/courses/${courseId}/chapters/${chapterId}/edit`);
+  };
 
+  const handleChapterUpdated = (updatedChapter: ChapterEditData) => {
+    // Update local state
+    setChapters(prevChapters => {
+      return prevChapters.map(chapter => {
+        if (chapter._id === updatedChapter._id) {
+          return {
+            ...chapter,
+            title: updatedChapter.title,
+            description: updatedChapter.description
+          };
+        }
+        return chapter;
+      });
+    });
+  };
+
+  const handleChapterDelete = (chapterId: string) => {
+    console.log('🗑️ handleChapterDelete called with:', chapterId);
+    
+    // Find the chapter to delete
+    const chapterToDelete = chapters.find(ch => ch._id === chapterId);
+    console.log('🔍 Found chapter to delete:', chapterToDelete);
+    
+    if (chapterToDelete) {
+      setSelectedChapterForDelete({
+        _id: chapterToDelete._id,
+        title: chapterToDelete.title,
+        description: chapterToDelete.description,
+        total_lessons: chapterToDelete.total_lessons || 0
+      });
+      setIsDeleteChapterModalOpen(true);
+      console.log('✅ Modal should now be open');
+    } else {
+      console.error('❌ Chapter not found for deletion');
+    }
+  };
+
+  const handleConfirmChapterDelete = async (chapterId: string) => {
     try {
-      const response = await deleteChapter(chapterId);
+      // Use React Query mutation instead of direct API call
+      const response = await deleteChapterMutation(chapterId);
       setChapters(chapters.filter(ch => ch._id !== chapterId));
-      toast.success(response.message || 'Something went wrong');
+      ToastService.success(response.message || 'Something went wrong');
     } catch (error: any) {
       console.error('Failed to delete chapter:', error);
-      toast.error(error.message || 'Something went wrong');
+      ToastService.error(error.message || 'Something went wrong');
+      throw error; // Re-throw to handle in modal
     }
   };
 
   const handleLessonEdit = (lessonId: string) => {
-    router.push(`/creator/courses/${courseId}/lessons/${lessonId}/edit`);
+    // Find the lesson to edit across all chapters
+    let lessonToEdit: any = null;
+    let chapterOfLesson: any = null;
+
+    for (const chapter of chapters) {
+      if (chapter.lessons) {
+        const foundLesson = chapter.lessons.find((lesson: any) => lesson._id === lessonId);
+        if (foundLesson) {
+          lessonToEdit = foundLesson;
+          chapterOfLesson = chapter;
+          break;
+        }
+      }
+    }
+
+    if (lessonToEdit && chapterOfLesson) {
+      setSelectedLessonForEdit({
+        _id: lessonToEdit._id,
+        chapter_id: chapterOfLesson._id,
+        course_id: courseId,
+        title: lessonToEdit.title,
+        description: lessonToEdit.description,
+        order: lessonToEdit.order,
+        video: lessonToEdit.video,
+        content: lessonToEdit.content,
+        resources: lessonToEdit.resources,
+        status: lessonToEdit.status || 'draft'
+      });
+      setIsEditLessonModalOpen(true);
+    }
   };
 
-  const handleLessonDelete = async (lessonId: string) => {
-    if (!confirm('Are you sure you want to delete this lesson?')) return;
+  const handleLessonEditDetailed = (lessonId: string) => {
+    router.push(`/admin/courses/${courseId}/lessons/${lessonId}/edit`);
+  };
 
+  const handleLessonUpdated = (updatedLesson: LessonEditData) => {
+    // Update local state - find the chapter and update the lesson
+    setChapters(prevChapters => {
+      return prevChapters.map(chapter => {
+        if (chapter._id === updatedLesson.chapter_id) {
+          const updatedLessons = chapter.lessons.map((lesson: any) => {
+            if (lesson._id === updatedLesson._id) {
+              return {
+                ...lesson,
+                title: updatedLesson.title,
+                description: updatedLesson.description,
+                video: updatedLesson.video,
+                content: updatedLesson.content,
+                status: updatedLesson.status
+              };
+            }
+            return lesson;
+          });
+          return {
+            ...chapter,
+            lessons: updatedLessons
+          };
+        }
+        return chapter;
+      });
+    });
+  };
+
+  const handleLessonDelete = (lessonId: string) => {
+    // Find the lesson to delete across all chapters
+    let lessonToDelete: any = null;
+    let chapterOfLesson: any = null;
+
+    for (const chapter of chapters) {
+      if (chapter.lessons) {
+        const foundLesson = chapter.lessons.find((lesson: any) => lesson._id === lessonId);
+        if (foundLesson) {
+          lessonToDelete = foundLesson;
+          chapterOfLesson = chapter;
+          break;
+        }
+      }
+    }
+
+    if (lessonToDelete && chapterOfLesson) {
+      setSelectedLessonForDelete({
+        _id: lessonToDelete._id,
+        title: lessonToDelete.title,
+        description: lessonToDelete.description,
+        chapter_title: chapterOfLesson.title,
+        order: lessonToDelete.order,
+        video: lessonToDelete.video,
+        content: lessonToDelete.content,
+        status: lessonToDelete.status || 'draft'
+      });
+      setIsDeleteLessonModalOpen(true);
+    }
+  };
+
+  const handleConfirmLessonDelete = async (lessonId: string) => {
     try {
-      // Import deleteLesson from lessons API
-      const { deleteLesson } = await import('@/lib/api/lessons');
-      const response = await deleteLesson(lessonId);
+      // Use React Query mutation instead of direct API call
+      const response = await deleteLessonMutation(lessonId);
       
       // Update local state - remove lesson from the chapter
       setChapters(prevChapters => {
@@ -189,99 +423,111 @@ const CourseBuilderPage = () => {
         });
       });
       
-      toast.success(response.message || 'Something went wrong');
+      ToastService.success(response.message || 'Something went wrong');
     } catch (error: any) {
       console.error('Failed to delete lesson:', error);
-      toast.error(error.message || 'Something went wrong');
+      ToastService.error(error.message || 'Something went wrong');
+      throw error; // Re-throw to handle in modal
     }
   };
 
-  const handleChapterReorder = async (chapterId: string, direction: 'up' | 'down') => {
-    // Find chapter index
-    const index = chapters.findIndex(ch => ch._id === chapterId);
-    if (index === -1) return;
-
-    // Check bounds
-    if (direction === 'up' && index === 0) return;
-    if (direction === 'down' && index === chapters.length - 1) return;
-
-    // Create new array with swapped chapters
-    const newChapters = [...chapters];
-    const swapIndex = direction === 'up' ? index - 1 : index + 1;
-    
-    // Swap orders
-    const tempOrder = newChapters[index].order;
-    newChapters[index].order = newChapters[swapIndex].order;
-    newChapters[swapIndex].order = tempOrder;
-    
-    // Swap positions in array
-    [newChapters[index], newChapters[swapIndex]] = [newChapters[swapIndex], newChapters[index]];
-    
-    setChapters(newChapters);
-
-    // Update both chapters in backend
+  const handleChaptersReorder = async (reorderedChapters: any[]) => {
     try {
-      await Promise.all([
-        updateChapter(newChapters[index]._id, { order: newChapters[index].order }),
-        updateChapter(newChapters[swapIndex]._id, { order: newChapters[swapIndex].order })
-      ]);
+      // Update local state optimistically
+      setChapters(reorderedChapters);
+
+      // Prepare data for bulk reorder API
+      const chapterOrders = reorderedChapters.map((chapter, index) => ({
+        id: chapter._id,
+        order: index + 1
+      }));
+
+      // Use React Query mutation instead of direct API call
+      const response = await reorderChaptersMutation({ courseId, chapterOrders });
+      
+      if (response.success && response.data) {
+        // Update with response data to ensure consistency
+        setChapters(response.data.chapters || reorderedChapters);
+      }
     } catch (error: any) {
       console.error('Failed to reorder chapters:', error);
-      toast.error(error.message || 'Something went wrong');
-      // Revert on error
-      setChapters(chapters);
+      ToastService.error(error.message || 'Something went wrong');
+      
+      // Revert to original order on error
+      refetchChapters();
+      throw error; // Re-throw so DroppableChapterList can handle it
     }
   };
 
-  const handleLessonReorder = async (chapterId: string, lessonId: string, newOrder: number) => {
+  const handleLessonsReorder = async (chapterId: string, reorderedLessons: any[]) => {
     try {
-      const response = await reorderLesson(lessonId, newOrder);
-      
-      // Update local state - find the chapter and update its lessons
+      // Update local state optimistically
       setChapters(prevChapters => {
         return prevChapters.map(chapter => {
           if (chapter._id === chapterId) {
-            // Re-fetch lessons for this chapter or update locally
-            const updatedLessons = [...chapter.lessons];
-            const lessonIndex = updatedLessons.findIndex(l => l._id === lessonId);
-            if (lessonIndex !== -1) {
-              const [movedLesson] = updatedLessons.splice(lessonIndex, 1);
-              updatedLessons.splice(newOrder - 1, 0, movedLesson);
-              
-              // Update order values
-              updatedLessons.forEach((lesson, index) => {
-                lesson.order = index + 1;
-              });
-            }
-            
             return {
               ...chapter,
-              lessons: updatedLessons,
+              lessons: reorderedLessons
             };
           }
           return chapter;
         });
       });
+
+      // Prepare data for bulk reorder API
+      const lessonOrders = reorderedLessons.map((lesson, index) => ({
+        id: lesson._id,
+        order: index + 1
+      }));
+
+      // Use React Query mutation instead of direct API call
+      const response = await reorderLessonsMutation({ 
+        chapterId, 
+        reorderData: { lesson_orders: lessonOrders.map(order => ({ lesson_id: order.id, new_order: order.order })) }
+      });
       
-      toast.success(response.message || 'Something went wrong');
+      if (response.success && response.data) {
+        // Update with response data to ensure consistency
+        setChapters(prevChapters => {
+          return prevChapters.map(chapter => {
+            if (chapter._id === chapterId) {
+              return {
+                ...chapter,
+                lessons: response.data?.lessons || reorderedLessons
+              };
+            }
+            return chapter;
+          });
+        });
+      }
     } catch (error: any) {
-      console.error('Failed to reorder lesson:', error);
-      toast.error(error.message || 'Something went wrong');
+      console.error('Failed to reorder lessons:', error);
+      ToastService.error(error.message || 'Something went wrong');
+      
+      // Revert to original order on error - React Query will handle refetch
+      throw error; // Re-throw so DroppableLessonList can handle it
     }
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" message="Loading course data..." />
       </div>
     );
   }
 
   if (!courseData) {
     return (
-      <div className="text-center py-16">
-        <p className="text-gray-600 text-lg">Course not found</p>
+      <div className="container mx-auto px-4 py-8">
+        <EmptyState
+          title="Course not found"
+          description="The course you're looking for doesn't exist or you don't have permission to edit it."
+          action={{
+            label: 'Back to Courses',
+            onClick: () => router.push('/admin/courses')
+          }}
+        />
       </div>
     );
   }
@@ -297,7 +543,7 @@ const CourseBuilderPage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => router.push('/creator/courses')}
+                  onClick={() => router.push('/admin/courses')}
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Courses
@@ -325,11 +571,13 @@ const CourseBuilderPage = () => {
               </div>
 
               <div className="flex items-center gap-4">
-                <SaveStatusIndicator
-                  status={saveStatus}
-                  lastSavedAt={lastSavedAt}
-                  error={error}
-                />
+                {saveStatus !== 'saving' && (
+                  <SaveStatusIndicator
+                    status={saveStatus}
+                    lastSavedAt={lastSavedAt}
+                    error={error}
+                  />
+                )}
                 
                 <Button
                   variant="outline"
@@ -342,11 +590,18 @@ const CourseBuilderPage = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={forceSave}
+                  onClick={() => forceSave()}
                   loading={saveStatus === 'saving'}
+                  disabled={saveStatus === 'saving'}
                 >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save
+                  {saveStatus === 'saving' ? (
+                    'Saving...'
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -361,7 +616,12 @@ const CourseBuilderPage = () => {
               <Card className="p-4">
                 <nav className="space-y-2">
                   <button
-                    onClick={() => setActiveTab('general')}
+                    onClick={() => {
+                      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
+                        return;
+                      }
+                      setActiveTab('general');
+                    }}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'general'
                         ? 'bg-blue-100 text-blue-700'
@@ -373,7 +633,12 @@ const CourseBuilderPage = () => {
                   </button>
                   
                   <button
-                    onClick={() => setActiveTab('chapters')}
+                    onClick={() => {
+                      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
+                        return;
+                      }
+                      setActiveTab('chapters');
+                    }}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'chapters'
                         ? 'bg-blue-100 text-blue-700'
@@ -385,7 +650,12 @@ const CourseBuilderPage = () => {
                   </button>
                   
                   <button
-                    onClick={() => setActiveTab('settings')}
+                    onClick={() => {
+                      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
+                        return;
+                      }
+                      setActiveTab('settings');
+                    }}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'settings'
                         ? 'bg-blue-100 text-blue-700'
@@ -536,25 +806,17 @@ const CourseBuilderPage = () => {
                       </Button>
                     </Card>
                   ) : (
-                    <div className="space-y-4">
-                      {chapters
-                        .sort((a, b) => a.order - b.order)
-                        .map((chapter) => (
-                          <DraggableChapterCard
-                            key={chapter._id}
-                            chapter={chapter}
-                            isEnrolled={true}
-                            isEditable={true}
-                            onEdit={handleChapterEdit}
-                            onDelete={handleChapterDelete}
-                            onReorder={handleChapterReorder}
-                            onLessonReorder={handleLessonReorder}
-                            onLessonEdit={handleLessonEdit}
-                            onLessonDelete={handleLessonDelete}
-                            onCreateLesson={handleCreateLesson}
-                          />
-                        ))}
-                    </div>
+                    <DroppableChapterList
+                      chapters={chapters}
+                      onChaptersReorder={handleChaptersReorder}
+                      onEdit={handleChapterEdit}
+                      onDelete={handleChapterDelete}
+                      onLessonEdit={handleLessonEdit}
+                      onLessonDelete={handleLessonDelete}
+                      onCreateLesson={handleCreateLesson}
+                      onLessonsReorder={handleLessonsReorder}
+                      isEditable={true}
+                    />
                   )}
                 </div>
               )}
@@ -659,6 +921,58 @@ const CourseBuilderPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Chapter Creation Modal */}
+      <CreateChapterModal
+        isOpen={isChapterModalOpen}
+        onClose={() => setIsChapterModalOpen(false)}
+        courseId={courseId}
+        onChapterCreated={handleChapterCreated}
+      />
+
+      {/* Lesson Creation Modal */}
+      <CreateLessonModal
+        isOpen={isLessonModalOpen}
+        onClose={() => setIsLessonModalOpen(false)}
+        chapterId={selectedChapterId}
+        courseId={courseId}
+        onLessonCreated={handleLessonCreated}
+      />
+
+      {/* Chapter Edit Modal */}
+      <EditChapterModal
+        isOpen={isEditChapterModalOpen}
+        onClose={() => setIsEditChapterModalOpen(false)}
+        chapter={selectedChapterForEdit}
+        onChapterUpdated={handleChapterUpdated}
+      />
+
+      {/* Chapter Delete Modal */}
+      <DeleteChapterModal
+        isOpen={isDeleteChapterModalOpen}
+        onClose={() => {
+          console.log('🚪 Delete modal closing');
+          setIsDeleteChapterModalOpen(false);
+        }}
+        chapter={selectedChapterForDelete}
+        onConfirmDelete={handleConfirmChapterDelete}
+      />
+
+      {/* Lesson Edit Modal */}
+      <EditLessonModal
+        isOpen={isEditLessonModalOpen}
+        onClose={() => setIsEditLessonModalOpen(false)}
+        lesson={selectedLessonForEdit}
+        onLessonUpdated={handleLessonUpdated}
+      />
+
+      {/* Lesson Delete Modal */}
+      <DeleteLessonModal
+        isOpen={isDeleteLessonModalOpen}
+        onClose={() => setIsDeleteLessonModalOpen(false)}
+        lesson={selectedLessonForDelete}
+        onConfirmDelete={handleConfirmLessonDelete}
+      />
     </NavigationGuard>
   );
 };

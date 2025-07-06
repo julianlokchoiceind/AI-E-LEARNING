@@ -5,6 +5,7 @@ import { Send, Bot, User, MessageSquare, Lightbulb, HelpCircle } from 'lucide-re
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAIChat } from '@/hooks/useAIChat';
+import { useAISuggestionsQuery } from '@/hooks/queries/useAI';
 
 interface InlineChatComponentProps {
   courseId?: string;
@@ -32,10 +33,24 @@ export const InlineChatComponent: React.FC<InlineChatComponentProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
-  const [contextualSuggestions, setContextualSuggestions] = useState<string[]>(defaultSuggestions);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // React Query hook for AI suggestions - replaces manual fetch
+  const { 
+    data: suggestionsResponse, 
+    loading: loadingSuggestions 
+  } = useAISuggestionsQuery(
+    {
+      course_id: courseId,
+      lesson_id: lessonId,
+      user_level: userLevel
+    },
+    !!(courseId || lessonId) // Only fetch when we have context
+  );
+
+  // Use React Query data or fallback to defaults
+  const contextualSuggestions = suggestionsResponse?.data?.suggestions || defaultSuggestions;
 
   const {
     messages,
@@ -57,14 +72,6 @@ export const InlineChatComponent: React.FC<InlineChatComponentProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, isTyping]);
 
-  // Fetch contextual suggestions on mount
-  useEffect(() => {
-    if (courseId || lessonId) {
-      fetchContextualSuggestions();
-    }
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId, lessonId, userLevel]);
 
   // Hide suggestions after first message
   useEffect(() => {
@@ -75,37 +82,6 @@ export const InlineChatComponent: React.FC<InlineChatComponentProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length]);
 
-  const fetchContextualSuggestions = async () => {
-    try {
-      setLoadingSuggestions(true);
-      
-      const response = await fetch('/api/v1/ai/suggestions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        },
-        body: JSON.stringify({
-          course_id: courseId,
-          lesson_id: lessonId,
-          user_level: userLevel
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setContextualSuggestions(data.suggestions);
-      } else {
-        // Fall back to default suggestions
-        setContextualSuggestions(defaultSuggestions);
-      }
-    } catch (error) {
-      console.error('Failed to fetch contextual suggestions:', error);
-      setContextualSuggestions(defaultSuggestions);
-    } finally {
-      setLoadingSuggestions(false);
-    }
-  };
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -167,7 +143,7 @@ export const InlineChatComponent: React.FC<InlineChatComponentProps> = ({
                 />
               ))
             ) : (
-              contextualSuggestions.map((suggestion, index) => (
+              contextualSuggestions.map((suggestion: any, index: number) => (
                 <Button
                   key={index}
                   variant="outline"

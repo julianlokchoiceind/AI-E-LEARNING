@@ -6,82 +6,78 @@ import Link from 'next/link';
 import { Plus, BookOpen, TrendingUp, Users, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { getCourses } from '@/lib/api/courses';
+import { useCreatorDashboardQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
+import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 
 const CreatorDashboard = () => {
   const router = useRouter();
-  const { user } = useAuth();
-  const [courses, setCourses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const { user, loading: authLoading } = useAuth();
+
+  // React Query hook - automatic caching and state management
+  const { 
+    data: dashboardResponse, 
+    loading: dashboardLoading, 
+    execute: refetchDashboard 
+  } = useCreatorDashboardQuery(!!user);
+
+  // Extract data from React Query response
+  const dashboardData = dashboardResponse?.data || null;
+  const courses = dashboardData?.courses || [];
+  const stats = dashboardData?.stats || {
     totalCourses: 0,
     totalStudents: 0,
     totalRevenue: 0,
     avgRating: 0,
-  });
+  };
+
+  // Combined loading state
+  const loading = authLoading || dashboardLoading;
 
   useEffect(() => {
-    if (user?.role !== 'creator' && user?.role !== 'admin') {
-      toast.error('Access denied. Creator access required.');
+    if (!authLoading && user && (user.role !== 'creator' && user.role !== 'admin')) {
+      ToastService.error('Access denied. Creator access required.');
       router.push('/dashboard');
       return;
     }
-
-    fetchCreatorData();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, router]);
-
-  const fetchCreatorData = async () => {
-    try {
-      setLoading(true);
-      // Fetch creator's courses
-      const response = await getCourses(`creator_id=${user?.id}`);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
-      }
-      
-      setCourses(response.data?.courses || []);
-
-      // Calculate stats
-      const courses = response.data?.courses || [];
-      const totalStudents = courses.reduce((sum: number, course: any) => 
-        sum + (course.stats?.total_enrollments || 0), 0
-      );
-      const totalRevenue = courses.reduce((sum: number, course: any) => 
-        sum + (course.stats?.total_revenue || 0), 0
-      );
-      const avgRating = courses.length > 0
-        ? courses.reduce((sum: number, course: any) => 
-            sum + (course.stats?.average_rating || 0), 0
-          ) / courses.length
-        : 0;
-
-      setStats({
-        totalCourses: courses.length,
-        totalStudents,
-        totalRevenue,
-        avgRating,
-      });
-    } catch (error: any) {
-      console.error('Failed to fetch creator data:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, authLoading, router]);
 
   const handleCreateCourse = () => {
     router.push('/creator/courses/new');
   };
 
+  // Manual refresh function for dashboard data
+  const refreshDashboard = async () => {
+    if (!user) return;
+    
+    try {
+      await refetchDashboard();
+      ToastService.success('Dashboard refreshed');
+    } catch (error) {
+      console.error('Dashboard refresh error:', error);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" message="Loading creator dashboard..." />
+      </div>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <EmptyState
+          title="Unable to load dashboard"
+          description="There was a problem loading your creator dashboard. Please try again."
+          action={{
+            label: 'Retry',
+            onClick: refreshDashboard
+          }}
+        />
       </div>
     );
   }
@@ -128,7 +124,7 @@ const CreatorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</p>
+                <p className="text-2xl font-bold">${(stats.totalRevenue || 0).toFixed(2)}</p>
               </div>
               <DollarSign className="w-8 h-8 text-indigo-500" />
             </div>
@@ -138,7 +134,7 @@ const CreatorDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Average Rating</p>
-                <p className="text-2xl font-bold">{stats.avgRating.toFixed(1)} ⭐</p>
+                <p className="text-2xl font-bold">{(stats.avgRating || 0).toFixed(1)} ⭐</p>
               </div>
               <TrendingUp className="w-8 h-8 text-yellow-500" />
             </div>
@@ -185,7 +181,7 @@ const CreatorDashboard = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {courses.slice(0, 5).map((course) => (
+              {courses.slice(0, 5).map((course: any) => (
                 <div
                   key={course._id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"

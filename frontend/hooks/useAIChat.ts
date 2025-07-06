@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useCallback } from 'react';
-import toast from 'react-hot-toast';
+import { useSendAIMessage, useGetConversationHistory, useClearConversationHistory } from '@/hooks/queries/useAI';
+import { StandardResponse } from '@/lib/types/api';
+import { ToastService } from '@/lib/toast/ToastService';
 
 // Types
 interface Message {
@@ -84,12 +86,16 @@ export const useAIChat = ({
   maxContextHistory = 10
 }: UseAIChatParams = {}): UseAIChatReturn => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [contextHistory, setContextHistory] = useState<string[]>([]);
   const [learningGoals, setLearningGoals] = useState<string[]>([]);
   const [difficultyPreference, setDifficultyPreference] = useState<'simple' | 'detailed' | 'technical'>('detailed');
   const [languagePreference, setLanguagePreference] = useState<'en' | 'vi'>('en');
+
+  // React Query mutations for AI operations
+  const { mutate: sendAIMessage, loading: isLoading } = useSendAIMessage();
+  const { data: conversationHistory, execute: getHistory } = useGetConversationHistory();
+  const { mutate: clearHistory } = useClearConversationHistory();
 
   // Add a message to the conversation
   const addMessage = useCallback((message: Omit<Message, 'id' | 'timestamp'>) => {
@@ -101,7 +107,7 @@ export const useAIChat = ({
     setMessages(prev => [...prev, newMessage]);
   }, []);
 
-  // Send message to AI
+  // Send message to AI using React Query mutation
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
 
@@ -114,151 +120,122 @@ export const useAIChat = ({
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
     setIsTyping(true);
 
-    try {
-      // Prepare enhanced context for AI
-      const context: ChatContext = {};
-      if (courseId) context.course_id = courseId;
-      if (lessonId) context.lesson_id = lessonId;
-      if (chapterId) context.chapter_id = chapterId;
-      if (userLevel) context.user_level = userLevel;
+    // Prepare enhanced context for AI
+    const context: ChatContext = {};
+    if (courseId) context.course_id = courseId;
+    if (lessonId) context.lesson_id = lessonId;
+    if (chapterId) context.chapter_id = chapterId;
+    if (userLevel) context.user_level = userLevel;
+    
+    // Add learning context
+    if (enableContextTracking) {
+      context.previous_questions = contextHistory.slice(-5); // Last 5 questions for context
+      context.difficulty_preference = difficultyPreference;
+      context.language_preference = languagePreference;
       
-      // Add learning context
-      if (enableContextTracking) {
-        context.previous_questions = contextHistory.slice(-5); // Last 5 questions for context
-        context.difficulty_preference = difficultyPreference;
-        context.language_preference = languagePreference;
-        
-        if (learningGoals.length > 0) {
-          context.learning_goals = learningGoals;
+      if (learningGoals.length > 0) {
+        context.learning_goals = learningGoals;
+      }
+      
+      // Get progress data if available
+      try {
+        const progressData = await getProgressData(courseId, lessonId);
+        if (progressData) {
+          context.lesson_progress = progressData.lessonProgress;
+          context.course_progress = progressData.courseProgress;
+          context.current_video_time = progressData.currentVideoTime;
         }
-        
-        // Get progress data if available
-        try {
-          const progressData = await getProgressData(courseId, lessonId);
-          if (progressData) {
-            context.lesson_progress = progressData.lessonProgress;
-            context.course_progress = progressData.courseProgress;
-            context.current_video_time = progressData.currentVideoTime;
-          }
-        } catch (error) {
-          console.warn('Could not fetch progress data:', error);
-        }
+      } catch (error) {
+        console.warn('Could not fetch progress data:', error);
       }
-
-      // Call AI API
-      const response = await fetch('/api/v1/ai/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        },
-        body: JSON.stringify({
-          message: content,
-          context: Object.keys(context).length > 0 ? context : undefined
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Handle different error types
-        if (response.status === 429) {
-          const errorData = data as ChatError;
-          throw new Error(errorData.error || 'Something went wrong');
-        } else if (response.status === 401) {
-          throw new Error('Something went wrong');
-        } else {
-          throw new Error(data.error || 'Something went wrong');
-        }
-      }
-      
-      if (!data.success) {
-        throw new Error(data.message || 'Something went wrong');
-      }
-
-      // Simulate typing delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const responseData = data.data;
-      const aiMessage: Message = {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: responseData.response,
-        timestamp: new Date(),
-        context: responseData.context
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-      
-      // Update context history for better future responses
-      if (enableContextTracking) {
-        setContextHistory(prev => {
-          const updated = [...prev, content];
-          return updated.slice(-maxContextHistory); // Keep only recent context
-        });
-        
-        // Extract learning goals from AI response if mentioned
-        if (enableLearningAnalytics) {
-          extractLearningGoalsFromResponse(responseData.response);
-        }
-      }
-
-    } catch (error: any) {
-      console.error('AI chat error:', error);
-      
-      const errorMessage = error.message || 'Failed to get AI response';
-      
-      // Handle different error types
-      if (errorMessage.includes('rate limit')) {
-        toast.error('You\'re sending messages too quickly. Please wait a moment.');
-      } else if (errorMessage.includes('Authentication')) {
-        toast.error(errorMessage || 'Something went wrong');
-      } else if (errorMessage.includes('credit balance')) {
-        toast.error(errorMessage || 'Something went wrong');
-      } else {
-        toast.error(errorMessage);
-      }
-
-      // Add error message to chat
-      const errorChatMessage: Message = {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: 'I\'m sorry, I\'m having trouble responding right now. Please try again in a moment.',
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, errorChatMessage]);
-
-      // Call onError callback if provided
-      if (onError) {
-        onError(errorMessage);
-      }
-
-    } finally {
-      setIsLoading(false);
-      setIsTyping(false);
     }
-  }, [isLoading, courseId, lessonId, chapterId, userLevel, onError, enableContextTracking, enableLearningAnalytics, maxContextHistory, contextHistory, difficultyPreference, languagePreference, learningGoals]);
+
+    // Use React Query mutation for AI API call
+    sendAIMessage({
+      message: content,
+      context: Object.keys(context).length > 0 ? context : undefined
+    }, {
+      onSuccess: async (response) => {
+        if (response.success && response.data) {
+          // Simulate typing delay for better UX
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          const responseData = response.data;
+          const aiMessage: Message = {
+            id: Date.now().toString(),
+            type: 'ai',
+            content: responseData.response,
+            timestamp: new Date(),
+            context: responseData.context
+          };
+
+          setMessages(prev => [...prev, aiMessage]);
+          
+          // Update context history for better future responses
+          if (enableContextTracking) {
+            setContextHistory(prev => {
+              const updated = [...prev, content];
+              return updated.slice(-maxContextHistory); // Keep only recent context
+            });
+            
+            // Extract learning goals from AI response if mentioned
+            if (enableLearningAnalytics) {
+              extractLearningGoalsFromResponse(responseData.response);
+            }
+          }
+        } else {
+          throw new Error(response.message || 'Something went wrong');
+        }
+      },
+      onError: (error: any) => {
+        console.error('AI chat error:', error);
+        
+        const errorMessage = error.message || 'Something went wrong';
+        
+        // Handle different error types
+        if (errorMessage.includes('rate limit')) {
+          ToastService.error('You\'re sending messages too quickly. Please wait a moment.');
+        } else if (errorMessage.includes('Authentication')) {
+          ToastService.error(errorMessage || 'Something went wrong');
+        } else if (errorMessage.includes('credit balance')) {
+          ToastService.error(errorMessage || 'Something went wrong');
+        } else {
+          ToastService.error(errorMessage);
+        }
+
+        // Add error message to chat
+        const errorChatMessage: Message = {
+          id: Date.now().toString(),
+          type: 'ai',
+          content: 'I\'m sorry, I\'m having trouble responding right now. Please try again in a moment.',
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, errorChatMessage]);
+
+        // Call onError callback if provided
+        if (onError) {
+          onError(errorMessage);
+        }
+      },
+      onSettled: () => {
+        setIsTyping(false);
+      }
+    });
+  }, [isLoading, courseId, lessonId, chapterId, userLevel, onError, enableContextTracking, enableLearningAnalytics, maxContextHistory, contextHistory, difficultyPreference, languagePreference, learningGoals, sendAIMessage]);
   
-  // Helper function to get progress data
+  // Helper function to get progress data using apiClient
   const getProgressData = useCallback(async (courseId?: string, lessonId?: string) => {
     if (!courseId || !lessonId) return null;
     
     try {
-      const response = await fetch(`/api/v1/progress/${courseId}/${lessonId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      });
+      const { api } = await import('@/lib/api/api-client');
+      const response = await api.get<StandardResponse<any>>(`/progress/${courseId}/${lessonId}`, { requireAuth: true });
       
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          return data.data;
-        }
+      if (response.success && response.data) {
+        return response.data;
       }
     } catch (error) {
       console.warn('Failed to fetch progress data:', error);
@@ -327,80 +304,47 @@ export const useAIChat = ({
     setMessages([]);
   }, []);
 
-  // Get conversation history from server
+  // Get conversation history using React Query
   const getConversationHistory = useCallback(async () => {
     try {
-      const response = await fetch('/api/v1/ai/conversation-history', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      });
+      await getHistory();
+      if (conversationHistory && conversationHistory.history) {
+        // Convert server history to messages
+        const historyMessages: Message[] = conversationHistory.history.map((entry: any) => [
+          {
+            id: `history-q-${entry.timestamp}`,
+            type: 'user' as const,
+            content: entry.question,
+            timestamp: new Date(entry.timestamp)
+          },
+          {
+            id: `history-a-${entry.timestamp}`,
+            type: 'ai' as const,
+            content: entry.answer,
+            timestamp: new Date(entry.timestamp),
+            context: entry.context
+          }
+        ]).flat();
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Something went wrong');
+        setMessages(historyMessages);
       }
-
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.message || 'Something went wrong');
-      }
-      
-      // Convert server history to messages
-      const historyMessages: Message[] = data.data.history.map((entry: any) => [
-        {
-          id: `history-q-${entry.timestamp}`,
-          type: 'user' as const,
-          content: entry.question,
-          timestamp: new Date(entry.timestamp)
-        },
-        {
-          id: `history-a-${entry.timestamp}`,
-          type: 'ai' as const,
-          content: entry.answer,
-          timestamp: new Date(entry.timestamp),
-          context: entry.context
-        }
-      ]).flat();
-
-      setMessages(historyMessages);
-
     } catch (error: any) {
       console.error('Failed to get conversation history:', error);
-      toast.error(error.message || 'Something went wrong');
+      ToastService.error(error.message || 'Something went wrong');
     }
-  }, []);
+  }, [getHistory, conversationHistory]);
 
-  // Clear conversation history on server
+  // Clear conversation history using React Query mutation
   const clearConversationHistory = useCallback(async () => {
     try {
-      const response = await fetch('/api/v1/ai/conversation-history', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Something went wrong');
-      }
-
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.message || 'Something went wrong');
-      }
-      
+      clearHistory({});
       clearMessages();
-      toast.success(data.message);
-
+      ToastService.success('Conversation history cleared');
     } catch (error: any) {
       console.error('Failed to clear conversation history:', error);
-      toast.error(error.message || 'Something went wrong');
+      ToastService.error(error.message || 'Something went wrong');
     }
-  }, [clearMessages]);
+  }, [clearHistory, clearMessages]);
 
   return {
     messages,

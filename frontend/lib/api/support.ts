@@ -116,6 +116,18 @@ export const supportAPI = {
   },
 
   /**
+   * Submit contact form
+   */
+  async submitContact(data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+  }): Promise<StandardResponse<any>> {
+    return apiClient.post<StandardResponse<any>>('/support/contact', data);
+  },
+
+  /**
    * Get knowledge base articles
    */
   async getKnowledgeBase(query?: string): Promise<StandardResponse<any>> {

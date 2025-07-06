@@ -4,18 +4,17 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { 
-  getOnboardingStatus, 
-  startOnboarding, 
-  updateLearningPath, 
-  updateProfileSetup, 
-  getCourseRecommendations,
-  completeOnboarding,
-  skipOnboarding,
-  OnboardingStatus,
-  OnboardingRecommendations
-} from '@/lib/api/onboarding';
-import { toast } from 'react-hot-toast';
+import { OnboardingStatus, OnboardingRecommendations } from '@/lib/api/onboarding';
+import {
+  useOnboardingStatusQuery,
+  useStartOnboarding,
+  useSkipOnboarding,
+  useUpdateLearningPath,
+  useUpdateProfileSetup,
+  useCourseRecommendationsQuery,
+  useCompleteOnboarding
+} from '@/hooks/queries/useStudent';
+import { ToastService } from '@/lib/toast/ToastService';
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -90,6 +89,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     selectedCourses: []
   });
 
+  // React Query hooks for onboarding operations
+  const { data: onboardingStatusResponse, execute: fetchOnboardingStatus } = useOnboardingStatusQuery(false);
+  const { data: recommendationsResponse, execute: fetchRecommendations } = useCourseRecommendationsQuery(false);
+  const { mutate: startOnboardingMutation } = useStartOnboarding();
+  const { mutate: skipOnboardingMutation } = useSkipOnboarding();
+  const { mutate: updateLearningPathMutation } = useUpdateLearningPath();
+  const { mutate: updateProfileSetupMutation } = useUpdateProfileSetup();
+  const { mutate: completeOnboardingMutation } = useCompleteOnboarding();
+
   // Check onboarding status when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -101,13 +109,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
   const checkOnboardingStatus = async () => {
     try {
-      const response = await getOnboardingStatus();
+      // Use React Query hook instead of direct API call
+      await fetchOnboardingStatus();
       
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Something went wrong');
+      if (!onboardingStatusResponse?.success || !onboardingStatusResponse.data) {
+        throw new Error(onboardingStatusResponse?.message || 'Something went wrong');
       }
       
-      const status = response.data;
+      const status = onboardingStatusResponse.data;
       if (status.is_completed || status.skipped) {
         onClose();
         return;
@@ -120,159 +129,181 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
       }));
     } catch (error: any) {
       console.error('Failed to check onboarding status:', error);
-      toast.error(error.message || 'Something went wrong');
+      ToastService.error(error.message || 'Something went wrong');
     }
   };
 
   const handleSkipOnboarding = async () => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      const response = await skipOnboarding();
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Something went wrong');
+    setState(prev => ({ ...prev, isLoading: true }));
+    
+    // Use React Query mutation instead of direct API call
+    skipOnboardingMutation(undefined, {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Something went wrong');
+        onClose();
+        onComplete?.();
+      },
+      onError: (error: any) => {
+        console.error('Failed to skip onboarding:', error);
+        ToastService.error(error.message || 'Something went wrong');
+      },
+      onSettled: () => {
+        setState(prev => ({ ...prev, isLoading: false }));
       }
-      
-      toast.success(response.message);
-      onClose();
-      onComplete?.();
-    } catch (error: any) {
-      console.error('Failed to skip onboarding:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
+    });
   };
 
   const handleStartOnboarding = async () => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      const response = await startOnboarding(false);
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Something went wrong');
+    setState(prev => ({ ...prev, isLoading: true }));
+    
+    // Use React Query mutation instead of direct API call
+    startOnboardingMutation(false, {
+      onSuccess: (response) => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'Something went wrong');
+        }
+        
+        const data = response.data;
+        setState(prev => ({
+          ...prev,
+          currentStep: 'learning_path',
+          progress: data.progress_percentage
+        }));
+      },
+      onError: (error: any) => {
+        console.error('Failed to start onboarding:', error);
+        ToastService.error(error.message || 'Something went wrong');
+      },
+      onSettled: () => {
+        setState(prev => ({ ...prev, isLoading: false }));
       }
-      
-      const data = response.data;
-      setState(prev => ({
-        ...prev,
-        currentStep: 'learning_path',
-        progress: data.progress_percentage
-      }));
-    } catch (error: any) {
-      console.error('Failed to start onboarding:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
+    });
   };
 
   const handleLearningPathSubmit = async () => {
     if (state.selectedPaths.length === 0 || !state.skillLevel || !state.timeCommitment) {
-      toast.error('Please complete all required fields');
+      ToastService.error('Please complete all required fields');
       return;
     }
 
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      const response = await updateLearningPath({
-        selected_paths: state.selectedPaths,
-        skill_level: state.skillLevel,
-        time_commitment: state.timeCommitment,
-        learning_goals: state.learningGoals
-      });
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Something went wrong');
+    setState(prev => ({ ...prev, isLoading: true }));
+    
+    // Use React Query mutation instead of direct API call
+    updateLearningPathMutation({
+      selected_paths: state.selectedPaths,
+      skill_level: state.skillLevel,
+      time_commitment: state.timeCommitment,
+      learning_goals: state.learningGoals
+    }, {
+      onSuccess: (response) => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'Something went wrong');
+        }
+        
+        const data = response.data;
+        setState(prev => ({
+          ...prev,
+          currentStep: 'profile_setup',
+          progress: data.progress_percentage
+        }));
+      },
+      onError: (error: any) => {
+        console.error('Failed to update learning path:', error);
+        ToastService.error(error.message || 'Something went wrong');
+      },
+      onSettled: () => {
+        setState(prev => ({ ...prev, isLoading: false }));
       }
-      
-      const data = response.data;
-      setState(prev => ({
-        ...prev,
-        currentStep: 'profile_setup',
-        progress: data.progress_percentage
-      }));
-    } catch (error: any) {
-      console.error('Failed to update learning path:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
+    });
   };
 
   const handleProfileSetupSubmit = async () => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      const response = await updateProfileSetup({
-        bio: state.bio,
-        title: state.title,
-        location: state.location,
-        interests: state.interests,
-        career_goals: state.careerGoals,
-        linkedin: state.linkedin,
-        github: state.github
-      });
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Something went wrong');
+    setState(prev => ({ ...prev, isLoading: true }));
+    
+    // Use React Query mutation instead of direct API call
+    updateProfileSetupMutation({
+      bio: state.bio,
+      title: state.title,
+      location: state.location,
+      interests: state.interests,
+      career_goals: state.careerGoals,
+      linkedin: state.linkedin,
+      github: state.github
+    }, {
+      onSuccess: async (response) => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'Something went wrong');
+        }
+        
+        const data = response.data;
+        
+        // Get course recommendations using React Query
+        try {
+          await fetchRecommendations();
+          
+          if (!recommendationsResponse?.success || !recommendationsResponse.data) {
+            throw new Error(recommendationsResponse?.message || 'Something went wrong');
+          }
+          
+          const recommendations = recommendationsResponse.data;
+          
+          setState(prev => ({
+            ...prev,
+            currentStep: 'course_recommendations',
+            progress: data.progress_percentage,
+            recommendations
+          }));
+        } catch (error: any) {
+          console.error('Failed to get recommendations:', error);
+          ToastService.error(error.message || 'Something went wrong');
+        }
+      },
+      onError: (error: any) => {
+        console.error('Failed to update profile setup:', error);
+        ToastService.error(error.message || 'Something went wrong');
+      },
+      onSettled: () => {
+        setState(prev => ({ ...prev, isLoading: false }));
       }
-      
-      // Get course recommendations
-      const recommendationsResponse = await getCourseRecommendations();
-      
-      if (!recommendationsResponse.success || !recommendationsResponse.data) {
-        throw new Error(recommendationsResponse.message || 'Something went wrong');
-      }
-      
-      const data = response.data;
-      const recommendations = recommendationsResponse.data;
-      
-      setState(prev => ({
-        ...prev,
-        currentStep: 'course_recommendations',
-        progress: data.progress_percentage,
-        recommendations
-      }));
-    } catch (error: any) {
-      console.error('Failed to update profile setup:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
+    });
   };
 
   const handleCompleteOnboarding = async () => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      const response = await completeOnboarding({
-        selected_courses: state.selectedCourses,
-        subscribe_to_newsletter: false,
-        enable_notifications: true
-      });
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Something went wrong');
+    setState(prev => ({ ...prev, isLoading: true }));
+    
+    // Use React Query mutation instead of direct API call
+    completeOnboardingMutation({
+      selected_courses: state.selectedCourses,
+      subscribe_to_newsletter: false,
+      enable_notifications: true
+    }, {
+      onSuccess: (response) => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || 'Something went wrong');
+        }
+        
+        setState(prev => ({
+          ...prev,
+          currentStep: 'completed',
+          progress: 100
+        }));
+        
+        ToastService.success(response.message || 'Something went wrong');
+        
+        // Close modal after showing completion for a moment
+        setTimeout(() => {
+          onClose();
+          onComplete?.();
+        }, 2000);
+      },
+      onError: (error: any) => {
+        console.error('Failed to complete onboarding:', error);
+        ToastService.error(error.message || 'Something went wrong');
+      },
+      onSettled: () => {
+        setState(prev => ({ ...prev, isLoading: false }));
       }
-      
-      setState(prev => ({
-        ...prev,
-        currentStep: 'completed',
-        progress: 100
-      }));
-      
-      toast.success(response.message);
-      
-      // Close modal after showing completion for a moment
-      setTimeout(() => {
-        onClose();
-        onComplete?.();
-      }, 2000);
-    } catch (error: any) {
-      console.error('Failed to complete onboarding:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
+    });
   };
 
   const renderWelcomeStep = () => (

@@ -1,16 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Edit2, Globe, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { CertificateDisplay } from '@/components/feature/CertificateDisplay';
 import { useAuth } from '@/hooks/useAuth';
+import { useCertificateQuery } from '@/hooks/queries/useCertificates';
+import { useApiMutation } from '@/hooks/useApiMutation';
 import { certificateAPI } from '@/lib/api/certificates';
 import { CertificateWithDetails, CertificateUpdate } from '@/lib/types/certificate';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 
 const CertificateViewPage = () => {
   const params = useParams();
@@ -18,8 +21,6 @@ const CertificateViewPage = () => {
   const { user } = useAuth();
   const certificateId = params.id as string;
 
-  const [certificate, setCertificate] = useState<CertificateWithDetails | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [updateData, setUpdateData] = useState<CertificateUpdate>({
     is_public: true,
@@ -28,56 +29,62 @@ const CertificateViewPage = () => {
     accent_color: '#dbeafe',
   });
 
-  useEffect(() => {
-    fetchCertificate();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [certificateId]);
+  // React Query hook for fetching certificate
+  const { 
+    data: certificateResponse, 
+    loading, 
+    error,
+    refetch
+  } = useCertificateQuery(certificateId, !!certificateId);
 
-  const fetchCertificate = async () => {
-    try {
-      setLoading(true);
-      const certResponse = await certificateAPI.getCertificate(certificateId);
-      if (certResponse.success && certResponse.data) {
-        setCertificate(certResponse.data);
-        setUpdateData({
-          is_public: certResponse.data.is_public,
-          template_id: certResponse.data.template_id,
-          background_color: certResponse.data.background_color,
-          accent_color: certResponse.data.accent_color,
-        });
-      } else {
-        throw new Error(certResponse.message || 'Something went wrong');
+  const certificate = certificateResponse?.data || null;
+
+  // React Query mutation for updating certificate
+  const { mutate: updateCertificate, loading: updateLoading } = useApiMutation(
+    ({ certificateId, updateData }: { certificateId: string; updateData: CertificateUpdate }) => 
+      certificateAPI.updateCertificate(certificateId, updateData),
+    {
+      onSuccess: (response) => {
+        setShowEditModal(false);
+        ToastService.success(response.message || 'Certificate updated successfully');
+        refetch(); // Refresh certificate data
+      },
+      onError: (error: any) => {
+        console.error('Failed to update certificate:', error);
+        ToastService.error(error.message || 'Something went wrong');
       }
-    } catch (error: any) {
+    }
+  );
+
+  // Initialize update data when certificate loads
+  React.useEffect(() => {
+    if (certificate) {
+      setUpdateData({
+        is_public: certificate.is_public,
+        template_id: certificate.template_id,
+        background_color: certificate.background_color,
+        accent_color: certificate.accent_color,
+      });
+    }
+  }, [certificate]);
+
+  // Handle errors
+  React.useEffect(() => {
+    if (error) {
       console.error('Failed to fetch certificate:', error);
-      toast.error(error.message || 'Something went wrong');
+      ToastService.error(error?.message || 'Something went wrong');
       router.push('/certificates');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [error, router]);
 
-  const handleUpdate = async () => {
-    try {
-      const updatedResponse = await certificateAPI.updateCertificate(certificateId, updateData);
-      if (updatedResponse.success && updatedResponse.data) {
-        setCertificate(updatedResponse.data);
-      } else {
-        throw new Error(updatedResponse.message || 'Something went wrong');
-      }
-      setShowEditModal(false);
-      toast.success(updatedResponse.message || 'Something went wrong');
-    } catch (error: any) {
-      console.error('Failed to update certificate:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+  const handleUpdate = () => {
+    updateCertificate({ certificateId, updateData });
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <LoadingSpinner size="lg" message="Loading certificate..." />
       </div>
     );
   }
@@ -275,7 +282,7 @@ const CertificateViewPage = () => {
             <Button variant="outline" onClick={() => setShowEditModal(false)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdate}>
+            <Button onClick={handleUpdate} loading={updateLoading}>
               Save Changes
             </Button>
           </div>

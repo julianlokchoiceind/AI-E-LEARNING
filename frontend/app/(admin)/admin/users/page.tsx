@@ -1,19 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 import { 
-  getAdminUsers, 
-  toggleUserPremium, 
-  updateUserRole, 
-  deleteUser 
-} from '@/lib/api/admin';
-import { useApiCall } from '@/hooks/useErrorHandler';
-import { toast } from 'react-hot-toast';
+  useAdminUsersQuery,
+  useToggleUserPremium,
+  useUpdateUserRole,
+  useDeleteUser
+} from '@/hooks/queries/useAdminUsers';
+import { ToastService } from '@/lib/toast/ToastService';
 import { 
   Search, 
   Filter, 
@@ -50,7 +49,6 @@ interface User {
 }
 
 export default function UserManagement() {
-  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [premiumFilter, setPremiumFilter] = useState<string>('');
@@ -58,72 +56,69 @@ export default function UserManagement() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
-  // Use useApiCall hook for consistent loading state management
-  const { data: usersData, loading, execute: fetchUsersExecute } = useApiCall();
-  const { loading: actionLoading, execute: executeAction } = useApiCall();
+  // React Query hooks for data fetching and mutations
+  const { data: usersData, loading, execute: refetchUsers } = useAdminUsersQuery({
+    search: searchTerm,
+    role: roleFilter,
+    premiumOnly: premiumFilter === 'premium' ? true : undefined
+  });
+  
+  const { mutate: togglePremiumMutation, loading: premiumLoading } = useToggleUserPremium();
+  const { mutate: updateRoleMutation, loading: roleLoading } = useUpdateUserRole();
+  const { mutate: deleteUserMutation, loading: deleteLoading } = useDeleteUser();
+  
+  // Combined loading state for actions
+  const actionLoading = premiumLoading || roleLoading || deleteLoading;
+  
+  // Extract users from React Query response
+  const users = usersData?.data?.users || [];
 
-  const fetchUsers = useCallback(async () => {
-    const response = await fetchUsersExecute(
-      () => getAdminUsers({
-        search: searchTerm,
-        role: roleFilter,
-        premiumOnly: premiumFilter === 'premium' ? true : undefined
-      }),
-      {
-        onSuccess: (response: any) => {
-          // StandardResponse format has data field containing the actual data
-          setUsers(response.data?.users || []);
-        }
-      }
-    );
-  }, [searchTerm, roleFilter, premiumFilter, fetchUsersExecute]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  // No manual fetchUsers needed - React Query handles this automatically
+  // refetchUsers is available for manual refresh if needed
 
   const handleSearch = () => {
-    fetchUsers();
+    // React Query will automatically refetch when search terms change
+    // If manual refetch is needed, use: refetchUsers()
   };
 
   const handleTogglePremium = async (userId: string, currentStatus: boolean) => {
-    await executeAction(
-      () => toggleUserPremium(userId, !currentStatus),
-      {
-        onSuccess: (response: any) => {
-          toast.success(response.message || 'Something went wrong');
-          fetchUsers(); // Refresh list
-        }
+    togglePremiumMutation({ userId, premiumStatus: !currentStatus }, {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Something went wrong');
+        // React Query will automatically invalidate and refetch users
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
       }
-    );
+    });
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
-    await executeAction(
-      () => updateUserRole(userId, newRole),
-      {
-        onSuccess: (response: any) => {
-          toast.success(response.message || 'Something went wrong');
-          fetchUsers(); // Refresh list
-        }
+    updateRoleMutation({ userId, role: newRole as 'student' | 'creator' | 'admin' }, {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Something went wrong');
+        // React Query will automatically invalidate and refetch users
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
       }
-    );
+    });
   };
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     
-    await executeAction(
-      () => deleteUser(selectedUser.id),
-      {
-        onSuccess: (response: any) => {
-          toast.success(response.message || 'Something went wrong');
-          setShowDeleteModal(false);
-          setSelectedUser(null);
-          fetchUsers(); // Refresh list
-        }
+    deleteUserMutation(selectedUser.id, {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Something went wrong');
+        setShowDeleteModal(false);
+        setSelectedUser(null);
+        // React Query will automatically invalidate and refetch users
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
       }
-    );
+    });
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -139,7 +134,7 @@ export default function UserManagement() {
     }
   };
 
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user: any) => {
     const matchesSearch = searchTerm === '' || 
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -160,7 +155,7 @@ export default function UserManagement() {
           <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600">Manage platform users, roles, and permissions</p>
         </div>
-        <Button onClick={fetchUsers}>
+        <Button onClick={refetchUsers}>
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
         </Button>
@@ -236,7 +231,7 @@ export default function UserManagement() {
                   setSearchTerm('');
                   setRoleFilter('');
                   setPremiumFilter('');
-                  fetchUsers();
+                  // React Query will automatically refetch when filters change
                 }
               }}
             />
@@ -267,7 +262,7 @@ export default function UserManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredUsers.map((user) => (
+                {filteredUsers.map((user: any) => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">

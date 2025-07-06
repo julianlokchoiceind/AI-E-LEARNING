@@ -1,0 +1,788 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft, Plus, Settings, BookOpen, Save } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { SaveStatusIndicator } from '@/components/ui/SaveStatusIndicator';
+import NavigationGuard from '@/components/feature/NavigationGuard';
+import DroppableChapterList from '@/components/feature/DroppableChapterList';
+import CreateChapterModal, { ChapterResponse } from '@/components/feature/CreateChapterModal';
+import CreateLessonModal, { LessonResponse } from '@/components/feature/CreateLessonModal';
+import EditChapterModal, { ChapterEditData } from '@/components/feature/EditChapterModal';
+import DeleteChapterModal, { ChapterDeleteData } from '@/components/feature/DeleteChapterModal';
+import EditLessonModal, { LessonEditData } from '@/components/feature/EditLessonModal';
+import DeleteLessonModal, { LessonDeleteData } from '@/components/feature/DeleteLessonModal';
+import { useAutosave } from '@/hooks/useAutosave';
+import { useEditorStore } from '@/stores/editorStore';
+import { useAuth } from '@/hooks/useAuth';
+import { 
+  useCourseEditorQuery, 
+  useCourseChaptersQuery, 
+  useUpdateCourse,
+  useDeleteChapter,
+  useDeleteLesson,
+  useReorderChapters,
+  useReorderLessons
+} from '@/hooks/queries/useCreatorCourses';
+import { ToastService } from '@/lib/toast/ToastService';
+
+const CourseBuilderPage = () => {
+  const params = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
+  const courseId = params.id as string;
+
+  const {
+    courseData,
+    setCourseData,
+    updateCourseData,
+    activeTab,
+    setActiveTab,
+    reset,
+  } = useEditorStore();
+
+  // React Query hooks for data fetching
+  const { data: courseResponse, loading: courseLoading, refetch: refetchCourse } = useCourseEditorQuery(courseId);
+  const { data: chaptersResponse, loading: chaptersLoading, refetch: refetchChapters } = useCourseChaptersQuery(courseId);
+  
+  // React Query mutations
+  const { mutateAsync: updateCourseAction } = useUpdateCourse();
+  const { mutate: deleteChapterAction } = useDeleteChapter();
+  const { mutate: deleteLessonAction } = useDeleteLesson();
+  const { mutateAsync: reorderChaptersAction } = useReorderChapters();
+  const { mutateAsync: reorderLessonsAction } = useReorderLessons();
+  
+  // Combined loading state
+  const loading = courseLoading || chaptersLoading;
+  
+  // Computed data from React Query responses
+  const chapters = React.useMemo(() => {
+    return chaptersResponse?.data?.chapters || [];
+  }, [chaptersResponse]);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState('');
+  const [isChapterModalOpen, setIsChapterModalOpen] = useState(false);
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [isEditChapterModalOpen, setIsEditChapterModalOpen] = useState(false);
+  const [isDeleteChapterModalOpen, setIsDeleteChapterModalOpen] = useState(false);
+  const [isEditLessonModalOpen, setIsEditLessonModalOpen] = useState(false);
+  const [isDeleteLessonModalOpen, setIsDeleteLessonModalOpen] = useState(false);
+  const [selectedChapterId, setSelectedChapterId] = useState<string>('');
+  const [selectedChapterForEdit, setSelectedChapterForEdit] = useState<ChapterEditData | null>(null);
+  const [selectedChapterForDelete, setSelectedChapterForDelete] = useState<ChapterDeleteData | null>(null);
+  const [selectedLessonForEdit, setSelectedLessonForEdit] = useState<LessonEditData | null>(null);
+  const [selectedLessonForDelete, setSelectedLessonForDelete] = useState<LessonDeleteData | null>(null);
+
+  // Auto-save hook with React Query mutation
+  const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges } = useAutosave(
+    courseData,
+    {
+      delay: 2000,
+      onSave: async (data) => {
+        if (!data || !data._id) return;
+        await updateCourseAction({ courseId: data._id, courseData: data });
+      },
+      enabled: !!courseData,
+    }
+  );
+
+  // Initialize data from React Query responses
+  useEffect(() => {
+    if (courseResponse?.data) {
+      setCourseData(courseResponse.data);
+      setTitleInput(courseResponse.data.title);
+    }
+  }, [courseResponse, setCourseData]);
+
+  useEffect(() => {
+    // Check permissions
+    if (user && user?.role !== 'creator' && user?.role !== 'admin') {
+      ToastService.error('You do not have permission to edit courses');
+      router.push('/dashboard');
+      return;
+    }
+  }, [user, router]);
+  
+  useEffect(() => {
+    return () => {
+      reset(); // Clean up on unmount
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // React Query handles data fetching automatically
+
+  const handleTitleSave = () => {
+    if (titleInput.trim() && titleInput !== courseData?.title) {
+      updateCourseData({ title: titleInput.trim() });
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleCreateChapter = () => {
+    setIsChapterModalOpen(true);
+  };
+
+  const handleChapterCreated = (newChapter: ChapterResponse) => {
+    console.log('🔧 handleChapterCreated - Chapter created successfully:', newChapter);
+    
+    // React Query will automatically refetch chapters
+    refetchChapters();
+    
+    ToastService.success('Chapter created successfully');
+  };
+
+  const handleCreateLesson = (chapterId: string) => {
+    setSelectedChapterId(chapterId);
+    setIsLessonModalOpen(true);
+  };
+
+  const handleLessonCreated = (newLesson: LessonResponse) => {
+    console.log('🔧 handleLessonCreated - Lesson created successfully:', newLesson);
+    
+    // React Query will automatically refetch chapters with lessons
+    refetchChapters();
+    
+    ToastService.success('Lesson created successfully');
+  };
+
+  const handleChapterEdit = (chapterId: string) => {
+    // Find the chapter to edit
+    const chapterToEdit = chapters.find(ch => ch._id === chapterId);
+    if (chapterToEdit) {
+      setSelectedChapterForEdit({
+        _id: chapterToEdit._id,
+        title: chapterToEdit.title,
+        description: chapterToEdit.description || '',
+        order: chapterToEdit.order,
+        course_id: chapterToEdit.course_id
+      });
+      setIsEditChapterModalOpen(true);
+    }
+  };
+
+  const handleChapterEditDetailed = (chapterId: string) => {
+    router.push(`/creator/courses/${courseId}/chapters/${chapterId}/edit`);
+  };
+
+  const handleChapterUpdated = (updatedChapter: ChapterEditData) => {
+    console.log('🔧 handleChapterUpdated - Chapter updated successfully:', updatedChapter);
+    
+    // React Query will automatically refetch chapters
+    refetchChapters();
+    
+    ToastService.success('Chapter updated successfully');
+  };
+
+  const handleChapterDelete = (chapterId: string) => {
+    // Find the chapter to delete
+    const chapterToDelete = chapters.find(ch => ch._id === chapterId);
+    if (chapterToDelete) {
+      setSelectedChapterForDelete({
+        _id: chapterToDelete._id,
+        title: chapterToDelete.title,
+        description: chapterToDelete.description,
+        total_lessons: chapterToDelete.total_lessons || 0
+      });
+      setIsDeleteChapterModalOpen(true);
+    }
+  };
+
+  const handleConfirmChapterDelete = async (chapterId: string) => {
+    try {
+      deleteChapterAction(chapterId, {
+        onSuccess: (response) => {
+          ToastService.success(response.message || 'Something went wrong');
+          // React Query will automatically refetch chapters
+        },
+        onError: (error: any) => {
+          console.error('Failed to delete chapter:', error);
+          ToastService.error(error.message || 'Something went wrong');
+          throw error; // Re-throw to handle in modal
+        }
+      });
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const handleLessonEdit = (lessonId: string) => {
+    // Find the lesson to edit across all chapters
+    let lessonToEdit: any = null;
+    let chapterOfLesson: any = null;
+
+    for (const chapter of chapters) {
+      if (chapter.lessons) {
+        const foundLesson = chapter.lessons.find((lesson: any) => lesson._id === lessonId);
+        if (foundLesson) {
+          lessonToEdit = foundLesson;
+          chapterOfLesson = chapter;
+          break;
+        }
+      }
+    }
+
+    if (lessonToEdit && chapterOfLesson) {
+      setSelectedLessonForEdit({
+        _id: lessonToEdit._id,
+        chapter_id: chapterOfLesson._id,
+        course_id: courseId,
+        title: lessonToEdit.title,
+        description: lessonToEdit.description,
+        order: lessonToEdit.order,
+        video: lessonToEdit.video,
+        content: lessonToEdit.content,
+        resources: lessonToEdit.resources,
+        status: lessonToEdit.status || 'draft'
+      });
+      setIsEditLessonModalOpen(true);
+    }
+  };
+
+  const handleLessonEditDetailed = (lessonId: string) => {
+    router.push(`/creator/courses/${courseId}/lessons/${lessonId}/edit`);
+  };
+
+  const handleLessonUpdated = (updatedLesson: LessonEditData) => {
+    console.log('🔧 handleLessonUpdated - Lesson updated successfully:', updatedLesson);
+    
+    // React Query will automatically refetch chapters with lessons
+    refetchChapters();
+    
+    ToastService.success('Lesson updated successfully');
+  };
+
+  const handleLessonDelete = (lessonId: string) => {
+    // Find the lesson to delete across all chapters
+    let lessonToDelete: any = null;
+    let chapterOfLesson: any = null;
+
+    for (const chapter of chapters) {
+      if (chapter.lessons) {
+        const foundLesson = chapter.lessons.find((lesson: any) => lesson._id === lessonId);
+        if (foundLesson) {
+          lessonToDelete = foundLesson;
+          chapterOfLesson = chapter;
+          break;
+        }
+      }
+    }
+
+    if (lessonToDelete && chapterOfLesson) {
+      setSelectedLessonForDelete({
+        _id: lessonToDelete._id,
+        title: lessonToDelete.title,
+        description: lessonToDelete.description,
+        chapter_title: chapterOfLesson.title,
+        order: lessonToDelete.order,
+        video: lessonToDelete.video,
+        content: lessonToDelete.content,
+        status: lessonToDelete.status || 'draft'
+      });
+      setIsDeleteLessonModalOpen(true);
+    }
+  };
+
+  const handleConfirmLessonDelete = async (lessonId: string) => {
+    try {
+      deleteLessonAction(lessonId, {
+        onSuccess: (response) => {
+          ToastService.success(response.message || 'Something went wrong');
+          // React Query will automatically refetch chapters with lessons
+        },
+        onError: (error: any) => {
+          console.error('Failed to delete lesson:', error);
+          ToastService.error(error.message || 'Something went wrong');
+          throw error; // Re-throw to handle in modal
+        }
+      });
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const handleChaptersReorder = async (reorderedChapters: any[]) => {
+    try {
+      // Prepare data for bulk reorder API
+      const reorderData = {
+        chapter_orders: reorderedChapters.map((chapter, index) => ({
+          chapter_id: chapter._id,
+          new_order: index + 1
+        }))
+      };
+
+      // Call React Query mutation
+      const response = await reorderChaptersAction({ courseId, reorderData });
+      
+      if (response.success) {
+        ToastService.success('Chapters reordered successfully');
+        // React Query will automatically refetch chapters
+      }
+    } catch (error: any) {
+      console.error('Failed to reorder chapters:', error);
+      ToastService.error(error.message || 'Something went wrong');
+      throw error; // Re-throw so DroppableChapterList can handle it
+    }
+  };
+
+  const handleLessonsReorder = async (chapterId: string, reorderedLessons: any[]) => {
+    try {
+      // Prepare data for bulk reorder API
+      const reorderData = {
+        lesson_orders: reorderedLessons.map((lesson, index) => ({
+          lesson_id: lesson._id,
+          new_order: index + 1
+        }))
+      };
+
+      // Call React Query mutation
+      const response = await reorderLessonsAction({ chapterId, reorderData });
+      
+      if (response.success) {
+        ToastService.success('Lessons reordered successfully');
+        // React Query will automatically refetch chapters with lessons
+      }
+    } catch (error: any) {
+      console.error('Failed to reorder lessons:', error);
+      ToastService.error(error.message || 'Something went wrong');
+      throw error; // Re-throw so DroppableLessonList can handle it
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!loading && !courseData && !courseResponse?.data) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-gray-600 text-lg">Course not found</p>
+      </div>
+    );
+  }
+
+  return (
+    <NavigationGuard hasUnsavedChanges={hasUnsavedChanges}>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push('/creator/courses')}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Courses
+                </Button>
+                
+                {/* Course Title - Inline Editing */}
+                {isEditingTitle ? (
+                  <input
+                    type="text"
+                    value={titleInput}
+                    onChange={(e) => setTitleInput(e.target.value)}
+                    onBlur={handleTitleSave}
+                    onKeyPress={(e) => e.key === 'Enter' && handleTitleSave()}
+                    className="text-2xl font-bold px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
+                ) : (
+                  <h1
+                    className="text-2xl font-bold cursor-pointer hover:text-blue-600"
+                    onClick={() => setIsEditingTitle(true)}
+                  >
+                    {courseData.title}
+                  </h1>
+                )}
+              </div>
+
+              <div className="flex items-center gap-4">
+                <SaveStatusIndicator
+                  status={saveStatus}
+                  lastSavedAt={lastSavedAt}
+                  error={error}
+                />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push(`/courses/${courseId}`)}
+                >
+                  Preview
+                </Button>
+                
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => forceSave()}
+                  loading={saveStatus === 'saving'}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <Card className="p-4">
+                <nav className="space-y-2">
+                  <button
+                    onClick={() => setActiveTab('general')}
+                    className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                      activeTab === 'general'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4 inline mr-2" />
+                    General Info
+                  </button>
+                  
+                  <button
+                    onClick={() => setActiveTab('chapters')}
+                    className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                      activeTab === 'chapters'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4 inline mr-2" />
+                    Chapters & Lessons
+                  </button>
+                  
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                      activeTab === 'settings'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <Settings className="w-4 h-4 inline mr-2" />
+                    Settings
+                  </button>
+                </nav>
+              </Card>
+            </div>
+
+            {/* Content Area */}
+            <div className="lg:col-span-3">
+              {activeTab === 'general' && (
+                <Card className="p-6">
+                  <h2 className="text-xl font-semibold mb-6">General Information</h2>
+                  
+                  <div className="space-y-6">
+                    {/* Description */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Description
+                      </label>
+                      <textarea
+                        value={courseData.description || ''}
+                        onChange={(e) => updateCourseData({ description: e.target.value })}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter course description..."
+                      />
+                    </div>
+
+                    {/* Short Description */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Short Description
+                      </label>
+                      <input
+                        type="text"
+                        value={courseData.short_description || ''}
+                        onChange={(e) => updateCourseData({ short_description: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Brief description for course cards..."
+                      />
+                    </div>
+
+                    {/* Category */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Category
+                      </label>
+                      <select
+                        value={courseData.category || ''}
+                        onChange={(e) => updateCourseData({ category: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select category</option>
+                        <option value="programming">Programming</option>
+                        <option value="ai-fundamentals">AI Fundamentals</option>
+                        <option value="machine-learning">Machine Learning</option>
+                        <option value="ai-tools">AI Tools</option>
+                        <option value="production-ai">Production AI</option>
+                      </select>
+                    </div>
+
+                    {/* Level */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Level
+                      </label>
+                      <select
+                        value={courseData.level || ''}
+                        onChange={(e) => updateCourseData({ level: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select level</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                      </select>
+                    </div>
+
+                    {/* Syllabus */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        What students will learn (one per line)
+                      </label>
+                      <textarea
+                        value={(courseData.syllabus || []).join('\n')}
+                        onChange={(e) => {
+                          const lines = e.target.value.split('\n').filter(line => line.trim());
+                          updateCourseData({ syllabus: lines });
+                        }}
+                        rows={6}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Build real-world AI applications&#10;Master machine learning fundamentals&#10;Deploy models to production"
+                      />
+                    </div>
+
+                    {/* Prerequisites */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Prerequisites (one per line)
+                      </label>
+                      <textarea
+                        value={(courseData.prerequisites || []).join('\n')}
+                        onChange={(e) => {
+                          const lines = e.target.value.split('\n').filter(line => line.trim());
+                          updateCourseData({ prerequisites: lines });
+                        }}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Basic programming knowledge&#10;Familiarity with Python"
+                      />
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {activeTab === 'chapters' && (
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold">Chapters & Lessons</h2>
+                    <Button
+                      variant="primary"
+                      onClick={handleCreateChapter}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Chapter
+                    </Button>
+                  </div>
+
+                  {chapters.length === 0 ? (
+                    <Card className="p-12 text-center">
+                      <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                      <h3 className="text-lg font-semibold mb-2">No chapters yet</h3>
+                      <p className="text-gray-600 mb-4">
+                        Start building your course by adding chapters and lessons
+                      </p>
+                      <Button
+                        variant="primary"
+                        onClick={handleCreateChapter}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create First Chapter
+                      </Button>
+                    </Card>
+                  ) : (
+                    <DroppableChapterList
+                      chapters={chapters}
+                      onChaptersReorder={handleChaptersReorder}
+                      onEdit={handleChapterEdit}
+                      onDelete={handleChapterDelete}
+                      onLessonEdit={handleLessonEdit}
+                      onLessonDelete={handleLessonDelete}
+                      onCreateLesson={handleCreateLesson}
+                      onLessonsReorder={handleLessonsReorder}
+                      isEditable={true}
+                    />
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'settings' && (
+                <Card className="p-6">
+                  <h2 className="text-xl font-semibold mb-6">Course Settings</h2>
+                  
+                  <div className="space-y-6">
+                    {/* Pricing */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Pricing
+                      </label>
+                      <div className="space-y-3">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            checked={courseData.pricing?.is_free === true}
+                            onChange={() => updateCourseData({ 
+                              pricing: { ...courseData.pricing, is_free: true, price: 0 }
+                            })}
+                            className="mr-2"
+                          />
+                          Free Course
+                        </label>
+                        
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            checked={courseData.pricing?.is_free === false}
+                            onChange={() => updateCourseData({ 
+                              pricing: { ...courseData.pricing, is_free: false }
+                            })}
+                            className="mr-2"
+                          />
+                          Paid Course
+                        </label>
+                        
+                        {!courseData.pricing?.is_free && (
+                          <div className="ml-6 space-y-3">
+                            <div>
+                              <label className="block text-sm text-gray-600 mb-1">
+                                Price (USD)
+                              </label>
+                              <input
+                                type="number"
+                                value={courseData.pricing?.price || 0}
+                                onChange={(e) => updateCourseData({
+                                  pricing: { ...courseData.pricing, price: parseFloat(e.target.value) || 0 }
+                                })}
+                                min="0"
+                                step="0.01"
+                                className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Course Status
+                      </label>
+                      <select
+                        value={courseData.status || 'draft'}
+                        onChange={(e) => updateCourseData({ status: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="review">Ready for Review</option>
+                        <option value="published">Published</option>
+                        <option value="archived">Archived</option>
+                      </select>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Only published courses are visible to students
+                      </p>
+                    </div>
+
+                    {/* Target Audience */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Target Audience (one per line)
+                      </label>
+                      <textarea
+                        value={(courseData.target_audience || []).join('\n')}
+                        onChange={(e) => {
+                          const lines = e.target.value.split('\n').filter(line => line.trim());
+                          updateCourseData({ target_audience: lines });
+                        }}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Beginner programmers&#10;Students interested in AI&#10;Professional developers"
+                      />
+                    </div>
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chapter Creation Modal */}
+      <CreateChapterModal
+        isOpen={isChapterModalOpen}
+        onClose={() => setIsChapterModalOpen(false)}
+        courseId={courseId}
+        onChapterCreated={handleChapterCreated}
+      />
+
+      {/* Lesson Creation Modal */}
+      <CreateLessonModal
+        isOpen={isLessonModalOpen}
+        onClose={() => setIsLessonModalOpen(false)}
+        chapterId={selectedChapterId}
+        courseId={courseId}
+        onLessonCreated={handleLessonCreated}
+      />
+
+      {/* Chapter Edit Modal */}
+      <EditChapterModal
+        isOpen={isEditChapterModalOpen}
+        onClose={() => setIsEditChapterModalOpen(false)}
+        chapter={selectedChapterForEdit}
+        onChapterUpdated={handleChapterUpdated}
+      />
+
+      {/* Chapter Delete Modal */}
+      <DeleteChapterModal
+        isOpen={isDeleteChapterModalOpen}
+        onClose={() => setIsDeleteChapterModalOpen(false)}
+        chapter={selectedChapterForDelete}
+        onConfirmDelete={handleConfirmChapterDelete}
+      />
+
+      {/* Lesson Edit Modal */}
+      <EditLessonModal
+        isOpen={isEditLessonModalOpen}
+        onClose={() => setIsEditLessonModalOpen(false)}
+        lesson={selectedLessonForEdit}
+        onLessonUpdated={handleLessonUpdated}
+      />
+
+      {/* Lesson Delete Modal */}
+      <DeleteLessonModal
+        isOpen={isDeleteLessonModalOpen}
+        onClose={() => setIsDeleteLessonModalOpen(false)}
+        lesson={selectedLessonForDelete}
+        onConfirmDelete={handleConfirmLessonDelete}
+      />
+    </NavigationGuard>
+  );
+};
+
+export default CourseBuilderPage;

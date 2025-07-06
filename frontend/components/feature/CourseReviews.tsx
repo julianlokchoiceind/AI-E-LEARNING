@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Star, 
   ThumbsUp, 
@@ -12,13 +12,12 @@ import {
   MessageCircle,
   CheckCircle
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
-import { reviewAPI } from '@/lib/api/reviews';
 import {
   Review,
   ReviewStats,
@@ -27,6 +26,14 @@ import {
   REVIEW_SUB_RATINGS,
   REPORT_REASONS
 } from '@/lib/types/review';
+import {
+  useCourseReviewsQuery,
+  useCreateReview,
+  useUpdateReview,
+  useDeleteReview,
+  useVoteReview,
+  useReportReview
+} from '@/hooks/queries/useReviews';
 
 interface CourseReviewsProps {
   courseId: string;
@@ -36,9 +43,6 @@ interface CourseReviewsProps {
 
 export function CourseReviews({ courseId, isEnrolled = false, isCreator = false }: CourseReviewsProps) {
   const { user } = useAuth();
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [stats, setStats] = useState<ReviewStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -46,10 +50,35 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState<'created_at' | 'rating' | 'helpful_count'>('created_at');
   const [filterRating, setFilterRating] = useState<number | null>(null);
-  const [userReview, setUserReview] = useState<Review | null>(null);
+
+  // React Query hooks for reviews data and operations
+  const { 
+    data: reviewsResponse, 
+    loading, 
+    error 
+  } = useCourseReviewsQuery(courseId, {
+    rating: filterRating || undefined,
+    sort_by: sortBy,
+    sort_order: 'desc',
+    page: currentPage,
+    per_page: 10,
+  });
+
+  const { mutate: createReview, loading: isCreatingReview } = useCreateReview();
+  const { mutate: updateReview, loading: isUpdatingReview } = useUpdateReview();
+  const { mutate: deleteReview } = useDeleteReview();
+  const { mutate: voteReview } = useVoteReview();
+  const { mutate: reportReview } = useReportReview();
+
+  // Extract data from React Query response
+  const reviews = reviewsResponse?.data?.items || [];
+  const stats = reviewsResponse?.data?.stats || null;
+  const totalPages = reviewsResponse?.data?.total_pages || 1;
+  const userReview = user ? reviews.find((r: Review) => r.user.id === user.id) : null;
+
+  const isSubmittingReview = isCreatingReview || isUpdatingReview;
   
   // Review form state
   const [formData, setFormData] = useState<ReviewCreateData>({
@@ -62,131 +91,93 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
     course_structure: undefined,
   });
 
-  useEffect(() => {
-    fetchReviews();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId, currentPage, sortBy, filterRating]);
 
-  const fetchReviews = async () => {
-    try {
-      setLoading(true);
-      const response = await reviewAPI.getCourseReviews(courseId, {
-        rating: filterRating || undefined,
-        sort_by: sortBy,
-        sort_order: 'desc',
-        page: currentPage,
-        per_page: 10,
-      });
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
-      }
-      
-      setReviews(response.data?.items || []);
-      setTotalPages(response.data?.total_pages || 1);
-      
-      if (response.data?.stats) {
-        setStats(response.data.stats);
-      }
-      
-      // Find user's review if exists
-      if (user) {
-        const userReview = response.data?.items?.find((r: Review) => r.user.id === user.id);
-        setUserReview(userReview || null);
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch reviews:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
+  const handleSubmitReview = () => {
+    if (editingReview) {
+      updateReview(
+        { reviewId: editingReview._id, reviewData: formData },
+        {
+          onSuccess: (response) => {
+            ToastService.success(response.message || 'Something went wrong');
+            setShowReviewModal(false);
+            resetForm();
+          },
+          onError: (error: any) => {
+            ToastService.error(error.message || 'Something went wrong');
+          }
+        }
+      );
+    } else {
+      createReview(
+        { courseId, reviewData: formData },
+        {
+          onSuccess: (response) => {
+            ToastService.success(response.message || 'Something went wrong');
+            setShowReviewModal(false);
+            resetForm();
+          },
+          onError: (error: any) => {
+            ToastService.error(error.message || 'Something went wrong');
+          }
+        }
+      );
     }
   };
 
-  const handleSubmitReview = async () => {
-    try {
-      const response = editingReview 
-        ? await reviewAPI.updateReview(editingReview._id, {
-            ...formData,
-            edit_reason: 'Updated review'
-          })
-        : await reviewAPI.createReview(courseId, formData);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
-      }
-      
-      toast.success(response.message);
-      setShowReviewModal(false);
-      resetForm();
-      fetchReviews();
-    } catch (error: any) {
-      console.error('Failed to submit review:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
-  };
-
-  const handleVoteReview = async (reviewId: string, isHelpful: boolean) => {
+  const handleVoteReview = (reviewId: string, isHelpful: boolean) => {
     if (!user) {
-      toast.error('Please login to vote');
+      ToastService.error('Please login to vote');
       return;
     }
 
-    try {
-      const response = await reviewAPI.voteReview(reviewId, { is_helpful: isHelpful });
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
+    voteReview(
+      { reviewId, isHelpful },
+      {
+        onSuccess: (response) => {
+          ToastService.success(response.message || 'Something went wrong');
+        },
+        onError: (error: any) => {
+          ToastService.error(error.message || 'Something went wrong');
+        }
       }
-      
-      toast.success(response.message);
-      fetchReviews();
-    } catch (error: any) {
-      console.error('Failed to vote:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    );
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
+  const handleDeleteReview = (reviewId: string) => {
     if (!confirm('Are you sure you want to delete this review?')) return;
 
-    try {
-      const response = await reviewAPI.deleteReview(reviewId);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
+    deleteReview(reviewId, {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Something went wrong');
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
       }
-      
-      toast.success(response.message);
-      fetchReviews();
-    } catch (error: any) {
-      console.error('Failed to delete review:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    });
   };
 
-  const handleReportReview = async () => {
+  const handleReportReview = () => {
     if (!reportingReview || !reportReason) return;
 
-    try {
-      const response = await reviewAPI.reportReview(reportingReview._id, {
+    reportReview(
+      {
+        reviewId: reportingReview._id,
         reason: reportReason,
         details: reportDetails,
-      });
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
+      },
+      {
+        onSuccess: (response) => {
+          ToastService.success(response.message || 'Something went wrong');
+          setShowReportModal(false);
+          setReportingReview(null);
+          setReportReason('');
+          setReportDetails('');
+        },
+        onError: (error: any) => {
+          ToastService.error(error.message || 'Something went wrong');
+        }
       }
-      
-      toast.success(response.message);
-      setShowReportModal(false);
-      setReportingReview(null);
-      setReportReason('');
-      setReportDetails('');
-    } catch (error: any) {
-      console.error('Failed to report review:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    );
   };
 
   const resetForm = () => {
@@ -241,6 +232,25 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
     );
   };
 
+  // Handle error state
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="text-center py-12">
+          <p className="text-red-600">Something went wrong</p>
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.reload()}
+            className="mt-4"
+          >
+            Try Again
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Handle loading state
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -365,7 +375,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
             </CardContent>
           </Card>
         ) : (
-          reviews.map((review) => (
+          reviews.map((review: any) => (
             <Card key={review._id}>
               <CardContent className="p-6">
                 <div className="space-y-4">
@@ -640,9 +650,12 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
             </Button>
             <Button
               onClick={handleSubmitReview}
-              disabled={!formData.comment || formData.comment.length < 10}
+              disabled={!formData.comment || formData.comment.length < 10 || isSubmittingReview}
             >
-              {editingReview ? 'Update Review' : 'Submit Review'}
+              {isSubmittingReview
+                ? (editingReview ? 'Updating...' : 'Submitting...')
+                : (editingReview ? 'Update Review' : 'Submit Review')
+              }
             </Button>
           </div>
         </div>

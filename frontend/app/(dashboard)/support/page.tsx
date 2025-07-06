@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Plus, 
   MessageCircle, 
@@ -10,32 +10,31 @@ import {
   Search,
   Filter
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
-import { supportAPI } from '@/lib/api/support';
 import {
   SupportTicket,
   TicketCreateData,
-  TicketSearchParams,
   TICKET_CATEGORIES,
   TICKET_PRIORITIES,
   TICKET_STATUSES
 } from '@/lib/types/support';
+import {
+  useSupportTicketsQuery,
+  useCreateSupportTicket
+} from '@/hooks/queries/useSupport';
 
 export default function SupportPage() {
   const { user } = useAuth();
-  const [tickets, setTickets] = useState<SupportTicket[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [formData, setFormData] = useState<TicketCreateData>({
     title: '',
     description: '',
@@ -43,52 +42,41 @@ export default function SupportPage() {
     priority: 'medium',
   });
 
-  // Fetch tickets
-  useEffect(() => {
-    fetchTickets();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, selectedStatus, currentPage]);
+  // React Query hooks for support data - replaces manual API calls
+  const { 
+    data: ticketsResponse, 
+    loading, 
+    error 
+  } = useSupportTicketsQuery({
+    search: searchQuery,
+    status: selectedStatus as any || undefined,
+    page: currentPage,
+    limit: 10
+  });
 
-  const fetchTickets = async () => {
-    try {
-      setLoading(true);
-      const params: TicketSearchParams = {
-        q: searchQuery || undefined,
-        status: selectedStatus as any || undefined,
-        page: currentPage,
-        per_page: 10,
-        sort_by: 'created_at',
-        sort_order: 'desc',
-      };
+  const { mutate: createTicket, loading: isCreating } = useCreateSupportTicket();
 
-      const response = await supportAPI.getTickets(params);
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Something went wrong');
+  // Extract data from React Query responses
+  const tickets = ticketsResponse?.data?.items || [];
+  const totalPages = ticketsResponse?.data?.total_pages || 1;
+
+  // ✅ React Query automatically handles data fetching when dependencies change
+
+  const handleCreateTicket = () => {
+    createTicket({
+      ...formData,
+      priority: formData.priority || 'medium' // Default to medium priority
+    }, {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Something went wrong');
+        setShowCreateModal(false);
+        resetForm();
+        // React Query automatically invalidates and refetches tickets list
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
       }
-      
-      setTickets(response.data.items);
-      setTotalPages(response.data.total_pages);
-    } catch (error: any) {
-      console.error('Failed to fetch tickets:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateTicket = async () => {
-    try {
-      const response = await supportAPI.createTicket(formData);
-      toast.success(response.message || 'Something went wrong');
-      setShowCreateModal(false);
-      resetForm();
-      fetchTickets(); // Refresh list
-    } catch (error: any) {
-      console.error('Failed to create ticket:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    });
   };
 
   const resetForm = () => {
@@ -186,7 +174,7 @@ export default function SupportPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {tickets.map((ticket) => {
+          {tickets.map((ticket: any) => {
             const categoryInfo = TICKET_CATEGORIES.find(c => c.value === ticket.category);
             
             return (

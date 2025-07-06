@@ -2,11 +2,20 @@
 
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { API_BASE_URL } from '@/lib/constants/api-endpoints'
+import { useApiMutation } from '@/hooks/useApiMutation'
+import { logoutUser } from '@/lib/api/auth'
 
 export function useAuth() {
   const { data: session, status } = useSession()
   const router = useRouter()
+
+  // React Query mutation for logout
+  const { mutate: logoutMutation } = useApiMutation(
+    () => logoutUser(),
+    {
+      showToast: false, // We handle logout feedback ourselves
+    }
+  )
 
   const user = session?.user || null
   const loading = status === 'loading'
@@ -24,10 +33,9 @@ export function useAuth() {
     // Call backend logout endpoint to blacklist token
     if (session?.accessToken) {
       try {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.accessToken}`
+        logoutMutation({}, {
+          onError: (error) => {
+            console.error('Backend logout error:', error)
           }
         })
       } catch (error) {

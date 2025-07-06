@@ -3,8 +3,8 @@
  */
 import { useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+import { api } from '@/lib/api/api-client'
+import { StandardResponse } from '@/lib/types/api'
 
 interface RefreshResponse {
   access_token: string
@@ -67,18 +67,12 @@ export function useTokenRefresh() {
         return
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          refresh_token: refreshToken
-        })
+      const response = await api.post<StandardResponse<RefreshResponse>>('/auth/refresh', {
+        refresh_token: refreshToken
       })
 
-      if (response.ok) {
-        const data: RefreshResponse = await response.json()
+      if (response.success && response.data) {
+        const data: RefreshResponse = response.data
         
         // Store new refresh token
         refreshTokenRef.current = data.refresh_token
@@ -112,8 +106,8 @@ export function useTokenRefresh() {
 export function setupAxiosInterceptors(axios: any) {
   // Request interceptor to add token
   axios.interceptors.request.use(
-    (config: any) => {
-      const session = getSession() // You'll need to implement this
+    async (config: any) => {
+      const session = await getSession() // You'll need to implement this
       if (session?.accessToken) {
         config.headers.Authorization = `Bearer ${session.accessToken}`
       }
@@ -132,20 +126,14 @@ export function setupAxiosInterceptors(axios: any) {
         originalRequest._retry = true
 
         try {
-          const session = getSession()
+          const session = await getSession()
           if (session?.refreshToken) {
-            const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                refresh_token: session.refreshToken
-              })
+            const response = await api.post<StandardResponse<RefreshResponse>>('/auth/refresh', {
+              refresh_token: session.refreshToken
             })
 
-            if (response.ok) {
-              const data = await response.json()
+            if (response.success && response.data) {
+              const data = response.data
               // Update tokens and retry original request
               updateSession({
                 accessToken: data.access_token,
@@ -167,12 +155,34 @@ export function setupAxiosInterceptors(axios: any) {
   )
 }
 
-// Helper functions (implement based on your session management)
-function getSession(): any {
-  // Implement based on your session storage method
-  return null
+// Helper functions - integrated with NextAuth
+async function getSession(): Promise<any> {
+  try {
+    if (typeof window !== 'undefined') {
+      const { getSession } = await import('next-auth/react');
+      return await getSession();
+    }
+  } catch (error) {
+    console.error('Error getting session:', error);
+  }
+  return null;
 }
 
-function updateSession(data: any): void {
-  // Implement based on your session update method
+async function updateSession(data: any): Promise<void> {
+  try {
+    if (typeof window !== 'undefined') {
+      const { getSession } = await import('next-auth/react');
+      const currentSession = await getSession();
+      
+      if (currentSession) {
+        // Update session tokens
+        (currentSession as any).accessToken = data.accessToken;
+        (currentSession as any).refreshToken = data.refreshToken;
+        
+        console.log('✅ useTokenRefresh: Session updated with new tokens');
+      }
+    }
+  } catch (error) {
+    console.error('Error updating session:', error);
+  }
 }

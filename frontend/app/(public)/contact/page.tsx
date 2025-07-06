@@ -3,17 +3,31 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
+import { useApiMutation } from '@/hooks/useApiMutation';
+import { supportAPI } from '@/lib/api/support';
 
 export default function ContactPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
     message: ''
   });
+
+  // React Query mutation for contact form submission
+  const { mutate: submitContactForm, loading: isSubmitting } = useApiMutation(
+    (contactData: typeof formData) => supportAPI.submitContact(contactData),
+    {
+      onSuccess: (response) => {
+        ToastService.success(response.message || 'Something went wrong');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      },
+      onError: (error: any) => {
+        ToastService.error(error.message || 'Something went wrong');
+      }
+    }
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -25,34 +39,7 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      // Submit contact form to backend
-      const response = await fetch(`${API_ENDPOINTS.BASE_URL}${API_ENDPOINTS.SUPPORT.CONTACT}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-      
-      if (response.ok && data.success) {
-        toast.success(data.message || 'Something went wrong');
-        setFormData({ name: '', email: '', subject: '', message: '' });
-      } else {
-        // Log detailed error for debugging
-        console.error('Contact form submission failed:', data);
-        toast.error(data.message || 'Something went wrong');
-      }
-    } catch (error: any) {
-      console.error('Contact form submission error:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setIsSubmitting(false);
-    }
+    submitContactForm(formData);
   };
 
   return (

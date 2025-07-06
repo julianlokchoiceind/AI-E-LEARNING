@@ -6,46 +6,44 @@ import { Plus, Edit, Trash2, Eye, MoreVertical, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { getCourses, deleteCourse } from '@/lib/api/courses';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
+import { 
+  useCreatorCoursesQuery,
+  useDeleteCourse 
+} from '@/hooks/queries/useCreatorCourses';
 
 const CreatorCoursesPage = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const [courses, setCourses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user?.role !== 'creator' && user?.role !== 'admin') {
-      toast.error('Access denied. Creator access required.');
-      router.push('/dashboard');
-      return;
-    }
+  // React Query hooks
+  const { 
+    data: coursesResponse, 
+    loading, 
+    execute: refetchCourses 
+  } = useCreatorCoursesQuery(user?.id || '', !!user?.id);
+  
+  const { mutate: deleteCourse, loading: deleteLoading } = useDeleteCourse();
 
-    fetchCourses();
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Extract courses from React Query response
+  const courses = coursesResponse?.success ? coursesResponse.data?.courses || [] : [];
+
+  // Check permissions when user loads
+  useEffect(() => {
+    if (user && user.role !== 'creator' && user.role !== 'admin') {
+      ToastService.error('Access denied. Creator access required.');
+      router.push('/dashboard');
+    }
   }, [user, router]);
 
-  const fetchCourses = async () => {
-    try {
-      setLoading(true);
-      const response = await getCourses(`creator_id=${user?.id}`);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
-      }
-      
-      setCourses(response.data?.courses || []);
-    } catch (error: any) {
-      console.error('Failed to fetch courses:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
+  // Handle courses loading errors
+  useEffect(() => {
+    if (coursesResponse && !coursesResponse.success) {
+      ToastService.error(coursesResponse.message || 'Something went wrong');
     }
-  };
+  }, [coursesResponse]);
 
   const handleCreateCourse = () => {
     router.push('/creator/courses/new');
@@ -55,24 +53,25 @@ const CreatorCoursesPage = () => {
     router.push(`/creator/courses/${courseId}/edit`);
   };
 
-  const handleDeleteCourse = async (courseId: string, title: string) => {
+  const handleDeleteCourse = (courseId: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
       return;
     }
 
-    try {
-      const response = await deleteCourse(courseId);
-      
-      if (response.success) {
-        setCourses(courses.filter(c => c._id !== courseId));
-        toast.success(response.message || 'Something went wrong');
-      } else {
-        throw new Error(response.message || 'Something went wrong');
+    deleteCourse(courseId, {
+      onSuccess: (response) => {
+        if (response.success) {
+          ToastService.success(response.message || 'Course deleted successfully');
+          refetchCourses(); // Refresh courses list
+        } else {
+          ToastService.error(response.message || 'Something went wrong');
+        }
+      },
+      onError: (error: any) => {
+        console.error('Failed to delete course:', error);
+        ToastService.error(error.message || 'Something went wrong');
       }
-    } catch (error: any) {
-      console.error('Failed to delete course:', error);
-      toast.error(error.message || 'Something went wrong');
-    }
+    });
   };
 
   const handleViewCourse = (courseId: string) => {
@@ -129,7 +128,7 @@ const CreatorCoursesPage = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => (
+            {courses.map((course: any) => (
               <Card key={course._id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Course Thumbnail */}
                 <div className="h-48 bg-gradient-to-br from-blue-500 to-indigo-600 relative">
@@ -191,10 +190,11 @@ const CreatorCoursesPage = () => {
                               handleDeleteCourse(course._id, course.title);
                               setActiveDropdown(null);
                             }}
-                            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center text-red-600"
+                            disabled={deleteLoading}
+                            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center text-red-600 disabled:opacity-50"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
+                            {deleteLoading ? 'Deleting...' : 'Delete'}
                           </button>
                         </div>
                       )}

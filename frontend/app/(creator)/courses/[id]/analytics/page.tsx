@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, BarChart, Users, DollarSign, Clock, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 import { AnalyticsChart } from '@/components/feature/AnalyticsChart';
+import { useCourseAnalyticsQuery } from '@/hooks/queries/useCreatorCourses';
 
 const CourseAnalyticsPage = () => {
   const params = useParams();
@@ -15,52 +16,32 @@ const CourseAnalyticsPage = () => {
   const { user } = useAuth();
   const courseId = params.id as string;
   
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30days');
 
-  const fetchAnalytics = useCallback(async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('access_token');
-      
-      const response = await fetch(
-        `/api/v1/courses/${courseId}/analytics?time_range=${timeRange}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+  // React Query hook for analytics data
+  const { 
+    data: analyticsResponse, 
+    loading,
+    execute: refetchAnalytics 
+  } = useCourseAnalyticsQuery(courseId, !!courseId);
 
-      if (!response.ok) {
-        throw new Error('Something went wrong');
-      }
+  // Extract analytics data from React Query response
+  const analytics = analyticsResponse?.success ? analyticsResponse.data : null;
 
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.message || 'Something went wrong');
-      }
-      setAnalytics(data.data);
-    } catch (error: any) {
-      console.error('Failed to fetch analytics:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  }, [courseId, timeRange]);
-
+  // Check permissions when user loads
   useEffect(() => {
-    if (user?.role !== 'creator' && user?.role !== 'admin') {
-      toast.error('Access denied. Creator access required.');
+    if (user && user.role !== 'creator' && user.role !== 'admin') {
+      ToastService.error('Access denied. Creator access required.');
       router.push('/dashboard');
-      return;
     }
+  }, [user, router]);
 
-    fetchAnalytics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, courseId, timeRange, fetchAnalytics]);
+  // Handle analytics loading errors
+  useEffect(() => {
+    if (analyticsResponse && !analyticsResponse.success) {
+      ToastService.error(analyticsResponse.message || 'Something went wrong');
+    }
+  }, [analyticsResponse]);
 
   if (loading) {
     return (

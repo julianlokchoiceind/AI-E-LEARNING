@@ -2,7 +2,7 @@
 Course service for business logic.
 Based on CLAUDE.md course creation workflow.
 """
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from beanie import PydanticObjectId
 from slugify import slugify
@@ -16,6 +16,9 @@ from app.core.exceptions import (
     BadRequestException
 )
 from app.core.performance import measure_performance, timed_lru_cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CourseService:
@@ -33,12 +36,11 @@ class CourseService:
         now = datetime.utcnow()
         short_date = now.strftime("%d%m%y")
         
-        # Count courses created today by this user
+        # Count ALL courses created today (platform-wide) to avoid duplicates
         start_of_day = datetime(now.year, now.month, now.day)
         end_of_day = datetime(now.year, now.month, now.day, 23, 59, 59)
         
         count = await Course.find(
-            Course.creator_id == PydanticObjectId(user_id),
             Course.created_at >= start_of_day,
             Course.created_at <= end_of_day
         ).count()
@@ -148,7 +150,7 @@ class CourseService:
         category: Optional[CourseCategory] = None,
         level: Optional[CourseLevel] = None,
         search: Optional[str] = None,
-        status: Optional[CourseStatus] = None,
+        status: Optional[Union[CourseStatus, List[CourseStatus]]] = None,
         creator_id: Optional[str] = None,
         is_free: Optional[bool] = None
     ) -> Dict[str, Any]:
@@ -325,12 +327,16 @@ class CourseService:
     
     @staticmethod
     async def delete_course(course_id: str, user: User) -> Dict[str, str]:
-        """Delete a course (soft delete by archiving)"""
+        """Delete a course (hard delete from database)"""
+        logger.info(f"🗑️ DELETE COURSE: Starting delete for course_id={course_id}, user={user.id}, role={user.role}")
+        
         # Get course
         course = await CourseService.get_course(course_id)
+        logger.info(f"🗑️ DELETE COURSE: Found course={course.title}, creator_id={course.creator_id}")
         
         # Check permissions (only creator or admin can delete)
         if str(course.creator_id) != str(user.id) and user.role != "admin":
+            logger.error(f"🚨 DELETE COURSE: Permission denied - user {user.id} cannot delete course {course_id}")
             raise ForbiddenException("You don't have permission to delete this course")
         
         # Check if course has enrollments
@@ -339,15 +345,18 @@ class CourseService:
             "is_active": True
         }).count()
         
+        logger.info(f"🗑️ DELETE COURSE: Found {enrollment_count} active enrollments")
+        
         if enrollment_count > 0:
+            logger.error(f"🚨 DELETE COURSE: Cannot delete - {enrollment_count} active enrollments exist")
             raise BadRequestException(
                 f"Cannot delete course with {enrollment_count} active enrollments. "
-                "Archive the course instead or handle refunds first."
+                "Please handle refunds and remove enrollments first."
             )
         
-        # Soft delete by archiving
-        course.status = CourseStatus.ARCHIVED
-        course.updated_at = datetime.utcnow()
-        await course.save()
+        # Hard delete: Remove course from database completely
+        logger.info(f"🗑️ DELETE COURSE: Performing hard delete for course {course_id}")
+        await course.delete()
+        logger.info(f"✅ DELETE COURSE: Successfully deleted course {course_id} from database")
         
-        return {"message": "Course archived successfully"}
+        return {"message": "Course deleted successfully"}

@@ -20,10 +20,10 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
-import { getCourses, deleteCourse } from '@/lib/api/courses';
 import { useAuth } from '@/hooks/useAuth';
+import { useCreatorCoursesQuery, useDeleteCourse } from '@/hooks/queries/useCreatorCourses';
 import { formatDate, formatCurrency } from '@/lib/utils/formatters';
-import { toast } from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
 
 interface CourseManageItem {
   id: string;
@@ -43,24 +43,45 @@ interface CourseManageItem {
 const CourseManagePage = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const [courses, setCourses] = useState<CourseManageItem[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<CourseManageItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('updated');
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // React Query hooks
+  const { data: coursesResponse, loading, refetch } = useCreatorCoursesQuery(user?.id || '', !!user?.id);
+  const { mutate: deleteCourseAction } = useDeleteCourse();
+  
+  // Computed courses from React Query response
+  const courses = React.useMemo(() => {
+    if (!coursesResponse?.data?.courses) return [];
+    
+    return coursesResponse.data.courses.map((course: any) => ({
+      id: course._id,
+      title: course.title,
+      status: course.status,
+      category: course.category,
+      level: course.level,
+      students: course.stats?.total_enrollments || 0,
+      revenue: course.stats?.total_revenue || 0,
+      rating: course.stats?.average_rating || 0,
+      reviews: course.stats?.total_reviews || 0,
+      createdAt: course.created_at,
+      updatedAt: course.updated_at,
+      selected: false
+    }));
+  }, [coursesResponse]);
 
   useEffect(() => {
     if (!user || (user.role !== 'creator' && user.role !== 'admin')) {
-      toast.error('Access denied. Creator access required.');
+      ToastService.error('Access denied. Creator access required.');
       router.push('/dashboard');
       return;
     }
-
-    fetchCourses();
     
+    // React Query automatically fetches when user.id is available
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, router]);
 
@@ -70,37 +91,7 @@ const CourseManagePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courses, searchTerm, filterStatus, sortBy]);
 
-  const fetchCourses = async () => {
-    try {
-      setLoading(true);
-      const response = await getCourses(`creator_id=${user?.id}`);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Something went wrong');
-      }
-      
-      const formattedCourses = (response.data?.courses || []).map((course: any) => ({
-        id: course._id,
-        title: course.title,
-        status: course.status,
-        category: course.category,
-        level: course.level,
-        students: course.stats?.total_enrollments || 0,
-        revenue: course.stats?.total_revenue || 0,
-        rating: course.stats?.average_rating || 0,
-        reviews: course.stats?.total_reviews || 0,
-        createdAt: course.created_at,
-        updatedAt: course.updated_at,
-        selected: false
-      }));
-      setCourses(formattedCourses);
-    } catch (error: any) {
-      console.error('Failed to fetch courses:', error);
-      toast.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // React Query handles data fetching automatically
 
   const filterAndSortCourses = () => {
     let filtered = [...courses];
@@ -157,7 +148,7 @@ const CourseManagePage = () => {
 
   const handleBulkDelete = async () => {
     if (selectedCourses.length === 0) {
-      toast.error('No courses selected');
+      ToastService.error('No courses selected');
       return;
     }
 
@@ -166,18 +157,23 @@ const CourseManagePage = () => {
     }
 
     try {
-      // In real app, would have bulk delete endpoint
-      let lastResponse;
+      // Delete courses using React Query mutation
       for (const courseId of selectedCourses) {
-        lastResponse = await deleteCourse(courseId);
+        deleteCourseAction(courseId, {
+          onSuccess: (response) => {
+            ToastService.success(response.message || 'Something went wrong');
+          },
+          onError: (error: any) => {
+            ToastService.error(error.message || 'Something went wrong');
+          }
+        });
       }
       
-      setCourses(courses.filter(c => !selectedCourses.includes(c.id)));
       setSelectedCourses([]);
-      toast.success(lastResponse?.message || 'Something went wrong');
+      // React Query will automatically refetch and update the UI
     } catch (error: any) {
       console.error('Failed to delete courses:', error);
-      toast.error(error.message || 'Something went wrong');
+      ToastService.error(error.message || 'Something went wrong');
     }
   };
 
@@ -194,7 +190,7 @@ const CourseManagePage = () => {
     }));
 
     console.log('Export data:', csvData);
-    toast.success('Course data exported successfully');
+    ToastService.success('Course data exported successfully');
   };
 
   const getStatusColor = (status: string) => {

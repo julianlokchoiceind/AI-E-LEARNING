@@ -1,6 +1,11 @@
 import { API_BASE_URL } from '@/lib/constants/api-endpoints';
 import { StandardResponse } from '@/lib/types/api';
 import { api } from '@/lib/api/api-client';
+import { 
+  withErrorHandling,
+  ChapterErrors,
+  handleError
+} from '@/lib/utils/error-handler';
 
 export interface ChapterResponse {
   _id: string;
@@ -38,123 +43,195 @@ interface ChaptersListData {
 
 // Get chapters by course
 export const getChaptersByCourse = async (courseId: string): Promise<StandardResponse<ChaptersListData>> => {
-  try {
+  return withErrorHandling(async () => {
     const response = await api.get<StandardResponse<ChaptersListData>>(
       `/courses/${courseId}/chapters`,
       { requireAuth: true }
     );
     
+    // Validate response
+    if (!response.success) {
+      throw new Error(response.message || 'Something went wrong');
+    }
+    
     return response;
-  } catch (error) {
-    console.error('Failed to fetch chapters:', error);
-    throw error;
-  }
+  }, ChapterErrors.FETCH_FAILED);
 };
 
 // Get chapter by ID
 export const getChapterById = async (chapterId: string): Promise<StandardResponse<ChapterResponse>> => {
-  try {
+  return withErrorHandling(async () => {
     const response = await api.get<StandardResponse<ChapterResponse>>(
       `/chapters/${chapterId}`,
       { requireAuth: true }
     );
     
+    // Validate response
+    if (!response.success) {
+      throw new Error(response.message || 'Something went wrong');
+    }
+    
     return response;
-  } catch (error) {
-    console.error('Failed to fetch chapter:', error);
-    throw error;
-  }
+  }, ChapterErrors.FETCH_FAILED);
 };
 
 // Create new chapter
 export const createChapter = async (data: ChapterCreate): Promise<StandardResponse<ChapterResponse>> => {
-  try {
+  return withErrorHandling(async () => {
+    // Validate input data
+    if (!data.course_id) {
+      throw new Error('Course ID is required');
+    }
+
     const response = await api.post<StandardResponse<ChapterResponse>>(
       `/courses/${data.course_id}/chapters`,
       data,
       { requireAuth: true }
     );
     
+    // Validate response
+    if (!response.success) {
+      throw new Error(response.message || 'Something went wrong');
+    }
+    
+    console.log('🔧 createChapter response:', { 
+      fullResponse: response,
+      data: response.data,
+      dataId: response.data?._id,
+      dataIdField: (response.data as any)?.id,
+      success: response.success
+    });
+    console.log('Chapter created successfully', { chapterId: response.data?._id, courseId: data.course_id });
     return response;
-  } catch (error) {
-    console.error('Failed to create chapter:', error);
-    throw error;
-  }
+  }, ChapterErrors.CREATE_FAILED);
 };
 
 // Update chapter
 export const updateChapter = async (chapterId: string, data: ChapterUpdate): Promise<StandardResponse<ChapterResponse>> => {
-  try {
+  return withErrorHandling(async () => {
+    // Validate input data
+    if (!chapterId) {
+      throw new Error('Chapter ID is required');
+    }
+
+    // Validate data has at least one field to update
+    if (!data || Object.keys(data).length === 0) {
+      throw new Error('No data provided for update');
+    }
+
     const response = await api.patch<StandardResponse<ChapterResponse>>(
       `/chapters/${chapterId}`,
       data,
       { requireAuth: true }
     );
     
+    // Validate response
+    if (!response.success) {
+      throw new Error(response.message || 'Something went wrong');
+    }
+    
     return response;
-  } catch (error) {
-    console.error('Failed to update chapter:', error);
-    throw error;
-  }
+  }, ChapterErrors.UPDATE_FAILED);
 };
 
 // Delete chapter
 export const deleteChapter = async (chapterId: string): Promise<StandardResponse<any>> => {
-  try {
+  return withErrorHandling(async () => {
+    // Validate input data
+    if (!chapterId) {
+      throw new Error('Chapter ID is required');
+    }
+
     const response = await api.delete<StandardResponse<any>>(
       `/chapters/${chapterId}`,
       { requireAuth: true }
     );
     
-    return response;
-  } catch (error) {
-    console.error('Failed to delete chapter:', error);
-    throw error;
-  }
-};
-
-// Reorder chapters
-export const reorderChapters = async (courseId: string, reorderData: { chapter_orders: { chapter_id: string; new_order: number }[] }): Promise<StandardResponse<ChaptersListData>> => {
-  try {
-    const response = await api.put<StandardResponse<ChaptersListData>>(
-      `/courses/${courseId}/chapters/reorder`,
-      reorderData,
-      { requireAuth: true }
-    );
+    // Validate response
+    if (!response.success) {
+      throw new Error(response.message || 'Something went wrong');
+    }
     
     return response;
-  } catch (error) {
-    console.error('Failed to reorder chapter:', error);
-    throw error;
-  }
+  }, ChapterErrors.DELETE_FAILED);
 };
+
 // Get chapters with lessons
 export const getChaptersWithLessons = async (courseId: string): Promise<StandardResponse<{ chapters: ChapterResponse[]; total: number }>> => {
-  try {
+  return withErrorHandling(async () => {
+    // Validate input data
+    if (!courseId) {
+      throw new Error('Course ID is required');
+    }
+
     const response = await api.get<StandardResponse<{ chapters: any[]; total: number }>>(
       `/courses/${courseId}/chapters-with-lessons`,
       { requireAuth: true }
     );
     
+    // Validate response
+    if (!response.success) {
+      throw new Error(response.message || 'Something went wrong');
+    }
+
     // Transform the response to maintain backward compatibility
-    if (response.success && response.data) {
+    if (response.data) {
+      console.log('🔧 getChaptersWithLessons raw response:', {
+        fullResponse: response,
+        chapters: response.data.chapters,
+        firstChapter: response.data.chapters?.[0],
+        firstChapterId: response.data.chapters?.[0]?.id,
+        firstChapter_id: response.data.chapters?.[0]?._id
+      });
+      
       const transformedData = {
-        chapters: response.data.chapters.map((chapter: any) => ({
-          _id: chapter.id,
-          course_id: chapter.course_id,
-          title: chapter.title,
-          description: chapter.description,
-          order: chapter.order,
-          lesson_count: chapter.lesson_count,
-          total_lessons: chapter.lesson_count,
-          total_duration: chapter.total_duration,
-          status: chapter.status,
-          created_at: chapter.created_at,
-          updated_at: chapter.updated_at,
-          lessons: chapter.lessons || [],
-        })),
-        total: response.data.total
+        chapters: (response.data.chapters || []).map((chapter: any) => {
+          console.log('🔧 Transforming chapter:', {
+            originalId: chapter.id,
+            original_id: chapter._id,
+            title: chapter.title,
+            fullChapter: chapter
+          });
+          
+          // 🔧 FIX: Transform lessons inside chapters - same ID field mismatch issue
+          const transformedLessons = (chapter.lessons || []).map((lesson: any) => {
+            console.log('🔧 Transforming lesson inside chapter:', {
+              chapterTitle: chapter.title,
+              lessonOriginalId: lesson.id,
+              lessonOriginal_id: lesson._id,
+              lessonTitle: lesson.title,
+              fullLesson: lesson
+            });
+            
+            return {
+              ...lesson,
+              _id: lesson.id || lesson._id, // Maps backend 'id' to frontend '_id'
+            };
+          });
+          
+          return {
+            _id: chapter.id, // Maps backend 'id' to frontend '_id'
+            course_id: chapter.course_id,
+            title: chapter.title,
+            description: chapter.description,
+            order: chapter.order,
+            lesson_count: chapter.lesson_count,
+            total_lessons: chapter.lesson_count,
+            total_duration: chapter.total_duration,
+            status: chapter.status,
+            created_at: chapter.created_at,
+            updated_at: chapter.updated_at,
+            lessons: transformedLessons, // Use transformed lessons with proper _id
+          };
+        }),
+        total: response.data.total || 0
       };
+      
+      console.log('🔧 getChaptersWithLessons transformed data:', {
+        transformedChapters: transformedData.chapters,
+        firstTransformed: transformedData.chapters[0],
+        firstTransformedId: transformedData.chapters[0]?._id
+      });
       
       return {
         success: response.success,
@@ -163,9 +240,56 @@ export const getChaptersWithLessons = async (courseId: string): Promise<Standard
       };
     }
     
-    return response as StandardResponse<{ chapters: ChapterResponse[]; total: number }>;
-  } catch (error) {
-    console.error('Get chapters with lessons failed:', error);
-    throw error;
+    // Fallback response if no data
+    return {
+      success: true,
+      data: { chapters: [], total: 0 },
+      message: response.message || 'No chapters found'
+    };
+  }, ChapterErrors.FETCH_FAILED);
+};
+
+// Bulk reorder chapters within a course
+export const reorderChapters = async (
+  courseId: string, 
+  reorderData: {
+    chapter_orders: Array<{ chapter_id: string; new_order: number }>
   }
+): Promise<StandardResponse<{ chapters: ChapterResponse[] }>> => {
+  return withErrorHandling(async () => {
+    // Validate input data
+    if (!courseId) {
+      throw new Error('Course ID is required');
+    }
+    if (!reorderData.chapter_orders || reorderData.chapter_orders.length === 0) {
+      throw new Error('Chapter order data is required');
+    }
+
+    // Validate each chapter order
+    reorderData.chapter_orders.forEach((item, index) => {
+      if (!item.chapter_id) {
+        throw new Error(`Chapter ID is required for item ${index + 1}`);
+      }
+      if (typeof item.new_order !== 'number' || item.new_order < 1) {
+        throw new Error(`Invalid order for chapter ${item.chapter_id}: must be a positive number`);
+      }
+    });
+
+    const response = await api.put<StandardResponse<{ chapters: ChapterResponse[] }>>(
+      `/courses/${courseId}/chapters/reorder`,
+      reorderData,
+      { requireAuth: true }
+    );
+    
+    // Validate response
+    if (!response.success) {
+      throw new Error(response.message || 'Something went wrong');
+    }
+    
+    console.log('Chapters reordered successfully', { 
+      courseId, 
+      chapterCount: reorderData.chapter_orders.length 
+    });
+    return response;
+  }, ChapterErrors.REORDER_FAILED);
 };

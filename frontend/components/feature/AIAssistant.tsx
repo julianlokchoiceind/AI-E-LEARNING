@@ -4,7 +4,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, MessageCircle, X, Minimize2, Maximize2, Bot, User } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import toast from 'react-hot-toast';
+import { ToastService } from '@/lib/toast/ToastService';
+import { useApiMutation } from '@/hooks/useApiMutation';
+import { api } from '@/lib/api/api-client';
+import { StandardResponse } from '@/lib/types/api';
 
 // Types
 interface Message {
@@ -46,8 +49,18 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+
+  // React Query mutation for AI chat - uses API client for consistent auth and error handling
+  const { mutate: sendAIMessage, loading: isLoading } = useApiMutation(
+    async ({ message, context }: { message: string; context?: any }): Promise<StandardResponse<any>> => {
+      return api.chatWithAI({ message, context }) as Promise<StandardResponse<any>>;
+    },
+    {
+      // Don't show automatic toasts for AI chat
+      showToast: false,
+    }
+  );
   
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -82,8 +95,8 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     }
   }, [isOpen, messages.length, courseId]);
   
-  // Send message to AI
-  const sendMessage = async () => {
+  // Send message to AI using React Query mutation
+  const sendMessage = () => {
     if (!inputValue.trim() || isLoading) return;
     
     const userMessage: Message = {
@@ -94,72 +107,63 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     };
     
     setMessages(prev => [...prev, userMessage]);
+    const messageContent = inputValue.trim();
     setInputValue('');
-    setIsLoading(true);
     setIsTyping(true);
     
-    try {
-      // Prepare context for AI
-      const context: any = {};
-      if (courseId) context.course_id = courseId;
-      if (lessonId) context.lesson_id = lessonId;
-      if (userLevel) context.user_level = userLevel;
-      
-      // Call AI API
-      const response = await fetch('/api/v1/ai/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    // Prepare context for AI
+    const context: any = {};
+    if (courseId) context.course_id = courseId;
+    if (lessonId) context.lesson_id = lessonId;
+    if (userLevel) context.user_level = userLevel;
+    
+    sendAIMessage(
+      {
+        message: messageContent,
+        context: Object.keys(context).length > 0 ? context : undefined
+      },
+      {
+        onSuccess: async (response) => {
+          // Simulate typing delay for better UX
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Handle API response format (StandardResponse)
+          const aiResponse = response.data || response;
+          
+          const aiMessage: Message = {
+            id: Date.now().toString(),
+            type: 'ai',
+            content: aiResponse.response || aiResponse.message || 'I received your message but had trouble generating a response.',
+            timestamp: new Date(),
+            context: aiResponse.context
+          };
+          
+          setMessages(prev => [...prev, aiMessage]);
+          setIsTyping(false);
         },
-        body: JSON.stringify({
-          message: userMessage.content,
-          context: Object.keys(context).length > 0 ? context : undefined
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Something went wrong');
+        onError: (error: any) => {
+          console.error('AI chat error:', error);
+          
+          // Handle rate limiting
+          if (error.message.includes('rate limit')) {
+            ToastService.error('You\'re sending messages too quickly. Please wait a moment.');
+          } else {
+            ToastService.error(error.message || 'Something went wrong');
+          }
+          
+          // Add error message to chat
+          const errorMessage: Message = {
+            id: Date.now().toString(),
+            type: 'ai',
+            content: 'I\'m sorry, I\'m having trouble responding right now. Please try again in a moment.',
+            timestamp: new Date()
+          };
+          
+          setMessages(prev => [...prev, errorMessage]);
+          setIsTyping(false);
+        }
       }
-      
-      // Simulate typing delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const aiMessage: Message = {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: data.response,
-        timestamp: new Date(),
-        context: data.context
-      };
-      
-      setMessages(prev => [...prev, aiMessage]);
-      
-    } catch (error: any) {
-      console.error('AI chat error:', error);
-      
-      // Handle rate limiting
-      if (error.message.includes('rate limit')) {
-        toast.error('You\'re sending messages too quickly. Please wait a moment.');
-      } else {
-        toast.error(error.message || 'Something went wrong');
-      }
-      
-      // Add error message to chat
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: 'I\'m sorry, I\'m having trouble responding right now. Please try again in a moment.',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-      
-    } finally {
-      setIsLoading(false);
-      setIsTyping(false);
-    }
+    );
   };
   
   // Handle input key press
@@ -173,7 +177,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
   // Clear conversation
   const clearConversation = () => {
     setMessages([]);
-    toast.success('Conversation cleared');
+    ToastService.success('Conversation cleared');
   };
   
   // Format timestamp

@@ -232,10 +232,10 @@ async def delete_course(
     current_user: User = Depends(get_current_user)
 ) -> StandardResponse[dict]:
     """
-    Delete (archive) a course.
+    Delete a course (hard delete from database).
     
     Only course creator or admin can delete.
-    Courses are soft-deleted by setting status to 'archived'.
+    Course and all its content will be permanently removed.
     """
     try:
         result = await CourseService.delete_course(course_id, current_user)
