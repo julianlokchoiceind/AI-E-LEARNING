@@ -79,7 +79,7 @@ export function useApiQuery<T>(
 
   return {
     // Same interface as useApiCall
-    data: (query.data && typeof query.data === 'object' && 'data' in query.data) ? (query.data as any).data : query.data || null,
+    data: query.data || null,
     loading: query.isLoading || query.isFetching,
     error: query.error as AppError | null,
     execute,

@@ -29,5 +29,7 @@ AUTH_RATE_LIMITS = {
     "register": "10/minute",        # 10 registrations per minute
     "forgot_password": "5/minute",  # 5 password reset requests per minute
     "verify_email": "20/minute",    # 20 verification attempts per minute (increased for better UX)
-    "resend_verification": "5/minute"  # 5 resend requests per minute
+    "resend_verification": "5/minute",  # 5 resend requests per minute
+    "change_password": "10/minute",     # 10 password change attempts per minute
+    "preferences": "30/minute"          # 30 preference read/write operations per minute
 }

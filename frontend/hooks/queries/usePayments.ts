@@ -79,6 +79,7 @@ export function useCancelSubscription() {
         ['subscription-status'], // Refresh subscription status
         ['payment-history'], // Refresh payment history
       ],
+      operationName: 'cancel-subscription', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -95,6 +96,7 @@ export function useCreateSubscription() {
         ['subscription-status'], // Refresh subscription status
         ['payment-history'], // Refresh payment history
       ],
+      operationName: 'create-subscription', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -110,6 +112,7 @@ export function useCreateCoursePayment() {
       invalidateQueries: [
         ['payment-history'], // Refresh payment history
       ],
+      operationName: 'create-course-payment', // Unique operation ID for toast deduplication
     }
   );
 }

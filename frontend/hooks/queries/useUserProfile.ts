@@ -38,6 +38,7 @@ export function useUpdateUserProfile() {
   return useApiMutation(
     (profileData: ProfileUpdateData) => usersApi.updateProfile(profileData),
     {
+      operationName: 'update-user-profile',
       invalidateQueries: [
         ['user-profile'], // Refresh profile data
         ['user'], // Refresh auth user data if needed

@@ -63,7 +63,7 @@ export const enrollInCourse = async (
 export const getMyEnrollments = async (): Promise<StandardResponse<Enrollment[]>> => {
   try {
     const response = await api.get<StandardResponse<Enrollment[]>>(
-      '/enrollments/enrollments',
+      '/enrollments',
       { requireAuth: true }
     );
     
@@ -105,7 +105,7 @@ export const unenrollFromCourse = async (courseId: string): Promise<StandardResp
 export const issueCertificate = async (enrollmentId: string): Promise<StandardResponse<Enrollment>> => {
   try {
     const response = await api.post<StandardResponse<Enrollment>>(
-      `/enrollments/enrollments/${enrollmentId}/certificate`,
+      `/enrollments/${enrollmentId}/certificate`,
       {},
       { requireAuth: true }
     );

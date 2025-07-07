@@ -93,3 +93,33 @@ class TokenWithRefresh(BaseModel):
     refresh_token: str
     token_type: str
     expires_in: int  # seconds
+
+
+class ChangePasswordRequest(BaseModel):
+    """Schema for changing user password."""
+    current_password: str
+    new_password: str = Field(..., min_length=8)
+    
+    @validator('new_password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        return v
+
+
+class UserPreferencesUpdate(BaseModel):
+    """Schema for updating user preferences."""
+    language: Optional[str] = None
+    timezone: Optional[str] = None
+    email_notifications: Optional[bool] = None
+    push_notifications: Optional[bool] = None
+    marketing_emails: Optional[bool] = None
+
+
+class UserPreferencesResponse(BaseModel):
+    """Schema for user preferences response."""
+    language: str
+    timezone: str
+    email_notifications: bool
+    push_notifications: bool
+    marketing_emails: bool

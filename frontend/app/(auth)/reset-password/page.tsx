@@ -23,7 +23,7 @@ export default function ResetPasswordPage() {
       resetPassword(data.token, data.password, data.confirmPassword),
     {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Password reset successfully!');
+        ToastService.success(response.message || 'Something went wrong');
         setSuccess(true);
         
         // Redirect to login after 3 seconds

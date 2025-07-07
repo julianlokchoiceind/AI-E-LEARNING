@@ -57,7 +57,7 @@ const CreatorAnalyticsPage = () => {
   const handleExport = (reportType: string) => {
     exportAnalyticsData({ reportType, timeRange, format: 'csv' }, {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Analytics export completed successfully');
+        ToastService.success(response.message || 'Something went wrong');
       },
       onError: (error: any) => {
         console.error('Export failed:', error);

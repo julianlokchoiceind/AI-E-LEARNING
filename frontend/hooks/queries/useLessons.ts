@@ -2,6 +2,8 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ToastService } from '@/lib/toast/ToastService';
 import { 
   getLessonsByChapter, 
   getLesson, 
@@ -105,6 +107,7 @@ export function useCreateLesson() {
         ['creator-courses'], // Refresh creator dashboard
         ['admin-courses'], // Refresh admin view
       ],
+      operationName: 'create-lesson', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -125,27 +128,165 @@ export function useUpdateLesson() {
         ['course'], // Refresh course details
         ['creator-courses'], // Refresh creator dashboard
       ],
+      operationName: 'update-lesson', // Unique operation ID for toast deduplication
     }
   );
 }
 
 /**
- * DELETE LESSON - Lesson deletion
+ * DELETE LESSON - Lesson deletion with optimistic update
  * Critical: Content management
  */
 export function useDeleteLesson() {
-  return useApiMutation(
-    (lessonId: string) => deleteLesson(lessonId),
-    {
-      invalidateQueries: [
-        ['lessons'], // Refresh lesson lists
-        ['chapters'], // Refresh chapter details
-        ['chapters-with-lessons'], // Refresh course structure
-        ['course'], // Refresh course details
-        ['creator-courses'], // Refresh creator dashboard
-        ['admin-courses'], // Refresh admin view
-      ],
+  const queryClient = useQueryClient();
+  
+  // Using native React Query for optimistic updates
+  const mutation = useMutation({
+    mutationFn: (lessonId: string) => deleteLesson(lessonId),
+    
+    // Optimistic update - Update UI immediately
+    onMutate: async (lessonId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'lessons'
+      });
+      
+      // Get all lesson-related cache keys
+      const cacheKeys = queryClient.getQueryCache().findAll({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'lessons'
+      });
+      
+      // Store snapshots for rollback
+      const snapshots: any[] = [];
+      
+      // Update all lesson caches
+      cacheKeys.forEach((cache) => {
+        const data = queryClient.getQueryData(cache.queryKey);
+        snapshots.push({ key: cache.queryKey, data });
+        
+        // Optimistically remove lesson from list
+        queryClient.setQueryData(cache.queryKey, (old: any) => {
+          if (!old) return old;
+          
+          // Handle different data structures
+          const lessons = old?.data?.lessons || old?.lessons || [];
+          const filteredLessons = lessons.filter((lesson: any) => {
+            const id = lesson._id || lesson.id;
+            return id !== lessonId;
+          });
+          
+          // Maintain same structure
+          if (old?.data?.lessons) {
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                lessons: filteredLessons,
+                total: filteredLessons.length
+              }
+            };
+          }
+          
+          return {
+            ...old,
+            lessons: filteredLessons,
+            total: filteredLessons.length
+          };
+        });
+      });
+      
+      // Also update chapters-with-lessons cache
+      const chaptersWithLessonsCaches = queryClient.getQueryCache().findAll({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'chapters-with-lessons'
+      });
+      
+      chaptersWithLessonsCaches.forEach((cache) => {
+        const data = queryClient.getQueryData(cache.queryKey);
+        snapshots.push({ key: cache.queryKey, data });
+        
+        queryClient.setQueryData(cache.queryKey, (old: any) => {
+          if (!old) return old;
+          
+          const chapters = old?.data?.chapters || old?.chapters || [];
+          const updatedChapters = chapters.map((chapter: any) => {
+            if (chapter.lessons) {
+              return {
+                ...chapter,
+                lessons: chapter.lessons.filter((lesson: any) => {
+                  const id = lesson._id || lesson.id;
+                  return id !== lessonId;
+                })
+              };
+            }
+            return chapter;
+          });
+          
+          if (old?.data?.chapters) {
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                chapters: updatedChapters
+              }
+            };
+          }
+          
+          return {
+            ...old,
+            chapters: updatedChapters
+          };
+        });
+      });
+      
+      return { snapshots, lessonId };
+    },
+    
+    // Rollback on error
+    onError: (error: any, lessonId: string, context: any) => {
+      if (context?.snapshots) {
+        context.snapshots.forEach((snapshot: any) => {
+          queryClient.setQueryData(snapshot.key, snapshot.data);
+        });
+      }
+    },
+    
+    // Always refetch to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['chapters'] });
+      queryClient.invalidateQueries({ queryKey: ['chapters-with-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['course'] });
+      queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
     }
-  );
+  });
+  
+  // Return wrapper to maintain useApiMutation interface
+  return {
+    mutate: (lessonId: string, options?: { onSuccess?: () => void; onError?: (error: any) => void }) => {
+      mutation.mutate(lessonId, {
+        onSuccess: (response) => {
+          // Toast handled manually since using useMutation (not useApiMutation)
+          ToastService.success(response?.message || 'Something went wrong', 'delete-lesson');
+          if (options?.onSuccess) {
+            options.onSuccess();
+          }
+        },
+        onError: (error: any) => {
+          // Toast handled manually since using useMutation (not useApiMutation)
+          ToastService.error(error?.message || 'Something went wrong', 'delete-lesson-error');
+          if (options?.onError) {
+            options.onError(error);
+          }
+        }
+      });
+    },
+    mutateAsync: mutation.mutateAsync,
+    loading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    data: mutation.data,
+  };
 }
 

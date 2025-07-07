@@ -36,11 +36,6 @@ export const DeleteLessonModal: React.FC<DeleteLessonModalProps> = ({
   const handleConfirmDelete = async () => {
     if (!lesson) return;
     
-    console.log('🔧 DeleteLessonModal - handleConfirmDelete called', { 
-      lessonId: lesson._id, 
-      confirmText,
-      isCorrect: confirmText === 'DELETE'
-    });
     
     try {
       setLoading(true);

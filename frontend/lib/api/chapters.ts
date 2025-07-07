@@ -94,14 +94,6 @@ export const createChapter = async (data: ChapterCreate): Promise<StandardRespon
       throw new Error(response.message || 'Something went wrong');
     }
     
-    console.log('🔧 createChapter response:', { 
-      fullResponse: response,
-      data: response.data,
-      dataId: response.data?._id,
-      dataIdField: (response.data as any)?.id,
-      success: response.success
-    });
-    console.log('Chapter created successfully', { chapterId: response.data?._id, courseId: data.course_id });
     return response;
   }, ChapterErrors.CREATE_FAILED);
 };
@@ -176,32 +168,13 @@ export const getChaptersWithLessons = async (courseId: string): Promise<Standard
 
     // Transform the response to maintain backward compatibility
     if (response.data) {
-      console.log('🔧 getChaptersWithLessons raw response:', {
-        fullResponse: response,
-        chapters: response.data.chapters,
-        firstChapter: response.data.chapters?.[0],
-        firstChapterId: response.data.chapters?.[0]?.id,
-        firstChapter_id: response.data.chapters?.[0]?._id
-      });
+      // Transform response data
       
       const transformedData = {
         chapters: (response.data.chapters || []).map((chapter: any) => {
-          console.log('🔧 Transforming chapter:', {
-            originalId: chapter.id,
-            original_id: chapter._id,
-            title: chapter.title,
-            fullChapter: chapter
-          });
           
           // 🔧 FIX: Transform lessons inside chapters - same ID field mismatch issue
           const transformedLessons = (chapter.lessons || []).map((lesson: any) => {
-            console.log('🔧 Transforming lesson inside chapter:', {
-              chapterTitle: chapter.title,
-              lessonOriginalId: lesson.id,
-              lessonOriginal_id: lesson._id,
-              lessonTitle: lesson.title,
-              fullLesson: lesson
-            });
             
             return {
               ...lesson,
@@ -227,11 +200,6 @@ export const getChaptersWithLessons = async (courseId: string): Promise<Standard
         total: response.data.total || 0
       };
       
-      console.log('🔧 getChaptersWithLessons transformed data:', {
-        transformedChapters: transformedData.chapters,
-        firstTransformed: transformedData.chapters[0],
-        firstTransformedId: transformedData.chapters[0]?._id
-      });
       
       return {
         success: response.success,
@@ -286,10 +254,6 @@ export const reorderChapters = async (
       throw new Error(response.message || 'Something went wrong');
     }
     
-    console.log('Chapters reordered successfully', { 
-      courseId, 
-      chapterCount: reorderData.chapter_orders.length 
-    });
     return response;
   }, ChapterErrors.REORDER_FAILED);
 };

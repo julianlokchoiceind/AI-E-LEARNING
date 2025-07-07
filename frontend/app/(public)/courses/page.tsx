@@ -78,7 +78,7 @@ const CourseCatalogPage = () => {
     // Find the course to check pricing
     const course = courses.find((c: any) => c._id === courseId);
     if (!course) {
-      ToastService.error('Course not found');
+      ToastService.error('Something went wrong');
       return;
     }
 

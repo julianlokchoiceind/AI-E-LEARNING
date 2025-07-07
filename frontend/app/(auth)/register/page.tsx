@@ -26,7 +26,7 @@ export default function RegisterPage() {
     }),
     {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Registration successful! Please check your email to verify your account.');
+        ToastService.success(response.message || 'Something went wrong');
         
         // Clear form
         setFormData({

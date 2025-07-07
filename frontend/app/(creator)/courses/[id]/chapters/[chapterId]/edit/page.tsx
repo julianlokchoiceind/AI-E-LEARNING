@@ -135,7 +135,7 @@ const ChapterEditPage = () => {
       updateChapterMutation({ chapterId: chapter._id, data: updatedChapter }, {
         onSuccess: (response) => {
           if (response.success) {
-            ToastService.success(response.message || 'Chapter title updated');
+            ToastService.success(response.message || 'Something went wrong');
             refetchChapter(); // Refresh chapter data
           } else {
             ToastService.error(response.message || 'Something went wrong');
@@ -184,7 +184,7 @@ const ChapterEditPage = () => {
     createLessonMutation(lessonData, {
       onSuccess: (response) => {
         if (response.success && response.data) {
-          ToastService.success(response.message || 'Lesson created successfully');
+          ToastService.success(response.message || 'Something went wrong');
           // Redirect to lesson editor
           router.push(`/creator/courses/${courseId}/lessons/${response.data._id}/edit`);
         } else {

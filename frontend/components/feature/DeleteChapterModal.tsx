@@ -29,11 +29,6 @@ export const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
   const handleConfirmDelete = async () => {
     if (!chapter) return;
     
-    console.log('🔧 DeleteChapterModal - handleConfirmDelete called', { 
-      chapterId: chapter._id, 
-      confirmText,
-      isCorrect: confirmText === 'DELETE'
-    });
     
     try {
       setLoading(true);

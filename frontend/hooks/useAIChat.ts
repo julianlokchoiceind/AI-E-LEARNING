@@ -94,7 +94,7 @@ export const useAIChat = ({
 
   // React Query mutations for AI operations
   const { mutate: sendAIMessage, loading: isLoading } = useSendAIMessage();
-  const { data: conversationHistory, execute: getHistory } = useGetConversationHistory();
+  const { data: conversationHistory, refetch: getHistory } = useGetConversationHistory(courseId, lessonId, false); // Disabled by default
   const { mutate: clearHistory } = useClearConversationHistory();
 
   // Add a message to the conversation
@@ -148,7 +148,6 @@ export const useAIChat = ({
           context.current_video_time = progressData.currentVideoTime;
         }
       } catch (error) {
-        console.warn('Could not fetch progress data:', error);
       }
     }
 
@@ -238,7 +237,6 @@ export const useAIChat = ({
         return response.data;
       }
     } catch (error) {
-      console.warn('Failed to fetch progress data:', error);
     }
     
     return null;
@@ -307,10 +305,11 @@ export const useAIChat = ({
   // Get conversation history using React Query
   const getConversationHistory = useCallback(async () => {
     try {
-      await getHistory();
-      if (conversationHistory && conversationHistory.history) {
+      const result = await getHistory();
+      if (result.data && result.data.success && result.data.data) {
+        const historyData = result.data.data;
         // Convert server history to messages
-        const historyMessages: Message[] = conversationHistory.history.map((entry: any) => [
+        const historyMessages: Message[] = historyData.conversations?.map((entry: any) => [
           {
             id: `history-q-${entry.timestamp}`,
             type: 'user' as const,
@@ -324,7 +323,7 @@ export const useAIChat = ({
             timestamp: new Date(entry.timestamp),
             context: entry.context
           }
-        ]).flat();
+        ]).flat() || [];
 
         setMessages(historyMessages);
       }
@@ -332,7 +331,7 @@ export const useAIChat = ({
       console.error('Failed to get conversation history:', error);
       ToastService.error(error.message || 'Something went wrong');
     }
-  }, [getHistory, conversationHistory]);
+  }, [getHistory]);
 
   // Clear conversation history using React Query mutation
   const clearConversationHistory = useCallback(async () => {

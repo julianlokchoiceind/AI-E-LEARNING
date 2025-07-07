@@ -84,9 +84,7 @@ export function useTokenRefresh() {
           refreshToken: data.refresh_token
         })
         
-        console.log('Token refreshed successfully')
       } else {
-        console.error('Failed to refresh token')
         // Token refresh failed, user needs to login again
         window.location.href = '/login'
       }
@@ -179,10 +177,8 @@ async function updateSession(data: any): Promise<void> {
         (currentSession as any).accessToken = data.accessToken;
         (currentSession as any).refreshToken = data.refreshToken;
         
-        console.log('✅ useTokenRefresh: Session updated with new tokens');
       }
     }
   } catch (error) {
-    console.error('Error updating session:', error);
   }
 }

@@ -208,7 +208,6 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('🗑️ Delete button clicked for chapter:', chapter._id);
                         onDelete(chapter._id);
                       }}
                       className="text-gray-600 hover:text-red-600"
@@ -241,7 +240,6 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      console.log('🔍 SortableChapterCard:', { chapterId: chapter._id, title: chapter.title });
                       onCreateLesson(chapter._id);
                     }}
                     className="text-blue-600 border-blue-200 hover:bg-blue-50"

@@ -191,8 +191,6 @@ function CheckoutForm({
           const strategy = getRecoveryStrategy(error.code);
           setRecoveryStrategy(strategy);
           
-          console.warn(`Payment attempt ${attempt} failed:`, error);
-          
           if (strategy.canRetry) {
             ToastService.error(`${error.message} - Retrying... (${attempt}/3)`);
             return true; // Continue retrying

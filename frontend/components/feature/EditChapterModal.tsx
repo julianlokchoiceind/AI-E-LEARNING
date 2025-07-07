@@ -63,14 +63,6 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
       throw new Error('Chapter ID is missing. Please refresh the page.');
     }
 
-    console.log('🔧 Chapter autosave attempting:', { 
-      chapterId: data._id, 
-      updateData: {
-        title: data.title,
-        description: data.description,
-        status: data.status
-      }
-    });
 
     const response = await updateChapterAction({
       chapterId: data._id,
@@ -178,10 +170,6 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
       setLoading(true);
       setErrors({});
 
-      console.log('🔧 EditChapterModal submit:', { 
-        chapterId: chapter._id, 
-        formData 
-      });
 
       // Use force save to bypass autosave debouncing
       const success = await forceSave();

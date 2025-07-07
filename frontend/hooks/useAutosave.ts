@@ -52,7 +52,6 @@ export const useAutosave = <T = any>(
     try {
       return JSON.stringify(current) !== JSON.stringify(previous);
     } catch (error) {
-      console.warn('Data comparison error:', error);
       return false;
     }
   }, []);
@@ -99,7 +98,6 @@ export const useAutosave = <T = any>(
             ToastService.error(`Autosave failed: ${err.message || 'Something went wrong'}`);
           }
         }
-        console.error('Autosave error:', err);
       }
     }, delay)
   ).current;
@@ -107,12 +105,10 @@ export const useAutosave = <T = any>(
   // Force save function (not debounced) with retry logic and conflict detection
   const forceSave = useCallback(async (retryCount = 0): Promise<boolean> => {
     if (!enabled) {
-      console.warn('🔧 Force save skipped: autosave not enabled');
       return false;
     }
     
     if (!dataRef.current) {
-      console.warn('🔧 Force save skipped: no data to save');
       return false;
     }
     
@@ -124,9 +120,7 @@ export const useAutosave = <T = any>(
       setError(null);
       setConflictData(null);
       
-      console.log('🔧 Force save starting:', { 
-        enabled, 
-        hasData: !!dataRef.current,
+      // Force save starting
         dataKeys: dataRef.current && typeof dataRef.current === 'object' ? Object.keys(dataRef.current) : [],
         retryCount
       });
@@ -138,7 +132,6 @@ export const useAutosave = <T = any>(
       setSaveStatus('saved');
       setLastSavedAt(new Date());
       
-      console.log('🔧 Force save completed successfully');
       
       setTimeout(() => {
         setSaveStatus(prev => prev === 'saved' ? 'idle' : prev);
@@ -159,12 +152,11 @@ export const useAutosave = <T = any>(
       const isTimeoutError = err instanceof Error && 
         (err.message.includes('timeout') || err.message.includes('aborted') || err.message.includes('Request timeout'));
       
-      if (isTimeoutError && retryCount < 2) {
-        console.log(`🔧 Force save timeout, retrying... (attempt ${retryCount + 1})`);
-        setError(`Save timeout - retrying... (${retryCount + 1}/2)`);
+      if (isTimeoutError && retryCount < 3) {
+        setError(`Save timeout - retrying... (${retryCount + 1}/3)`);
         setTimeout(() => {
           forceSave(retryCount + 1);
-        }, 3000); // Wait 3 seconds before retry
+        }, 2000); // Wait 2 seconds before retry
         return false;
       }
       

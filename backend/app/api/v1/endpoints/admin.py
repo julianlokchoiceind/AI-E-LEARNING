@@ -6,7 +6,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from app.core.deps import get_current_admin
 from app.models.user import User
-from app.models.course import CourseStatus
+from app.models.course import CourseStatus, CourseCategory, CourseLevel
 from app.schemas.course import CourseResponse, CourseListResponse
 from app.schemas.admin import (
     CourseApprovalRequest,
@@ -70,6 +70,56 @@ async def get_pending_review_courses(
     except Exception as e:
         logger.error(f"Error fetching pending courses: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch pending courses")
+
+
+@router.get("/courses", response_model=StandardResponse[dict])
+async def list_all_courses(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(20, ge=1, le=100, description="Items per page"),
+    status: Optional[CourseStatus] = Query(None, description="Filter by course status"),
+    search: Optional[str] = Query(None, description="Search in title, description, or creator name"),
+    category: Optional[CourseCategory] = Query(None, description="Filter by course category"),
+    level: Optional[CourseLevel] = Query(None, description="Filter by course level"),
+    creator_id: Optional[str] = Query(None, description="Filter by creator ID"),
+    current_admin: User = Depends(get_current_admin)
+):
+    """
+    Get comprehensive list of all courses for admin management.
+    
+    Returns all courses (not just pending review) with:
+    - Comprehensive filtering options (status, search, category, level, creator)
+    - Pagination support
+    - Detailed course information including stats
+    - Creator information
+    - Revenue and enrollment data
+    - Admin action availability
+    - Summary statistics
+    
+    Workflow:
+    1. Verify admin authentication
+    2. Apply filters based on query parameters
+    3. Fetch courses with creator and enrollment data
+    4. Calculate statistics (completion rates, revenue, etc.)
+    5. Return comprehensive course data with pagination
+    """
+    try:
+        courses = await AdminService.list_all_courses(
+            page=page,
+            per_page=per_page,
+            status=status.value if status else None,
+            search=search,
+            category=category.value if category else None,
+            level=level.value if level else None,
+            creator_id=creator_id
+        )
+        return StandardResponse(
+            success=True,
+            data=courses,
+            message="Courses retrieved successfully"
+        )
+    except Exception as e:
+        logger.error(f"Error fetching admin courses: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch courses")
 
 
 @router.post("/courses/{course_id}/approve", response_model=StandardResponse[CourseApprovalResponse])
@@ -562,3 +612,46 @@ async def get_user_analytics(
     except Exception as e:
         logger.error(f"Error fetching user analytics: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch user analytics")
+
+
+@router.get("/analytics/user-growth", response_model=StandardResponse[dict])
+async def get_user_growth_analytics(
+    period: str = Query("month", pattern="^(day|week|month|year)$"),
+    current_admin: User = Depends(get_current_admin)
+):
+    """
+    Get user growth analytics.
+    
+    Returns user growth metrics over the specified period.
+    """
+    try:
+        analytics = await AdminService.get_user_growth_analytics(period)
+        return StandardResponse(
+            success=True,
+            data=analytics,
+            message="User growth analytics retrieved successfully"
+        )
+    except Exception as e:
+        logger.error(f"Error fetching user growth analytics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch user growth analytics")
+
+
+@router.get("/system/health", response_model=StandardResponse[dict])
+async def get_system_health(
+    current_admin: User = Depends(get_current_admin)
+):
+    """
+    Get system health metrics.
+    
+    Returns system status, performance metrics, and infrastructure health.
+    """
+    try:
+        health = await AdminService.get_system_health()
+        return StandardResponse(
+            success=True,
+            data=health,
+            message="System health metrics retrieved successfully"
+        )
+    except Exception as e:
+        logger.error(f"Error fetching system health: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch system health")

@@ -172,7 +172,6 @@ const CourseManagePage = () => {
       setSelectedCourses([]);
       // React Query will automatically refetch and update the UI
     } catch (error: any) {
-      console.error('Failed to delete courses:', error);
       ToastService.error(error.message || 'Something went wrong');
     }
   };
@@ -189,7 +188,6 @@ const CourseManagePage = () => {
       Updated: formatDate(course.updatedAt)
     }));
 
-    console.log('Export data:', csvData);
     ToastService.success('Course data exported successfully');
   };
 

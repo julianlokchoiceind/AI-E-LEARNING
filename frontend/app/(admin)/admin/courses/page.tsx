@@ -16,7 +16,6 @@ import {
   useDeleteCourse,
   useCreateCourse 
 } from '@/hooks/queries/useAdminCourses';
-import { ToastService } from '@/lib/toast/ToastService';
 import { 
   Search, 
   Filter, 
@@ -38,7 +37,8 @@ import {
 } from 'lucide-react';
 
 interface Course {
-  _id: string;
+  _id?: string;      // Optional since API might return id instead
+  id?: string;       // API actually returns this field
   title: string;
   description: string;
   thumbnail: string;
@@ -78,11 +78,17 @@ export default function CourseApproval() {
   const router = useRouter();
   
   // React Query hooks for data fetching and mutations
-  const { data: coursesData, loading, execute: fetchCourses } = useAdminCoursesQuery({
-    search: searchTerm,
-    status: statusFilter,
-    category: categoryFilter
-  });
+  // Use stable query key (no filters) to ensure invalidation works
+  const { 
+    data: coursesData, 
+    loading: isInitialLoading, 
+    query: { isFetching, isRefetching },
+    execute: fetchCourses 
+  } = useAdminCoursesQuery({});
+  
+  // Smart loading states: Only show spinner on initial load, not background refetch
+  const showLoadingSpinner = isInitialLoading && !coursesData;
+  const showBackgroundUpdate = (isFetching || isRefetching) && coursesData;
   
   const { mutate: approveCourse, loading: approveLoading } = useApproveCourse();
   const { mutate: rejectCourse, loading: rejectLoading } = useRejectCourse();
@@ -94,22 +100,25 @@ export default function CourseApproval() {
   const actionLoading = approveLoading || rejectLoading || toggleLoading || deleteLoading || createLoading;
   
   // Extract courses from response data
-  const courses = coursesData?.courses || [];
+  // API returns paginated response: { courses: [], total: 0, page: 1, ... }
+  const courses = coursesData?.data?.courses || [];
 
   // No need for manual useEffect - React Query handles data fetching automatically
   // fetchCourses is available from useAdminCoursesQuery for manual refresh if needed
 
-  const handleApproveCourse = (courseId: string) => {
+  const handleApproveCourse = (course: Course) => {
+    const courseId = course._id || course.id!;
     approveCourse(courseId);
   };
 
   const handleRejectCourse = () => {
     if (!selectedCourse || !rejectionReason.trim()) {
-      ToastService.error('Please provide a rejection reason');
+      // Let the mutation handle the validation error
       return;
     }
     
-    rejectCourse({ courseId: selectedCourse._id, reason: rejectionReason }, {
+    const courseId = selectedCourse._id || selectedCourse.id!;
+    rejectCourse({ courseId, reason: rejectionReason }, {
       onSuccess: () => {
         setShowRejectModal(false);
         setRejectionReason('');
@@ -118,13 +127,17 @@ export default function CourseApproval() {
     });
   };
 
-  const handleToggleFree = (courseId: string, currentStatus: boolean) => {
+  const handleToggleFree = (course: Course, currentStatus: boolean) => {
+    const courseId = course._id || course.id!;
     toggleFree({ courseId, isFree: !currentStatus });
   };
 
   const handleDeleteCourse = (course: Course) => {
+    // Fix: Use course.id instead of course._id (API returns id field)
+    const courseId = course._id || (course as any).id;
+    
     setSelectedCourseForDelete({
-      _id: course._id,
+      _id: courseId,
       title: course.title,
       description: course.description,
       total_lessons: course.total_lessons,
@@ -148,12 +161,8 @@ export default function CourseApproval() {
     createCourseAction({}, {
       onSuccess: (response) => {
         if (response.success && response.data?._id) {
-          ToastService.success(response.message || 'Something went wrong');
           router.push(`/admin/courses/${response.data._id}/edit`);
         }
-      },
-      onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
       }
     });
   };
@@ -325,12 +334,20 @@ export default function CourseApproval() {
       {/* Courses Table */}
       <Card className="overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">
-            Courses ({filteredCourses.length})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">
+              Courses ({filteredCourses.length})
+            </h2>
+            {showBackgroundUpdate && (
+              <div className="flex items-center text-sm text-blue-600">
+                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                Refreshing...
+              </div>
+            )}
+          </div>
         </div>
 
-        {loading ? (
+        {showLoadingSpinner ? (
           <div className="flex justify-center items-center h-64">
             <LoadingSpinner size="lg" message="Loading courses..." />
           </div>
@@ -443,7 +460,10 @@ export default function CourseApproval() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => router.push(`/admin/courses/${course._id}/edit`)}
+                          onClick={() => {
+                            const courseId = course._id || course.id!;
+                            router.push(`/admin/courses/${courseId}/edit`);
+                          }}
                           className="text-gray-600 hover:bg-gray-50"
                         >
                           <Edit3 className="h-4 w-4" />
@@ -464,7 +484,7 @@ export default function CourseApproval() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => handleApproveCourse(course._id)}
+                              onClick={() => handleApproveCourse(course)}
                               loading={actionLoading}
                               className="text-green-600 hover:bg-green-50"
                             >
@@ -489,7 +509,7 @@ export default function CourseApproval() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleToggleFree(course._id, course.pricing.is_free)}
+                            onClick={() => handleToggleFree(course, course.pricing.is_free)}
                             loading={actionLoading}
                             className={`${course.pricing.is_free ? 'text-yellow-600' : 'text-blue-600'} hover:bg-blue-50`}
                           >
@@ -574,7 +594,7 @@ export default function CourseApproval() {
               {selectedCourse.status === 'review' && (
                 <>
                   <Button
-                    onClick={() => handleApproveCourse(selectedCourse._id)}
+                    onClick={() => handleApproveCourse(selectedCourse)}
                     loading={actionLoading}
                     className="bg-green-600 hover:bg-green-700"
                   >
@@ -595,7 +615,7 @@ export default function CourseApproval() {
               
               {selectedCourse.status === 'published' && (
                 <Button
-                  onClick={() => handleToggleFree(selectedCourse._id, selectedCourse.pricing.is_free)}
+                  onClick={() => handleToggleFree(selectedCourse, selectedCourse.pricing.is_free)}
                   loading={actionLoading}
                   variant="outline"
                 >

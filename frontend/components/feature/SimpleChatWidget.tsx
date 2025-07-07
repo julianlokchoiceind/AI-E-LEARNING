@@ -5,6 +5,7 @@ import { Send, Bot, User, MessageCircle, X, Settings, Target, Languages, Brain, 
 import { Button } from '@/components/ui/Button';
 import { useAIChat } from '@/hooks/useAIChat';
 import { useAISuggestionsQuery } from '@/hooks/queries/useAI';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SimpleChatWidgetProps {
   courseId?: string;
@@ -31,6 +32,8 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const { isAuthenticated } = useAuth();
+  
   // React Query hook for AI suggestions - replaces manual fetch
   const { data: suggestionsResponse } = useAISuggestionsQuery(
     {
@@ -38,7 +41,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
       lesson_id: lessonId,
       user_level: userLevel
     },
-    !!(courseId || lessonId) // Only fetch when we have context
+    isAuthenticated && !!(courseId || lessonId) // Only fetch when authenticated AND we have context
   );
 
   // Extract suggestions from React Query response or use fallback
@@ -126,6 +129,15 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
+    
+    // Check authentication before sending
+    if (!isAuthenticated) {
+      addMessage({
+        type: 'ai',
+        content: 'Please log in to chat with the AI Study Buddy. 🔐'
+      });
+      return;
+    }
     
     const message = inputValue.trim();
     setInputValue('');
@@ -392,6 +404,13 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
+                    if (!isAuthenticated) {
+                      addMessage({
+                        type: 'ai',
+                        content: 'Please log in to chat with the AI Study Buddy. 🔐'
+                      });
+                      return;
+                    }
                     sendMessage(suggestion);
                     setShowQuickSuggestions(false);
                   }}
@@ -451,6 +470,13 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
+                    if (!isAuthenticated) {
+                      addMessage({
+                        type: 'ai',
+                        content: 'Please log in to chat with the AI Study Buddy. 🔐'
+                      });
+                      return;
+                    }
                     const goalText = learningGoals.join(', ');
                     sendMessage(`Help me with my learning goals: ${goalText}`);
                   }}

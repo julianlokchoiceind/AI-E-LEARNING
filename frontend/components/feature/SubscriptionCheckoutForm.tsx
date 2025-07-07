@@ -134,8 +134,6 @@ export function SubscriptionCheckoutForm({
           const strategy = getRecoveryStrategy(error.code);
           setRecoveryStrategy(strategy);
           
-          console.warn(`Payment method creation attempt ${attempt} failed:`, error);
-          
           if (strategy.canRetry) {
             ToastService.error(`${error.message} - Retrying... (${attempt}/3)`);
             return true; // Continue retrying
@@ -155,7 +153,7 @@ export function SubscriptionCheckoutForm({
         {
           onSuccess: (response) => {
             if (response.success) {
-              ToastService.success(response.message || 'Subscription created successfully');
+              ToastService.success(response.message || 'Something went wrong');
               setTimeout(() => {
                 onSuccess();
               }, 1500);

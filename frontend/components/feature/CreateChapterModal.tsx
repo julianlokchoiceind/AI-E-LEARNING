@@ -94,23 +94,19 @@ export const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
       description: formData.description.trim() || undefined
     }, {
       onSuccess: (response) => {
-        console.log('🔧 CreateChapterModal - Success response:', response);
-        
         if (response.success && response.data) {
           onChapterCreated(response.data);
-          ToastService.success(response.message || 'Something went wrong');
+          // Toast is already shown by useApiMutation with operation ID 'create-chapter'
           
           // Reset form and close modal
           setFormData({ title: '', description: '' });
           setErrors({});
           onClose();
-        } else {
-          ToastService.error(response.message || 'Something went wrong');
         }
       },
       onError: (error: any) => {
         console.error('Failed to create chapter:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Toast is already shown by useApiMutation with operation ID 'create-chapter-error'
         setErrors({});
       }
     });

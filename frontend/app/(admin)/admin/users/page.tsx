@@ -12,7 +12,6 @@ import {
   useUpdateUserRole,
   useDeleteUser
 } from '@/hooks/queries/useAdminUsers';
-import { ToastService } from '@/lib/toast/ToastService';
 import { 
   Search, 
   Filter, 
@@ -84,11 +83,7 @@ export default function UserManagement() {
   const handleTogglePremium = async (userId: string, currentStatus: boolean) => {
     togglePremiumMutation({ userId, premiumStatus: !currentStatus }, {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Something went wrong');
         // React Query will automatically invalidate and refetch users
-      },
-      onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
       }
     });
   };
@@ -96,11 +91,7 @@ export default function UserManagement() {
   const handleRoleChange = async (userId: string, newRole: string) => {
     updateRoleMutation({ userId, role: newRole as 'student' | 'creator' | 'admin' }, {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Something went wrong');
         // React Query will automatically invalidate and refetch users
-      },
-      onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
       }
     });
   };
@@ -110,13 +101,9 @@ export default function UserManagement() {
     
     deleteUserMutation(selectedUser.id, {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Something went wrong');
         setShowDeleteModal(false);
         setSelectedUser(null);
         // React Query will automatically invalidate and refetch users
-      },
-      onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
       }
     });
   };

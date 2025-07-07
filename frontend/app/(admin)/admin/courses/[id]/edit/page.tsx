@@ -19,8 +19,13 @@ import { useEditorStore } from '@/stores/editorStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useUpdateCourse } from '@/hooks/queries/useCreatorCourses';
 import { useCourseQuery } from '@/hooks/queries/useCourses';
-import { useChaptersWithLessonsQuery, useDeleteChapter, useReorderChapters } from '@/hooks/queries/useChapters';
-import { useDeleteLesson, useReorderLessons } from '@/hooks/queries/useLessons';
+import { 
+  useCourseChaptersQuery, 
+  useDeleteChapter, 
+  useReorderChapters,
+  useDeleteLesson, 
+  useReorderLessons 
+} from '@/hooks/queries/useCreatorCourses';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 
@@ -43,7 +48,7 @@ const CourseBuilderPage = () => {
   
   // React Query hooks - automatic caching and state management
   const { data: courseResponse, loading: courseLoading, refetch: refetchCourse } = useCourseQuery(courseId);
-  const { data: chaptersResponse, loading: chaptersLoading, refetch: refetchChapters } = useChaptersWithLessonsQuery(courseId);
+  const { data: chaptersResponse, loading: chaptersLoading, refetch: refetchChapters } = useCourseChaptersQuery(courseId);
   const { mutateAsync: updateCourseAction } = useUpdateCourse();
   
   // React Query mutations for chapter and lesson operations
@@ -75,7 +80,21 @@ const CourseBuilderPage = () => {
       delay: 5000, // Increased delay to 5 seconds to reduce timeout issues
       onSave: async (data) => {
         if (!data || !data._id) return;
-        await updateCourseAction({ courseId: data._id, courseData: data });
+        
+        // Autosave triggered with course data
+        
+        // Try with minimal data first to isolate the issue
+        const minimalData = {
+          title: data.title,
+          description: data.description,
+        };
+        
+        try {
+          await updateCourseAction({ courseId: data._id, courseData: minimalData });
+        } catch (error) {
+          // Autosave failed - error will be handled by useAutosave hook
+          throw error;
+        }
       },
       enabled: !!courseData,
     }
@@ -102,12 +121,28 @@ const CourseBuilderPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Permission check
+  // Permission check and backend health check
   useEffect(() => {
     if (user && user.role !== 'creator' && user.role !== 'admin') {
       ToastService.error('You do not have permission to edit courses');
       router.push('/dashboard');
     }
+    
+    // Check backend health - health endpoint is at /health, not /api/v1/health
+    const checkHealth = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/health');
+        if (!response.ok) {
+          ToastService.error('Backend server is not responding properly');
+        } else {
+          // Backend health check successful
+        }
+      } catch (error) {
+        ToastService.error('Cannot connect to backend server. Make sure it is running on http://localhost:8000');
+      }
+    };
+    
+    checkHealth();
   }, [user, router]);
 
   const handleTitleSave = () => {
@@ -122,14 +157,7 @@ const CourseBuilderPage = () => {
   };
 
   const handleChapterCreated = (newChapter: ChapterResponse) => {
-    console.log('🔧 ADMIN handleChapterCreated - Raw chapter response:', {
-      fullObject: newChapter,
-      _id: newChapter._id,
-      id: (newChapter as any).id,
-      hasId: !!((newChapter as any).id),
-      has_id: !!(newChapter._id),
-      allKeys: Object.keys(newChapter)
-    });
+    // Process chapter response from backend
     
     // 🔧 FIX: Backend returns 'id' field, but UI expects '_id' field
     const backendId = (newChapter as any).id;
@@ -137,7 +165,6 @@ const CourseBuilderPage = () => {
     const finalId = backendId || frontendId;
     
     if (!finalId) {
-      console.error('🚨 CRITICAL: No valid ID found in chapter response!', newChapter);
       ToastService.error('Chapter created but no ID returned from backend. Please refresh the page.');
       return;
     }
@@ -150,31 +177,17 @@ const CourseBuilderPage = () => {
       total_duration: 0
     };
     
-    console.log('🔧 ADMIN handleChapterCreated - Transformed chapter:', {
-      originalBackendId: backendId,
-      originalFrontendId: frontendId,
-      finalMappedId: transformedChapter._id,
-      title: transformedChapter.title,
-      hasValidId: !!transformedChapter._id,
-      transformedChapter: transformedChapter
-    });
+    // Chapter transformed successfully
     
     setChapters(prev => {
       const newChapters = [...prev, transformedChapter];
-      console.log('🔧 ADMIN Updated chapters array:', {
-        oldCount: prev.length,
-        newCount: newChapters.length,
-        lastChapter: newChapters[newChapters.length - 1],
-        lastChapterId: newChapters[newChapters.length - 1]?._id
-      });
+      // Chapters array updated
       return newChapters;
     });
     // Auto-save will handle the course update automatically
   };
 
   const handleCreateLesson = (chapterId: string) => {
-    console.log('🔍 handleCreateLesson:', { chapterId, type: typeof chapterId });
-    
     // Use setTimeout to ensure React state updates are complete
     setTimeout(() => {
       setSelectedChapterId(chapterId);
@@ -183,14 +196,6 @@ const CourseBuilderPage = () => {
   };
 
   const handleLessonCreated = (newLesson: LessonResponse) => {
-    console.log('🔧 ADMIN handleLessonCreated - Raw lesson response:', {
-      fullObject: newLesson,
-      _id: newLesson._id,
-      id: (newLesson as any).id,
-      hasId: !!((newLesson as any).id),
-      has_id: !!(newLesson._id),
-      allKeys: Object.keys(newLesson)
-    });
     
     // 🔧 FIX: Backend returns 'id' field, but UI expects '_id' field
     const backendId = (newLesson as any).id;
@@ -198,7 +203,6 @@ const CourseBuilderPage = () => {
     const finalId = backendId || frontendId;
     
     if (!finalId) {
-      console.error('🚨 CRITICAL: No valid ID found in lesson response!', newLesson);
       ToastService.error('Lesson created but no ID returned from backend. Please refresh the page.');
       return;
     }
@@ -208,27 +212,14 @@ const CourseBuilderPage = () => {
       _id: finalId, // Use backend 'id' first, fallback to '_id'
     };
     
-    console.log('🔧 ADMIN handleLessonCreated - Transformed lesson:', {
-      originalBackendId: backendId,
-      originalFrontendId: frontendId,
-      finalMappedId: transformedLesson._id,
-      title: transformedLesson.title,
-      hasValidId: !!transformedLesson._id,
-      transformedLesson: transformedLesson
-    });
+    // Lesson transformed successfully
     
     // Update local state - add lesson to the appropriate chapter
     setChapters(prevChapters => {
       return prevChapters.map(chapter => {
         if (chapter._id === transformedLesson.chapter_id) {
           const updatedLessons = [...(chapter.lessons || []), transformedLesson];
-          console.log('🔧 ADMIN Updated lessons in chapter:', {
-            chapterTitle: chapter.title,
-            oldLessonCount: chapter.lessons?.length || 0,
-            newLessonCount: updatedLessons.length,
-            lastLesson: updatedLessons[updatedLessons.length - 1],
-            lastLessonId: updatedLessons[updatedLessons.length - 1]?._id
-          });
+          // Lessons updated in chapter
           return {
             ...chapter,
             lessons: updatedLessons,
@@ -277,11 +268,8 @@ const CourseBuilderPage = () => {
   };
 
   const handleChapterDelete = (chapterId: string) => {
-    console.log('🗑️ handleChapterDelete called with:', chapterId);
-    
     // Find the chapter to delete
     const chapterToDelete = chapters.find(ch => ch._id === chapterId);
-    console.log('🔍 Found chapter to delete:', chapterToDelete);
     
     if (chapterToDelete) {
       setSelectedChapterForDelete({
@@ -291,7 +279,7 @@ const CourseBuilderPage = () => {
         total_lessons: chapterToDelete.total_lessons || 0
       });
       setIsDeleteChapterModalOpen(true);
-      console.log('✅ Modal should now be open');
+      // Delete modal opened
     } else {
       console.error('❌ Chapter not found for deletion');
     }
@@ -951,7 +939,6 @@ const CourseBuilderPage = () => {
       <DeleteChapterModal
         isOpen={isDeleteChapterModalOpen}
         onClose={() => {
-          console.log('🚪 Delete modal closing');
           setIsDeleteChapterModalOpen(false);
         }}
         chapter={selectedChapterForDelete}

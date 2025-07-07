@@ -24,10 +24,17 @@ const nextConfig = {
   },
   
   // Bundle optimization
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     // Add case sensitivity check to catch errors during development
     const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
     config.plugins.push(new CaseSensitivePathsPlugin());
+    
+    // Reduce webpack messages in development
+    if (dev && !isServer) {
+      config.infrastructureLogging = {
+        level: 'error',
+      };
+    }
     
     // Explicit path resolution for production builds
     config.resolve.alias = {

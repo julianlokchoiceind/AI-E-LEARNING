@@ -30,8 +30,13 @@ export class ToastService {
       id: toastId,
       duration: 5000,
       style: {
-        background: '#10b981',
-        color: '#fff',
+        background: 'rgba(16, 185, 129, 0.1)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)', // Safari support
+        color: '#10b981',
+        border: '2px solid #10b981',
+        padding: '16px',
+        borderRadius: '8px',
       },
     });
     
@@ -63,8 +68,13 @@ export class ToastService {
       id: toastId,
       duration: 5000,
       style: {
-        background: '#ef4444',
-        color: '#fff',
+        background: 'rgba(239, 68, 68, 0.1)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)', // Safari support
+        color: '#ef4444',
+        border: '2px solid #ef4444',
+        padding: '16px',
+        borderRadius: '8px',
       },
     });
     
@@ -95,8 +105,13 @@ export class ToastService {
     const newToastId = toast.loading(finalMessage, {
       id: toastId,
       style: {
-        background: '#3b82f6',
-        color: '#fff',
+        background: 'rgba(59, 130, 246, 0.1)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)', // Safari support
+        color: '#3b82f6',
+        border: '2px solid #3b82f6',
+        padding: '16px',
+        borderRadius: '8px',
       },
     });
     
@@ -112,9 +127,31 @@ export class ToastService {
     const finalMessage = this.getFinalMessage(message);
     
     if (type === 'success') {
-      return toast.success(finalMessage, { id: toastId });
+      return toast.success(finalMessage, { 
+        id: toastId,
+        style: {
+          background: 'rgba(16, 185, 129, 0.1)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)', // Safari support
+          color: '#10b981',
+          border: '2px solid #10b981',
+          padding: '16px',
+          borderRadius: '8px',
+        },
+      });
     } else {
-      return toast.error(finalMessage, { id: toastId });
+      return toast.error(finalMessage, { 
+        id: toastId,
+        style: {
+          background: 'rgba(239, 68, 68, 0.1)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)', // Safari support
+          color: '#ef4444',
+          border: '2px solid #ef4444',
+          padding: '16px',
+          borderRadius: '8px',
+        },
+      });
     }
   }
   
@@ -175,11 +212,40 @@ export class ToastService {
       style: {
         minWidth: '250px',
       },
+      loading: {
+        style: {
+          background: 'rgba(59, 130, 246, 0.1)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)', // Safari support
+          color: '#3b82f6',
+          border: '2px solid #3b82f6',
+          padding: '16px',
+          borderRadius: '8px',
+        },
+      },
       success: {
         duration: 5000,
+        style: {
+          background: 'rgba(16, 185, 129, 0.1)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)', // Safari support
+          color: '#10b981',
+          border: '2px solid #10b981',
+          padding: '16px',
+          borderRadius: '8px',
+        },
       },
       error: {
         duration: 5000,
+        style: {
+          background: 'rgba(239, 68, 68, 0.1)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)', // Safari support
+          color: '#ef4444',
+          border: '2px solid #ef4444',
+          padding: '16px',
+          borderRadius: '8px',
+        },
       },
     });
   }

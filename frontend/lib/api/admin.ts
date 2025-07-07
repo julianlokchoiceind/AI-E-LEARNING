@@ -393,13 +393,21 @@ export const getAdminAnalytics = async (): Promise<StandardResponse<AdminDashboa
 /**
  * Get admin courses with filters
  */
+interface AdminCoursesResponse {
+  courses: any[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
 export const getAdminCourses = async (params?: {
   page?: number;
   per_page?: number;
   status?: string;
   search?: string;
   category?: string;
-}): Promise<StandardResponse<any>> => {
+}): Promise<StandardResponse<AdminCoursesResponse>> => {
   const queryParams = new URLSearchParams();
   
   if (params) {
@@ -411,8 +419,8 @@ export const getAdminCourses = async (params?: {
   }
 
   try {
-    const response = await api.get<StandardResponse<any>>(
-      `/courses?${queryParams.toString()}`,
+    const response = await api.get<StandardResponse<AdminCoursesResponse>>(
+      `/admin/courses?${queryParams.toString()}`,
       { requireAuth: true }
     );
     
@@ -463,19 +471,29 @@ export const toggleCourseFree = async (courseId: string, isFree: boolean): Promi
 };
 
 /**
- * Set course price
+ * Update course pricing (admin override)
+ * Matches backend endpoint: PUT /admin/courses/{course_id}/pricing
  */
-export const setCoursePrice = async (courseId: string, price: number): Promise<StandardResponse<any>> => {
+export const updateCoursePricing = async (
+  courseId: string, 
+  is_free: boolean, 
+  price?: number
+): Promise<StandardResponse<any>> => {
   try {
+    const params = new URLSearchParams({ is_free: is_free.toString() });
+    if (price !== undefined && price !== null) {
+      params.append('price', price.toString());
+    }
+    
     const response = await api.put<StandardResponse<any>>(
-      `/admin/courses/${courseId}/price`,
-      { price },
+      `/admin/courses/${courseId}/pricing?${params}`,
+      {},
       { requireAuth: true }
     );
     
     return response;
   } catch (error) {
-    console.error('Set course price failed:', error);
+    console.error('Update course pricing failed:', error);
     throw error;
   }
 };

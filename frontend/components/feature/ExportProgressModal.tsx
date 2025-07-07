@@ -42,7 +42,7 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
 
-          ToastService.success(response.message || `Your ${selectedFormat.toUpperCase()} export is ready!`);
+          ToastService.success(response.message || 'Something went wrong');
           onClose();
         } else {
           ToastService.error(response.message || 'Something went wrong');

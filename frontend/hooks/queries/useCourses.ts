@@ -2,14 +2,16 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { useQueryClient } from '@tanstack/react-query';
+import { CACHE_CONFIGS } from '@/lib/constants/cache-config';
 import { 
   getCourses, 
   getCourseById, 
   createCourse, 
   updateCourse, 
-  deleteCourse,
-  enrollInCourse
+  deleteCourse
 } from '@/lib/api/courses';
+import { enrollInCourse } from '@/lib/api/enrollments';
 
 // Types for course queries
 interface CoursesFilters {
@@ -37,10 +39,7 @@ export function useCoursesQuery(filters: CoursesFilters = {}) {
   return useApiQuery(
     ['courses', { search, category, level, pricing, sort, page, limit }],
     () => getCourses(),
-    {
-      staleTime: 3 * 60 * 1000, // 3 minutes - catalog data
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
-    }
+    CACHE_CONFIGS.PUBLIC_BROWSING // 3 minutes - catalog data
   );
 }
 
@@ -54,8 +53,7 @@ export function useCourseQuery(courseId: string, enabled: boolean = true) {
     () => getCourseById(courseId),
     {
       enabled: enabled && !!courseId,
-      staleTime: 5 * 60 * 1000, // 5 minutes - course details
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
+      ...CACHE_CONFIGS.CONTENT_DETAILS, // 5 minutes - course details
     }
   );
 }
@@ -70,8 +68,7 @@ export function useCourseSearchQuery(query: string, filters: Omit<CoursesFilters
     () => getCourses(),
     {
       enabled: query.length > 2, // Only search after 3 characters
-      staleTime: 1 * 60 * 1000, // 1 minute - search results
-      gcTime: 5 * 60 * 1000, // 5 minutes cache
+      ...CACHE_CONFIGS.SEARCH, // 1 minute - search results
     }
   );
 }
@@ -89,6 +86,7 @@ export function useCreateCourse() {
         ['admin-courses'], // Refresh admin view
         ['creator-courses'], // Refresh creator dashboard
       ],
+      operationName: 'create-course', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -107,6 +105,7 @@ export function useUpdateCourse() {
         ['admin-courses'], // Refresh admin view
         ['creator-courses'], // Refresh creator dashboard
       ],
+      operationName: 'update-course', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -116,14 +115,24 @@ export function useUpdateCourse() {
  * Critical: Content management
  */
 export function useDeleteCourse() {
+  const queryClient = useQueryClient();
+  
   return useApiMutation(
     (courseId: string) => deleteCourse(courseId),
     {
-      invalidateQueries: [
-        ['courses'], // Refresh course catalog
-        ['admin-courses'], // Refresh admin view
-        ['creator-courses'], // Refresh creator dashboard
-      ],
+      operationName: 'delete-course',
+      onSuccess: async (response, variables) => {
+        // IMPORTANT: Remove the specific course query to prevent 404 errors
+        queryClient.removeQueries({ 
+          queryKey: ['course', variables],
+          exact: true 
+        });
+        
+        // Invalidate list queries
+        await queryClient.invalidateQueries({ queryKey: ['courses'] });
+        await queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+        await queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
+      }
     }
   );
 }
@@ -141,6 +150,7 @@ export function useEnrollInCourse() {
         ['course'], // Refresh course details (enrollment status)
         ['student-dashboard'], // Refresh dashboard
       ],
+      operationName: 'enroll-course', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -153,10 +163,7 @@ export function useFeaturedCoursesQuery() {
   return useApiQuery(
     ['featured-courses'],
     () => getCourses(),
-    {
-      staleTime: 10 * 60 * 1000, // 10 minutes - featured content
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
-    }
+    CACHE_CONFIGS.FEATURED // 10 minutes - featured content
   );
 }
 
@@ -170,8 +177,7 @@ export function useCourseRecommendationsQuery(userId?: string) {
     () => getCourses(),
     {
       enabled: !!userId,
-      staleTime: 15 * 60 * 1000, // 15 minutes - recommendations
-      gcTime: 60 * 60 * 1000, // 1 hour cache
+      ...CACHE_CONFIGS.RECOMMENDATIONS, // 15 minutes - recommendations
     }
   );
 }
@@ -222,8 +228,7 @@ export function useCreatorDashboardQuery(enabled: boolean = true) {
     },
     {
       enabled,
-      staleTime: 2 * 60 * 1000, // 2 minutes - creator data changes frequently
-      gcTime: 5 * 60 * 1000, // 5 minutes cache
+      ...CACHE_CONFIGS.CREATOR_DASHBOARD, // 2 minutes - creator data changes frequently
     }
   );
 }

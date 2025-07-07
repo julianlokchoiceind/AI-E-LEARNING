@@ -182,7 +182,6 @@ export async function retryPaymentOperation<T>(
   const handler = new PaymentRetryHandler(options);
   
   return handler.executeWithRetry(operation, async (error, attempt) => {
-    console.warn(`Payment attempt ${attempt} failed:`, error);
     
     // Show user-friendly error message
     ToastService.error(`${error.message}${error.suggestedAction ? ` - ${error.suggestedAction}` : ''}`);

@@ -30,13 +30,10 @@ export const DeleteCourseModal: React.FC<DeleteCourseModalProps> = ({
   const [confirmText, setConfirmText] = useState('');
 
   const handleConfirmDelete = async () => {
-    if (!course) return;
-    
-    console.log('🔧 DeleteCourseModal - handleConfirmDelete called', { 
-      courseId: course._id, 
-      confirmText,
-      isCorrect: confirmText === 'DELETE'
-    });
+    // Prevent execution if conditions not met
+    if (!course || loading || confirmText !== 'DELETE') {
+      return;
+    }
     
     try {
       setLoading(true);
@@ -72,7 +69,7 @@ export const DeleteCourseModal: React.FC<DeleteCourseModalProps> = ({
       title="Delete Course"
       size="md"
     >
-      <div onKeyDown={handleKeyDown}>
+      <div>
         <div className="space-y-6">
           {/* Warning Icon & Message */}
           <div className="flex items-start gap-4">
@@ -157,6 +154,7 @@ export const DeleteCourseModal: React.FC<DeleteCourseModalProps> = ({
               placeholder="Type DELETE to confirm"
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
               disabled={loading}
               autoFocus

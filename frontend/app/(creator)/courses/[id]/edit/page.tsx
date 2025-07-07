@@ -92,26 +92,27 @@ const CourseBuilderPage = () => {
     {
       delay: 5000, // Increased delay to 5 seconds to reduce timeout issues
       onSave: async (data) => {
-        console.log('🔧 Course onSave called (React Query):', { 
-          hasData: !!data, 
-          hasId: !!data?._id,
-          courseId: data?._id 
-        });
-        
         if (!data || !data._id) {
-          console.error('🔧 Course save failed: missing data or ID', { data });
           throw new Error('Course data or ID is missing');
         }
         
-        console.log('🔧 Calling React Query updateCourse mutation...');
+        // Filter out system fields that backend doesn't expect
+        const {
+          _id, id, created_at, updated_at, creator_id, stats, 
+          total_chapters, total_lessons, total_duration,
+          is_enrolled, has_access, progress_percentage,
+          slug, published_at, creator_name,
+          ...allowedFields
+        } = data;
+        
+        // Filter complete, proceed with update
         
         // Use React Query mutation with Promise wrapper for useAutosave compatibility
         return new Promise((resolve, reject) => {
           updateCourseMutation(
-            { courseId: data._id, courseData: data },
+            { courseId: data._id, courseData: allowedFields },
             {
               onSuccess: (response) => {
-                console.log('🔧 Course save response (React Query):', response);
                 resolve(response);
               },
               onError: (error: any) => {
@@ -140,7 +141,7 @@ const CourseBuilderPage = () => {
       setCourseData(courseResponse.data);
       setTitleInput(courseResponse.data.title);
     } else if (courseResponse && !courseResponse.success) {
-      ToastService.error(courseResponse.message || 'Course not found');
+      ToastService.error(courseResponse.message || 'Something went wrong');
       router.push('/creator/courses');
     }
   }, [courseResponse, user, router, setCourseData]);
@@ -170,7 +171,6 @@ const CourseBuilderPage = () => {
   };
 
   const handleCreateLesson = (chapterId: string) => {
-    console.log('🔍 handleCreateLesson (creator):', { chapterId, type: typeof chapterId });
     
     // Use setTimeout to ensure React state updates are complete
     setTimeout(() => {
@@ -225,19 +225,15 @@ const CourseBuilderPage = () => {
   };
 
   const handleConfirmChapterDelete = async (chapterId: string) => {
-    console.log('🔧 Delete chapter starting (React Query):', { chapterId });
-    
     // Use React Query mutation with Promise wrapper
     return new Promise<void>((resolve, reject) => {
       deleteChapterMutation(chapterId, {
         onSuccess: (response) => {
-          console.log('🔧 Delete chapter success (React Query):', response);
-          ToastService.success(response.message || 'Chapter deleted successfully');
+          ToastService.success(response.message || 'Something went wrong');
           // React Query will automatically invalidate and refetch chapters
           resolve();
         },
         onError: (error: any) => {
-          console.error('🔧 Failed to delete chapter (React Query):', error);
           ToastService.error(error.message || 'Something went wrong');
           reject(error);
         }
@@ -320,19 +316,16 @@ const CourseBuilderPage = () => {
   };
 
   const handleConfirmLessonDelete = async (lessonId: string) => {
-    console.log('🔧 Delete lesson starting (React Query):', { lessonId });
     
     // Use React Query mutation with Promise wrapper
     return new Promise<void>((resolve, reject) => {
       deleteLessonMutation(lessonId, {
         onSuccess: (response) => {
-          console.log('🔧 Delete lesson success (React Query):', response);
-          ToastService.success(response.message || 'Lesson deleted successfully');
+          ToastService.success(response.message || 'Something went wrong');
           // React Query will automatically invalidate and refetch chapters
           resolve();
         },
         onError: (error: any) => {
-          console.error('🔧 Failed to delete lesson (React Query):', error);
           ToastService.error(error.message || 'Something went wrong');
           reject(error);
         }
@@ -341,7 +334,6 @@ const CourseBuilderPage = () => {
   };
 
   const handleChaptersReorder = async (reorderedChapters: any[]) => {
-    console.log('🔧 Reorder chapters starting (React Query):', { count: reorderedChapters.length });
     
     // Prepare data for bulk reorder API
     const reorderData = {
@@ -357,12 +349,10 @@ const CourseBuilderPage = () => {
         { courseId, reorderData },
         {
           onSuccess: (response) => {
-            console.log('🔧 Reorder chapters success (React Query):', response);
             // React Query will automatically invalidate and refetch chapters
             resolve();
           },
           onError: (error: any) => {
-            console.error('🔧 Failed to reorder chapters (React Query):', error);
             ToastService.error(error.message || 'Something went wrong');
             reject(error);
           }
@@ -372,7 +362,6 @@ const CourseBuilderPage = () => {
   };
 
   const handleLessonsReorder = async (chapterId: string, reorderedLessons: any[]) => {
-    console.log('🔧 Reorder lessons starting (React Query):', { chapterId, count: reorderedLessons.length });
     
     // Prepare data for bulk reorder API
     const reorderData = {
@@ -388,12 +377,10 @@ const CourseBuilderPage = () => {
         { chapterId, reorderData },
         {
           onSuccess: (response) => {
-            console.log('🔧 Reorder lessons success (React Query):', response);
             // React Query will automatically invalidate and refetch chapters
             resolve();
           },
           onError: (error: any) => {
-            console.error('🔧 Failed to reorder lessons (React Query):', error);
             ToastService.error(error.message || 'Something went wrong');
             reject(error);
           }
@@ -503,7 +490,6 @@ const CourseBuilderPage = () => {
                 <nav className="space-y-2">
                   <button
                     onClick={() => {
-                      console.log('🔧 Tab switch to General - hasUnsavedChanges:', hasUnsavedChanges);
                       if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
                         return;
                       }
@@ -521,7 +507,6 @@ const CourseBuilderPage = () => {
                   
                   <button
                     onClick={() => {
-                      console.log('🔧 Tab switch to Chapters - hasUnsavedChanges:', hasUnsavedChanges);
                       if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
                         return;
                       }
@@ -539,7 +524,6 @@ const CourseBuilderPage = () => {
                   
                   <button
                     onClick={() => {
-                      console.log('🔧 Tab switch to Settings - hasUnsavedChanges:', hasUnsavedChanges);
                       if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
                         return;
                       }

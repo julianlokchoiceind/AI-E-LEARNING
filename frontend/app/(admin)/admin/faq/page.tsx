@@ -10,7 +10,6 @@ import {
   EyeOff,
   ChevronDown
 } from 'lucide-react';
-import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
@@ -71,12 +70,8 @@ export default function AdminFAQPage() {
     if (editingFaq) {
       updateFAQMutation({ faqId: editingFaq._id, data: formData as FAQUpdateData }, {
         onSuccess: (response) => {
-          ToastService.success(response.message || 'FAQ updated successfully');
           resetForm();
           // React Query will automatically invalidate and refetch FAQs
-        },
-        onError: (error: any) => {
-          ToastService.error(error.message || 'Something went wrong');
         }
       });
     } else {
@@ -88,12 +83,8 @@ export default function AdminFAQPage() {
       
       createFAQMutation(finalFormData, {
         onSuccess: (response) => {
-          ToastService.success(response.message || 'FAQ created successfully');
           resetForm();
           // React Query will automatically invalidate and refetch FAQs
-        },
-        onError: (error: any) => {
-          ToastService.error(error.message || 'Something went wrong');
         }
       });
     }
@@ -104,18 +95,14 @@ export default function AdminFAQPage() {
 
     deleteFAQMutation(faqId, {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'FAQ deleted successfully');
         // React Query will automatically invalidate and refetch FAQs
-      },
-      onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
       }
     });
   };
 
   const handleBulkAction = async (action: 'publish' | 'unpublish' | 'delete') => {
     if (selectedFaqs.size === 0) {
-      ToastService.error('Please select FAQs first');
+      // Don't proceed without selection
       return;
     }
 
@@ -128,11 +115,7 @@ export default function AdminFAQPage() {
     bulkActionMutation({ action, faqIds: Array.from(selectedFaqs) }, {
       onSuccess: (response) => {
         setSelectedFaqs(new Set());
-        ToastService.success(response.message || `Bulk ${action} completed successfully`);
         // React Query will automatically invalidate and refetch FAQs
-      },
-      onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
       }
     });
   };

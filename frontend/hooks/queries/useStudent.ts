@@ -33,11 +33,12 @@ interface LessonCompletion {
  * STUDENT DASHBOARD - Primary student interface
  * Critical: 80% of users start here daily
  */
-export function useStudentDashboardQuery() {
+export function useStudentDashboardQuery(enabled: boolean = true) {
   return useApiQuery(
     ['student-dashboard'],
     () => usersApi.getDashboard(),
     {
+      enabled,
       staleTime: 2 * 60 * 1000, // 2 minutes - recent activity
       gcTime: 10 * 60 * 1000, // 10 minutes cache
     }
@@ -69,7 +70,7 @@ export function useCourseProgressQuery(courseId: string, enabled: boolean = true
   return useApiQuery(
     ['course-progress', courseId],
     async () => {
-      return api.get<any>(`/courses/${courseId}/progress`, { requireAuth: true });
+      return api.get<any>(`/progress/courses/${courseId}/progress`, { requireAuth: true });
     },
     {
       enabled: enabled && !!courseId,
@@ -86,7 +87,7 @@ export function useCourseProgressQuery(courseId: string, enabled: boolean = true
 export function useUpdateLessonProgress() {
   return useApiMutation(
     async ({ lessonId, progress }: LessonProgressUpdate) => {
-      return api.patch<any>(`/lessons/${lessonId}/progress`, progress, { requireAuth: true });
+      return api.put<any>(`/progress/lessons/${lessonId}/progress`, progress, { requireAuth: true });
     },
     {
       invalidateQueries: [
@@ -107,7 +108,7 @@ export function useUpdateLessonProgress() {
 export function useMarkLessonComplete() {
   return useApiMutation(
     async ({ lessonId, courseId, quizScore }: LessonCompletion) => {
-      return api.post<any>(`/lessons/${lessonId}/complete`, 
+      return api.post<any>(`/progress/lessons/${lessonId}/complete`, 
         { courseId, quizScore }, 
         { requireAuth: true }
       );
@@ -118,6 +119,7 @@ export function useMarkLessonComplete() {
         ['my-courses'], // Update course completion status
         ['student-dashboard'], // Update dashboard stats
       ],
+      operationName: 'mark-lesson-complete', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -181,7 +183,7 @@ export function useCourseCompletionQuery(courseId: string) {
   return useApiQuery(
     ['course-completion', courseId],
     async () => {
-      const response = await api.get<any>(`/courses/${courseId}/progress`, { requireAuth: true });
+      const response = await api.get<any>(`/progress/courses/${courseId}/progress`, { requireAuth: true });
       
       const data = response.data;
       const completionData = {
@@ -214,7 +216,7 @@ export function useOnboardingStatusQuery(enabled: boolean = true) {
   return useApiQuery(
     ['onboarding-status'],
     async () => {
-      return api.get<any>('/users/onboarding-status', { requireAuth: true });
+      return api.get<any>('/onboarding/status', { requireAuth: true });
     },
     {
       enabled,
@@ -240,6 +242,7 @@ export function useStartOnboarding() {
         ['onboarding-status'], // Refresh onboarding status
         ['student-dashboard'], // Update dashboard
       ],
+      operationName: 'start-onboarding', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -256,6 +259,7 @@ export function useSkipOnboarding() {
         ['onboarding-status'], // Refresh onboarding status
         ['student-dashboard'], // Update dashboard
       ],
+      operationName: 'skip-onboarding', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -276,6 +280,7 @@ export function useUpdateLearningPath() {
       invalidateQueries: [
         ['onboarding-status'], // Refresh onboarding status
       ],
+      operationName: 'update-learning-path', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -300,6 +305,7 @@ export function useUpdateProfileSetup() {
         ['onboarding-status'], // Refresh onboarding status
         ['student-dashboard'], // Update dashboard with profile
       ],
+      operationName: 'update-profile-setup', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -337,6 +343,7 @@ export function useCompleteOnboarding() {
         ['student-dashboard'], // Update dashboard
         ['my-courses'], // Refresh enrolled courses
       ],
+      operationName: 'complete-onboarding', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -353,13 +360,11 @@ export function useExportProgress() {
     async (params?: { format?: 'pdf' | 'excel' | 'csv'; courseIds?: string[] }) => {
       const { format = 'pdf', courseIds } = params || {};
       
-      return api.post<any>('/student/export-progress', {
-        format,
-        course_ids: courseIds
-      });
+      return api.get<any>(`/users/export-progress?format=${format}`, { requireAuth: true });
     },
     {
       // No need to invalidate queries for export
+      operationName: 'export-progress', // Unique operation ID for toast deduplication
     }
   );
 }

@@ -115,7 +115,6 @@ export const authOptions: NextAuthOptions = {
             
             // Refresh if token expires within 5 minutes
             if (expiryTime && (expiryTime - currentTime) < 300) {
-              console.log('🔄 NextAuth JWT: Token near expiry, attempting refresh...')
               
               if (token.refreshToken) {
                 try {
@@ -125,7 +124,6 @@ export const authOptions: NextAuthOptions = {
                   })
                   
                   if (refreshData.success && refreshData.data) {
-                    console.log('✅ NextAuth JWT: Token refreshed successfully')
                     
                     // Update token with new values
                     token.accessToken = refreshData.data.access_token

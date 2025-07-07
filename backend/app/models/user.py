@@ -103,6 +103,7 @@ class Onboarding(BaseModel):
     current_step: OnboardingStep = OnboardingStep.WELCOME
     skipped: bool = False
     completed_at: Optional[datetime] = None
+    steps_completed: List[str] = Field(default_factory=list)
     
     # Learning preferences collected during onboarding
     selected_paths: List[LearningPath] = Field(default_factory=list)

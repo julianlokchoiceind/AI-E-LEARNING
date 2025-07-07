@@ -20,12 +20,12 @@ export const API_ENDPOINTS = {
 
   // Users
   USERS: {
-    PROFILE: '/users/profile',
-    UPDATE_PROFILE: '/users/profile',
+    PROFILE: '/users/me',
+    UPDATE_PROFILE: '/users/me',
     DASHBOARD: '/users/dashboard',
-    COURSES: '/users/courses',
+    COURSES: '/users/my-courses',
     CERTIFICATES: '/users/certificates',
-    PROGRESS: '/users/progress',
+    PROGRESS: '/users/progress-statistics',
     EXPORT_PROGRESS: (format: string) => `/users/export-progress?format=${format}`,
   },
 
@@ -36,7 +36,8 @@ export const API_ENDPOINTS = {
     CREATE: '/courses',
     UPDATE: (id: string) => `/courses/${id}`,
     DELETE: (id: string) => `/courses/${id}`,
-    ENROLL: (id: string) => `/courses/${id}/enroll`,
+    ENROLL: (id: string) => `/enrollments/courses/${id}/enroll`,
+    PROGRESS: (id: string) => `/progress/courses/${id}/progress`,
     CHAPTERS: (id: string) => `/courses/${id}/chapters`,
     LESSONS: (id: string) => `/courses/${id}/lessons`,
     PREVIEW_LESSON: (courseId: string, lessonId: string) => `/courses/${courseId}/preview/${lessonId}`,
@@ -62,10 +63,10 @@ export const API_ENDPOINTS = {
     CREATE: (chapterId: string, courseId: string) => `/chapters/${chapterId}/lessons?course_id=${courseId}`,
     UPDATE: (id: string) => `/lessons/${id}`,
     DELETE: (id: string) => `/lessons/${id}`,
-    START: (id: string) => `/lessons/${id}/start`,
-    PROGRESS: (id: string) => `/lessons/${id}/progress`,
-    COMPLETE: (id: string) => `/lessons/${id}/complete`,
-    UPLOAD_VIDEO: (id: string) => `/lessons/${id}/upload-video`,
+    START: (id: string) => `/progress/lessons/${id}/start`,
+    PROGRESS: (id: string) => `/progress/lessons/${id}/progress`,
+    COMPLETE: (id: string) => `/progress/lessons/${id}/complete`,
+    UPLOAD_VIDEO: (id: string) => `/lessons/${id}/video`,
     REORDER: (id: string) => `/lessons/${id}/reorder`,
   },
 

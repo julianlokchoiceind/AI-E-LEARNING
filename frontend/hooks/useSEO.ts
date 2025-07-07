@@ -113,8 +113,7 @@ export function usePageTracking() {
         window.fbq('track', 'PageView');
       }
 
-      // Custom analytics
-      console.log('Page view tracked:', pathname);
+      // Custom analytics tracked
     }
   }, [pathname]);
 
@@ -130,8 +129,7 @@ export function usePageTracking() {
         window.fbq('track', eventName, parameters);
       }
 
-      // Custom analytics
-      console.log('Event tracked:', eventName, parameters);
+      // Custom analytics tracked
     }
   };
 

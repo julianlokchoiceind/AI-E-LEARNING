@@ -61,7 +61,6 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
   courseId,
   onLessonCreated
 }) => {
-  console.log('🔍 CreateLessonModal props:', { chapterId, courseId, isOpen });
   const [formData, setFormData] = useState<LessonFormData>({
     title: '',
     description: '',
@@ -134,13 +133,13 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
     // 🔧 FIX: Validate chapter ID before proceeding
     if (!chapterId) {
       ToastService.error('Chapter ID is missing. Please refresh the page and try again.');
-      console.error('🔧 CreateLesson failed: Chapter ID is missing', { chapterId, courseId });
+      // Chapter ID validation error - already shown in toast
       return;
     }
 
     if (!courseId) {
       ToastService.error('Course ID is missing. Please refresh the page and try again.');
-      console.error('🔧 CreateLesson failed: Course ID is missing', { chapterId, courseId });
+      // Course ID validation error - already shown in toast
       return;
     }
 
@@ -156,7 +155,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
       description: formData.description.trim() || undefined,
     };
 
-    console.log('🔧 CreateLesson API call data:', { lessonData, chapterId, courseId });
+    // Lesson data prepared for API call
 
     // Add video data if provided
     if (formData.video_url && formData.video_url.trim()) {
@@ -175,11 +174,11 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
     // React Query mutation - automatic error handling and state management
     createLessonMutation(lessonData, {
       onSuccess: (response) => {
-        console.log('🔧 CreateLessonModal - Success response:', response);
+        // Lesson created successfully
         
         if (response.success && response.data) {
           onLessonCreated(response.data);
-          ToastService.success(response.message || 'Something went wrong');
+          // Toast is already shown by useApiMutation with operation ID 'create-lesson'
           
           // Reset form and close modal
           setFormData({ 
@@ -190,13 +189,11 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
           });
           setErrors({});
           onClose();
-        } else {
-          ToastService.error(response.message || 'Something went wrong');
         }
       },
       onError: (error: any) => {
-        console.error('Failed to create lesson:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Error already handled by useApiMutation
+        // Toast is already shown by useApiMutation with operation ID 'create-lesson-error'
         setErrors({});
       }
     });
@@ -225,7 +222,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
 
   // 🔧 FIX: Don't render modal if missing required IDs
   if (!chapterId || !courseId) {
-    console.warn('🔧 CreateLessonModal not rendering: missing required IDs', { chapterId, courseId });
+    // This is expected when modal is closed - no need to warn
     return null;
   }
 

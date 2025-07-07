@@ -2,6 +2,8 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ToastService } from '@/lib/toast/ToastService';
 import { 
   getFAQs,
   createFAQ,
@@ -47,6 +49,7 @@ export function useCreateFAQ() {
   return useApiMutation(
     (faqData: FAQCreateData) => createFAQ(faqData),
     {
+      operationName: 'create-faq',
       invalidateQueries: [
         ['faqs'], // Refresh FAQ list
         ['faq-categories'], // Update categories if new category added
@@ -63,6 +66,7 @@ export function useUpdateFAQ() {
   return useApiMutation(
     ({ faqId, data }: { faqId: string; data: FAQUpdateData }) => updateFAQ(faqId, data),
     {
+      operationName: 'update-faq',
       invalidateQueries: [
         ['faqs'], // Refresh FAQ list
         ['faq', 'faqId'], // Refresh specific FAQ if viewing
@@ -72,18 +76,100 @@ export function useUpdateFAQ() {
 }
 
 /**
- * DELETE FAQ - Remove FAQ item
+ * DELETE FAQ - Remove FAQ item with optimistic update
  * Critical: Content management
  */
 export function useDeleteFAQ() {
-  return useApiMutation(
-    (faqId: string) => deleteFAQ(faqId),
-    {
-      invalidateQueries: [
-        ['faqs'], // Refresh FAQ list
-      ],
+  const queryClient = useQueryClient();
+  
+  // Using native React Query for optimistic updates
+  const mutation = useMutation({
+    mutationFn: (faqId: string) => deleteFAQ(faqId),
+    
+    // Optimistic update - Update UI immediately
+    onMutate: async (faqId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'faqs'
+      });
+      
+      // Snapshot previous value
+      const previousFAQs = queryClient.getQueryData(['faqs']);
+      
+      // Optimistically remove FAQ from list
+      queryClient.setQueryData(['faqs'], (old: any) => {
+        if (!old) return old;
+        
+        // Handle different data structures
+        const faqs = old?.data?.faqs || old?.faqs || [];
+        const filteredFAQs = faqs.filter((faq: any) => {
+          const id = faq._id || faq.id;
+          return id !== faqId;
+        });
+        
+        // Maintain same structure
+        if (old?.data?.faqs) {
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              faqs: filteredFAQs,
+              total: filteredFAQs.length
+            }
+          };
+        }
+        
+        return {
+          ...old,
+          faqs: filteredFAQs,
+          total: filteredFAQs.length
+        };
+      });
+      
+      return { previousFAQs, faqId };
+    },
+    
+    // Rollback on error
+    onError: (error: any, faqId: string, context: any) => {
+      if (context?.previousFAQs) {
+        queryClient.setQueryData(['faqs'], context.previousFAQs);
+      }
+    },
+    
+    // Always refetch to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: ['faqs'],
+        refetchType: 'active'
+      });
     }
-  );
+  });
+  
+  // Return wrapper to maintain useApiMutation interface
+  return {
+    mutate: (faqId: string, options?: { onSuccess?: () => void; onError?: (error: any) => void }) => {
+      mutation.mutate(faqId, {
+        onSuccess: (response) => {
+          ToastService.success(response?.message || 'Something went wrong', 'delete-faq');
+          if (options?.onSuccess) {
+            options.onSuccess();
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error?.message || 'Something went wrong', 'delete-faq-error');
+          if (options?.onError) {
+            options.onError(error);
+          }
+        }
+      });
+    },
+    mutateAsync: mutation.mutateAsync,
+    loading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    data: mutation.data,
+  };
 }
 
 /**
@@ -135,6 +221,7 @@ export function usePublishFAQ() {
       invalidateQueries: [
         ['faqs'], // Refresh FAQ list
       ],
+      operationName: 'publish-faq', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -170,6 +257,7 @@ export function useBulkFAQActions() {
       };
     },
     {
+      operationName: 'bulk-faq-action',
       invalidateQueries: [
         ['faqs'], // Refresh FAQ list
       ],
@@ -189,6 +277,7 @@ export function useVoteFAQ() {
       invalidateQueries: [
         ['faqs'], // Refresh FAQ list to show updated vote counts
       ],
+      operationName: 'vote-faq', // Unique operation ID for toast deduplication
     }
   );
 }

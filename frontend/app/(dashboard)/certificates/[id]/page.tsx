@@ -46,7 +46,7 @@ const CertificateViewPage = () => {
     {
       onSuccess: (response) => {
         setShowEditModal(false);
-        ToastService.success(response.message || 'Certificate updated successfully');
+        ToastService.success(response.message || 'Something went wrong');
         refetch(); // Refresh certificate data
       },
       onError: (error: any) => {

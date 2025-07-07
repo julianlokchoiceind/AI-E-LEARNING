@@ -113,6 +113,7 @@ export function useCreateQuiz() {
       return quizAPI.createQuiz(quizData);
     },
     {
+      operationName: 'create-quiz',
       invalidateQueries: [
         ['lesson-quiz'], // Refresh lesson quiz
         ['course-content'], // Refresh course content

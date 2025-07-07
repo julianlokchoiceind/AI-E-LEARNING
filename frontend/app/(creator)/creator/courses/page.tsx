@@ -61,7 +61,7 @@ const CreatorCoursesPage = () => {
     deleteCourse(courseId, {
       onSuccess: (response) => {
         if (response.success) {
-          ToastService.success(response.message || 'Course deleted successfully');
+          ToastService.success(response.message || 'Something went wrong');
           refetchCourses(); // Refresh courses list
         } else {
           ToastService.error(response.message || 'Something went wrong');

@@ -110,7 +110,6 @@ export const useVideoOptimization = (options: VideoOptimizationOptions = {}) => 
               optimalQuality: autoQuality ? quality : prev.quality
             }));
           } catch (error) {
-            console.warn('Network speed test failed:', error);
           }
         };
         

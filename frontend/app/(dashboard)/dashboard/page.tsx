@@ -57,12 +57,14 @@ export default function DashboardPage() {
   const accessError = searchParams.get('error');
   
   // React Query hook - automatic caching and state management
-  const { data: dashboardResponse, loading, execute: refetchDashboard } = useStudentDashboardQuery();
+  // Only fetch when user is authenticated
+  const { data: dashboardResponse, loading, execute: refetchDashboard } = useStudentDashboardQuery(!authLoading && !!user);
   
   const { shouldShowOnboarding, refetchStatus } = useOnboarding();
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   
   // Extract dashboard data from React Query response
+  // dashboardResponse is already StandardResponse<DashboardData>
   const dashboardData = dashboardResponse?.data || null;
 
   // Redirect to login if not authenticated

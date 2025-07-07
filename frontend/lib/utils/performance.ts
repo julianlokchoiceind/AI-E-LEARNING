@@ -34,7 +34,6 @@ class PerformanceMonitor {
   endTiming(label: string): number | null {
     const timing = this.timings.get(label);
     if (!timing) {
-      console.warn(`Performance timing '${label}' not found`);
       return null;
     }
 
@@ -278,13 +277,10 @@ export function analyzeBundleSize(): void {
       const size = blob.size;
       totalSize += size;
       
-      console.log(`📦 Script size: ${script.src} - ${(size / 1024).toFixed(2)}KB`);
     } catch (error) {
-      console.warn('Could not measure script size:', script.src);
     }
   });
 
-  console.log(`📦 Total bundle size: ${(totalSize / 1024).toFixed(2)}KB`);
 }
 
 // Export React hook for performance monitoring
@@ -365,6 +361,5 @@ if (typeof window !== 'undefined') {
   // Log performance summary on page unload
   window.addEventListener('beforeunload', () => {
     const summary = perfMonitor.getSummary();
-    console.log('📊 Performance Summary:', summary);
   });
 }

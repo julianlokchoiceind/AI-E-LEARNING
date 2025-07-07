@@ -548,3 +548,171 @@ async def generate_pdf_export(progress_data: list, summary_stats: dict, user_nam
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+@router.get("/recent-courses", response_model=StandardResponse[list], status_code=status.HTTP_200_OK)
+@measure_performance("api.users.recent_courses")
+async def get_recent_courses(
+    limit: int = Query(default=5, ge=1, le=20),
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[list]:
+    """Get recently accessed courses with progress information."""
+    try:
+        # Get all enrollments
+        enrollments = await enrollment_service.get_user_enrollments(str(current_user.id))
+        
+        # Sort by last accessed date
+        recent_enrollments = sorted(
+            enrollments,
+            key=lambda e: e.progress.last_accessed or e.enrolled_at,
+            reverse=True
+        )[:limit]
+        
+        # Get course details for recent enrollments
+        recent_courses = []
+        for enrollment in recent_enrollments:
+            course = await Course.get(enrollment.course_id)
+            if course:
+                recent_courses.append({
+                    "id": str(course.id),
+                    "title": course.title,
+                    "thumbnail": course.thumbnail,
+                    "progress": enrollment.progress.completion_percentage,
+                    "last_accessed": enrollment.progress.last_accessed,
+                    "enrolled_at": enrollment.enrolled_at,
+                    "is_completed": enrollment.progress.is_completed
+                })
+        
+        return StandardResponse(
+            success=True,
+            data=recent_courses,
+            message=f"Found {len(recent_courses)} recent courses"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+@router.get("/progress-statistics", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
+@measure_performance("api.users.progress_statistics")
+async def get_progress_statistics(
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """Get detailed learning progress statistics."""
+    try:
+        # Get all enrollments
+        enrollments = await enrollment_service.get_user_enrollments(str(current_user.id))
+        
+        # Calculate statistics
+        total_courses = len(enrollments)
+        completed_courses = sum(1 for e in enrollments if e.progress.is_completed)
+        in_progress_courses = total_courses - completed_courses
+        
+        # Calculate total hours and completion rate
+        total_hours = sum(e.progress.total_watch_time / 60 for e in enrollments)
+        completion_rate = (completed_courses / total_courses * 100) if total_courses > 0 else 0
+        
+        # Get progress by category
+        category_progress = {}
+        for enrollment in enrollments:
+            course = await Course.get(enrollment.course_id)
+            if course:
+                category = course.category
+                if category not in category_progress:
+                    category_progress[category] = {
+                        "total": 0,
+                        "completed": 0,
+                        "in_progress": 0,
+                        "hours": 0
+                    }
+                category_progress[category]["total"] += 1
+                if enrollment.progress.is_completed:
+                    category_progress[category]["completed"] += 1
+                else:
+                    category_progress[category]["in_progress"] += 1
+                category_progress[category]["hours"] += enrollment.progress.total_watch_time / 60
+        
+        # Calculate weekly progress
+        from datetime import timedelta
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        recent_activity = []
+        
+        # Get progress records from last 7 days
+        for enrollment in enrollments:
+            if enrollment.progress.last_accessed and enrollment.progress.last_accessed > week_ago:
+                recent_activity.append({
+                    "date": enrollment.progress.last_accessed.date(),
+                    "minutes": enrollment.progress.total_watch_time / 60
+                })
+        
+        statistics = {
+            "overview": {
+                "total_courses": total_courses,
+                "completed_courses": completed_courses,
+                "in_progress_courses": in_progress_courses,
+                "total_hours_learned": round(total_hours, 1),
+                "completion_rate": round(completion_rate, 1),
+                "certificates_earned": current_user.stats.certificates_earned,
+                "current_streak": current_user.stats.current_streak,
+                "longest_streak": current_user.stats.longest_streak
+            },
+            "category_breakdown": category_progress,
+            "recent_activity": recent_activity,
+            "member_since": current_user.created_at,
+            "last_active": current_user.stats.last_active
+        }
+        
+        return StandardResponse(
+            success=True,
+            data=statistics,
+            message="Progress statistics retrieved successfully"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+@router.get("/certificates", response_model=StandardResponse[list], status_code=status.HTTP_200_OK)
+@measure_performance("api.users.certificates")
+async def get_my_certificates(
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[list]:
+    """Get all certificates earned by the user."""
+    try:
+        # Get all completed enrollments with certificates
+        enrollments = await Enrollment.find({
+            "user_id": str(current_user.id),
+            "certificate.is_issued": True
+        }).to_list()
+        
+        certificates = []
+        for enrollment in enrollments:
+            course = await Course.get(enrollment.course_id)
+            if course:
+                certificates.append({
+                    "certificate_id": enrollment.certificate.certificate_id,
+                    "course_id": str(course.id),
+                    "course_title": course.title,
+                    "course_thumbnail": course.thumbnail,
+                    "issued_at": enrollment.certificate.issued_at,
+                    "final_score": enrollment.certificate.final_score,
+                    "verification_url": enrollment.certificate.verification_url,
+                    "instructor_name": course.creator_name,
+                    "course_duration": course.total_duration,
+                    "completion_date": enrollment.progress.completed_at
+                })
+        
+        # Sort by issue date (newest first)
+        certificates.sort(key=lambda x: x["issued_at"], reverse=True)
+        
+        return StandardResponse(
+            success=True,
+            data=certificates,
+            message=f"Found {len(certificates)} certificates"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )

@@ -31,7 +31,7 @@ export function useAISuggestionsQuery(params: AISuggestionsParams, enabled: bool
         course_id: params.course_id,
         lesson_id: params.lesson_id,
         user_level: params.user_level
-      });
+      }, { requireAuth: true });
       return response as StandardResponse<any>;
     },
     {
@@ -68,7 +68,7 @@ export function useLearningPathRecommendationsQuery(userId?: string) {
   return useApiQuery(
     ['learning-path-recommendations', userId],
     async (): Promise<StandardResponse<any>> => {
-      const response = await api.get('/ai/learning-path');
+      const response = await api.get('/ai/learning-path', { requireAuth: true });
       return response as StandardResponse<any>;
     },
     {
@@ -88,7 +88,7 @@ export function useGenerateQuizMutation() {
       const response = await api.post('/ai/generate-quiz', {
         lesson_id: lessonId,
         difficulty: difficulty || 'medium'
-      });
+      }, { requireAuth: true });
       return response as StandardResponse<any>;
     },
     {
@@ -137,7 +137,7 @@ export function useSendAIMessage() {
       const response = await api.post('/ai/chat', {
         message: params.message,
         context: params.context || {}
-      });
+      }, { requireAuth: true });
       return response as StandardResponse<any>;
     },
     {
@@ -151,7 +151,7 @@ export function useSendAIMessage() {
 /**
  * Get conversation history for current user
  */
-export function useGetConversationHistory(courseId?: string, lessonId?: string) {
+export function useGetConversationHistory(courseId?: string, lessonId?: string, enabled: boolean = false) {
   return useApiQuery(
     ['conversation-history', courseId, lessonId],
     async (): Promise<StandardResponse<any>> => {
@@ -159,10 +159,11 @@ export function useGetConversationHistory(courseId?: string, lessonId?: string) 
       if (courseId) params.append('course_id', courseId);
       if (lessonId) params.append('lesson_id', lessonId);
       
-      const response = await api.get(`/ai/conversation-history?${params.toString()}`);
+      const response = await api.get(`/ai/conversation-history?${params.toString()}`, { requireAuth: true });
       return response as StandardResponse<any>;
     },
     {
+      enabled, // Only run when explicitly enabled
       staleTime: 5 * 60 * 1000, // 5 minutes - conversation history changes frequently
       gcTime: 15 * 60 * 1000, // 15 minutes cache
     }
@@ -175,7 +176,7 @@ export function useGetConversationHistory(courseId?: string, lessonId?: string) 
 export function useClearConversationHistory() {
   return useApiMutation(
     async (params?: { courseId?: string; lessonId?: string }): Promise<StandardResponse<any>> => {
-      const response = await api.delete('/ai/conversation-history');
+      const response = await api.delete('/ai/conversation-history', { requireAuth: true });
       return response as StandardResponse<any>;
     },
     {

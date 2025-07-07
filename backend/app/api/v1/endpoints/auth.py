@@ -30,7 +30,10 @@ from app.schemas.auth import (
     EmailVerificationResend,
     OAuthUserCreate,
     TokenWithRefresh,
-    RefreshTokenRequest
+    RefreshTokenRequest,
+    ChangePasswordRequest,
+    UserPreferencesUpdate,
+    UserPreferencesResponse
 )
 from app.api.deps import get_current_user
 from app.schemas.base import StandardResponse, ErrorResponse
@@ -712,6 +715,172 @@ async def resend_verification(request: Request, email_request: EmailVerification
         success=True,
         data={"email": user["email"]},
         message="Verification email sent successfully"
+    )
+
+
+@router.put("/change-password", response_model=StandardResponse[dict])
+@limiter.limit(AUTH_RATE_LIMITS["change_password"])
+async def change_password(
+    request: Request,
+    password_data: ChangePasswordRequest,
+    current_user: dict = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """
+    Change password for authenticated user.
+    """
+    db = get_database()
+    
+    # Get full user data with password
+    user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # For OAuth users without password
+    if not user.get("password"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot change password for OAuth users"
+        )
+    
+    # Verify current password
+    if not verify_password(password_data.current_password, user["password"]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect"
+        )
+    
+    # Update password
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {
+                "password": get_password_hash(password_data.new_password),
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    logger.info(f"Password changed for user: {user['email']}")
+    
+    return StandardResponse(
+        success=True,
+        data={"email": user["email"]},
+        message="Password changed successfully"
+    )
+
+
+@router.get("/preferences", response_model=StandardResponse[UserPreferencesResponse])
+@limiter.limit(AUTH_RATE_LIMITS["preferences"])
+async def get_preferences(
+    request: Request,
+    current_user: dict = Depends(get_current_user)
+) -> StandardResponse[UserPreferencesResponse]:
+    """
+    Get user preferences.
+    """
+    db = get_database()
+    
+    # Get user data
+    user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Get preferences with defaults if not set
+    preferences = user.get("preferences", {})
+    
+    response = UserPreferencesResponse(
+        language=preferences.get("language", "vi"),
+        timezone=preferences.get("timezone", "Asia/Ho_Chi_Minh"),
+        email_notifications=preferences.get("email_notifications", True),
+        push_notifications=preferences.get("push_notifications", True),
+        marketing_emails=preferences.get("marketing_emails", False)
+    )
+    
+    return StandardResponse(
+        success=True,
+        data=response,
+        message="Preferences retrieved successfully"
+    )
+
+
+@router.put("/preferences", response_model=StandardResponse[UserPreferencesResponse])
+@limiter.limit(AUTH_RATE_LIMITS["preferences"])
+async def update_preferences(
+    request: Request,
+    preferences_data: UserPreferencesUpdate,
+    current_user: dict = Depends(get_current_user)
+) -> StandardResponse[UserPreferencesResponse]:
+    """
+    Update user preferences.
+    """
+    db = get_database()
+    
+    # Get current user preferences
+    user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Get existing preferences
+    current_preferences = user.get("preferences", {
+        "language": "vi",
+        "timezone": "Asia/Ho_Chi_Minh",
+        "email_notifications": True,
+        "push_notifications": True,
+        "marketing_emails": False
+    })
+    
+    # Update only provided fields
+    update_data = {}
+    if preferences_data.language is not None:
+        update_data["preferences.language"] = preferences_data.language
+    if preferences_data.timezone is not None:
+        update_data["preferences.timezone"] = preferences_data.timezone
+    if preferences_data.email_notifications is not None:
+        update_data["preferences.email_notifications"] = preferences_data.email_notifications
+    if preferences_data.push_notifications is not None:
+        update_data["preferences.push_notifications"] = preferences_data.push_notifications
+    if preferences_data.marketing_emails is not None:
+        update_data["preferences.marketing_emails"] = preferences_data.marketing_emails
+    
+    # Add updated_at timestamp
+    update_data["updated_at"] = datetime.utcnow()
+    
+    # Update database
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": update_data}
+    )
+    
+    # Get updated preferences
+    updated_user = await db.users.find_one({"_id": user["_id"]})
+    updated_preferences = updated_user.get("preferences", current_preferences)
+    
+    response = UserPreferencesResponse(
+        language=updated_preferences.get("language", "vi"),
+        timezone=updated_preferences.get("timezone", "Asia/Ho_Chi_Minh"),
+        email_notifications=updated_preferences.get("email_notifications", True),
+        push_notifications=updated_preferences.get("push_notifications", True),
+        marketing_emails=updated_preferences.get("marketing_emails", False)
+    )
+    
+    logger.info(f"Preferences updated for user: {user['email']}")
+    
+    return StandardResponse(
+        success=True,
+        data=response,
+        message="Preferences updated successfully"
     )
 
 

@@ -158,7 +158,6 @@ export const createLesson = async (data: LessonCreateData): Promise<StandardResp
       throw new Error(response.message || 'Something went wrong');
     }
     
-    console.log('Lesson created successfully', { lessonId: response.data?._id, chapterId: data.chapter_id });
     return response;
   }, LessonErrors.CREATE_FAILED);
 };
@@ -287,10 +286,6 @@ export const reorderLessons = async (
       throw new Error(response.message || 'Something went wrong');
     }
     
-    console.log('Lessons reordered successfully', { 
-      chapterId, 
-      lessonCount: reorderData.lesson_orders.length 
-    });
     return response;
   }, LessonErrors.REORDER_FAILED);
 };

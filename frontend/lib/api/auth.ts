@@ -40,10 +40,8 @@ export interface UserResponse {
  * Register a new user
  */
 export async function registerUser(data: RegisterData): Promise<StandardResponse<UserResponse>> {
-  console.log('[AUTH API DEBUG] registerUser called with:', data);
   
   try {
-    console.log('[AUTH API DEBUG] Making API request to /auth/register');
     
     const response = await api.post<StandardResponse<UserResponse>>(
       '/auth/register',
@@ -53,7 +51,6 @@ export async function registerUser(data: RegisterData): Promise<StandardResponse
       }
     )
 
-    console.log('[AUTH API DEBUG] Registration API response:', response);
     
     return response;
   } catch (error) {
@@ -192,7 +189,7 @@ export interface ChangePasswordData {
  * Get user profile information
  */
 export async function getUserProfile(): Promise<StandardResponse<UserResponse & { profile?: UserProfileData }>> {
-  const response = await api.get<StandardResponse<UserResponse & { profile?: UserProfileData }>>('/auth/profile')
+  const response = await api.get<StandardResponse<UserResponse & { profile?: UserProfileData }>>('/users/me')
   return response
 }
 
@@ -200,7 +197,7 @@ export async function getUserProfile(): Promise<StandardResponse<UserResponse & 
  * Update user profile information
  */
 export async function updateProfile(data: UserProfileData): Promise<StandardResponse<UserResponse>> {
-  const response = await api.put<StandardResponse<UserResponse>>('/auth/profile', data)
+  const response = await api.put<StandardResponse<UserResponse>>('/users/me', data)
   return response
 }
 
@@ -232,7 +229,7 @@ export async function updateUserPreferences(data: UserPreferencesData): Promise<
  * Check current session validity
  */
 export async function checkSession(): Promise<StandardResponse<UserResponse>> {
-  const response = await api.get<StandardResponse<UserResponse>>('/auth/me')
+  const response = await api.get<StandardResponse<UserResponse>>('/users/me')
   return response
 }
 

@@ -177,7 +177,7 @@ const LessonEditPage = () => {
       updateLessonMutation({ lessonId: lesson._id, data: updatedLesson }, {
         onSuccess: (response) => {
           if (response.success) {
-            ToastService.success(response.message || 'Lesson title updated');
+            ToastService.success(response.message || 'Something went wrong');
             refetchLesson(); // Refresh lesson data
           } else {
             ToastService.error(response.message || 'Something went wrong');
@@ -305,7 +305,7 @@ const LessonEditPage = () => {
       updateQuizMutation({ lessonId: lesson._id, quiz: updatePayload }, {
         onSuccess: (response) => {
           if (response.success && response.data) {
-            ToastService.success(response.message || 'Quiz updated successfully');
+            ToastService.success(response.message || 'Something went wrong');
             refetchQuiz(); // Refresh quiz data
           } else {
             ToastService.error(response.message || 'Something went wrong');
@@ -344,7 +344,7 @@ const LessonEditPage = () => {
       createQuizMutation({ lessonId: lesson._id, quiz: createPayload }, {
         onSuccess: (response) => {
           if (response.success && response.data) {
-            ToastService.success(response.message || 'Quiz created successfully');
+            ToastService.success(response.message || 'Something went wrong');
             refetchQuiz(); // Refresh quiz data
           } else {
             ToastService.error(response.message || 'Something went wrong');

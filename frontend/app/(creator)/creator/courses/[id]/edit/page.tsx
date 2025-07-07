@@ -126,12 +126,10 @@ const CourseBuilderPage = () => {
   };
 
   const handleChapterCreated = (newChapter: ChapterResponse) => {
-    console.log('🔧 handleChapterCreated - Chapter created successfully:', newChapter);
-    
     // React Query will automatically refetch chapters
     refetchChapters();
     
-    ToastService.success('Chapter created successfully');
+    // Toast is already shown in CreateChapterModal
   };
 
   const handleCreateLesson = (chapterId: string) => {
@@ -140,12 +138,10 @@ const CourseBuilderPage = () => {
   };
 
   const handleLessonCreated = (newLesson: LessonResponse) => {
-    console.log('🔧 handleLessonCreated - Lesson created successfully:', newLesson);
-    
     // React Query will automatically refetch chapters with lessons
     refetchChapters();
     
-    ToastService.success('Lesson created successfully');
+    // Toast is already shown in CreateLessonModal
   };
 
   const handleChapterEdit = (chapterId: string) => {
@@ -168,12 +164,10 @@ const CourseBuilderPage = () => {
   };
 
   const handleChapterUpdated = (updatedChapter: ChapterEditData) => {
-    console.log('🔧 handleChapterUpdated - Chapter updated successfully:', updatedChapter);
-    
     // React Query will automatically refetch chapters
     refetchChapters();
     
-    ToastService.success('Chapter updated successfully');
+    // Toast is already shown in EditChapterModal
   };
 
   const handleChapterDelete = (chapterId: string) => {
@@ -193,12 +187,11 @@ const CourseBuilderPage = () => {
   const handleConfirmChapterDelete = async (chapterId: string) => {
     try {
       deleteChapterAction(chapterId, {
-        onSuccess: (response) => {
-          ToastService.success(response.message || 'Something went wrong');
+        onSuccess: () => {
+          // Toast is already shown in useDeleteChapter hook
           // React Query will automatically refetch chapters
         },
         onError: (error: any) => {
-          console.error('Failed to delete chapter:', error);
           ToastService.error(error.message || 'Something went wrong');
           throw error; // Re-throw to handle in modal
         }
@@ -246,12 +239,10 @@ const CourseBuilderPage = () => {
   };
 
   const handleLessonUpdated = (updatedLesson: LessonEditData) => {
-    console.log('🔧 handleLessonUpdated - Lesson updated successfully:', updatedLesson);
-    
     // React Query will automatically refetch chapters with lessons
     refetchChapters();
     
-    ToastService.success('Lesson updated successfully');
+    // Toast is already shown in EditLessonModal
   };
 
   const handleLessonDelete = (lessonId: string) => {
@@ -288,8 +279,8 @@ const CourseBuilderPage = () => {
   const handleConfirmLessonDelete = async (lessonId: string) => {
     try {
       deleteLessonAction(lessonId, {
-        onSuccess: (response) => {
-          ToastService.success(response.message || 'Something went wrong');
+        onSuccess: () => {
+          // Toast is already shown in useDeleteLesson hook
           // React Query will automatically refetch chapters with lessons
         },
         onError: (error: any) => {
@@ -317,12 +308,12 @@ const CourseBuilderPage = () => {
       const response = await reorderChaptersAction({ courseId, reorderData });
       
       if (response.success) {
-        ToastService.success('Chapters reordered successfully');
+        // Toast is already shown by useApiMutation with operation ID 'reorder-chapters'
         // React Query will automatically refetch chapters
       }
     } catch (error: any) {
       console.error('Failed to reorder chapters:', error);
-      ToastService.error(error.message || 'Something went wrong');
+      // Toast is already shown by useApiMutation with operation ID 'reorder-chapters-error'
       throw error; // Re-throw so DroppableChapterList can handle it
     }
   };
@@ -341,12 +332,12 @@ const CourseBuilderPage = () => {
       const response = await reorderLessonsAction({ chapterId, reorderData });
       
       if (response.success) {
-        ToastService.success('Lessons reordered successfully');
+        // Toast is already shown by useApiMutation with operation ID for lesson reorder
         // React Query will automatically refetch chapters with lessons
       }
     } catch (error: any) {
       console.error('Failed to reorder lessons:', error);
-      ToastService.error(error.message || 'Something went wrong');
+      // Toast is already shown by useApiMutation with operation ID for lesson reorder error
       throw error; // Re-throw so DroppableLessonList can handle it
     }
   };

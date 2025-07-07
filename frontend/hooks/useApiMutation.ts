@@ -10,6 +10,7 @@ interface UseApiMutationOptions<TData, TVariables> {
   onError?: (error: AppError, variables: TVariables) => void;
   invalidateQueries?: string[][];
   showToast?: boolean;
+  operationName?: string; // For toast deduplication
 }
 
 /**
@@ -26,6 +27,7 @@ export function useApiMutation<TData = any, TVariables = any>(
     onError,
     invalidateQueries = [],
     showToast = true,
+    operationName = 'mutation',
   } = options;
 
   const mutation = useMutation<StandardResponse<TData>, AppError, TVariables>({
@@ -35,25 +37,29 @@ export function useApiMutation<TData = any, TVariables = any>(
         
         // Show success toast if enabled and message exists
         if (showToast && response.message) {
-          ToastService.success(response.message, `mutation-${Date.now()}`);
+          // Generate operation-based ID for deduplication
+          const toastId = generateToastId(operationName, variables);
+          ToastService.success(response.message, toastId);
         }
         
         return response;
       } catch (error: any) {
         const appError = handleError(error, false); // Prevent auto-toast, handle manually
         if (showToast) {
-          ToastService.error(appError.message, `mutation-error-${Date.now()}`);
+          // Generate operation-based ID for deduplication
+          const toastId = generateToastId(`${operationName}-error`, variables);
+          ToastService.error(appError.message, toastId);
         }
         throw appError;
       }
     },
     onSuccess: (response, variables) => {
-      // Invalidate specified queries
+      // Invalidate specified queries FIRST
       invalidateQueries.forEach(queryKey => {
         queryClient.invalidateQueries({ queryKey });
       });
       
-      // Call custom success handler
+      // Then call custom success handler (which may do additional invalidations)
       if (onSuccess) {
         onSuccess(response, variables);
       }
@@ -87,7 +93,8 @@ export function useApiMutation<TData = any, TVariables = any>(
       
       // Show success toast with operation ID to prevent duplicates
       if (showToast && response.message) {
-        ToastService.success(response.message, `execute-${Date.now()}`);
+        const toastId = `${operationName}-execute`;
+        ToastService.success(response.message, toastId);
       }
       
       // Call success handler
@@ -100,7 +107,8 @@ export function useApiMutation<TData = any, TVariables = any>(
       const appError = handleError(error, false); // Prevent auto-toast
       
       if (showToast) {
-        ToastService.error(appError.message, `execute-error-${Date.now()}`);
+        const toastId = `${operationName}-execute-error`;
+        ToastService.error(appError.message, toastId);
       }
       
       // Call error handler
@@ -129,4 +137,27 @@ export function useApiMutation<TData = any, TVariables = any>(
     // Raw mutation object for advanced usage
     mutation,
   };
+}
+
+/**
+ * Generate operation-based toast ID for deduplication
+ * @param operationName - The operation name (e.g., 'delete-course', 'update-profile')
+ * @param variables - The mutation variables that may contain IDs
+ * @returns A stable toast ID for the operation
+ */
+function generateToastId(operationName: string, variables?: any): string {
+  // If variables contain an ID, append it for uniqueness per resource
+  if (variables) {
+    // Common ID fields to check
+    const idFields = ['id', '_id', 'courseId', 'userId', 'lessonId', 'chapterId'];
+    
+    for (const field of idFields) {
+      if (variables[field]) {
+        return `${operationName}-${variables[field]}`;
+      }
+    }
+  }
+  
+  // Default to just operation name
+  return operationName;
 }

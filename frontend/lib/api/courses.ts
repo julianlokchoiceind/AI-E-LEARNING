@@ -83,12 +83,13 @@ export const createCourse = async (): Promise<StandardResponse<CreateCourseData>
 
 // Update course
 export const updateCourse = async (courseId: string, data: Partial<CourseResponse>): Promise<StandardResponse<CourseDetailData>> => {
+  
   return api.put<StandardResponse<CourseDetailData>>(
     `/courses/${courseId}`,
     data,
     { 
-      requireAuth: true,
-      timeout: 60000 // 60 seconds timeout for course updates
+      requireAuth: true
+      // Remove specific timeout to use default 120000ms
     }
   );
 };
@@ -101,11 +102,4 @@ export const deleteCourse = async (courseId: string): Promise<StandardResponse<a
   );
 };
 
-// Enroll in course
-export const enrollInCourse = async (courseId: string): Promise<StandardResponse<any>> => {
-  return api.post<StandardResponse<any>>(
-    `/courses/${courseId}/enroll`,
-    null,
-    { requireAuth: true }
-  );
-};
+// Enroll in course - REMOVED: Use enrollInCourse from enrollments.ts instead

@@ -730,7 +730,7 @@ frontend/
 | **API Calls** | `useApiQuery` + `useApiMutation` + `NO direct fetch()` | `/hooks/useApiQuery.ts`, `/hooks/useApiMutation.ts` |
 | **Authentication** | `NextAuth` + `useAuth` hook + `JWT verification` | `/hooks/useAuth.ts` |
 | **Data Fetching** | `React Query` + `loading/error/success` states | `/hooks/useApiQuery.ts` |
-| **Mutations** | `useApiMutation` + `ToastService` + `error handling` | `/hooks/useApiMutation.ts` |
+| **Mutations** | `useApiMutation` + `operationName` + `automatic toasts` | `/hooks/useApiMutation.ts` |
 | **User Feedback** | `ToastService` + `NEVER alert()` + `'Something went wrong' fallback` | `/lib/toast/service.ts` |
 | **Form Validation** | `Zod schemas` + `react-hook-form` | `/lib/validators/*.ts` |
 | **Error Handling** | `ErrorBoundary` + `ToastService` + `Sentry logging` | `/components/ErrorBoundary.tsx` |
@@ -797,6 +797,173 @@ setError('An unexpected error occurred');
 // IMPORTANT: "Something went wrong" indicates a backend response issue
 ```
 
+#### **🔔 TOAST MANAGEMENT PATTERN**
+
+**GOLDEN RULE: Let useApiMutation handle ALL toasts automatically**
+
+**🎯 TOAST ARCHITECTURE OVERVIEW:**
+```typescript
+// Toast Flow: useApiMutation → ToastService → react-hot-toast
+// 1. useApiMutation automatically shows toasts with operation IDs
+// 2. ToastService provides deduplication using IDs
+// 3. react-hot-toast renders with transparent blur styling
+```
+
+**❌ STRICTLY FORBIDDEN - Manual Toast Handling:**
+```typescript
+// NEVER add manual toast calls in onSuccess/onError callbacks
+mutate(data, {
+  onSuccess: (response) => {
+    ToastService.success(response.message); // NO! Duplicate toast
+  },
+  onError: (error) => {
+    ToastService.error(error.message); // NO! Duplicate toast
+  }
+});
+```
+
+**✅ CORRECT - Automatic Toast Handling:**
+```typescript
+// Let useApiMutation handle toasts automatically
+mutate(data, {
+  onSuccess: (response) => {
+    // Handle logic only, NO toast calls
+    router.push('/success');
+    setModalOpen(false);
+  },
+  onError: (error) => {
+    // Handle logic only, NO toast calls
+    console.error('Operation failed:', error);
+  }
+});
+```
+
+**🎨 TOAST STYLING CONFIGURATION:**
+```typescript
+// layout.tsx - Keep minimal, let ToastService handle styling
+<Toaster
+  position="top-right"
+  toastOptions={{
+    duration: 4000,
+    // DO NOT add style overrides here
+  }}
+/>
+
+// ToastService.ts - All styling defined here
+style: {
+  background: 'rgba(16, 185, 129, 0.1)', // Transparent
+  backdropFilter: 'blur(12px)',          // Blur effect
+  WebkitBackdropFilter: 'blur(12px)',    // Safari support
+  color: '#10b981',
+  border: '2px solid #10b981',
+  padding: '16px',
+  borderRadius: '8px',
+}
+```
+
+**🆔 TOAST ID PATTERN:**
+```typescript
+// Always use operation-based IDs for deduplication
+// Format: {action}-{resource}-{id}
+
+// ✅ CORRECT Toast IDs:
+'delete-course-123'
+'update-profile-456'
+'create-faq'
+'toggle-user-premium-789'
+
+// ❌ WRONG Toast IDs:
+`toast-${Date.now()}`  // Creates unique ID every time
+'success-toast'        // Too generic
+'random-id-123'        // Not meaningful
+```
+
+**📝 MUTATION HOOK PATTERN:**
+```typescript
+// Always specify operationName for proper toast deduplication
+export function useDeleteCourse() {
+  const queryClient = useQueryClient();
+  
+  return useApiMutation(
+    (courseId: string) => deleteCourse(courseId),
+    {
+      operationName: 'delete-course', // Required for toast ID
+      invalidateQueries: [
+        ['courses'],        // Refresh course lists
+        ['admin-courses'],  // Refresh admin view
+      ],
+      // NO manual toast calls here!
+    }
+  );
+}
+```
+
+**🚨 COMMON TOAST ISSUES & SOLUTIONS:**
+
+**1. Duplicate Toasts:**
+```typescript
+// PROBLEM: Both modal and useApiMutation show toasts
+// SOLUTION: Remove toast from modal callbacks
+
+// ❌ WRONG - Modal component:
+onSuccess: (response) => {
+  ToastService.success(response.message); // Duplicate!
+}
+
+// ✅ CORRECT - Modal component:
+onSuccess: (response) => {
+  // Just handle UI logic, no toast
+  onClose();
+}
+```
+
+**2. Missing Operation Names:**
+```typescript
+// ❌ WRONG - No operation name:
+export function useCreateChapter() {
+  return useApiMutation(createChapter, {
+    invalidateQueries: [['chapters']],
+    // Missing operationName!
+  });
+}
+
+// ✅ CORRECT - With operation name:
+export function useCreateChapter() {
+  return useApiMutation(createChapter, {
+    invalidateQueries: [['chapters']],
+    operationName: 'create-chapter', // Prevents duplicates
+  });
+}
+```
+
+**3. Toast Background Not Transparent:**
+```typescript
+// ❌ WRONG - Overriding in layout.tsx:
+<Toaster
+  toastOptions={{
+    style: {
+      background: '#10b981', // Solid color override
+    }
+  }}
+/>
+
+// ✅ CORRECT - Minimal configuration:
+<Toaster
+  position="top-right"
+  toastOptions={{
+    duration: 4000,
+    // Let ToastService handle all styling
+  }}
+/>
+```
+
+**🔧 TOAST CHECKLIST FOR NEW FEATURES:**
+- [ ] Add `operationName` to all useApiMutation calls
+- [ ] Remove manual toast calls from component callbacks
+- [ ] Use meaningful operation IDs (e.g., 'create-chapter', not 'success')
+- [ ] Don't override toast styles in layout.tsx
+- [ ] Test for duplicate toasts before committing
+
 ```typescript
 // MANDATORY API Response Pattern
 // Backend returns using StandardResponse:
@@ -855,6 +1022,109 @@ try {
   toast.error(error.message || 'Something went wrong');
 }
 ```
+
+#### **⚡ OPTIMISTIC UPDATE PATTERN**
+
+**GOLDEN RULE: Use native React Query for optimistic updates, NOT useApiMutation**
+
+**❌ PROBLEM - useApiMutation limitations:**
+```typescript
+// useApiMutation KHÔNG hỗ trợ onMutate lifecycle
+const { mutate } = useApiMutation(deleteCourse, {
+  onMutate: async () => {} // KHÔNG HOẠT ĐỘNG!
+});
+
+// Không thể truyền options khi gọi mutate
+mutate(id, { onSuccess: () => {} }); // KHÔNG HOẠT ĐỘNG!
+```
+
+**✅ SOLUTION - Native React Query pattern:**
+```typescript
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+export function useDeleteCourse() {
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: (courseId: string) => deleteCourse(courseId),
+    
+    // Optimistic update - Update UI trước khi API response
+    onMutate: async (courseId: string) => {
+      // 1. Cancel outgoing refetches
+      await queryClient.cancelQueries(['admin-courses']);
+      
+      // 2. Snapshot previous value for rollback
+      const previousData = queryClient.getQueryData(['admin-courses']);
+      
+      // 3. Optimistically update UI
+      queryClient.setQueryData(['admin-courses'], (old: any) => {
+        // Handle different data structures from useApiQuery
+        const courses = old?.data?.courses || old?.courses || [];
+        const filteredCourses = courses.filter(c => c.id !== courseId);
+        
+        return {
+          ...old,
+          data: { ...old.data, courses: filteredCourses }
+        };
+      });
+      
+      // 4. Return context for rollback
+      return { previousData, courseId };
+    },
+    
+    // Rollback on error
+    onError: (error, courseId, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['admin-courses'], context.previousData);
+      }
+    },
+    
+    // Ensure consistency after mutation
+    onSettled: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: ['admin-courses'],
+        refetchType: 'active'
+      });
+    }
+  });
+  
+  // Wrapper to maintain useApiMutation interface
+  return {
+    mutate: (courseId: string, options?: any) => {
+      mutation.mutate(courseId, {
+        onSuccess: (response) => {
+          ToastService.success(response?.message || 'Course deleted successfully');
+          options?.onSuccess?.();
+        },
+        onError: (error: any) => {
+          ToastService.error(error?.message || 'Something went wrong');
+          options?.onError?.(error);
+        }
+      });
+    },
+    loading: mutation.isPending,
+    // ... other properties
+  };
+}
+```
+
+**📊 WHEN TO USE EACH APPROACH:**
+
+| Use Case | Approach | Example |
+|----------|----------|---------|
+| Simple CRUD (no optimistic) | useApiMutation | Create, Update forms |
+| Delete with instant feedback | Native useMutation | Delete course/user/FAQ |
+| Complex state updates | Native useMutation | Reorder, bulk operations |
+| Real-time UI updates | Native useMutation | Toggle status, ratings |
+
+**🔄 OPTIMISTIC UPDATE CHECKLIST:**
+- [ ] Use native `useMutation` instead of `useApiMutation`
+- [ ] Implement `onMutate` for immediate UI update
+- [ ] Snapshot previous data for rollback
+- [ ] Handle different data structures from useApiQuery
+- [ ] Implement `onError` for rollback on failure
+- [ ] Use `onSettled` for consistency check
+- [ ] Maintain backward compatibility with existing interface
 
 #### **🚨 CRITICAL RULE: ZERO SCOPE CREEP**
 

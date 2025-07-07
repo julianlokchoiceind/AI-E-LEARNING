@@ -10,7 +10,7 @@ interface RequestOptions extends RequestInit {
 
 class ApiClient {
   private baseUrl: string;
-  private defaultTimeout: number = 60000; // 🔧 FIX: Increase to 60 seconds for course operations
+  private defaultTimeout: number = 120000; // 🔧 FIX: Increase to 120 seconds (2 minutes) for course operations
 
   constructor(baseUrl?: string) {
     // Use the provided baseUrl or fall back to API_ENDPOINTS.BASE_URL
@@ -29,7 +29,6 @@ class ApiClient {
           return session.accessToken as string;
         }
       } catch (error) {
-        console.warn('[API-CLIENT] Failed to get NextAuth session:', error);
       }
     }
     return null;
@@ -52,9 +51,14 @@ class ApiClient {
   // Create abort controller with timeout
   private createAbortController(timeout?: number): AbortController {
     const controller = new AbortController();
+    const actualTimeout = timeout || this.defaultTimeout;
+    
+    
     const timeoutId = setTimeout(
-      () => controller.abort(),
-      timeout || this.defaultTimeout
+      () => {
+        controller.abort();
+      },
+      actualTimeout
     );
 
     // Clear timeout when request completes
@@ -84,6 +88,13 @@ class ApiClient {
       hasBody: !!fetchOptions.body,
       retryCount
     });
+
+    // Special logging for course updates
+    if (fullUrl.includes('/courses/') && fetchOptions.method === 'PUT') {
+      try {
+      } catch (e) {
+      }
+    }
 
     // Check if auth is required
     if (requireAuth && !(await this.getAuthToken())) {
@@ -136,6 +147,14 @@ class ApiClient {
         ok: response.ok,
         headers: Object.fromEntries(response.headers.entries())
       });
+
+      // Special logging for course update responses
+      if (fullUrl.includes('/courses/') && fetchOptions.method === 'PUT') {
+        const responseClone = response.clone();
+        try {
+        } catch (e) {
+        }
+      }
 
       // Handle non-2xx responses
       if (!response.ok) {
@@ -214,7 +233,6 @@ class ApiClient {
             const { signOut } = await import('next-auth/react');
             await signOut({ redirect: true, callbackUrl: '/login' });
           } catch (e) {
-            console.warn('[API-CLIENT] Failed to clear NextAuth session:', e);
             // Fallback redirect
             if (typeof window !== 'undefined') {
               window.location.href = '/login';
@@ -417,7 +435,9 @@ class ApiClient {
       const controller = new AbortController();
       setTimeout(() => controller.abort(), 5000); // 5 second timeout for health check
       
-      const response = await fetch(`${this.baseUrl}/health`, {
+      // Health endpoint is at /health, not under API version prefix
+      const healthUrl = this.baseUrl.replace('/api/v1', '') + '/health';
+      const response = await fetch(healthUrl, {
         method: 'GET',
         signal: controller.signal,
         headers: { 'Content-Type': 'application/json' }

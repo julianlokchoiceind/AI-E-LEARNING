@@ -14,10 +14,8 @@ export default function AuthLayout({
   const router = useRouter()
 
   useEffect(() => {
-    console.log('Auth layout - User:', user, 'Loading:', loading);
     // Redirect authenticated users to dashboard
     if (!loading && user) {
-      console.log('Auth layout - Redirecting to dashboard');
       router.push('/dashboard')
     }
   }, [user, loading, router])

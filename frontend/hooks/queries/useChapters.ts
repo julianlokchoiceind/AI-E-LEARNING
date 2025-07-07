@@ -2,6 +2,8 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ToastService } from '@/lib/toast/ToastService';
 import { 
   getChaptersByCourse, 
   getChapterById, 
@@ -76,6 +78,7 @@ export function useCreateChapter() {
         ['creator-courses'], // Refresh creator dashboard
         ['admin-courses'], // Refresh admin view
       ],
+      operationName: 'create-chapter', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -95,26 +98,121 @@ export function useUpdateChapter() {
         ['course'], // Refresh course details
         ['creator-courses'], // Refresh creator dashboard
       ],
+      operationName: 'update-chapter', // Unique operation ID for toast deduplication
     }
   );
 }
 
 /**
- * DELETE CHAPTER - Chapter deletion
+ * DELETE CHAPTER - Chapter deletion with optimistic update
  * Critical: Content management
  */
 export function useDeleteChapter() {
-  return useApiMutation(
-    (chapterId: string) => deleteChapter(chapterId),
-    {
-      invalidateQueries: [
-        ['chapters'], // Refresh chapter lists
-        ['course'], // Refresh course details
-        ['creator-courses'], // Refresh creator dashboard
-        ['admin-courses'], // Refresh admin view
-      ],
+  const queryClient = useQueryClient();
+  
+  // Using native React Query for optimistic updates
+  const mutation = useMutation({
+    mutationFn: (chapterId: string) => deleteChapter(chapterId),
+    
+    // Optimistic update - Update UI immediately
+    onMutate: async (chapterId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'chapters'
+      });
+      
+      // Get all chapter-related cache keys
+      const cacheKeys = queryClient.getQueryCache().findAll({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'chapters'
+      });
+      
+      // Store snapshots for rollback
+      const snapshots: any[] = [];
+      
+      // Update all chapter caches
+      cacheKeys.forEach((cache) => {
+        const data = queryClient.getQueryData(cache.queryKey);
+        snapshots.push({ key: cache.queryKey, data });
+        
+        // Optimistically remove chapter from list
+        queryClient.setQueryData(cache.queryKey, (old: any) => {
+          if (!old) return old;
+          
+          // Handle different data structures
+          const chapters = old?.data?.chapters || old?.chapters || [];
+          const filteredChapters = chapters.filter((chapter: any) => {
+            const id = chapter._id || chapter.id;
+            return id !== chapterId;
+          });
+          
+          // Maintain same structure
+          if (old?.data?.chapters) {
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                chapters: filteredChapters,
+                total: filteredChapters.length
+              }
+            };
+          }
+          
+          return {
+            ...old,
+            chapters: filteredChapters,
+            total: filteredChapters.length
+          };
+        });
+      });
+      
+      return { snapshots, chapterId };
+    },
+    
+    // Rollback on error
+    onError: (error: any, chapterId: string, context: any) => {
+      if (context?.snapshots) {
+        context.snapshots.forEach((snapshot: any) => {
+          queryClient.setQueryData(snapshot.key, snapshot.data);
+        });
+      }
+    },
+    
+    // Always refetch to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['chapters'] });
+      queryClient.invalidateQueries({ queryKey: ['course'] });
+      queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
     }
-  );
+  });
+  
+  // Return wrapper to maintain useApiMutation interface
+  return {
+    mutate: (chapterId: string, options?: { onSuccess?: () => void; onError?: (error: any) => void }) => {
+      mutation.mutate(chapterId, {
+        onSuccess: (response) => {
+          // Toast handled manually since using useMutation (not useApiMutation)
+          ToastService.success(response?.message || 'Something went wrong', 'delete-chapter');
+          if (options?.onSuccess) {
+            options.onSuccess();
+          }
+        },
+        onError: (error: any) => {
+          // Toast handled manually since using useMutation (not useApiMutation)
+          ToastService.error(error?.message || 'Something went wrong', 'delete-chapter-error');
+          if (options?.onError) {
+            options.onError(error);
+          }
+        }
+      });
+    },
+    mutateAsync: mutation.mutateAsync,
+    loading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    data: mutation.data,
+  };
 }
 
 /**
@@ -130,6 +228,7 @@ export function useReorderChapters() {
         ['chapters'], // Refresh chapter lists
         ['course'], // Refresh course details
       ],
+      operationName: 'reorder-chapters', // Unique operation ID for toast deduplication
     }
   );
 }

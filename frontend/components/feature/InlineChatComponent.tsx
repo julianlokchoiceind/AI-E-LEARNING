@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAIChat } from '@/hooks/useAIChat';
 import { useAISuggestionsQuery } from '@/hooks/queries/useAI';
+import { useAuth } from '@/hooks/useAuth';
 
 interface InlineChatComponentProps {
   courseId?: string;
@@ -35,6 +36,7 @@ export const InlineChatComponent: React.FC<InlineChatComponentProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { isAuthenticated } = useAuth();
 
   // React Query hook for AI suggestions - replaces manual fetch
   const { 
@@ -46,7 +48,7 @@ export const InlineChatComponent: React.FC<InlineChatComponentProps> = ({
       lesson_id: lessonId,
       user_level: userLevel
     },
-    !!(courseId || lessonId) // Only fetch when we have context
+    isAuthenticated && !!(courseId || lessonId) // Only fetch when authenticated AND we have context
   );
 
   // Use React Query data or fallback to defaults
@@ -85,6 +87,15 @@ export const InlineChatComponent: React.FC<InlineChatComponentProps> = ({
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
+    
+    // Check authentication before sending
+    if (!isAuthenticated) {
+      addMessage({
+        type: 'ai',
+        content: 'Please log in to chat with the AI Study Buddy. 🔐'
+      });
+      return;
+    }
     
     const message = inputValue.trim();
     setInputValue('');

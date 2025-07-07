@@ -83,6 +83,7 @@ export function useLogin() {
       invalidateQueries: [
         ['user-profile'], // Refresh user data after login
       ],
+      operationName: 'login', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -97,6 +98,7 @@ export function useRegister() {
       register({ name, email, password }),
     {
       // No cache invalidation needed for registration
+      operationName: 'register', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -110,6 +112,7 @@ export function useForgotPassword() {
     (email: string) => forgotPassword(email),
     {
       // No cache invalidation needed
+      operationName: 'forgot-password', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -124,6 +127,7 @@ export function useResetPassword() {
       resetPassword(token, newPassword, confirmPassword),
     {
       // No cache invalidation needed
+      operationName: 'reset-password', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -139,6 +143,7 @@ export function useVerifyEmail() {
       invalidateQueries: [
         ['user-profile'], // Refresh user verification status
       ],
+      operationName: 'verify-email', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -152,6 +157,7 @@ export function useResendVerification() {
     (email: string) => resendVerification(email),
     {
       // No cache invalidation needed
+      operationName: 'resend-verification', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -167,6 +173,7 @@ export function useUpdateProfile() {
       invalidateQueries: [
         ['user-profile'], // Refresh updated profile
       ],
+      operationName: 'update-profile', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -181,6 +188,7 @@ export function useChangePassword() {
       changePassword({ current_password: currentPassword, new_password: newPassword, confirm_password: confirmPassword }),
     {
       // No cache invalidation needed for password change
+      operationName: 'change-password', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -229,6 +237,7 @@ export function useUpdatePreferences() {
         ['user-preferences'], // Refresh preferences
         ['user-profile'], // May affect profile display
       ],
+      operationName: 'update-preferences', // Unique operation ID for toast deduplication
     }
   );
 }
@@ -250,6 +259,7 @@ export function useLogout() {
       onSuccess: () => {
         // Cache clearing will be handled by invalidateQueries
       },
+      operationName: 'logout', // Unique operation ID for toast deduplication
     }
   );
 }
