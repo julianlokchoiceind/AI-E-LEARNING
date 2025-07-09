@@ -145,7 +145,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Dynamically build origins list
 origins = [
     settings.FRONTEND_URL,  # Use configured frontend URL
-    "http://localhost:3000",  # Keep for local development
+    "http://localhost:3001",  # Updated for new port
     *[str(origin) for origin in settings.BACKEND_CORS_ORIGINS]
 ]
 # Remove duplicates while preserving order
