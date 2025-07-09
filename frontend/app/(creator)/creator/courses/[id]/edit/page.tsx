@@ -25,7 +25,7 @@ import {
   useDeleteLesson,
   useReorderChapters,
   useReorderLessons
-} from '@/hooks/queries/useCreatorCourses';
+} from '@/hooks/queries/useCourses';
 import { ToastService } from '@/lib/toast/ToastService';
 
 const CourseBuilderPage = () => {
@@ -76,7 +76,7 @@ const CourseBuilderPage = () => {
   const [selectedLessonForDelete, setSelectedLessonForDelete] = useState<LessonDeleteData | null>(null);
 
   // Auto-save hook with React Query mutation
-  const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges } = useAutosave(
+  const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges, isOnline, hasPendingChanges } = useAutosave(
     courseData,
     {
       delay: 2000,
@@ -359,7 +359,12 @@ const CourseBuilderPage = () => {
   }
 
   return (
-    <NavigationGuard hasUnsavedChanges={hasUnsavedChanges}>
+    <NavigationGuard 
+      hasUnsavedChanges={hasUnsavedChanges}
+      saveStatus={saveStatus}
+      errorMessage={error}
+      onForceSave={forceSave}
+    >
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-10">

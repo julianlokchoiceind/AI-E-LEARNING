@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { debounce } from '@/lib/utils/debounce';
 import { ToastService } from '@/lib/toast/ToastService';
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'conflict' | 'offline';
 
 interface UseAutosaveOptions<T = any> {
   delay?: number;
@@ -14,6 +14,7 @@ interface UseAutosaveOptions<T = any> {
   showToastOnError?: boolean;
   beforeUnloadWarning?: boolean;
   transformData?: (data: T) => any;
+  detectNetworkStatus?: boolean;
 }
 
 export const useAutosave = <T = any>(
@@ -26,16 +27,51 @@ export const useAutosave = <T = any>(
     hasDataChanged,
     showToastOnError = false,
     beforeUnloadWarning = false,
-    transformData
+    transformData,
+    detectNetworkStatus = true
   }: UseAutosaveOptions<T>
 ) => {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [conflictData, setConflictData] = useState<any>(null);
+  const [isOnline, setIsOnline] = useState(true);
   const dataRef = useRef(data);
   const lastSavedDataRef = useRef<T | null>(data);
   const isFirstRender = useRef(true);
+  const pendingSaveRef = useRef(false);
+
+  // Network status detection
+  useEffect(() => {
+    if (!detectNetworkStatus) return;
+
+    const updateOnlineStatus = () => {
+      const online = navigator.onLine;
+      setIsOnline(online);
+      
+      if (online && pendingSaveRef.current && dataRef.current) {
+        // Network is back, trigger save if we have pending changes
+        ToastService.info('Connection restored. Saving pending changes...');
+        debouncedSave();
+        pendingSaveRef.current = false;
+      } else if (!online && saveStatus !== 'offline') {
+        setSaveStatus('offline');
+        ToastService.warning('You are offline. Changes will be saved when connection is restored.');
+      }
+    };
+
+    // Set initial state
+    updateOnlineStatus();
+
+    // Listen for network changes
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
+  }, [detectNetworkStatus, saveStatus]);
 
   // Update ref when data changes
   useEffect(() => {
@@ -67,6 +103,14 @@ export const useAutosave = <T = any>(
       if (!dataChangeChecker(dataRef.current, lastSavedDataRef.current)) {
         return;
       }
+
+      // Check network status
+      if (!navigator.onLine) {
+        setSaveStatus('offline');
+        pendingSaveRef.current = true;
+        setError('No internet connection. Changes will be saved when you\'re back online.');
+        return;
+      }
       
       try {
         setSaveStatus('saving');
@@ -79,12 +123,21 @@ export const useAutosave = <T = any>(
         lastSavedDataRef.current = dataRef.current;
         setSaveStatus('saved');
         setLastSavedAt(new Date());
+        pendingSaveRef.current = false;
         
         // Reset to idle after 3 seconds
         setTimeout(() => {
           setSaveStatus(prev => prev === 'saved' ? 'idle' : prev);
         }, 3000);
       } catch (err: any) {
+        // Check for network errors
+        if (err.name === 'NetworkError' || err.message?.includes('network') || err.message?.includes('fetch')) {
+          setSaveStatus('offline');
+          pendingSaveRef.current = true;
+          setError('Network error. Changes will be saved when connection is stable.');
+          return;
+        }
+
         // Check for conflict errors (409 status or version mismatch)
         if (err.status === 409 || err.message?.includes('conflict') || err.message?.includes('version')) {
           setSaveStatus('conflict');
@@ -111,6 +164,17 @@ export const useAutosave = <T = any>(
     if (!dataRef.current) {
       return false;
     }
+
+    // Check network status first
+    if (!navigator.onLine) {
+      setSaveStatus('offline');
+      pendingSaveRef.current = true;
+      setError('No internet connection. Please check your connection and try again.');
+      if (showToastOnError) {
+        ToastService.error('Cannot save while offline. Please check your internet connection.');
+      }
+      return false;
+    }
     
     // Cancel any pending debounced saves
     debouncedSave.cancel();
@@ -120,18 +184,13 @@ export const useAutosave = <T = any>(
       setError(null);
       setConflictData(null);
       
-      // Force save starting
-        dataKeys: dataRef.current && typeof dataRef.current === 'object' ? Object.keys(dataRef.current) : [],
-        retryCount
-      });
-      
       const saveData = transformData ? transformData(dataRef.current) : dataRef.current;
       await onSave(saveData);
       
       lastSavedDataRef.current = dataRef.current;
       setSaveStatus('saved');
       setLastSavedAt(new Date());
-      
+      pendingSaveRef.current = false;
       
       setTimeout(() => {
         setSaveStatus(prev => prev === 'saved' ? 'idle' : prev);
@@ -139,7 +198,18 @@ export const useAutosave = <T = any>(
       
       return true;
     } catch (err: any) {
-      // Check for conflict errors first
+      // Check for network errors first
+      if (err.name === 'NetworkError' || err.message?.includes('network') || err.message?.includes('fetch')) {
+        setSaveStatus('offline');
+        pendingSaveRef.current = true;
+        setError('Network error. Please check your connection and try again.');
+        if (showToastOnError) {
+          ToastService.error('Network error - please check your connection');
+        }
+        return false;
+      }
+
+      // Check for conflict errors
       if (err.status === 409 || err.message?.includes('conflict') || err.message?.includes('version')) {
         setSaveStatus('conflict');
         setConflictData(err.conflictData || null);
@@ -192,7 +262,7 @@ export const useAutosave = <T = any>(
       
       return false;
     }
-  }, [enabled, onSave, transformData, showToastOnError, onConflict]);
+  }, [enabled, onSave, transformData, showToastOnError, onConflict, debouncedSave]);
 
   // Trigger autosave on data changes
   useEffect(() => {
@@ -203,8 +273,10 @@ export const useAutosave = <T = any>(
       return;
     }
 
-    if (enabled && data) {
+    if (enabled && data && navigator.onLine) {
       debouncedSave();
+    } else if (enabled && data && !navigator.onLine) {
+      pendingSaveRef.current = true;
     }
 
     // Cleanup
@@ -233,9 +305,12 @@ export const useAutosave = <T = any>(
     if (!beforeUnloadWarning) return;
     
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges()) {
+      if (hasUnsavedChanges() || pendingSaveRef.current) {
         e.preventDefault();
-        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        const message = !navigator.onLine 
+          ? 'You have unsaved changes and are offline. Your changes may be lost.' 
+          : 'You have unsaved changes. Are you sure you want to leave?';
+        e.returnValue = message;
         return e.returnValue;
       }
     };
@@ -263,6 +338,7 @@ export const useAutosave = <T = any>(
       setSaveStatus('saved');
       setConflictData(null);
       setError(null);
+      pendingSaveRef.current = false;
       return true;
     } else {
       // Force save local changes
@@ -282,5 +358,7 @@ export const useAutosave = <T = any>(
     resolveConflict,
     hasUnsavedChanges: currentHasUnsavedChanges,
     isAutosaveEnabled: enabled,
+    isOnline,
+    hasPendingChanges: pendingSaveRef.current,
   };
 };

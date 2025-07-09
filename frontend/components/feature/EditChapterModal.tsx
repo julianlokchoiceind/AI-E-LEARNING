@@ -3,7 +3,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { SaveStatusIndicator } from '@/components/ui/SaveStatusIndicator';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
-import { useUpdateChapter } from '@/hooks/queries/useCreatorCourses';
+import { useUpdateChapter } from '@/hooks/queries/useCourses';
 import { useAutosave } from '@/hooks/useAutosave';
 import { ToastService } from '@/lib/toast/ToastService';
 import { useCallback } from 'react';
@@ -198,8 +198,10 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
 
   const handleClose = () => {
     if (!loading) {
-      // Warn about unsaved changes
-      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to close?')) {
+      // Don't close if there are unsaved changes - NavigationGuard handles warnings
+      if (hasUnsavedChanges) {
+        // Could show a toast or inline warning instead
+        ToastService.error('Please save or discard your changes before closing');
         return;
       }
       

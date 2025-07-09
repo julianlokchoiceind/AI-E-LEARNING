@@ -216,21 +216,134 @@ export function useDeleteChapter() {
 }
 
 /**
- * REORDER CHAPTERS - Chapter organization
+ * REORDER CHAPTERS - Chapter organization with optimistic updates
  * Medium-impact: Course structure management
  */
 export function useReorderChapters() {
-  return useApiMutation(
-    ({ courseId, chapterOrders }: ReorderData) => 
+  const queryClient = useQueryClient();
+  
+  // Using native React Query for optimistic updates
+  const mutation = useMutation({
+    mutationFn: ({ courseId, chapterOrders }: ReorderData) => 
       reorderChapters(courseId, { chapter_orders: chapterOrders.map(order => ({ chapter_id: order.id, new_order: order.order })) }),
-    {
-      invalidateQueries: [
-        ['chapters'], // Refresh chapter lists
-        ['course'], // Refresh course details
-      ],
-      operationName: 'reorder-chapters', // Unique operation ID for toast deduplication
+    
+    // Optimistic update - Update UI immediately
+    onMutate: async ({ courseId, chapterOrders }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && 
+          (query.queryKey[0] === 'chapters' || query.queryKey[0] === 'chapters-with-lessons')
+      });
+      
+      // Get all chapter-related cache keys for this course
+      const cacheKeys = queryClient.getQueryCache().findAll({
+        predicate: (query) => Array.isArray(query.queryKey) && 
+          (query.queryKey[0] === 'chapters' || query.queryKey[0] === 'chapters-with-lessons') &&
+          query.queryKey[1] === courseId
+      });
+      
+      // Store snapshots for rollback
+      const snapshots: any[] = [];
+      
+      // Create a map for quick order lookup
+      const orderMap = new Map(chapterOrders.map(item => [item.id, item.order]));
+      
+      // Update all chapter caches
+      cacheKeys.forEach((cache) => {
+        const data = queryClient.getQueryData(cache.queryKey);
+        snapshots.push({ key: cache.queryKey, data });
+        
+        // Optimistically reorder chapters
+        queryClient.setQueryData(cache.queryKey, (old: any) => {
+          if (!old) return old;
+          
+          // Handle different data structures
+          const chapters = old?.data?.chapters || old?.chapters || [];
+          
+          // Sort chapters based on new order
+          const reorderedChapters = [...chapters].sort((a: any, b: any) => {
+            const aId = a._id || a.id;
+            const bId = b._id || b.id;
+            const aOrder = orderMap.get(aId) || a.order || 999;
+            const bOrder = orderMap.get(bId) || b.order || 999;
+            return aOrder - bOrder;
+          });
+          
+          // Update order property on each chapter
+          const updatedChapters = reorderedChapters.map((chapter: any, index: number) => {
+            const chapterId = chapter._id || chapter.id;
+            const newOrder = orderMap.get(chapterId);
+            return {
+              ...chapter,
+              order: newOrder || index + 1
+            };
+          });
+          
+          // Maintain same structure
+          if (old?.data?.chapters) {
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                chapters: updatedChapters
+              }
+            };
+          }
+          
+          return {
+            ...old,
+            chapters: updatedChapters
+          };
+        });
+      });
+      
+      return { snapshots, courseId, chapterOrders };
+    },
+    
+    // Rollback on error
+    onError: (error: any, variables: ReorderData, context: any) => {
+      if (context?.snapshots) {
+        context.snapshots.forEach((snapshot: any) => {
+          queryClient.setQueryData(snapshot.key, snapshot.data);
+        });
+      }
+    },
+    
+    // Always refetch to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['chapters'] });
+      queryClient.invalidateQueries({ queryKey: ['chapters-with-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['course'] });
     }
-  );
+  });
+  
+  // Return wrapper to maintain useApiMutation interface
+  return {
+    mutate: (data: ReorderData, options?: { onSuccess?: (response: any) => void; onError?: (error: any) => void }) => {
+      mutation.mutate(data, {
+        onSuccess: (response) => {
+          // Toast handled manually since using useMutation (not useApiMutation)
+          ToastService.success(response?.message || 'Chapters reordered successfully', 'reorder-chapters');
+          if (options?.onSuccess) {
+            options.onSuccess(response);
+          }
+        },
+        onError: (error: any) => {
+          // Toast handled manually since using useMutation (not useApiMutation)
+          ToastService.error(error?.message || 'Failed to reorder chapters', 'reorder-chapters-error');
+          if (options?.onError) {
+            options.onError(error);
+          }
+        }
+      });
+    },
+    mutateAsync: (data: ReorderData) => mutation.mutateAsync(data),
+    loading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    data: mutation.data,
+  };
 }
 
 /**

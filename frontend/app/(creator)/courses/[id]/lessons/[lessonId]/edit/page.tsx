@@ -106,7 +106,7 @@ const LessonEditPage = () => {
   });
 
   // Auto-save hook with React Query mutation
-  const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges } = useAutosave(
+  const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges, isOnline, hasPendingChanges } = useAutosave(
     lesson,
     {
       delay: 2000,
@@ -375,7 +375,12 @@ const LessonEditPage = () => {
   }
 
   return (
-    <NavigationGuard hasUnsavedChanges={hasUnsavedChanges}>
+    <NavigationGuard 
+      hasUnsavedChanges={hasUnsavedChanges}
+      saveStatus={saveStatus}
+      errorMessage={error}
+      onForceSave={forceSave}
+    >
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-10">

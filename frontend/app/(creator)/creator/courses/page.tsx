@@ -11,7 +11,7 @@ import { ToastService } from '@/lib/toast/ToastService';
 import { 
   useCreatorCoursesQuery,
   useDeleteCourse 
-} from '@/hooks/queries/useCreatorCourses';
+} from '@/hooks/queries/useCourses';
 
 const CreatorCoursesPage = () => {
   const router = useRouter();

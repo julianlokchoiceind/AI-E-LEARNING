@@ -21,7 +21,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/hooks/useAuth';
-import { useCreatorCoursesQuery, useDeleteCourse } from '@/hooks/queries/useCreatorCourses';
+import { useCreatorCoursesQuery, useDeleteCourse } from '@/hooks/queries/useCourses';
 import { formatDate, formatCurrency } from '@/lib/utils/formatters';
 import { ToastService } from '@/lib/toast/ToastService';
 

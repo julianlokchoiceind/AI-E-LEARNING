@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/hooks/useAuth';
-import { useCreatorDashboardQuery } from '@/hooks/queries/useCreatorCourses';
+import { useCreatorDashboardQuery } from '@/hooks/queries/useCourses';
 import { formatDate, formatCurrency } from '@/lib/utils/formatters';
 import { ToastService } from '@/lib/toast/ToastService';
 

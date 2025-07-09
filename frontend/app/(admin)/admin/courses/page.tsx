@@ -13,9 +13,9 @@ import {
   useApproveCourse, 
   useRejectCourse, 
   useToggleCourseFree, 
-  useDeleteCourse,
+  useDeleteCourseOptimistic as useDeleteCourse,
   useCreateCourse 
-} from '@/hooks/queries/useAdminCourses';
+} from '@/hooks/queries/useCourses';
 import { 
   Search, 
   Filter, 

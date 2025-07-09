@@ -273,8 +273,10 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
 
   const handleClose = () => {
     if (!loading) {
-      // Warn about unsaved changes
-      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to close?')) {
+      // Don't close if there are unsaved changes - NavigationGuard handles warnings
+      if (hasUnsavedChanges) {
+        // Could show a toast or inline warning instead
+        ToastService.error('Please save or discard your changes before closing');
         return;
       }
       

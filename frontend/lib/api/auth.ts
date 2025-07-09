@@ -238,7 +238,7 @@ export async function checkSession(): Promise<StandardResponse<UserResponse>> {
 // =============================================================================
 
 /**
- * Alias exports to match expected import names in useAuth.ts
+ * Alias exports for consistency
  */
 export const login = loginUser;
 export const register = registerUser;

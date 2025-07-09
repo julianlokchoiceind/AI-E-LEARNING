@@ -17,15 +17,15 @@ import DeleteLessonModal, { LessonDeleteData } from '@/components/feature/Delete
 import { useAutosave } from '@/hooks/useAutosave';
 import { useEditorStore } from '@/stores/editorStore';
 import { useAuth } from '@/hooks/useAuth';
-import { useUpdateCourse } from '@/hooks/queries/useCreatorCourses';
-import { useCourseQuery } from '@/hooks/queries/useCourses';
 import { 
+  useCourseQuery,
+  useUpdateCourse,
   useCourseChaptersQuery, 
   useDeleteChapter, 
   useReorderChapters,
   useDeleteLesson, 
   useReorderLessons 
-} from '@/hooks/queries/useCreatorCourses';
+} from '@/hooks/queries/useCourses';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 
@@ -74,7 +74,7 @@ const CourseBuilderPage = () => {
   const [selectedLessonForDelete, setSelectedLessonForDelete] = useState<LessonDeleteData | null>(null);
 
   // Auto-save hook
-  const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges } = useAutosave(
+  const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges, isOnline, hasPendingChanges } = useAutosave(
     courseData,
     {
       delay: 5000, // Increased delay to 5 seconds to reduce timeout issues
@@ -521,7 +521,12 @@ const CourseBuilderPage = () => {
   }
 
   return (
-    <NavigationGuard hasUnsavedChanges={hasUnsavedChanges}>
+    <NavigationGuard 
+      hasUnsavedChanges={hasUnsavedChanges}
+      saveStatus={saveStatus}
+      errorMessage={error}
+      onForceSave={forceSave}
+    >
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-10">
@@ -621,12 +626,7 @@ const CourseBuilderPage = () => {
                   </button>
                   
                   <button
-                    onClick={() => {
-                      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
-                        return;
-                      }
-                      setActiveTab('chapters');
-                    }}
+                    onClick={() => setActiveTab('chapters')}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'chapters'
                         ? 'bg-blue-100 text-blue-700'
@@ -638,12 +638,7 @@ const CourseBuilderPage = () => {
                   </button>
                   
                   <button
-                    onClick={() => {
-                      if (hasUnsavedChanges && !window.confirm('You have unsaved changes. Are you sure you want to switch tabs?')) {
-                        return;
-                      }
-                      setActiveTab('settings');
-                    }}
+                    onClick={() => setActiveTab('settings')}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'settings'
                         ? 'bg-blue-100 text-blue-700'

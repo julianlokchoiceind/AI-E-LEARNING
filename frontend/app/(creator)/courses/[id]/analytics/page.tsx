@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { AnalyticsChart } from '@/components/feature/AnalyticsChart';
-import { useCourseAnalyticsQuery } from '@/hooks/queries/useCreatorCourses';
+import { useCourseAnalyticsQuery } from '@/hooks/queries/useCourses';
 
 const CourseAnalyticsPage = () => {
   const params = useParams();
