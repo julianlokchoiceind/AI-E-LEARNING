@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { StatsCard, AnimatedButton, GlassCard, ProgressRing } from '@/components/ui/modern/ModernComponents';
 import { useAdminOverviewQuery } from '@/hooks/queries/useAdminStats';
 import { ToastService } from '@/lib/toast/ToastService';
 import { 
@@ -16,7 +18,11 @@ import {
   Clock,
   Star,
   Crown,
-  Activity
+  Activity,
+  BarChart3,
+  Zap,
+  Shield,
+  Database
 } from 'lucide-react';
 
 // Map the AdminDashboardStats to the format expected by the component
@@ -131,251 +137,293 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Overview of platform performance and key metrics</p>
-        </div>
-        <Button 
-          onClick={handleRefresh} 
-          loading={loading}
-          variant="outline"
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="container mx-auto px-6 py-8">
+        {/* Enhanced Header */}
+        <motion.div 
+          className="flex justify-between items-center mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          <Activity className="w-4 h-4 mr-2" />
-          Refresh Data
-        </Button>
-      </div>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Users */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Users</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats?.users.total.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-green-600">
-                +{stats?.users.new_today || 0} today
-              </p>
-            </div>
-            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
+          <div>
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Admin Dashboard
+            </h1>
+            <p className="text-gray-600 text-lg">Overview of platform performance and key metrics</p>
           </div>
-        </Card>
+          <AnimatedButton 
+            variant="secondary"
+            size="md"
+            onClick={handleRefresh} 
+            loading={loading}
+            icon={<Activity className="w-4 h-4" />}
+          >
+            Refresh Data
+          </AnimatedButton>
+        </motion.div>
 
-        {/* Total Courses */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Courses</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats?.courses.total || '0'}
-              </p>
-              <p className="text-sm text-orange-600">
-                {stats?.courses.pending_approval || 0} pending approval
-              </p>
-            </div>
-            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <BookOpen className="h-6 w-6 text-green-600" />
-            </div>
-          </div>
-        </Card>
+        {/* Enhanced Key Metrics */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <StatsCard
+            title="Total Users"
+            value={stats?.users.total.toLocaleString() || '0'}
+            change={stats?.users.new_today ? (stats.users.new_today / stats.users.total * 100) : 0}
+            icon={<Users className="w-6 h-6" />}
+            variant="default"
+            subtitle={`+${stats?.users.new_today || 0} today`}
+          />
+          
+          <StatsCard
+            title="Total Courses"
+            value={stats?.courses.total || '0'}
+            change={stats?.courses.published ? (stats.courses.published / stats.courses.total * 100) : 0}
+            icon={<BookOpen className="w-6 h-6" />}
+            variant="success"
+            subtitle={`${stats?.courses.pending_approval || 0} pending approval`}
+          />
+          
+          <StatsCard
+            title="Monthly Revenue"
+            value={`$${stats?.revenue.total_monthly.toLocaleString() || '0'}`}
+            change={stats?.revenue.growth_percentage || 0}
+            icon={<DollarSign className="w-6 h-6" />}
+            variant="warning"
+            subtitle={`+${stats?.revenue.growth_percentage || 0}% growth`}
+          />
+          
+          <StatsCard
+            title="Active Sessions"
+            value={stats?.system.active_sessions || '0'}
+            change={stats?.users.active_this_week ? (stats.users.active_this_week / stats.users.total * 100) : 0}
+            icon={<TrendingUp className="w-6 h-6" />}
+            variant="success"
+            subtitle={`${stats?.users.active_this_week || 0} weekly active`}
+          />
+        </motion.div>
 
-        {/* Monthly Revenue */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Monthly Revenue</p>
-              <p className="text-2xl font-bold text-gray-900">
-                ${stats?.revenue.total_monthly.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-green-600">
-                +{stats?.revenue.growth_percentage || 0}% growth
-              </p>
-            </div>
-            <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="h-6 w-6 text-purple-600" />
-            </div>
-          </div>
-        </Card>
-
-        {/* Active Sessions */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Active Sessions</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats?.system.active_sessions || '0'}
-              </p>
-              <p className="text-sm text-blue-600">
-                {stats?.users.active_this_week || 0} weekly active
-              </p>
-            </div>
-            <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-yellow-600" />
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* System Status & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* System Status */}
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">System Status</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                <span className="text-gray-700">Server Status</span>
+        {/* Enhanced System Status & Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Enhanced System Status */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <GlassCard variant="light" className="p-8 h-full">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">System Status</h2>
               </div>
-              <span className="text-green-600 font-medium">
-                {stats?.system.server_status || 'Healthy'}
-              </span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Clock className="h-5 w-5 text-blue-500 mr-3" />
-                <span className="text-gray-700">Last Backup</span>
-              </div>
-              <span className="text-gray-600">
-                {stats?.system.last_backup || '2 hours ago'}
-              </span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <AlertTriangle className="h-5 w-5 text-yellow-500 mr-3" />
-                <span className="text-gray-700">Pending Tickets</span>
-              </div>
-              <span className="text-yellow-600 font-medium">
-                {stats?.system.pending_support_tickets || 0}
-              </span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Crown className="h-5 w-5 text-purple-500 mr-3" />
-                <span className="text-gray-700">Premium Users</span>
-              </div>
-              <span className="text-purple-600 font-medium">
-                {stats?.users.premium_users || 0}
-              </span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open('/admin/users', '_blank')}
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Manage Users
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open('/admin/courses', '_blank')}
-            >
-              <BookOpen className="w-4 h-4 mr-2" />
-              Review Courses
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open('/admin/payments', '_blank')}
-            >
-              <DollarSign className="w-4 h-4 mr-2" />
-              View Payments
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open('/admin/support', '_blank')}
-            >
-              <AlertTriangle className="w-4 h-4 mr-2" />
-              Support Queue
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {/* Recent Activity & Revenue Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Breakdown */}
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Revenue Breakdown</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700">Subscription Revenue</span>
-              <span className="font-semibold">
-                ${stats?.revenue.subscription_revenue.toLocaleString() || '0'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700">Course Sales</span>
-              <span className="font-semibold">
-                ${stats?.revenue.course_sales_revenue.toLocaleString() || '0'}
-              </span>
-            </div>
-            <div className="border-t pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-900 font-medium">Total Monthly</span>
-                <span className="text-lg font-bold text-green-600">
-                  ${stats?.revenue.total_monthly.toLocaleString() || '0'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Platform Statistics */}
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Platform Statistics</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700">Published Courses</span>
-              <span className="font-semibold">
-                {stats?.courses.published || 0}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700">Total Enrollments</span>
-              <span className="font-semibold">
-                {stats?.courses.total_enrollments?.toLocaleString() || '0'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700">Weekly Active Users</span>
-              <span className="font-semibold">
-                {stats?.users.active_this_week || 0}
-              </span>
-            </div>
-            <div className="border-t pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-900 font-medium">Platform Health</span>
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-green-600 font-medium">Excellent</span>
+              
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="text-gray-700 font-medium">Server Status</span>
+                  </div>
+                  <span className="text-green-600 font-bold px-3 py-1 bg-green-100 rounded-full text-sm">
+                    {stats?.system.server_status || 'Healthy'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Database className="h-5 w-5 text-blue-500" />
+                    <span className="text-gray-700 font-medium">Last Backup</span>
+                  </div>
+                  <span className="text-gray-600 font-semibold">
+                    {stats?.system.last_backup || '2 hours ago'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                    <span className="text-gray-700 font-medium">Pending Tickets</span>
+                  </div>
+                  <span className="text-yellow-600 font-bold px-3 py-1 bg-yellow-100 rounded-full text-sm">
+                    {stats?.system.pending_support_tickets || 0}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Crown className="h-5 w-5 text-purple-500" />
+                    <span className="text-gray-700 font-medium">Premium Users</span>
+                  </div>
+                  <span className="text-purple-600 font-bold px-3 py-1 bg-purple-100 rounded-full text-sm">
+                    {stats?.users.premium_users || 0}
+                  </span>
                 </div>
               </div>
-            </div>
-          </div>
-        </Card>
+            </GlassCard>
+          </motion.div>
+
+          {/* Enhanced Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
+            <GlassCard variant="light" className="p-8 h-full">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <Zap className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <AnimatedButton 
+                  variant="ghost" 
+                  size="md"
+                  className="h-16 justify-start"
+                  onClick={() => window.open('/admin/users', '_blank')}
+                  icon={<Users className="w-5 h-5" />}
+                >
+                  Manage Users
+                </AnimatedButton>
+                
+                <AnimatedButton 
+                  variant="ghost" 
+                  size="md"
+                  className="h-16 justify-start"
+                  onClick={() => window.open('/admin/courses', '_blank')}
+                  icon={<BookOpen className="w-5 h-5" />}
+                >
+                  Review Courses
+                </AnimatedButton>
+                
+                <AnimatedButton 
+                  variant="ghost" 
+                  size="md"
+                  className="h-16 justify-start"
+                  onClick={() => window.open('/admin/payments', '_blank')}
+                  icon={<DollarSign className="w-5 h-5" />}
+                >
+                  View Payments
+                </AnimatedButton>
+                
+                <AnimatedButton 
+                  variant="ghost" 
+                  size="md"
+                  className="h-16 justify-start"
+                  onClick={() => window.open('/admin/support', '_blank')}
+                  icon={<AlertTriangle className="w-5 h-5" />}
+                >
+                  Support Queue
+                </AnimatedButton>
+              </div>
+            </GlassCard>
+          </motion.div>
+        </div>
+
+        {/* Enhanced Revenue & Platform Statistics */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Enhanced Revenue Breakdown */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <GlassCard variant="colored" className="p-8 h-full">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Revenue Breakdown</h2>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-white/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <span className="text-gray-700 font-medium">Subscription Revenue</span>
+                  </div>
+                  <span className="font-bold text-lg">
+                    ${stats?.revenue.subscription_revenue.toLocaleString() || '0'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-white/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                    <span className="text-gray-700 font-medium">Course Sales</span>
+                  </div>
+                  <span className="font-bold text-lg">
+                    ${stats?.revenue.course_sales_revenue.toLocaleString() || '0'}
+                  </span>
+                </div>
+                
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                    <span className="text-gray-900 font-bold text-lg">Total Monthly</span>
+                    <span className="text-2xl font-bold text-green-600">
+                      ${stats?.revenue.total_monthly.toLocaleString() || '0'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+          </motion.div>
+
+          {/* Enhanced Platform Statistics */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+          >
+            <GlassCard variant="colored" className="p-8 h-full">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Platform Statistics</h2>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-white/50 rounded-lg">
+                  <span className="text-gray-700 font-medium">Published Courses</span>
+                  <span className="font-bold text-lg text-green-600">
+                    {stats?.courses.published || 0}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-white/50 rounded-lg">
+                  <span className="text-gray-700 font-medium">Total Enrollments</span>
+                  <span className="font-bold text-lg text-blue-600">
+                    {stats?.courses.total_enrollments?.toLocaleString() || '0'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-white/50 rounded-lg">
+                  <span className="text-gray-700 font-medium">Weekly Active Users</span>
+                  <span className="font-bold text-lg text-purple-600">
+                    {stats?.users.active_this_week || 0}
+                  </span>
+                </div>
+                
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                    <span className="text-gray-900 font-bold text-lg">Platform Health</span>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <span className="text-green-600 font-bold">Excellent</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
