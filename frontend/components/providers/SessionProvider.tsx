@@ -27,11 +27,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <NextAuthSessionProvider
-      // Increase refetch interval to 30 minutes (session is valid for 30 days)
-      refetchInterval={30 * 60}
-      // Only refetch on window focus if session is older than 10 minutes
-      refetchOnWindowFocus={false}
-      // Skip initial session fetch if we have a valid session in storage
+      // Refetch interval set to 20 minutes (before 30 min token expiry)
+      refetchInterval={20 * 60}
+      // Enable refetch on window focus to check session on tab activation
+      refetchOnWindowFocus={true}
+      // Skip refetch when offline
       refetchWhenOffline={false}
     >
       {children}

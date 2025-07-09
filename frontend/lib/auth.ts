@@ -103,6 +103,11 @@ export const authOptions: NextAuthOptions = {
         // This is called when using update() from useSession
       }
       
+      // Skip refresh check if we just refreshed within the last minute
+      if (token.lastRefresh && Date.now() - (token.lastRefresh as number) < 60000) {
+        return token
+      }
+      
       // Check if access token needs refresh
       if (token.accessToken) {
         try {
@@ -118,30 +123,40 @@ export const authOptions: NextAuthOptions = {
               
               if (token.refreshToken) {
                 try {
-                  // Call backend refresh endpoint
-                  const refreshData = await api.post<StandardResponse<any>>('/auth/refresh', {
-                    refresh_token: token.refreshToken
+                  // Call backend refresh endpoint directly to avoid circular dependency
+                  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+                  const refreshResponse = await fetch(`${baseUrl}/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh_token: token.refreshToken })
                   })
                   
-                  if (refreshData.success && refreshData.data) {
+                  if (refreshResponse.ok) {
+                    const refreshData = await refreshResponse.json() as StandardResponse<any>
                     
-                    // Update token with new values
-                    token.accessToken = refreshData.data.access_token
-                    token.refreshToken = refreshData.data.refresh_token
-                    
-                    // Decode new token to update user info
-                    const newTokenParts = refreshData.data.access_token.split('.')
-                    if (newTokenParts.length === 3) {
-                      const newPayload = JSON.parse(Buffer.from(newTokenParts[1], 'base64').toString())
+                    if (refreshData.success && refreshData.data) {
                       
-                      // Update user info from new token
-                      token.email = newPayload.email || token.email
-                      token.name = newPayload.name || token.name
-                      token.role = newPayload.role || token.role
-                      token.premiumStatus = newPayload.premium_status || token.premiumStatus
+                      // Update token with new values
+                      token.accessToken = refreshData.data.access_token
+                      token.refreshToken = refreshData.data.refresh_token
+                      
+                      // Decode new token to update user info
+                      const newTokenParts = refreshData.data.access_token.split('.')
+                      if (newTokenParts.length === 3) {
+                        const newPayload = JSON.parse(Buffer.from(newTokenParts[1], 'base64').toString())
+                        
+                        // Update user info from new token
+                        token.email = newPayload.email || token.email
+                        token.name = newPayload.name || token.name
+                        token.role = newPayload.role || token.role
+                        token.premiumStatus = newPayload.premium_status || token.premiumStatus
+                      }
+                      
+                      // Mark the time of successful refresh
+                      token.lastRefresh = Date.now()
+                      
+                      return token
                     }
-                    
-                    return token
                   }
                 } catch (refreshError) {
                   console.error('❌ NextAuth JWT: Token refresh failed:', refreshError)
@@ -179,14 +194,26 @@ export const authOptions: NextAuthOptions = {
       // Handle OAuth sign-ins
       if (account?.provider !== 'credentials') {
         try {
-          // Send OAuth user data to backend
-          const data = await api.post<StandardResponse<any>>('/auth/oauth', {
-            email: user.email,
-            name: user.name || user.email?.split('@')[0],
-            provider: account?.provider || 'unknown',
-            provider_id: account?.providerAccountId || '',
-            picture: user.image
+          // Send OAuth user data to backend directly
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+          const oauthResponse = await fetch(`${baseUrl}/auth/oauth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.name || user.email?.split('@')[0],
+              provider: account?.provider || 'unknown',
+              provider_id: account?.providerAccountId || '',
+              picture: user.image
+            })
           })
+          
+          if (!oauthResponse.ok) {
+            console.error('OAuth backend sync failed')
+            return false
+          }
+          
+          const data = await oauthResponse.json() as StandardResponse<any>
           
           // Check if OAuth backend sync was successful
           if (!data.success) {
