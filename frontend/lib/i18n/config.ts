@@ -72,8 +72,8 @@ export const LOCALE_RTL: Record<Locale, boolean> = {
   vi: false,
 };
 
-export function isValidLocale(locale: string): locale is Locale {
-  return SUPPORTED_LOCALES.includes(locale as Locale);
+export function isValidLocale(locale: string | null): locale is Locale {
+  return locale !== null && SUPPORTED_LOCALES.includes(locale as Locale);
 }
 
 export function getLocaleFromPath(pathname: string): Locale {
