@@ -104,68 +104,27 @@
   }
   
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
-  }
-  
-  /* Mobile: reduce transform effect */
-  @media (max-width: 768px) {
-    .card-hover {
-      @apply hover:translate-y-0 active:scale-95;
-    }
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1 max-md:hover:translate-y-0 max-md:active:scale-95;
   }
   
   .btn-primary {
-    @apply bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 touch-manipulation;
-  }
-  
-  /* Mobile: larger touch targets */
-  @media (max-width: 768px) {
-    .btn-primary {
-      @apply min-h-[44px] px-6 py-3;
-    }
+    @apply bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 touch-manipulation max-md:min-h-[44px] max-md:px-6 max-md:py-3;
   }
   
   .btn-secondary {
-    @apply bg-secondary text-secondary-foreground px-4 py-2 rounded-md font-medium transition-colors hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 touch-manipulation;
-  }
-  
-  /* Mobile: larger touch targets */
-  @media (max-width: 768px) {
-    .btn-secondary {
-      @apply min-h-[44px] px-6 py-3;
-    }
+    @apply bg-secondary text-secondary-foreground px-4 py-2 rounded-md font-medium transition-colors hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 touch-manipulation max-md:min-h-[44px] max-md:px-6 max-md:py-3;
   }
   
   /* Mobile-optimized input fields */
   .input-mobile {
-    @apply w-full px-3 py-2 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors;
+    @apply w-full px-3 py-2 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors max-md:min-h-[44px] max-md:px-4 max-md:py-3 max-md:text-base;
     /* Prevent zoom on iOS */
     font-size: 16px;
   }
   
-  /* Mobile: larger touch targets */
-  @media (max-width: 768px) {
-    .input-mobile {
-      @apply min-h-[44px] px-4 py-3 text-base;
-    }
-  }
-  
   /* Mobile-first card component */
   .mobile-card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 transition-shadow duration-200;
-  }
-  
-  /* Mobile: reduce padding and adjust shadows */
-  @media (max-width: 768px) {
-    .mobile-card {
-      @apply p-4 rounded-lg shadow-md;
-    }
-  }
-  
-  @media (min-width: 768px) {
-    .mobile-card {
-      @apply p-6 hover:shadow-lg;
-    }
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 transition-shadow duration-200 max-md:p-4 max-md:shadow-md md:p-6 md:hover:shadow-lg;
   }
   
   /* Touch-friendly interactive elements */
@@ -175,82 +134,33 @@
   
   /* Mobile navigation styles */
   .mobile-nav {
-    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-bottom;
-  }
-  
-  /* Only show on mobile */
-  @media (min-width: 768px) {
-    .mobile-nav {
-      @apply hidden;
-    }
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-bottom md:hidden;
   }
   
   /* Responsive text utilities */
   .text-responsive-xs {
-    @apply text-xs;
-  }
-  
-  @media (min-width: 768px) {
-    .text-responsive-xs {
-      @apply text-sm;
-    }
+    @apply text-xs md:text-sm;
   }
   
   .text-responsive-sm {
-    @apply text-sm;
-  }
-  
-  @media (min-width: 768px) {
-    .text-responsive-sm {
-      @apply text-base;
-    }
+    @apply text-sm md:text-base;
   }
   
   .text-responsive-base {
-    @apply text-base;
-  }
-  
-  @media (min-width: 768px) {
-    .text-responsive-base {
-      @apply text-lg;
-    }
+    @apply text-base md:text-lg;
   }
   
   .text-responsive-lg {
-    @apply text-lg;
-  }
-  
-  @media (min-width: 768px) {
-    .text-responsive-lg {
-      @apply text-xl;
-    }
+    @apply text-lg md:text-xl;
   }
   
   /* Mobile-optimized spacing */
   .space-mobile {
-    @apply space-y-4;
-  }
-  
-  @media (min-width: 768px) {
-    .space-mobile {
-      @apply space-y-6;
-    }
+    @apply space-y-4 md:space-y-6;
   }
   
   .padding-mobile {
-    @apply p-4;
-  }
-  
-  @media (min-width: 768px) {
-    .padding-mobile {
-      @apply p-6;
-    }
-  }
-  
-  @media (min-width: 1024px) {
-    .padding-mobile {
-      @apply p-8;
-    }
+    @apply p-4 md:p-6 lg:p-8;
   }
   
   /* Scroll area optimization */
@@ -269,20 +179,7 @@
   
   /* Mobile-friendly modals */
   .modal-mobile {
-    @apply fixed inset-0 z-50 overflow-y-auto;
-  }
-  
-  /* Mobile: full screen on small devices */
-  @media (max-width: 768px) {
-    .modal-mobile {
-      @apply p-0;
-    }
-  }
-  
-  @media (min-width: 768px) {
-    .modal-mobile {
-      @apply p-4;
-    }
+    @apply fixed inset-0 z-50 overflow-y-auto max-md:p-0 md:p-4;
   }
   
   /* Loading states optimized for mobile */
@@ -299,13 +196,7 @@
   
   /* Mobile-optimized forms */
   .form-mobile {
-    @apply space-y-4;
-  }
-  
-  @media (min-width: 768px) {
-    .form-mobile {
-      @apply space-y-6;
-    }
+    @apply space-y-4 md:space-y-6;
   }
   
   .form-group-mobile {
@@ -313,27 +204,14 @@
   }
   
   .form-label-mobile {
-    @apply block text-sm font-medium text-gray-700 mb-1;
-  }
-  
-  @media (max-width: 768px) {
-    .form-label-mobile {
-      @apply text-base;
-    }
+    @apply block text-sm font-medium text-gray-700 mb-1 max-md:text-base;
   }
   
   /* Video player mobile optimizations */
   .video-container-mobile {
-    @apply relative w-full bg-black rounded-lg overflow-hidden;
+    @apply relative w-full bg-black rounded-lg overflow-hidden max-md:rounded-none;
     /* Maintain aspect ratio */
     aspect-ratio: 16 / 9;
-  }
-  
-  /* Mobile: adjust border radius */
-  @media (max-width: 768px) {
-    .video-container-mobile {
-      @apply rounded-none;
-    }
   }
   
   /* Pull-to-refresh indicator (for future implementation) */

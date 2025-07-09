@@ -2,12 +2,27 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { ProgressBar } from '@/components/ui/ProgressBar';
+import { StatsCard, AnimatedButton, GlassCard, ProgressRing } from '@/components/ui/modern/ModernComponents';
 import { useMyCoursesQuery } from '@/hooks/queries/useStudent';
 import { ToastService } from '@/lib/toast/ToastService';
+import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { 
+  BookOpen, 
+  Clock, 
+  Award, 
+  TrendingUp, 
+  Filter, 
+  Search, 
+  Play, 
+  CheckCircle,
+  Star,
+  Calendar,
+  Target,
+  Zap
+} from 'lucide-react';
 
 interface EnrolledCourse {
   id: string;
@@ -77,203 +92,337 @@ export default function MyCoursesPage() {
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <LoadingSpinner size="lg" message="Loading your courses..." />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">My Courses</h1>
-        <p className="text-gray-600">
-          Track your learning progress across all enrolled courses
-        </p>
-      </div>
-
-      {/* Filters and Sort */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              filter === 'all' 
-                ? 'bg-primary text-white' 
-                : 'bg-gray-100 hover:bg-gray-200'
-            }`}
-          >
-            All ({enrollments.length})
-          </button>
-          <button
-            onClick={() => setFilter('in-progress')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              filter === 'in-progress' 
-                ? 'bg-primary text-white' 
-                : 'bg-gray-100 hover:bg-gray-200'
-            }`}
-          >
-            In Progress ({enrollments.filter((e: any) => !e.progress.is_completed).length})
-          </button>
-          <button
-            onClick={() => setFilter('completed')}
-            className={`px-4 py-2 rounded-lg transition-colors ${
-              filter === 'completed' 
-                ? 'bg-primary text-white' 
-                : 'bg-gray-100 hover:bg-gray-200'
-            }`}
-          >
-            Completed ({enrollments.filter((e: any) => e.progress.is_completed).length})
-          </button>
-        </div>
-
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortType)}
-          className="px-4 py-2 border rounded-lg bg-white"
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="container mx-auto px-6 py-8">
+        {/* Enhanced Header */}
+        <motion.div 
+          className="mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          <option value="recent">Recently Accessed</option>
-          <option value="progress">Progress</option>
-          <option value="title">Title</option>
-        </select>
-      </div>
-
-      {/* Courses Grid */}
-      {sortedCourses.length === 0 ? (
-        <Card className="p-12 text-center">
-          <p className="text-gray-500 mb-4">
-            {filter === 'all' 
-              ? "You haven't enrolled in any courses yet"
-              : `No ${filter} courses found`
-            }
-          </p>
-          {filter === 'all' && (
-            <Link 
-              href="/courses"
-              className="inline-block bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors"
-            >
-              Browse Courses
-            </Link>
-          )}
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedCourses.map((enrollment) => (
-            <Card key={enrollment.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              {/* Course Thumbnail */}
-              <div className="relative h-48">
-                {enrollment.course.thumbnail ? (
-                  <img
-                    src={enrollment.course.thumbnail}
-                    alt={enrollment.course.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-6xl text-gray-400">📚</span>
-                  </div>
-                )}
-                
-                {/* Completion Badge */}
-                {enrollment.progress.is_completed && (
-                  <div className="absolute top-2 right-2">
-                    <Badge variant="default">Completed</Badge>
-                  </div>
-                )}
-              </div>
-
-              {/* Course Info */}
-              <div className="p-6">
-                <h3 className="font-bold text-lg mb-2">{enrollment.course.title}</h3>
-                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                  {enrollment.course.short_description || enrollment.course.description}
-                </p>
-
-                {/* Course Meta */}
-                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                  <span className="flex items-center gap-1">
-                    <span>👤</span> {enrollment.course.instructor}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span>📝</span> {enrollment.course.total_lessons} lessons
-                  </span>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                My Learning Journey
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Track your progress and continue your learning adventure
+              </p>
+              <div className="mt-4 flex items-center gap-4">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Target className="w-4 h-4 text-blue-500" />
+                  <span>{enrollments.length} Enrolled Courses</span>
                 </div>
-
-                {/* Progress */}
-                <div className="mb-4">
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span>Progress</span>
-                    <span className="font-medium">
-                      {enrollment.progress.lessons_completed}/{enrollment.progress.total_lessons} lessons
-                    </span>
-                  </div>
-                  <ProgressBar value={enrollment.progress.completion_percentage} />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {enrollment.progress.completion_percentage}% complete
-                  </p>
-                </div>
-
-                {/* Watch Time */}
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <span>Watch time</span>
-                  <span>{Math.round(enrollment.progress.total_watch_time / 60)} minutes</span>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <Link
-                    href={`/learn/${enrollment.course_id}`}
-                    className="flex-1 text-center bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors"
-                  >
-                    {enrollment.progress.is_completed ? 'Review' : 'Continue Learning'}
-                  </Link>
-                  {enrollment.progress.is_completed && (
-                    <Link
-                      href={`/certificates/${enrollment.id}`}
-                      className="px-4 py-2 border border-primary text-primary rounded hover:bg-primary hover:text-white transition-colors"
-                    >
-                      Certificate
-                    </Link>
-                  )}
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Award className="w-4 h-4 text-yellow-500" />
+                  <span>{enrollments.filter((e: any) => e.progress.is_completed).length} Completed</span>
                 </div>
               </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Summary Stats */}
-      {enrollments.length > 0 && (
-        <div className="mt-12 p-6 bg-gray-50 rounded-lg">
-          <h3 className="font-bold mb-4">Learning Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-primary">{enrollments.length}</p>
-              <p className="text-sm text-gray-600">Total Courses</p>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-green-600">
-                {enrollments.filter((e: any) => e.progress.is_completed).length}
-              </p>
-              <p className="text-sm text-gray-600">Completed</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-blue-600">
-                {enrollments.filter((e: any) => !e.progress.is_completed).length}
-              </p>
-              <p className="text-sm text-gray-600">In Progress</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-purple-600">
-                {Math.round(
-                  enrollments.reduce((sum: number, e: any) => sum + e.progress.total_watch_time, 0) / 3600
-                )}h
-              </p>
-              <p className="text-sm text-gray-600">Total Watch Time</p>
+            
+            {/* Progress Ring */}
+            <div className="hidden md:block">
+              <ProgressRing
+                progress={enrollments.length > 0 ? Math.round((enrollments.filter((e: any) => e.progress.is_completed).length / enrollments.length) * 100) : 0}
+                size={120}
+                showPercentage={true}
+                className="text-primary"
+              />
             </div>
           </div>
-        </div>
+        </motion.div>
+
+        {/* Enhanced Filters and Sort */}
+        <motion.div 
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <GlassCard variant="light" className="p-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+              {/* Filter Buttons */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Filter className="w-4 h-4" />
+                  <span>Filter:</span>
+                </div>
+                <div className="flex gap-2">
+                  <AnimatedButton
+                    variant={filter === 'all' ? 'gradient' : 'ghost'}
+                    size="sm"
+                    onClick={() => setFilter('all')}
+                  >
+                    All ({enrollments.length})
+                  </AnimatedButton>
+                  <AnimatedButton
+                    variant={filter === 'in-progress' ? 'primary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setFilter('in-progress')}
+                  >
+                    In Progress ({enrollments.filter((e: any) => !e.progress.is_completed).length})
+                  </AnimatedButton>
+                  <AnimatedButton
+                    variant={filter === 'completed' ? 'success' : 'ghost'}
+                    size="sm"
+                    onClick={() => setFilter('completed')}
+                  >
+                    Completed ({enrollments.filter((e: any) => e.progress.is_completed).length})
+                  </AnimatedButton>
+                </div>
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-700">Sort by:</span>
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as SortType)}
+                  className="px-4 py-2 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                >
+                  <option value="recent">Recently Accessed</option>
+                  <option value="progress">Progress</option>
+                  <option value="title">Title A-Z</option>
+                </select>
+              </div>
+            </div>
+          </GlassCard>
+        </motion.div>
+
+        {/* Enhanced Courses Grid */}
+        {sortedCourses.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <GlassCard variant="light" className="p-12 text-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                <BookOpen className="w-12 h-12 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {filter === 'all' 
+                  ? "Start Your Learning Journey"
+                  : `No ${filter} courses found`
+                }
+              </h3>
+              <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                {filter === 'all' 
+                  ? "You haven't enrolled in any courses yet. Explore our catalog and start learning today!"
+                  : `Try adjusting your filters or enroll in more courses to see them here.`
+                }
+              </p>
+              {filter === 'all' && (
+                <AnimatedButton 
+                  variant="gradient" 
+                  size="lg"
+                  icon={<Search className="w-5 h-5" />}
+                  onClick={() => window.location.href = '/courses'}
+                >
+                  Browse Courses
+                </AnimatedButton>
+              )}
+            </GlassCard>
+          </motion.div>
+        ) : (
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            {sortedCourses.map((enrollment, index) => (
+              <motion.div
+                key={enrollment.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.5 + index * 0.1 }}
+              >
+                <GlassCard variant="light" className="overflow-hidden hover:shadow-xl transition-all duration-300 group">
+                  {/* Enhanced Course Thumbnail */}
+                  <div className="relative h-48 overflow-hidden">
+                    {enrollment.course.thumbnail ? (
+                      <img
+                        src={enrollment.course.thumbnail}
+                        alt={enrollment.course.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center group-hover:from-blue-200 group-hover:to-purple-200 transition-colors duration-300">
+                        <BookOpen className="text-6xl text-blue-400" />
+                      </div>
+                    )}
+                    
+                    {/* Enhanced Progress Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                      <div className="flex items-center justify-between text-white text-sm">
+                        <span className="font-medium">
+                          {enrollment.progress.completion_percentage}% Complete
+                        </span>
+                        <ProgressRing
+                          progress={enrollment.progress.completion_percentage}
+                          size={32}
+                          showPercentage={false}
+                          className="text-white"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Enhanced Completion Badge */}
+                    {enrollment.progress.is_completed && (
+                      <div className="absolute top-3 right-3">
+                        <div className="flex items-center gap-1 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                          <CheckCircle className="w-3 h-3" />
+                          Completed
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Enhanced Course Info */}
+                  <div className="p-6">
+                    <h3 className="font-bold text-xl mb-3 text-gray-900 line-clamp-2 group-hover:text-primary transition-colors">
+                      {enrollment.course.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                      {enrollment.course.short_description || enrollment.course.description}
+                    </p>
+
+                    {/* Enhanced Course Meta */}
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 mb-6">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 text-yellow-500" />
+                        <span>{enrollment.course.instructor}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-blue-500" />
+                        <span>{enrollment.course.total_lessons} lessons</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-green-500" />
+                        <span>{Math.round(enrollment.progress.total_watch_time / 60)}m watched</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-purple-500" />
+                        <span>{new Date(enrollment.enrolled_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+
+                    {/* Enhanced Progress Section */}
+                    <div className="mb-6 p-4 bg-gray-50 rounded-xl">
+                      <div className="flex items-center justify-between text-sm mb-2">
+                        <span className="font-medium text-gray-700">Learning Progress</span>
+                        <span className="font-bold text-primary">
+                          {enrollment.progress.lessons_completed}/{enrollment.progress.total_lessons}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                        <div 
+                          className="bg-gradient-to-r from-primary to-primary-dark h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${enrollment.progress.completion_percentage}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {enrollment.progress.completion_percentage}% complete
+                      </p>
+                    </div>
+
+                    {/* Enhanced Action Buttons */}
+                    <div className="flex gap-3">
+                      <Link
+                        href={`/learn/${enrollment.course_id}`}
+                        className="flex-1"
+                      >
+                        <AnimatedButton
+                          variant="gradient"
+                          size="md"
+                          className="w-full"
+                          icon={enrollment.progress.is_completed ? <Award className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        >
+                          {enrollment.progress.is_completed ? 'Review' : 'Continue'}
+                        </AnimatedButton>
+                      </Link>
+                      {enrollment.progress.is_completed && (
+                        <Link href={`/certificates/${enrollment.id}`}>
+                          <AnimatedButton
+                            variant="secondary"
+                            size="md"
+                            icon={<Award className="w-4 h-4" />}
+                          >
+                            Certificate
+                          </AnimatedButton>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </GlassCard>
+              </motion.div>
+            ))}
+          </motion.div>
       )}
+
+        {/* Enhanced Summary Stats */}
+        {enrollments.length > 0 && (
+          <motion.div 
+            className="mt-16"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <GlassCard variant="colored" className="p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">Learning Summary</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <StatsCard
+                  title="Total Courses"
+                  value={enrollments.length.toString()}
+                  change={0}
+                  icon={<BookOpen className="w-6 h-6" />}
+                  variant="default"
+                />
+                
+                <StatsCard
+                  title="Completed"
+                  value={enrollments.filter((e: any) => e.progress.is_completed).length.toString()}
+                  change={0}
+                  icon={<CheckCircle className="w-6 h-6" />}
+                  variant="success"
+                />
+                
+                <StatsCard
+                  title="In Progress"
+                  value={enrollments.filter((e: any) => !e.progress.is_completed).length.toString()}
+                  change={0}
+                  icon={<Zap className="w-6 h-6" />}
+                  variant="warning"
+                />
+                
+                <StatsCard
+                  title="Total Hours"
+                  value={`${Math.round(
+                    enrollments.reduce((sum: number, e: any) => sum + e.progress.total_watch_time, 0) / 3600
+                  )}h`}
+                  change={0}
+                  icon={<Clock className="w-6 h-6" />}
+                  variant="default"
+                />
+              </div>
+            </GlassCard>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }

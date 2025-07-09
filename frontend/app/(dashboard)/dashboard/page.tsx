@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/Card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { StatsCard, AnimatedButton, GlassCard, ProgressRing } from '@/components/ui/modern/ModernComponents';
 import { InlineChatComponent } from '@/components/feature/InlineChatComponent';
 import { AccessDenied } from '@/components/feature/AccessDenied';
 import { ExportProgressModal } from '@/components/feature/ExportProgressModal';
@@ -15,6 +17,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { formatDistanceToNow } from '@/lib/utils/formatters';
 import { LoadingSpinner, EmptyState, CourseCardSkeleton } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
+import { BookOpen, Award, Clock, TrendingUp, Play, Star, Target, Zap, Gift } from 'lucide-react';
 
 interface DashboardData {
   user: {
@@ -149,217 +152,342 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Welcome Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          Welcome back, {dashboardData.user.name}!
-        </h1>
-        <p className="text-gray-600">
-          Continue your learning journey and track your progress
-        </p>
-      </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="container mx-auto px-6 py-8">
+        {/* Enhanced Welcome Section */}
+        <motion.div 
+          className="mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Enrolled Courses</p>
-              <p className="text-2xl font-bold">{dashboardData.stats.total_courses}</p>
-            </div>
-            <div className="text-4xl">📚</div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Completed</p>
-              <p className="text-2xl font-bold">{dashboardData.stats.completed_courses}</p>
-            </div>
-            <div className="text-4xl">✅</div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Hours Learned</p>
-              <p className="text-2xl font-bold">{dashboardData.stats.total_hours_learned}</p>
-            </div>
-            <div className="text-4xl">⏱️</div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Current Streak</p>
-              <p className="text-2xl font-bold">{dashboardData.stats.current_streak} days</p>
-            </div>
-            <div className="text-4xl">🔥</div>
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Courses */}
-        <div className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Continue Learning</h2>
-            <Link 
-              href="/my-courses" 
-              className="text-primary hover:underline text-sm"
-            >
-              View all courses →
-            </Link>
-          </div>
-
-          {dashboardData.recent_courses.length === 0 ? (
-            <Card className="p-8">
-              <EmptyState
-                title="No courses yet"
-                description="You haven't enrolled in any courses yet. Start learning today!"
-                action={{
-                  label: 'Browse Courses',
-                  onClick: () => router.push('/courses')
-                }}
-              />
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {dashboardData.recent_courses.map((course: any) => (
-                <Card key={course.id} className="p-4">
-                  <div className="flex items-center gap-4">
-                    {course.thumbnail ? (
-                      <img
-                        src={course.thumbnail}
-                        alt={course.title}
-                        className="w-24 h-16 object-cover rounded"
-                      />
-                    ) : (
-                      <div className="w-24 h-16 bg-gray-200 rounded flex items-center justify-center">
-                        <span className="text-gray-400">📚</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-1">{course.title}</h3>
-                      <div className="mb-2">
-                        <ProgressBar value={course.progress} />
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        {course.progress}% complete
-                        {course.last_accessed && (
-                          <span> • Last accessed {formatDistanceToNow(new Date(course.last_accessed))}</span>
-                        )}
-                      </p>
-                    </div>
-                    
-                    <Link
-                      href={`/learn/${course.id}`}
-                      className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors"
-                    >
-                      Continue
-                    </Link>
+              <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Welcome back, {dashboardData.user.name}!
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Continue your learning journey and track your progress
+              </p>
+              <div className="mt-4 flex items-center gap-4">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Zap className="w-4 h-4 text-yellow-500" />
+                  <span>{dashboardData.stats.current_streak} day streak</span>
+                </div>
+                {dashboardData.user.premium_status && (
+                  <div className="flex items-center gap-2 text-sm text-purple-600 bg-purple-100 px-3 py-1 rounded-full">
+                    <Star className="w-4 h-4" />
+                    <span>Premium Member</span>
                   </div>
-                </Card>
-              ))}
+                )}
+              </div>
             </div>
-          )}
-        </div>
+            
+            {/* Overall Progress Ring */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              <ProgressRing
+                progress={dashboardData.stats.total_courses > 0 ? (dashboardData.stats.completed_courses / dashboardData.stats.total_courses * 100) : 0}
+                size={120}
+                showPercentage={true}
+                className="hidden md:block"
+              />
+            </motion.div>
+          </div>
+        </motion.div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Upcoming Lessons */}
-          <div>
-            <h3 className="text-lg font-bold mb-3">Upcoming Lessons</h3>
-            {dashboardData.upcoming_lessons.length === 0 ? (
-              <Card className="p-4">
-                <p className="text-sm text-gray-500">No upcoming lessons</p>
-              </Card>
+        {/* Enhanced Stats Overview */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <StatsCard
+            title="Enrolled Courses"
+            value={dashboardData.stats.total_courses}
+            change={15}
+            icon={<BookOpen className="w-6 h-6" />}
+            variant="default"
+          />
+          
+          <StatsCard
+            title="Completed Courses"
+            value={dashboardData.stats.completed_courses}
+            change={dashboardData.stats.completed_courses > 0 ? 25 : 0}
+            icon={<Award className="w-6 h-6" />}
+            variant="success"
+          />
+          
+          <StatsCard
+            title="Hours Learned"
+            value={`${dashboardData.stats.total_hours_learned}h`}
+            change={12}
+            icon={<Clock className="w-6 h-6" />}
+            variant="warning"
+          />
+          
+          <StatsCard
+            title="Learning Streak"
+            value={`${dashboardData.stats.current_streak} days`}
+            change={dashboardData.stats.current_streak > dashboardData.stats.longest_streak ? 100 : 0}
+            icon={<TrendingUp className="w-6 h-6" />}
+            variant="success"
+          />
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Enhanced Recent Courses */}
+          <motion.div 
+            className="lg:col-span-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Continue Learning</h2>
+              <Link 
+                href="/my-courses" 
+                className="text-primary hover:text-primary-hover text-sm font-medium flex items-center gap-1"
+              >
+                View all courses
+                <Target className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {dashboardData.recent_courses.length === 0 ? (
+              <GlassCard variant="light" className="p-8">
+                <EmptyState
+                  title="No courses yet"
+                  description="You haven't enrolled in any courses yet. Start learning today!"
+                  action={{
+                    label: 'Browse Courses',
+                    onClick: () => router.push('/courses')
+                  }}
+                />
+              </GlassCard>
             ) : (
-              <div className="space-y-3">
-                {dashboardData.upcoming_lessons.map((lesson: any, index: number) => (
-                  <Card key={index} className="p-4">
-                    <p className="font-medium text-sm">{lesson.lesson_title}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {lesson.course_title} • {lesson.estimated_time} min
-                    </p>
-                  </Card>
+              <div className="space-y-4">
+                {dashboardData.recent_courses.map((course: any, index: number) => (
+                  <motion.div
+                    key={course.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
+                  >
+                    <GlassCard variant="light" className="p-6 hover:shadow-lg transition-all duration-300">
+                      <div className="flex items-center gap-6">
+                        {course.thumbnail ? (
+                          <img
+                            src={course.thumbnail}
+                            alt={course.title}
+                            className="w-24 h-16 object-cover rounded-xl shadow-md"
+                          />
+                        ) : (
+                          <div className="w-24 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center shadow-md">
+                            <BookOpen className="w-8 h-8 text-blue-600" />
+                          </div>
+                        )}
+                        
+                        <div className="flex-1">
+                          <h3 className="font-bold text-lg mb-2 text-gray-900">{course.title}</h3>
+                          <div className="mb-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium text-gray-600">Progress</span>
+                              <span className="text-sm font-bold text-blue-600">{course.progress}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <motion.div 
+                                className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${course.progress}%` }}
+                                transition={{ duration: 1, delay: 0.8 + index * 0.1 }}
+                              />
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            {course.last_accessed && (
+                              <span>Last accessed {formatDistanceToNow(new Date(course.last_accessed))}</span>
+                            )}
+                          </p>
+                        </div>
+                        
+                        <AnimatedButton
+                          variant="gradient"
+                          size="md"
+                          onClick={() => router.push(`/learn/${course.id}`)}
+                          icon={<Play className="w-4 h-4" />}
+                        >
+                          Continue
+                        </AnimatedButton>
+                      </div>
+                    </GlassCard>
+                  </motion.div>
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
 
-          {/* Achievements */}
-          <div>
-            <h3 className="text-lg font-bold mb-3">Achievements</h3>
-            <Card className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm">Certificates Earned</span>
-                <span className="font-bold">{dashboardData.certificates_earned}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Longest Streak</span>
-                <span className="font-bold">{dashboardData.stats.longest_streak} days</span>
-              </div>
-            </Card>
-          </div>
-
-          {/* Quick Actions */}
-          <div>
-            <h3 className="text-lg font-bold mb-3">Quick Actions</h3>
-            <div className="space-y-2">
-              <Link
-                href="/courses"
-                className="block w-full text-center bg-gray-100 hover:bg-gray-200 py-2 rounded transition-colors"
-              >
-                Browse New Courses
-              </Link>
-              <Link
-                href="/certificates"
-                className="block w-full text-center bg-gray-100 hover:bg-gray-200 py-2 rounded transition-colors"
-              >
-                View Certificates
-              </Link>
-              <Link
-                href="/profile"
-                className="block w-full text-center bg-gray-100 hover:bg-gray-200 py-2 rounded transition-colors"
-              >
-                Edit Profile
-              </Link>
-              <button
-                onClick={() => setShowExportModal(true)}
-                className="block w-full text-center bg-blue-100 hover:bg-blue-200 py-2 rounded transition-colors text-blue-700"
-              >
-                📊 Export Progress
-              </button>
-              <button
-                onClick={() => setShowOnboardingModal(true)}
-                className="block w-full text-center bg-purple-100 hover:bg-purple-200 py-2 rounded transition-colors text-purple-700"
-              >
-                🚀 Platform Tour
-              </button>
+          {/* Enhanced Sidebar */}
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
+            {/* Upcoming Lessons */}
+            <div>
+              <h3 className="text-xl font-bold mb-4 text-gray-900">Upcoming Lessons</h3>
+              {dashboardData.upcoming_lessons.length === 0 ? (
+                <GlassCard variant="light" className="p-6 text-center">
+                  <Clock className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                  <p className="text-sm text-gray-500">No upcoming lessons</p>
+                  <p className="text-xs text-gray-400 mt-1">Complete current lessons to unlock more</p>
+                </GlassCard>
+              ) : (
+                <div className="space-y-3">
+                  {dashboardData.upcoming_lessons.map((lesson: any, index: number) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.7 + index * 0.1 }}
+                    >
+                      <GlassCard variant="light" className="p-4 hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                            <Play className="w-4 h-4 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm text-gray-900">{lesson.lesson_title}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {lesson.course_title} • {lesson.estimated_time} min
+                            </p>
+                          </div>
+                        </div>
+                      </GlassCard>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
+
+            {/* Enhanced Achievements */}
+            <div>
+              <h3 className="text-xl font-bold mb-4 text-gray-900">Achievements</h3>
+              <GlassCard variant="colored" className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Award className="w-5 h-5 text-yellow-500" />
+                      <span className="text-sm font-medium">Certificates Earned</span>
+                    </div>
+                    <span className="font-bold text-lg text-yellow-600">{dashboardData.certificates_earned}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Zap className="w-5 h-5 text-orange-500" />
+                      <span className="text-sm font-medium">Longest Streak</span>
+                    </div>
+                    <span className="font-bold text-lg text-orange-600">{dashboardData.stats.longest_streak} days</span>
+                  </div>
+                </div>
+              </GlassCard>
+            </div>
+
+            {/* Enhanced Quick Actions */}
+            <div>
+              <h3 className="text-xl font-bold mb-4 text-gray-900">Quick Actions</h3>
+              <div className="space-y-3">
+                <AnimatedButton
+                  variant="ghost"
+                  size="md"
+                  className="w-full justify-start"
+                  onClick={() => router.push('/courses')}
+                  icon={<BookOpen className="w-4 h-4" />}
+                >
+                  Browse New Courses
+                </AnimatedButton>
+                
+                <AnimatedButton
+                  variant="ghost"
+                  size="md"
+                  className="w-full justify-start"
+                  onClick={() => router.push('/certificates')}
+                  icon={<Award className="w-4 h-4" />}
+                >
+                  View Certificates
+                </AnimatedButton>
+                
+                <AnimatedButton
+                  variant="ghost"
+                  size="md"
+                  className="w-full justify-start"
+                  onClick={() => router.push('/profile')}
+                  icon={<Target className="w-4 h-4" />}
+                >
+                  Edit Profile
+                </AnimatedButton>
+                
+                <AnimatedButton
+                  variant="secondary"
+                  size="md"
+                  className="w-full justify-start"
+                  onClick={() => setShowExportModal(true)}
+                  icon={<TrendingUp className="w-4 h-4" />}
+                >
+                  Export Progress
+                </AnimatedButton>
+                
+                <AnimatedButton
+                  variant="gradient"
+                  size="md"
+                  className="w-full justify-start"
+                  onClick={() => setShowOnboardingModal(true)}
+                  icon={<Gift className="w-4 h-4" />}
+                >
+                  Platform Tour
+                </AnimatedButton>
+              </div>
+            </div>
+          </motion.div>
         </div>
 
-        {/* AI Study Assistant */}
-        <div className="mt-8">
-          <InlineChatComponent
-            title="Ask Your AI Study Buddy"
-            placeholder="What would you like to learn today? Ask me anything about your courses!"
-            suggestions={[
-              "What should I study next?",
-              "Help me review my progress",
-              "Explain a concept I'm struggling with",
-              "Suggest a learning plan for this week"
-            ]}
-          />
-        </div>
+        {/* Enhanced AI Study Assistant */}
+        <motion.div 
+          className="mt-12"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+        >
+          <GlassCard variant="colored" className="p-8">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
+                <Star className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">AI Study Buddy</h3>
+                <p className="text-sm text-gray-600">Get personalized learning assistance powered by Claude AI</p>
+              </div>
+            </div>
+            
+            <InlineChatComponent
+              title=""
+              placeholder="What would you like to learn today? Ask me anything about your courses!"
+              suggestions={[
+                "What should I study next?",
+                "Help me review my progress",
+                "Explain a concept I'm struggling with",
+                "Suggest a learning plan for this week"
+              ]}
+            />
+          </GlassCard>
+        </motion.div>
       </div>
+    </div>
 
       {/* Export Progress Modal */}
       <ExportProgressModal
