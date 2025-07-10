@@ -112,7 +112,7 @@ export function useUpdateSupportTicket() {
         // Handle different data structures
         const tickets = old?.data?.tickets || old?.tickets || [];
         const updatedTickets = tickets.map((ticket: any) => {
-          if (ticket._id === ticketId || ticket.id === ticketId) {
+          if (ticket.id === ticketId) {
             return {
               ...ticket,
               ...data,
@@ -225,7 +225,7 @@ export function useAssignSupportTicket() {
         // Handle different data structures
         const tickets = old?.data?.tickets || old?.tickets || [];
         const updatedTickets = tickets.map((ticket: any) => {
-          if (ticket._id === ticketId || ticket.id === ticketId) {
+          if (ticket.id === ticketId) {
             return {
               ...ticket,
               assignee_id: assigneeId,
@@ -319,7 +319,7 @@ export function useResolveSupportTicket() {
         // Handle different data structures
         const tickets = old?.data?.tickets || old?.tickets || [];
         const updatedTickets = tickets.map((ticket: any) => {
-          if (ticket._id === ticketId || ticket.id === ticketId) {
+          if (ticket.id === ticketId) {
             return {
               ...ticket,
               status: 'resolved',
@@ -413,7 +413,7 @@ export function useDeleteSupportTicket() {
         // Handle different data structures
         const tickets = old?.data?.tickets || old?.tickets || [];
         const filteredTickets = tickets.filter((ticket: any) => {
-          const id = ticket._id || ticket.id;
+          const id = ticket.id;
           return id !== ticketId;
         });
         

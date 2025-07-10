@@ -7,7 +7,7 @@ export type TicketStatus = 'open' | 'in_progress' | 'waiting_for_user' | 'resolv
 export type TicketCategory = 'technical' | 'billing' | 'course_content' | 'account' | 'feature_request' | 'bug_report' | 'other';
 
 export interface TicketMessage {
-  _id: string;
+  id: string;
   ticket_id: string;
   sender_id: string;
   sender_name: string;
@@ -20,7 +20,7 @@ export interface TicketMessage {
 }
 
 export interface SupportTicket {
-  _id: string;
+  id: string;
   user_id: string;
   user_email: string;
   user_name: string;

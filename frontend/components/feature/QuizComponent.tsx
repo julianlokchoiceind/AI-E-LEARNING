@@ -24,8 +24,8 @@ export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
   // React Query hooks for data fetching
   const { data: quizResponse, loading: quizLoading } = useLessonQuizQuery(lessonId, !!lessonId);
   const { data: progressResponse, loading: progressLoading } = useQuizProgressQuery(
-    quizResponse?.data?._id, 
-    !!quizResponse?.data?._id
+    quizResponse?.data?.id, 
+    !!quizResponse?.data?.id
   );
   const { mutate: submitQuizMutation, loading: isSubmitting } = useSubmitQuiz();
 

@@ -21,7 +21,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 interface Lesson {
-  _id: string;
+  id: string;
   title: string;
   description?: string;
   order: number;
@@ -77,7 +77,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
     transition,
     isDragging: isSortableDragging,
   } = useSortable({ 
-    id: lesson._id,
+    id: lesson.id,
     disabled: !isEditable || isOverlay
   });
 
@@ -95,9 +95,9 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
     if (isLocked || isOverlay) return;
     
     if (lesson.is_free_preview && !isEnrolled && onPreviewClick) {
-      onPreviewClick(lesson._id);
+      onPreviewClick(lesson.id);
     } else if (isEnrolled && onLessonClick) {
-      onLessonClick(chapterId, lesson._id);
+      onLessonClick(chapterId, lesson.id);
     }
   };
 
@@ -221,7 +221,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEdit?.(lesson._id);
+                    onEdit?.(lesson.id);
                   }}
                   className="text-gray-600 hover:text-blue-600 h-8 w-8 p-0"
                   title="Quick edit"
@@ -235,7 +235,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onEditDetailed(lesson._id);
+                      onEditDetailed(lesson.id);
                     }}
                     className="text-gray-600 hover:text-blue-600 h-8 w-8 p-0"
                     title="Advanced edit"
@@ -249,7 +249,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDelete?.(lesson._id);
+                    onDelete?.(lesson.id);
                   }}
                   className="text-gray-600 hover:text-red-600 h-8 w-8 p-0"
                 >
@@ -262,7 +262,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onPreviewClick?.(lesson._id);
+                      onPreviewClick?.(lesson.id);
                     }}
                     className="text-gray-600 hover:text-green-600 h-8 w-8 p-0"
                   >

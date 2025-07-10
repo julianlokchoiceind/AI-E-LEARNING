@@ -1,0 +1,293 @@
+# ========================================
+# AI E-Learning Platform - Complete CI/CD Pipeline
+# ========================================
+# Full pipeline ensuring smooth app operation and deployment
+
+name: 🚀 CI/CD Pipeline
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch: # Manual trigger
+
+env:
+  NODE_VERSION: '18.x'
+  PYTHON_VERSION: '3.9'
+
+jobs:
+  # =====================================
+  # 📁 DETECT CHANGES
+  # =====================================
+  detect-changes:
+    name: 🔍 Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.changes.outputs.frontend }}
+      backend: ${{ steps.changes.outputs.backend }}
+      any: ${{ steps.changes.outputs.frontend == 'true' || steps.changes.outputs.backend == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/**'
+            backend:
+              - 'backend/**'
+              - '.github/workflows/**'
+
+  # =====================================
+  # 🎨 FRONTEND PIPELINE
+  # =====================================
+  frontend-pipeline:
+    name: 🎨 Frontend Pipeline
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 ESLint Check
+        run: npm run lint
+
+      - name: 🔧 TypeScript Check
+        run: npx tsc --noEmit
+
+      - name: 🏗️ Production Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+          SKIP_ENV_VALIDATION: true
+
+      - name: 📊 Bundle Size Check
+        run: |
+          BUILD_SIZE=$(du -sh .next | cut -f1)
+          echo "🏗️ Build size: $BUILD_SIZE" >> $GITHUB_STEP_SUMMARY
+          
+      - name: 🚀 Startup Test
+        run: |
+          timeout 30s npm start &
+          PID=$!
+          sleep 10
+          if kill -0 $PID 2>/dev/null; then
+            echo "✅ Next.js starts successfully"
+            kill $PID
+          else
+            echo "❌ Next.js failed to start"
+            exit 1
+          fi
+
+      - name: 📦 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/.next/
+          retention-days: 1
+
+  # =====================================
+  # 🐍 BACKEND PIPELINE
+  # =====================================
+  backend-pipeline:
+    name: 🐍 Backend Pipeline
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements.txt'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🔍 Ruff Linting
+        run: ruff check .
+
+      - name: 🎨 Black Formatting
+        run: black --check .
+
+      - name: 🧪 Import Tests
+        run: python -c "from app.main import app; print('✅ App imports successfully')"
+
+      - name: 🏥 Health Check Test
+        run: |
+          python -c "
+          from app.main import app
+          from fastapi.testclient import TestClient
+          client = TestClient(app)
+          response = client.get('/health')
+          print(f'Health check status: {response.status_code}')
+          assert response.status_code == 200, 'Health check failed'
+          print('✅ Health check passed')
+          "
+
+      - name: 🐛 Pytest Basic Tests
+        run: |
+          if [ -d "tests" ]; then
+            pytest tests/ -v --tb=short
+          else
+            echo "ℹ️  No tests directory found, skipping pytest"
+          fi
+
+  # =====================================
+  # 🔗 INTEGRATION TESTS
+  # =====================================
+  integration-tests:
+    name: 🔗 Integration Tests
+    needs: [frontend-pipeline, backend-pipeline]
+    if: always() && (needs.frontend-pipeline.result == 'success' || needs.backend-pipeline.result == 'success')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python & Node
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          cd backend && pip install -r requirements.txt
+          cd ../frontend && npm ci
+
+      - name: 🚀 Start Backend
+        run: |
+          cd backend
+          python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          echo $! > backend.pid
+          sleep 5
+
+      - name: 🧪 API Integration Test
+        run: |
+          # Test basic API endpoints
+          curl -f http://localhost:8000/health || exit 1
+          curl -f http://localhost:8000/docs || exit 1
+          echo "✅ API integration tests passed"
+
+      - name: 🛑 Cleanup
+        if: always()
+        run: |
+          if [ -f backend.pid ]; then
+            kill $(cat backend.pid) || true
+          fi
+
+  # =====================================
+  # 🚀 DEPLOYMENT PIPELINE
+  # =====================================
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    needs: [frontend-pipeline, backend-pipeline, integration-tests]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/.next/
+
+      - name: 🚀 Deploy to Staging
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          echo "📍 Staging URL: https://staging.your-domain.com"
+          # Add your deployment commands here
+          # Examples:
+          # - Deploy to Vercel staging
+          # - Deploy to Railway staging
+          # - Deploy to AWS staging
+
+      - name: 🏥 Post-Deploy Health Check
+        run: |
+          echo "🏥 Running post-deployment health checks..."
+          # Add health check commands here
+          # curl -f https://staging.your-domain.com/health
+
+  deploy-production:
+    name: 🏭 Deploy to Production
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏭 Deploy to Production
+        run: |
+          echo "🏭 Deploying to production environment..."
+          echo "📍 Production URL: https://your-domain.com"
+          # Add your production deployment commands here
+
+      - name: 🏥 Production Health Check
+        run: |
+          echo "🏥 Running production health checks..."
+          # Add production health check commands here
+
+  # =====================================
+  # ✅ FINAL STATUS & NOTIFICATIONS
+  # =====================================
+  status-report:
+    name: ✅ Pipeline Status
+    needs: [frontend-pipeline, backend-pipeline, integration-tests, deploy-staging]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📊 Generate Status Report
+        run: |
+          echo "## 🚀 CI/CD Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Status | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🎨 Frontend | ${{ needs.frontend-pipeline.result || '⏭️ Skipped' }} | Build, Lint, TypeScript |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐍 Backend | ${{ needs.backend-pipeline.result || '⏭️ Skipped' }} | Lint, Format, Tests |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔗 Integration | ${{ needs.integration-tests.result || '⏭️ Skipped' }} | API & E2E Tests |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🚀 Staging | ${{ needs.deploy-staging.result || '⏭️ Skipped' }} | Staging Deployment |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY

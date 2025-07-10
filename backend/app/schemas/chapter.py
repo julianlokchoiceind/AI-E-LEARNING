@@ -39,7 +39,7 @@ class ChapterReorder(BaseModel):
 
 class ChapterResponse(BaseModel):
     """Response schema for chapter data."""
-    id: str
+    id: str = Field(alias="_id")
     course_id: str
     title: str
     description: Optional[str]
@@ -51,6 +51,7 @@ class ChapterResponse(BaseModel):
     updated_at: datetime
     
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "id": "507f1f77bcf86cd799439011",
@@ -75,7 +76,7 @@ class ChapterListResponse(BaseModel):
 
 class ChapterWithLessonsResponse(BaseModel):
     """Response schema for chapter data with lessons included."""
-    id: str
+    id: str = Field(alias="_id")
     course_id: str
     title: str
     description: Optional[str]
@@ -88,6 +89,7 @@ class ChapterWithLessonsResponse(BaseModel):
     lessons: List[dict] = []  # Include lessons
     
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "id": "507f1f77bcf86cd799439011",
@@ -102,7 +104,7 @@ class ChapterWithLessonsResponse(BaseModel):
                 "updated_at": "2024-06-20T10:00:00Z",
                 "lessons": [
                     {
-                        "_id": "507f1f77bcf86cd799439012",
+                        "id": "507f1f77bcf86cd799439012",
                         "title": "Setting up Python",
                         "order": 1,
                         "video_duration": 600,

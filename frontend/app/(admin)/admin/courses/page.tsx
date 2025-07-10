@@ -107,7 +107,7 @@ export default function CourseApproval() {
   // fetchCourses is available from useAdminCoursesQuery for manual refresh if needed
 
   const handleApproveCourse = (course: Course) => {
-    const courseId = course._id || course.id!;
+    const courseId = course.id;
     approveCourse(courseId);
   };
 
@@ -117,7 +117,7 @@ export default function CourseApproval() {
       return;
     }
     
-    const courseId = selectedCourse._id || selectedCourse.id!;
+    const courseId = selectedCourse.id!;
     rejectCourse({ courseId, reason: rejectionReason }, {
       onSuccess: () => {
         setShowRejectModal(false);
@@ -128,13 +128,13 @@ export default function CourseApproval() {
   };
 
   const handleToggleFree = (course: Course, currentStatus: boolean) => {
-    const courseId = course._id || course.id!;
+    const courseId = course.id || course.id!;
     toggleFree({ courseId, isFree: !currentStatus });
   };
 
   const handleDeleteCourse = (course: Course) => {
-    // Fix: Use course.id instead of course._id (API returns id field)
-    const courseId = course._id || (course as any).id;
+    // Fix: Use course.id instead of course.id (API returns id field)
+    const courseId = course.id || (course as any).id;
     
     setSelectedCourseForDelete({
       _id: courseId,
@@ -160,8 +160,8 @@ export default function CourseApproval() {
   const handleCreateCourse = () => {
     createCourseAction({}, {
       onSuccess: (response) => {
-        if (response.success && response.data?._id) {
-          router.push(`/admin/courses/${response.data._id}/edit`);
+        if (response.success && response.data?.id) {
+          router.push(`/admin/courses/${response.data.id}/edit`);
         }
       }
     });
@@ -393,7 +393,7 @@ export default function CourseApproval() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredCourses.map((course: Course) => (
-                  <tr key={course._id} className="hover:bg-gray-50">
+                  <tr key={course.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         {course.thumbnail ? (
@@ -461,7 +461,7 @@ export default function CourseApproval() {
                           size="sm"
                           variant="ghost"
                           onClick={() => {
-                            const courseId = course._id || course.id!;
+                            const courseId = course.id || course.id!;
                             router.push(`/admin/courses/${courseId}/edit`);
                           }}
                           className="text-gray-600 hover:bg-gray-50"

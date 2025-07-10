@@ -81,8 +81,8 @@ const CourseBuilderPage = () => {
     {
       delay: 2000,
       onSave: async (data) => {
-        if (!data || !data._id) return;
-        await updateCourseAction({ courseId: data._id, courseData: data });
+        if (!data || !data.id) return;
+        await updateCourseAction({ courseId: data.id, courseData: data });
       },
       enabled: !!courseData,
     }
@@ -146,10 +146,10 @@ const CourseBuilderPage = () => {
 
   const handleChapterEdit = (chapterId: string) => {
     // Find the chapter to edit
-    const chapterToEdit = chapters.find(ch => ch._id === chapterId);
+    const chapterToEdit = chapters.find(ch => ch.id === chapterId);
     if (chapterToEdit) {
       setSelectedChapterForEdit({
-        _id: chapterToEdit._id,
+        id: chapterToEdit.id,
         title: chapterToEdit.title,
         description: chapterToEdit.description || '',
         order: chapterToEdit.order,
@@ -172,10 +172,10 @@ const CourseBuilderPage = () => {
 
   const handleChapterDelete = (chapterId: string) => {
     // Find the chapter to delete
-    const chapterToDelete = chapters.find(ch => ch._id === chapterId);
+    const chapterToDelete = chapters.find(ch => ch.id === chapterId);
     if (chapterToDelete) {
       setSelectedChapterForDelete({
-        _id: chapterToDelete._id,
+        id: chapterToDelete.id,
         title: chapterToDelete.title,
         description: chapterToDelete.description,
         total_lessons: chapterToDelete.total_lessons || 0
@@ -208,7 +208,7 @@ const CourseBuilderPage = () => {
 
     for (const chapter of chapters) {
       if (chapter.lessons) {
-        const foundLesson = chapter.lessons.find((lesson: any) => lesson._id === lessonId);
+        const foundLesson = chapter.lessons.find((lesson: any) => lesson.id === lessonId);
         if (foundLesson) {
           lessonToEdit = foundLesson;
           chapterOfLesson = chapter;
@@ -219,8 +219,8 @@ const CourseBuilderPage = () => {
 
     if (lessonToEdit && chapterOfLesson) {
       setSelectedLessonForEdit({
-        _id: lessonToEdit._id,
-        chapter_id: chapterOfLesson._id,
+        id: lessonToEdit.id,
+        chapter_id: chapterOfLesson.id,
         course_id: courseId,
         title: lessonToEdit.title,
         description: lessonToEdit.description,
@@ -252,7 +252,7 @@ const CourseBuilderPage = () => {
 
     for (const chapter of chapters) {
       if (chapter.lessons) {
-        const foundLesson = chapter.lessons.find((lesson: any) => lesson._id === lessonId);
+        const foundLesson = chapter.lessons.find((lesson: any) => lesson.id === lessonId);
         if (foundLesson) {
           lessonToDelete = foundLesson;
           chapterOfLesson = chapter;
@@ -263,7 +263,7 @@ const CourseBuilderPage = () => {
 
     if (lessonToDelete && chapterOfLesson) {
       setSelectedLessonForDelete({
-        _id: lessonToDelete._id,
+        id: lessonToDelete.id,
         title: lessonToDelete.title,
         description: lessonToDelete.description,
         chapter_title: chapterOfLesson.title,
@@ -299,7 +299,7 @@ const CourseBuilderPage = () => {
       // Prepare data for bulk reorder API
       const reorderData = {
         chapter_orders: reorderedChapters.map((chapter, index) => ({
-          chapter_id: chapter._id,
+          chapter_id: chapter.id,
           new_order: index + 1
         }))
       };
@@ -323,7 +323,7 @@ const CourseBuilderPage = () => {
       // Prepare data for bulk reorder API
       const reorderData = {
         lesson_orders: reorderedLessons.map((lesson, index) => ({
-          lesson_id: lesson._id,
+          lesson_id: lesson.id,
           new_order: index + 1
         }))
       };

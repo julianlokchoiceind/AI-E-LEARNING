@@ -141,8 +141,7 @@ export function useDeleteChapter() {
           // Handle different data structures
           const chapters = old?.data?.chapters || old?.chapters || [];
           const filteredChapters = chapters.filter((chapter: any) => {
-            const id = chapter._id || chapter.id;
-            return id !== chapterId;
+            return chapter.id !== chapterId;
           });
           
           // Maintain same structure
@@ -262,8 +261,8 @@ export function useReorderChapters() {
           
           // Sort chapters based on new order
           const reorderedChapters = [...chapters].sort((a: any, b: any) => {
-            const aId = a._id || a.id;
-            const bId = b._id || b.id;
+            const aId = a.id;
+            const bId = b.id;
             const aOrder = orderMap.get(aId) || a.order || 999;
             const bOrder = orderMap.get(bId) || b.order || 999;
             return aOrder - bOrder;
@@ -271,7 +270,7 @@ export function useReorderChapters() {
           
           // Update order property on each chapter
           const updatedChapters = reorderedChapters.map((chapter: any, index: number) => {
-            const chapterId = chapter._id || chapter.id;
+            const chapterId = chapter.id;
             const newOrder = orderMap.get(chapterId);
             return {
               ...chapter,

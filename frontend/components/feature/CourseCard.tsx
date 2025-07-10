@@ -10,7 +10,7 @@ import { CourseRatingMini } from '@/components/feature/CourseRating';
 
 interface CourseCardProps {
   course: {
-    _id: string;
+    id: string;
     title: string;
     description: string;
     short_description: string;
@@ -41,13 +41,13 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
   const router = useRouter();
 
   const handleClick = () => {
-    router.push(`/courses/${course._id}`);
+    router.push(`/courses/${course.id}`);
   };
 
   const handleEnroll = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onEnroll) {
-      onEnroll(course._id);
+      onEnroll(course.id);
     }
   };
 

@@ -21,7 +21,7 @@ export interface QuizConfig {
 }
 
 export interface Quiz {
-  _id: string;
+  id: string;
   lesson_id: string;
   course_id: string;
   title: string;

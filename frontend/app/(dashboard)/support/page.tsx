@@ -179,9 +179,9 @@ export default function SupportPage() {
             
             return (
               <Card 
-                key={ticket._id} 
+                key={ticket.id} 
                 className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => window.location.href = `/support/${ticket._id}`}
+                onClick={() => window.location.href = `/support/${ticket.id}`}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">

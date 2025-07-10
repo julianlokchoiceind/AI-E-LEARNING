@@ -123,7 +123,7 @@ export default function LessonPage({ params }: {
   const { trackVideoPlay } = usePageTracking();
 
   const handleVideoPlay = (position: number) => {
-    trackVideoPlay(lesson._id, lesson.title, position);
+    trackVideoPlay(lesson.id, lesson.title, position);
   };
 
   return (

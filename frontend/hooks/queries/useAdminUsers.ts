@@ -96,7 +96,7 @@ export function useToggleUserPremium() {
         // Handle different data structures
         const users = old?.data?.users || old?.users || [];
         const updatedUsers = users.map((user: any) => {
-          const id = user._id || user.id;
+          const id = user.id;
           if (id === userId) {
             return {
               ...user,
@@ -202,7 +202,7 @@ export function useDeleteUser() {
         // Handle different data structures
         const users = old?.data?.users || old?.users || [];
         const filteredUsers = users.filter((user: any) => {
-          const id = user._id || user.id;
+          const id = user.id;
           return id !== userId;
         });
         

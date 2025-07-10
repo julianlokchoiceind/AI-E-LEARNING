@@ -3,7 +3,7 @@
  */
 
 export interface Course {
-  _id: string
+  id: string
   title: string
   description: string
   short_description?: string
@@ -56,7 +56,7 @@ export interface CourseSEO {
 }
 
 export interface Chapter {
-  _id: string
+  id: string
   course_id: string
   title: string
   description?: string
@@ -70,7 +70,7 @@ export interface Chapter {
 }
 
 export interface Lesson {
-  _id: string
+  id: string
   course_id: string
   chapter_id: string
   title: string
@@ -125,7 +125,7 @@ export interface CourseProgress {
 }
 
 export interface Enrollment {
-  _id: string
+  id: string
   user_id: string
   course_id: string
   enrollment_type: 'free' | 'purchased' | 'subscription' | 'admin_granted'

@@ -12,7 +12,7 @@ import { Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 export interface LessonEditData {
-  _id: string;
+  id: string;
   chapter_id: string;
   course_id: string;
   title: string;
@@ -85,7 +85,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
   // Lesson-specific data change detection with video object comparison
   const hasDataChanged = useCallback((current: any, previous: any): boolean => {
     if (!current || !previous) return false;
-    if (current._id !== previous._id) return false;
+    if (current.id !== previous.id) return false;
     
     // Deep comparison for video object
     const videoChanged = JSON.stringify(current.video) !== JSON.stringify(previous.video);
@@ -111,7 +111,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
     
     // Use React Query mutation instead of direct API call
     const response = await updateLessonMutation({ 
-      lessonId: data._id, 
+      lessonId: data.id, 
       data: updateData 
     });
 
@@ -133,7 +133,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
     conflictData
   } = useAutosave(
     lesson ? {
-      _id: lesson._id,
+      id: lesson.id,
       title: formData.title,
       description: formData.description,
       video: formData.video_url ? {
@@ -313,7 +313,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
     // Determine the route based on user role
     const rolePrefix = user?.role === 'admin' ? 'admin' : 'creator';
     const courseId = lesson?.course_id;
-    const lessonId = lesson?._id;
+    const lessonId = lesson?.id;
     
     if (courseId && lessonId) {
       router.push(`/${rolePrefix}/courses/${courseId}/lessons/${lessonId}/edit`);

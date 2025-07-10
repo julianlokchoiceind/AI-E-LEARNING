@@ -12,7 +12,7 @@ export interface ReviewUser {
 }
 
 export interface Review {
-  _id: string;
+  id: string;
   course_id: string;
   user: ReviewUser;
   rating: number;

@@ -79,7 +79,7 @@ const CourseBuilderPage = () => {
     {
       delay: 5000, // Increased delay to 5 seconds to reduce timeout issues
       onSave: async (data) => {
-        if (!data || !data._id) return;
+        if (!data || !data.id) return;
         
         // Autosave triggered with course data
         
@@ -90,7 +90,7 @@ const CourseBuilderPage = () => {
         };
         
         try {
-          await updateCourseAction({ courseId: data._id, courseData: minimalData });
+          await updateCourseAction({ courseId: data.id, courseData: minimalData });
         } catch (error) {
           // Autosave failed - error will be handled by useAutosave hook
           throw error;
@@ -157,34 +157,22 @@ const CourseBuilderPage = () => {
   };
 
   const handleChapterCreated = (newChapter: ChapterResponse) => {
-    // Process chapter response from backend
-    
-    // 🔧 FIX: Backend returns 'id' field, but UI expects '_id' field
-    const backendId = (newChapter as any).id;
-    const frontendId = newChapter._id;
-    const finalId = backendId || frontendId;
-    
-    if (!finalId) {
-      ToastService.error('Chapter created but no ID returned from backend. Please refresh the page.');
-      return;
+    // Immediately update local state for instant UI feedback
+    if (newChapter?.id) {
+      const chapterToAdd = {
+        ...newChapter,
+        lessons: [],
+        total_lessons: 0,
+        total_duration: 0
+      };
+      
+      setChapters(prev => [...prev, chapterToAdd]);
     }
     
-    const transformedChapter = {
-      ...newChapter,
-      _id: finalId, // Use backend 'id' first, fallback to '_id'
-      lessons: [],
-      total_lessons: 0,
-      total_duration: 0
-    };
+    // Also refetch to ensure consistency
+    refetchChapters();
     
-    // Chapter transformed successfully
-    
-    setChapters(prev => {
-      const newChapters = [...prev, transformedChapter];
-      // Chapters array updated
-      return newChapters;
-    });
-    // Auto-save will handle the course update automatically
+    // Toast is already shown in CreateChapterModal
   };
 
   const handleCreateLesson = (chapterId: string) => {
@@ -196,48 +184,35 @@ const CourseBuilderPage = () => {
   };
 
   const handleLessonCreated = (newLesson: LessonResponse) => {
-    
-    // 🔧 FIX: Backend returns 'id' field, but UI expects '_id' field
-    const backendId = (newLesson as any).id;
-    const frontendId = newLesson._id;
-    const finalId = backendId || frontendId;
-    
-    if (!finalId) {
-      ToastService.error('Lesson created but no ID returned from backend. Please refresh the page.');
-      return;
+    // Immediately update local state for instant UI feedback
+    if (newLesson?.id) {
+      setChapters(prevChapters => {
+        return prevChapters.map(chapter => {
+          if (chapter.id === newLesson.chapter_id) {
+            const updatedLessons = [...(chapter.lessons || []), newLesson];
+            return {
+              ...chapter,
+              lessons: updatedLessons,
+              total_lessons: updatedLessons.length
+            };
+          }
+          return chapter;
+        });
+      });
     }
     
-    const transformedLesson = {
-      ...newLesson,
-      _id: finalId, // Use backend 'id' first, fallback to '_id'
-    };
+    // Also refetch to ensure consistency
+    refetchChapters();
     
-    // Lesson transformed successfully
-    
-    // Update local state - add lesson to the appropriate chapter
-    setChapters(prevChapters => {
-      return prevChapters.map(chapter => {
-        if (chapter._id === transformedLesson.chapter_id) {
-          const updatedLessons = [...(chapter.lessons || []), transformedLesson];
-          // Lessons updated in chapter
-          return {
-            ...chapter,
-            lessons: updatedLessons,
-            total_lessons: updatedLessons.length
-          };
-        }
-        return chapter;
-      });
-    });
-    // Auto-save will handle the course update automatically
+    // Toast is already shown in CreateLessonModal
   };
 
   const handleChapterEdit = (chapterId: string) => {
     // Find the chapter to edit
-    const chapterToEdit = chapters.find(ch => ch._id === chapterId);
+    const chapterToEdit = chapters.find(ch => ch.id === chapterId);
     if (chapterToEdit) {
       setSelectedChapterForEdit({
-        _id: chapterToEdit._id,
+        id: chapterToEdit.id,
         title: chapterToEdit.title,
         description: chapterToEdit.description || '',
         order: chapterToEdit.order,
@@ -255,7 +230,7 @@ const CourseBuilderPage = () => {
     // Update local state
     setChapters(prevChapters => {
       return prevChapters.map(chapter => {
-        if (chapter._id === updatedChapter._id) {
+        if (chapter.id === updatedChapter.id) {
           return {
             ...chapter,
             title: updatedChapter.title,
@@ -269,11 +244,11 @@ const CourseBuilderPage = () => {
 
   const handleChapterDelete = (chapterId: string) => {
     // Find the chapter to delete
-    const chapterToDelete = chapters.find(ch => ch._id === chapterId);
+    const chapterToDelete = chapters.find(ch => ch.id === chapterId);
     
     if (chapterToDelete) {
       setSelectedChapterForDelete({
-        _id: chapterToDelete._id,
+        id: chapterToDelete.id,
         title: chapterToDelete.title,
         description: chapterToDelete.description,
         total_lessons: chapterToDelete.total_lessons || 0
@@ -289,7 +264,7 @@ const CourseBuilderPage = () => {
     try {
       // Use React Query mutation instead of direct API call
       const response = await deleteChapterMutation(chapterId);
-      setChapters(chapters.filter(ch => ch._id !== chapterId));
+      setChapters(chapters.filter(ch => ch.id !== chapterId));
       ToastService.success(response.message || 'Something went wrong');
     } catch (error: any) {
       console.error('Failed to delete chapter:', error);
@@ -305,7 +280,7 @@ const CourseBuilderPage = () => {
 
     for (const chapter of chapters) {
       if (chapter.lessons) {
-        const foundLesson = chapter.lessons.find((lesson: any) => lesson._id === lessonId);
+        const foundLesson = chapter.lessons.find((lesson: any) => lesson.id === lessonId);
         if (foundLesson) {
           lessonToEdit = foundLesson;
           chapterOfLesson = chapter;
@@ -316,8 +291,8 @@ const CourseBuilderPage = () => {
 
     if (lessonToEdit && chapterOfLesson) {
       setSelectedLessonForEdit({
-        _id: lessonToEdit._id,
-        chapter_id: chapterOfLesson._id,
+        id: lessonToEdit.id,
+        chapter_id: chapterOfLesson.id,
         course_id: courseId,
         title: lessonToEdit.title,
         description: lessonToEdit.description,
@@ -339,9 +314,9 @@ const CourseBuilderPage = () => {
     // Update local state - find the chapter and update the lesson
     setChapters(prevChapters => {
       return prevChapters.map(chapter => {
-        if (chapter._id === updatedLesson.chapter_id) {
+        if (chapter.id === updatedLesson.chapter_id) {
           const updatedLessons = chapter.lessons.map((lesson: any) => {
-            if (lesson._id === updatedLesson._id) {
+            if (lesson.id === updatedLesson.id) {
               return {
                 ...lesson,
                 title: updatedLesson.title,
@@ -370,7 +345,7 @@ const CourseBuilderPage = () => {
 
     for (const chapter of chapters) {
       if (chapter.lessons) {
-        const foundLesson = chapter.lessons.find((lesson: any) => lesson._id === lessonId);
+        const foundLesson = chapter.lessons.find((lesson: any) => lesson.id === lessonId);
         if (foundLesson) {
           lessonToDelete = foundLesson;
           chapterOfLesson = chapter;
@@ -381,7 +356,7 @@ const CourseBuilderPage = () => {
 
     if (lessonToDelete && chapterOfLesson) {
       setSelectedLessonForDelete({
-        _id: lessonToDelete._id,
+        id: lessonToDelete.id,
         title: lessonToDelete.title,
         description: lessonToDelete.description,
         chapter_title: chapterOfLesson.title,
@@ -402,7 +377,7 @@ const CourseBuilderPage = () => {
       // Update local state - remove lesson from the chapter
       setChapters(prevChapters => {
         return prevChapters.map(chapter => {
-          const updatedLessons = chapter.lessons.filter((l: any) => l._id !== lessonId);
+          const updatedLessons = chapter.lessons.filter((l: any) => l.id !== lessonId);
           return {
             ...chapter,
             lessons: updatedLessons,
@@ -426,7 +401,7 @@ const CourseBuilderPage = () => {
 
       // Prepare data for bulk reorder API
       const chapterOrders = reorderedChapters.map((chapter, index) => ({
-        id: chapter._id,
+        id: chapter.id,
         order: index + 1
       }));
 
@@ -452,7 +427,7 @@ const CourseBuilderPage = () => {
       // Update local state optimistically
       setChapters(prevChapters => {
         return prevChapters.map(chapter => {
-          if (chapter._id === chapterId) {
+          if (chapter.id === chapterId) {
             return {
               ...chapter,
               lessons: reorderedLessons
@@ -464,7 +439,7 @@ const CourseBuilderPage = () => {
 
       // Prepare data for bulk reorder API
       const lessonOrders = reorderedLessons.map((lesson, index) => ({
-        id: lesson._id,
+        id: lesson.id,
         order: index + 1
       }));
 
@@ -478,7 +453,7 @@ const CourseBuilderPage = () => {
         // Update with response data to ensure consistency
         setChapters(prevChapters => {
           return prevChapters.map(chapter => {
-            if (chapter._id === chapterId) {
+            if (chapter.id === chapterId) {
               return {
                 ...chapter,
                 lessons: response.data?.lessons || reorderedLessons

@@ -95,7 +95,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
   const handleSubmitReview = () => {
     if (editingReview) {
       updateReview(
-        { reviewId: editingReview._id, reviewData: formData },
+        { reviewId: editingReview.id, reviewData: formData },
         {
           onSuccess: (response) => {
             ToastService.success(response.message || 'Something went wrong');
@@ -161,7 +161,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
 
     reportReview(
       {
-        reviewId: reportingReview._id,
+        reviewId: reportingReview.id,
         reason: reportReason,
         details: reportDetails,
       },
@@ -376,7 +376,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
           </Card>
         ) : (
           reviews.map((review: any) => (
-            <Card key={review._id}>
+            <Card key={review.id}>
               <CardContent className="p-6">
                 <div className="space-y-4">
                   {/* Header */}
@@ -427,7 +427,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
                               Edit Review
                             </button>
                             <button
-                              onClick={() => handleDeleteReview(review._id)}
+                              onClick={() => handleDeleteReview(review.id)}
                               className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 w-full text-red-600"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -479,7 +479,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
                       </span>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleVoteReview(review._id, true)}
+                          onClick={() => handleVoteReview(review.id, true))
                           className={`flex items-center gap-1 px-3 py-1 rounded-md text-sm ${
                             review.user_vote === true
                               ? 'bg-green-100 text-green-700'
@@ -490,7 +490,7 @@ export function CourseReviews({ courseId, isEnrolled = false, isCreator = false 
                           {review.helpful_count}
                         </button>
                         <button
-                          onClick={() => handleVoteReview(review._id, false)}
+                          onClick={() => handleVoteReview(review.id, false))
                           className={`flex items-center gap-1 px-3 py-1 rounded-md text-sm ${
                             review.user_vote === false
                               ? 'bg-red-100 text-red-700'

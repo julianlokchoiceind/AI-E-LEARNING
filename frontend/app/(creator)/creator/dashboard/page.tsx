@@ -122,7 +122,7 @@ const CreatorDashboardPage = () => {
 
     // Set recent courses (last 5)
     const recent = courses.slice(0, 5).map((course: any) => ({
-      id: course._id,
+      id: course.id,
       title: course.title,
       status: course.status,
       students: course.stats?.total_enrollments || 0,
@@ -169,12 +169,12 @@ const CreatorDashboardPage = () => {
               onClick={() => {
                 createCourse({}, {
                   onSuccess: (response) => {
-                    if (response.success && response.data?._id) {
+                    if (response.success && response.data?.id) {
                       // Redirect based on user role
                       if (user?.role === 'admin') {
-                        router.push(`/admin/courses/${response.data._id}/edit`);
+                        router.push(`/admin/courses/${response.data.id}/edit`);
                       } else {
-                        router.push(`/creator/courses/${response.data._id}/edit`);
+                        router.push(`/creator/courses/${response.data.id}/edit`);
                       }
                     }
                   }
@@ -265,12 +265,12 @@ const CreatorDashboardPage = () => {
               onClick={() => {
                 createCourse({}, {
                   onSuccess: (response) => {
-                    if (response.success && response.data?._id) {
+                    if (response.success && response.data?.id) {
                       // Redirect based on user role
                       if (user?.role === 'admin') {
-                        router.push(`/admin/courses/${response.data._id}/edit`);
+                        router.push(`/admin/courses/${response.data.id}/edit`);
                       } else {
-                        router.push(`/creator/courses/${response.data._id}/edit`);
+                        router.push(`/creator/courses/${response.data.id}/edit`);
                       }
                     }
                   }
@@ -373,12 +373,12 @@ const CreatorDashboardPage = () => {
                 onClick={() => {
                   createCourse({}, {
                     onSuccess: (response) => {
-                      if (response.success && response.data?._id) {
+                      if (response.success && response.data?.id) {
                         // Redirect based on user role
                         if (user?.role === 'admin') {
-                          router.push(`/admin/courses/${response.data._id}/edit`);
+                          router.push(`/admin/courses/${response.data.id}/edit`);
                         } else {
-                          router.push(`/creator/courses/${response.data._id}/edit`);
+                          router.push(`/creator/courses/${response.data.id}/edit`);
                         }
                       }
                     }

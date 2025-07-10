@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 
 export interface ChapterDeleteData {
-  _id: string;
+  id: string;
   title: string;
   description?: string;
   total_lessons: number;
@@ -32,7 +32,7 @@ export const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
     
     try {
       setLoading(true);
-      await onConfirmDelete(chapter._id);
+      await onConfirmDelete(chapter.id);
       setConfirmText(''); // Reset form
       onClose();
     } catch (error) {

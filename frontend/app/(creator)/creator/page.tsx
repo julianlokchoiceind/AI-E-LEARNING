@@ -48,12 +48,12 @@ const CreatorDashboard = () => {
   const handleCreateCourse = () => {
     createCourse({}, {
       onSuccess: (response) => {
-        if (response.success && response.data?._id) {
+        if (response.success && response.data?.id) {
           // Redirect based on user role
           if (user?.role === 'admin') {
-            router.push(`/admin/courses/${response.data._id}/edit`);
+            router.push(`/admin/courses/${response.data.id}/edit`);
           } else {
-            router.push(`/creator/courses/${response.data._id}/edit`);
+            router.push(`/creator/courses/${response.data.id}/edit`);
           }
         }
       }
@@ -205,7 +205,7 @@ const CreatorDashboard = () => {
             <div className="space-y-4">
               {courses.slice(0, 5).map((course: any) => (
                 <div
-                  key={course._id}
+                  key={course.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
                 >
                   <div>
@@ -224,7 +224,7 @@ const CreatorDashboard = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push(`/creator/courses/${course._id}/edit`)}
+                    onClick={() => router.push(`/creator/courses/${course.id}/edit`)}
                   >
                     Edit
                   </Button>

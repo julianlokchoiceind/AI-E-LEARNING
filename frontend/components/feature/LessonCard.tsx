@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 
 interface LessonCardProps {
   lesson: {
-    _id: string;
+    id: string;
     title: string;
     description?: string;
     order: number;
@@ -45,9 +45,9 @@ const LessonCard: React.FC<LessonCardProps> = ({
     if (isLocked) return;
     
     if (lesson.is_free_preview && !isEnrolled && onPreviewClick) {
-      onPreviewClick(lesson._id);
+      onPreviewClick(lesson.id);
     } else if (isEnrolled && onLessonClick) {
-      onLessonClick(chapterId, lesson._id);
+      onLessonClick(chapterId, lesson.id);
     }
   };
 
@@ -135,7 +135,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              onPreviewClick && onPreviewClick(lesson._id);
+              onPreviewClick && onPreviewClick(lesson.id);
             }}
           >
             Preview
@@ -151,7 +151,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onEdit(lesson._id);
+                  onEdit(lesson.id);
                 }}
               >
                 <Edit className="w-4 h-4" />
@@ -163,7 +163,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDelete(lesson._id);
+                  onDelete(lesson.id);
                 }}
               >
                 <Trash2 className="w-4 h-4 text-red-500" />
@@ -179,7 +179,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              onLessonClick && onLessonClick(chapterId, lesson._id);
+              onLessonClick && onLessonClick(chapterId, lesson.id);
             }}
           >
             {lesson.is_completed ? 'Review' : 'Start'}

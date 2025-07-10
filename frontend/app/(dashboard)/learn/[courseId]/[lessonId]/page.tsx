@@ -23,7 +23,7 @@ import {
 } from '@/hooks/queries/useQuizzes';
 
 interface Lesson {
-  _id: string;
+  id: string;
   title: string;
   description: string;
   video: {
@@ -36,7 +36,7 @@ interface Lesson {
 }
 
 interface Chapter {
-  _id: string;
+  id: string;
   title: string;
   order: number;
   lessons: Lesson[];
@@ -80,7 +80,7 @@ export default function LessonPlayerPage() {
   
   // Calculate all lesson IDs for batch progress fetching
   const allLessonIds = chapters.flatMap((chapter: Chapter) => 
-    chapter.lessons.map((lesson: Lesson) => lesson._id)
+    chapter.lessons.map((lesson: Lesson) => lesson.id)
   );
   
   // Batch fetch lesson progress using React Query - replaces manual fetchAllLessonsProgress
@@ -104,8 +104,8 @@ export default function LessonPlayerPage() {
   // React Query hooks for quiz data - replaces manual quiz API calls
   const { data: quizResponse, loading: quizLoading } = useLessonQuizQuery(lessonId, !!lessonId);
   const { data: quizProgressResponse, loading: quizProgressLoading } = useQuizProgressQuery(
-    quizResponse?.data?._id, 
-    !!quizResponse?.data?._id
+    quizResponse?.data?.id, 
+    !!quizResponse?.data?.id
   );
 
   // Extract quiz data from React Query responses
@@ -149,7 +149,7 @@ export default function LessonPlayerPage() {
     if (chapters.length > 0) {
       // Process chapters data to find current chapter and next lesson
       for (const chapter of chapters) {
-        const lessonIndex = chapter.lessons.findIndex((l: Lesson) => l._id === lessonId);
+        const lessonIndex = chapter.lessons.findIndex((l: Lesson) => l.id === lessonId);
         if (lessonIndex !== -1) {
           setCurrentChapter(chapter);
           
@@ -158,7 +158,7 @@ export default function LessonPlayerPage() {
             setNextLesson(chapter.lessons[lessonIndex + 1]);
           } else {
             // Check for first lesson in next chapter
-            const chapterIndex = chapters.findIndex((c: Chapter) => c._id === chapter._id);
+            const chapterIndex = chapters.findIndex((c: Chapter) => c.id === chapter.id);
             if (chapterIndex < chapters.length - 1 && chapters[chapterIndex + 1].lessons.length > 0) {
               setNextLesson(chapters[chapterIndex + 1].lessons[0]);
             }
@@ -294,26 +294,26 @@ export default function LessonPlayerPage() {
 
           <div className="p-4">
             {chapters.map((chapter: any) => (
-              <div key={chapter._id} className="mb-6">
+              <div key={chapter.id} className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-2">
                   Chapter {chapter.order}: {chapter.title}
                 </h3>
                 <div className="space-y-1">
                   {chapter.lessons.map((chapterLesson: any) => {
-                    const isCurrentLesson = chapterLesson._id === lessonId;
-                    const lessonProgress = lessonsProgress.get(chapterLesson._id);
+                    const isCurrentLesson = chapterLesson.id === lessonId;
+                    const lessonProgress = lessonsProgress.get(chapterLesson.id);
                     const isCompleted = lessonProgress?.is_completed || false;
                     const isUnlocked = lessonProgress?.is_unlocked || false;
                     
                     return (
                       <button
-                        key={chapterLesson._id}
+                        key={chapterLesson.id}
                         onClick={() => {
                           if (!isUnlocked && !isCurrentLesson) {
                             ToastService.error('Please complete previous lessons first');
                             return;
                           }
-                          navigateToLesson(chapterLesson._id);
+                          navigateToLesson(chapterLesson.id);
                         }}
                         disabled={!isUnlocked && !isCurrentLesson}
                         className={`w-full text-left px-3 py-2 rounded transition-colors relative ${
@@ -370,7 +370,7 @@ export default function LessonPlayerPage() {
                 onProgress={handleVideoProgress}
                 onComplete={handleVideoComplete}
                 initialProgress={progress?.video_progress.watch_percentage || 0}
-                nextLessonId={nextLesson?._id}
+                nextLessonId={nextLesson?.id}
               />
             </div>
 
@@ -405,7 +405,7 @@ export default function LessonPlayerPage() {
             {nextLesson && (progress?.video_progress?.watch_percentage ?? 0) >= 80 && (!hasQuiz || quizPassed) && (
               <div className="mt-8 text-center">
                 <button
-                  onClick={() => navigateToLesson(nextLesson._id)}
+                  onClick={() => navigateToLesson(nextLesson.id)}
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Continue to Next Lesson →

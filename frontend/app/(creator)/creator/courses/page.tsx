@@ -110,12 +110,12 @@ const CreatorCoursesPage = () => {
   const handleCreateCourse = () => {
     createCourse({}, {
       onSuccess: (response) => {
-        if (response.success && response.data?._id) {
+        if (response.success && response.data?.id) {
           // Redirect based on user role
           if (user?.role === 'admin') {
-            router.push(`/admin/courses/${response.data._id}/edit`);
+            router.push(`/admin/courses/${response.data.id}/edit`);
           } else {
-            router.push(`/creator/courses/${response.data._id}/edit`);
+            router.push(`/creator/courses/${response.data.id}/edit`);
           }
         }
       }
@@ -169,7 +169,7 @@ const CreatorCoursesPage = () => {
     if (selectedCourses.length === filteredCourses.length) {
       setSelectedCourses([]);
     } else {
-      setSelectedCourses(filteredCourses.map(c => c._id));
+      setSelectedCourses(filteredCourses.map(c => c.id));
     }
   };
 
@@ -410,7 +410,7 @@ const CreatorCoursesPage = () => {
           /* Card View */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course: any) => (
-              <Card key={course._id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Course Thumbnail */}
                 <div className="h-48 bg-gradient-to-br from-blue-500 to-indigo-600 relative">
                   {course.thumbnail ? (
@@ -434,17 +434,17 @@ const CreatorCoursesPage = () => {
                   <div className="absolute top-4 left-4">
                     <div className="relative">
                       <button
-                        onClick={() => setActiveDropdown(activeDropdown === course._id ? null : course._id)}
+                        onClick={() => setActiveDropdown(activeDropdown === course.id ? null : course.id)}
                         className="p-2 bg-white/90 rounded-lg hover:bg-white transition-colors"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
                       
-                      {activeDropdown === course._id && (
+                      {activeDropdown === course.id && (
                         <div className="absolute top-10 left-0 bg-white rounded-lg shadow-lg py-2 w-48 z-10">
                           <button
                             onClick={() => {
-                              handleEditCourse(course._id);
+                              handleEditCourse(course.id);
                               setActiveDropdown(null);
                             }}
                             className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center"
@@ -455,7 +455,7 @@ const CreatorCoursesPage = () => {
                           
                           <button
                             onClick={() => {
-                              handleViewCourse(course._id);
+                              handleViewCourse(course.id);
                               setActiveDropdown(null);
                             }}
                             className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center"
@@ -466,7 +466,7 @@ const CreatorCoursesPage = () => {
 
                           <button
                             onClick={() => {
-                              handleViewAnalytics(course._id);
+                              handleViewAnalytics(course.id);
                               setActiveDropdown(null);
                             }}
                             className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center"
@@ -479,7 +479,7 @@ const CreatorCoursesPage = () => {
                           
                           <button
                             onClick={() => {
-                              handleDeleteCourse(course._id, course.title);
+                              handleDeleteCourse(course.id, course.title);
                               setActiveDropdown(null);
                             }}
                             disabled={deleteLoading}
@@ -523,7 +523,7 @@ const CreatorCoursesPage = () => {
                   <Button
                     variant="primary"
                     className="w-full mt-4"
-                    onClick={() => handleEditCourse(course._id)}
+                    onClick={() => handleEditCourse(course.id)}
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit Course
@@ -575,13 +575,13 @@ const CreatorCoursesPage = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredCourses.map((course) => (
-                  <tr key={course._id} className="hover:bg-gray-50">
+                  <tr key={course.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => handleSelectCourse(course._id)}
+                        onClick={() => handleSelectCourse(course.id)}
                         className="flex items-center"
                       >
-                        {selectedCourses.includes(course._id) ? (
+                        {selectedCourses.includes(course.id) ? (
                           <CheckSquare className="w-4 h-4 text-blue-600" />
                         ) : (
                           <Square className="w-4 h-4 text-gray-400" />
@@ -626,7 +626,7 @@ const CreatorCoursesPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleViewAnalytics(course._id)}
+                          onClick={() => handleViewAnalytics(course.id)}
                           title="Analytics"
                         >
                           <BarChart className="w-4 h-4" />
@@ -634,7 +634,7 @@ const CreatorCoursesPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEditCourse(course._id)}
+                          onClick={() => handleEditCourse(course.id)}
                           title="Edit"
                         >
                           <Edit className="w-4 h-4" />
@@ -642,7 +642,7 @@ const CreatorCoursesPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleViewCourse(course._id)}
+                          onClick={() => handleViewCourse(course.id)}
                           title="Preview"
                         >
                           <Eye className="w-4 h-4" />

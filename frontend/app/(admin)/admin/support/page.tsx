@@ -262,14 +262,14 @@ export default function AdminSupportPage() {
                     const categoryInfo = TICKET_CATEGORIES.find(c => c.value === ticket.category);
                     
                     return (
-                      <tr key={ticket._id} className="hover:bg-gray-50">
+                      <tr key={ticket.id} className="hover:bg-gray-50">
                         <td className="p-4">
                           <div>
                             <p className="font-medium text-gray-900">
                               {ticket.title}
                             </p>
                             <p className="text-sm text-gray-500">
-                              #{ticket._id.slice(-8)}
+                              #{ticket.id.slice(-8)}
                             </p>
                           </div>
                         </td>
@@ -290,7 +290,7 @@ export default function AdminSupportPage() {
                         <td className="p-4">
                           <select
                             value={ticket.priority}
-                            onChange={(e) => handleQuickUpdate(ticket._id, { 
+                            onChange={(e) => handleQuickUpdate(ticket.id, { 
                               priority: e.target.value as any 
                             })}
                             className="text-sm border rounded px-2 py-1"
@@ -306,7 +306,7 @@ export default function AdminSupportPage() {
                         <td className="p-4">
                           <select
                             value={ticket.status}
-                            onChange={(e) => handleQuickUpdate(ticket._id, { 
+                            onChange={(e) => handleQuickUpdate(ticket.id, { 
                               status: e.target.value as any 
                             })}
                             className="text-sm border rounded px-2 py-1"
@@ -326,7 +326,7 @@ export default function AdminSupportPage() {
                         <td className="p-4">
                           <Button
                             size="sm"
-                            onClick={() => window.location.href = `/support/${ticket._id}`}
+                            onClick={() => window.location.href = `/support/${ticket.id}`}
                           >
                             View
                           </Button>

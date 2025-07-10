@@ -83,14 +83,14 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user, account, trigger }) {
-      // Only process on initial sign-in or forced refresh
+      // Initial sign-in - save all tokens and calculate expiry
       if (user) {
-        // Initial sign-in - set all user data
         token.id = user.id
         token.email = user.email || ''
         token.name = user.name || ''
         token.role = user.role || 'student'
         token.premiumStatus = user.premiumStatus || false
+        
         // Store backend tokens
         if ('accessToken' in user && user.accessToken) {
           token.accessToken = user.accessToken
@@ -98,75 +98,68 @@ export const authOptions: NextAuthOptions = {
         if ('refreshToken' in user && user.refreshToken) {
           token.refreshToken = user.refreshToken
         }
+        
+        // Calculate token expiry (30 minutes from now)
+        token.expiresAt = Math.floor(Date.now() / 1000) + (30 * 60)
       } else if (trigger === 'update') {
         // Handle session updates if needed
         // This is called when using update() from useSession
       }
       
-      // Skip refresh check if we just refreshed within the last minute
-      if (token.lastRefresh && Date.now() - (token.lastRefresh as number) < 60000) {
+      // Check if access token has expired
+      if (token.expiresAt && Date.now() < (token.expiresAt as number) * 1000) {
+        // Token is still valid
         return token
       }
       
-      // Check if access token needs refresh
-      if (token.accessToken) {
+      // Token has expired - attempt to refresh
+      if (token.refreshToken) {
         try {
-          // Parse JWT to check expiry
-          const tokenParts = (token.accessToken as string).split('.')
-          if (tokenParts.length === 3) {
-            const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
-            const currentTime = Math.floor(Date.now() / 1000)
-            const expiryTime = payload.exp
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+          const refreshResponse = await fetch(`${baseUrl}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: token.refreshToken })
+          })
+          
+          if (refreshResponse.ok) {
+            const refreshData = await refreshResponse.json() as StandardResponse<any>
             
-            // Refresh if token expires within 5 minutes
-            if (expiryTime && (expiryTime - currentTime) < 300) {
+            if (refreshData.success && refreshData.data) {
+              // Update with new tokens
+              token.accessToken = refreshData.data.access_token
+              token.refreshToken = refreshData.data.refresh_token
+              // Reset expiry for another 30 minutes
+              token.expiresAt = Math.floor(Date.now() / 1000) + (30 * 60)
               
-              if (token.refreshToken) {
-                try {
-                  // Call backend refresh endpoint directly to avoid circular dependency
-                  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
-                  const refreshResponse = await fetch(`${baseUrl}/auth/refresh`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ refresh_token: token.refreshToken })
-                  })
-                  
-                  if (refreshResponse.ok) {
-                    const refreshData = await refreshResponse.json() as StandardResponse<any>
-                    
-                    if (refreshData.success && refreshData.data) {
-                      
-                      // Update token with new values
-                      token.accessToken = refreshData.data.access_token
-                      token.refreshToken = refreshData.data.refresh_token
-                      
-                      // Decode new token to update user info
-                      const newTokenParts = refreshData.data.access_token.split('.')
-                      if (newTokenParts.length === 3) {
-                        const newPayload = JSON.parse(Buffer.from(newTokenParts[1], 'base64').toString())
-                        
-                        // Update user info from new token
-                        token.email = newPayload.email || token.email
-                        token.name = newPayload.name || token.name
-                        token.role = newPayload.role || token.role
-                        token.premiumStatus = newPayload.premium_status || token.premiumStatus
-                      }
-                      
-                      // Mark the time of successful refresh
-                      token.lastRefresh = Date.now()
-                      
-                      return token
-                    }
-                  }
-                } catch (refreshError) {
-                  console.error('❌ NextAuth JWT: Token refresh failed:', refreshError)
+              // Optionally update user info from new token
+              try {
+                const tokenParts = refreshData.data.access_token.split('.')
+                if (tokenParts.length === 3) {
+                  const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+                  token.email = payload.email || token.email
+                  token.name = payload.name || token.name
+                  token.role = payload.role || token.role
+                  token.premiumStatus = payload.premium_status || token.premiumStatus
                 }
+              } catch (e) {
+                // Silent fail on token decode
               }
+              
+              return token
             }
           }
-        } catch (parseError) {
-          console.error('❌ NextAuth JWT: Token parse error:', parseError)
+        } catch (error) {
+          console.error('Token refresh failed:', error)
+          // Mark token as having refresh error
+          token.error = "RefreshTokenError" as any
         }
+      }
+      
+      // If we get here, refresh failed or no refresh token
+      // Mark the error so session callback can handle it
+      if (!token.error) {
+        token.error = "RefreshTokenError" as any
       }
       
       return token
@@ -174,6 +167,12 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       // Quick return if no token or session.user
       if (!token || !session.user) return session
+      
+      // Check for refresh errors
+      if (token.error === "RefreshTokenError") {
+        // Token refresh failed, force re-authentication
+        throw new Error("RefreshTokenError")
+      }
       
       // Efficiently copy token data to session
       Object.assign(session.user, {

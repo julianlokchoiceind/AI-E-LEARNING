@@ -2,7 +2,7 @@ import { StandardResponse } from '@/lib/types/api';
 import { api } from '@/lib/api/api-client';
 
 interface CourseResponse {
-  _id: string;
+  id: string;
   title: string;
   description: string;
   short_description: string;
@@ -53,7 +53,7 @@ interface CourseDetailData extends CourseResponse {
 }
 
 interface CreateCourseData {
-  _id: string;
+  id: string;
   redirect_url: string;
   message: string;
 }

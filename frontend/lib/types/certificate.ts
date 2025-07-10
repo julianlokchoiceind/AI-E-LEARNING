@@ -3,7 +3,7 @@
  */
 
 export interface Certificate {
-  _id: string;
+  id: string;
   user_id: string;
   course_id: string;
   enrollment_id: string;

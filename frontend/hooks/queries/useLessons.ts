@@ -171,7 +171,7 @@ export function useDeleteLesson() {
           // Handle different data structures
           const lessons = old?.data?.lessons || old?.lessons || [];
           const filteredLessons = lessons.filter((lesson: any) => {
-            const id = lesson._id || lesson.id;
+            const id = lesson.id;
             return id !== lessonId;
           });
           
@@ -213,7 +213,7 @@ export function useDeleteLesson() {
               return {
                 ...chapter,
                 lessons: chapter.lessons.filter((lesson: any) => {
-                  const id = lesson._id || lesson.id;
+                  const id = lesson.id;
                   return id !== lessonId;
                 })
               };

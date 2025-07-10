@@ -132,7 +132,7 @@ function CheckoutForm({
     }
 
     // Create payment intent using React Query mutation
-    const response = await createPayment({ courseId: course._id, paymentMethodId: paymentMethod.id });
+    const response = await createPayment({ courseId: course.id, paymentMethodId: paymentMethod.id });
     
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Something went wrong');

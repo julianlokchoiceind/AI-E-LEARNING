@@ -10,7 +10,7 @@ export interface VideoProgressUpdate {
 }
 
 export interface Progress {
-  _id: string;
+  id: string;
   user_id: string;
   lesson_id: string;
   course_id: string;

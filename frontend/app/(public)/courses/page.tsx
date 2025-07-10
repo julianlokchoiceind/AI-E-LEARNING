@@ -76,7 +76,7 @@ const CourseCatalogPage = () => {
     }
 
     // Find the course to check pricing
-    const course = courses.find((c: any) => c._id === courseId);
+    const course = courses.find((c: any) => c.id === courseId);
     if (!course) {
       ToastService.error('Something went wrong');
       return;
@@ -236,7 +236,7 @@ const CourseCatalogPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {courses.map((course: any) => (
               <CourseCard
-                key={course._id}
+                key={course.id}
                 course={course}
                 onEnroll={handleEnroll}
                 isEnrolling={enrollingCourse}

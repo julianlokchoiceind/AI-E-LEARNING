@@ -74,7 +74,7 @@ export const DroppableChapterList: React.FC<DroppableChapterListProps> = ({
     setIsDragging(true);
     
     // Find the dragged chapter
-    const chapter = chapters.find(ch => ch._id === active.id);
+    const chapter = chapters.find(ch => ch.id === active.id);
     setDraggedChapter(chapter || null);
     
     // Add visual feedback
@@ -93,8 +93,8 @@ export const DroppableChapterList: React.FC<DroppableChapterListProps> = ({
       return;
     }
 
-    const oldIndex = chapters.findIndex(chapter => chapter._id === active.id);
-    const newIndex = chapters.findIndex(chapter => chapter._id === over.id);
+    const oldIndex = chapters.findIndex(chapter => chapter.id === active.id);
+    const newIndex = chapters.findIndex(chapter => chapter.id === over.id);
 
     if (oldIndex === -1 || newIndex === -1) {
       return;
@@ -131,7 +131,7 @@ export const DroppableChapterList: React.FC<DroppableChapterListProps> = ({
 
   // Sort chapters by order
   const sortedChapters = [...chapters].sort((a, b) => a.order - b.order);
-  const chapterIds = sortedChapters.map(chapter => chapter._id);
+  const chapterIds = sortedChapters.map(chapter => chapter.id);
 
   return (
     <DndContext
@@ -146,12 +146,12 @@ export const DroppableChapterList: React.FC<DroppableChapterListProps> = ({
         <div className="space-y-4">
           {sortedChapters.map((chapter, index) => (
             <SortableChapterCard
-              key={chapter._id}
+              key={chapter.id}
               chapter={chapter}
               index={index}
               isEditable={isEditable}
               isDragging={isDragging}
-              isActiveItem={activeId === chapter._id}
+              isActiveItem={activeId === chapter.id}
               onEdit={onEdit}
               onDelete={onDelete}
               onLessonEdit={onLessonEdit}

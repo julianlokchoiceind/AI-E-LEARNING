@@ -120,9 +120,9 @@ async def list_courses(
         for course in result["courses"]:
             course_dict = course.dict()
             
-            # Convert ObjectId fields to strings
-            course_dict["id"] = str(course_dict.get("id", ""))
-            course_dict["creator_id"] = str(course_dict.get("creator_id", ""))
+            # Convert ObjectId fields to strings - Fixed conversion
+            course_dict["id"] = str(course.id)
+            course_dict["creator_id"] = str(course.creator_id)
             
             # Get access info from batch result
             access_info = access_info_map.get(str(course.id), {"has_access": False, "is_enrolled": False})
@@ -170,9 +170,9 @@ async def get_course(
         # Convert to dict for response
         course_dict = course.dict()
         
-        # Convert ObjectId fields to strings
-        course_dict["id"] = str(course_dict.get("id", ""))
-        course_dict["creator_id"] = str(course_dict.get("creator_id", ""))
+        # Convert ObjectId fields to strings - Fixed conversion
+        course_dict["id"] = str(course.id)
+        course_dict["creator_id"] = str(course.creator_id)
         
         # Check access
         access_info = await CourseService.check_course_access(course, current_user)

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import LessonCard from './LessonCard';
 
 interface Lesson {
-  _id: string;
+  id: string;
   title: string;
   description?: string;
   order: number;
@@ -21,7 +21,7 @@ interface Lesson {
 
 interface ChapterCardProps {
   chapter: {
-    _id: string;
+    id: string;
     title: string;
     description?: string;
     order: number;
@@ -135,7 +135,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onReorder(chapter._id, 'up')}
+                    onClick={() => onReorder(chapter.id, 'up')}
                     disabled={chapter.order === 1}
                   >
                     ↑
@@ -143,7 +143,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onReorder(chapter._id, 'down')}
+                    onClick={() => onReorder(chapter.id, 'down')}
                   >
                     ↓
                   </Button>
@@ -153,7 +153,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onEdit(chapter._id)}
+                  onClick={() => onEdit(chapter.id)}
                 >
                   Edit
                 </Button>
@@ -162,7 +162,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
                 <Button
                   variant="danger"
                   size="sm"
-                  onClick={() => onDelete(chapter._id)}
+                  onClick={() => onDelete(chapter.id)}
                 >
                   Delete
                 </Button>
@@ -196,7 +196,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
                   variant="primary"
                   size="sm"
                   className="mt-3"
-                  onClick={() => onEdit && onEdit(chapter._id)}
+                  onClick={() => onEdit && onEdit(chapter.id)}
                 >
                   Add Lessons
                 </Button>
@@ -206,9 +206,9 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
             <div className="divide-y">
               {chapter.lessons.map((lesson) => (
                 <LessonCard
-                  key={lesson._id}
+                  key={lesson.id}
                   lesson={lesson}
-                  chapterId={chapter._id}
+                  chapterId={chapter.id}
                   isEnrolled={isEnrolled}
                   onLessonClick={onLessonClick}
                   onPreviewClick={onPreviewClick}

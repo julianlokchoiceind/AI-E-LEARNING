@@ -97,7 +97,7 @@ export function CourseCompletionCelebration({
   const handleDownloadCertificate = () => {
     if (!certificate) return;
 
-    downloadCertificate(certificate._id, {
+    downloadCertificate(certificate.id, {
       onSuccess: (response) => {
         if (!response.data) return;
         const url = window.URL.createObjectURL(response.data);
@@ -120,7 +120,7 @@ export function CourseCompletionCelebration({
   const handleShareLinkedIn = () => {
     if (!certificate) return;
 
-    getLinkedInData(certificate._id, {
+    getLinkedInData(certificate.id, {
       onSuccess: (response) => {
         if (!response.success || !response.data) {
           ToastService.error(response.message || 'Something went wrong');

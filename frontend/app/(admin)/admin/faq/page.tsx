@@ -68,7 +68,7 @@ export default function AdminFAQPage() {
 
   const handleCreateOrUpdate = async () => {
     if (editingFaq) {
-      updateFAQMutation({ faqId: editingFaq._id, data: formData as FAQUpdateData }, {
+      updateFAQMutation({ faqId: editingFaq.id, data: formData as FAQUpdateData }, {
         onSuccess: (response) => {
           resetForm();
           // React Query will automatically invalidate and refetch FAQs
@@ -164,7 +164,7 @@ export default function AdminFAQPage() {
     if (selectedFaqs.size === faqs.length) {
       setSelectedFaqs(new Set());
     } else {
-      setSelectedFaqs(new Set(faqs.map((f: any) => f._id)));
+      setSelectedFaqs(new Set(faqs.map((f: any) => f.id)));
     }
   };
 
@@ -308,12 +308,12 @@ export default function AdminFAQPage() {
                   {faqs.map((faq: any) => {
                     const categoryInfo = FAQ_CATEGORIES.find(c => c.value === faq.category);
                     return (
-                      <tr key={faq._id} className="hover:bg-gray-50">
+                      <tr key={faq.id} className="hover:bg-gray-50">
                         <td className="p-4">
                           <input
                             type="checkbox"
-                            checked={selectedFaqs.has(faq._id)}
-                            onChange={() => toggleSelectFaq(faq._id)}
+                            checked={selectedFaqs.has(faq.id)}
+                            onChange={() => toggleSelectFaq(faq.id)}
                             className="rounded"
                           />
                         </td>
@@ -359,7 +359,7 @@ export default function AdminFAQPage() {
                               size="sm"
                               variant="ghost"
                               className="text-red-600 hover:bg-red-50"
-                              onClick={() => handleDelete(faq._id)}
+                              onClick={() => handleDelete(faq.id)}
                               loading={deleteLoading}
                             >
                               <Trash2 className="h-4 w-4" />

@@ -177,15 +177,15 @@ export default function FAQPage() {
         ) : (
           <div className="space-y-4">
             {faqs.map((faq: any) => {
-              const isExpanded = expandedFaqs.has(faq._id);
-              const hasVoted = votedFaqs.has(faq._id);
+              const isExpanded = expandedFaqs.has(faq.id);
+              const hasVoted = votedFaqs.has(faq.id);
               const categoryInfo = getCategoryInfo(faq.category);
               
               return (
-                <Card key={faq._id} className="overflow-hidden">
+                <Card key={faq.id} className="overflow-hidden">
                   <CardContent className="p-0">
                     <button
-                      onClick={() => toggleExpanded(faq._id)}
+                      onClick={() => toggleExpanded(faq.id)}
                       className="w-full text-left p-6 hover:bg-gray-50 transition-colors"
                     >
                       <div className="flex items-start justify-between">
@@ -241,7 +241,7 @@ export default function FAQPage() {
                             </div>
                             <div className="flex items-center gap-4">
                               <button
-                                onClick={() => handleVote(faq._id, true)}
+                                onClick={() => handleVote(faq.id, true)}
                                 disabled={hasVoted || isVoting}
                                 className={`flex items-center gap-1 px-3 py-1 rounded-md transition-colors ${
                                   hasVoted || isVoting
@@ -253,7 +253,7 @@ export default function FAQPage() {
                                 <span>{faq.helpful_votes}</span>
                               </button>
                               <button
-                                onClick={() => handleVote(faq._id, false)}
+                                onClick={() => handleVote(faq.id, false)}
                                 disabled={hasVoted || isVoting}
                                 className={`flex items-center gap-1 px-3 py-1 rounded-md transition-colors ${
                                   hasVoted || isVoting

@@ -27,7 +27,7 @@ import SortableLessonCard from './SortableLessonCard';
 import { ToastService } from '@/lib/toast/ToastService';
 
 interface Lesson {
-  _id: string;
+  id: string;
   title: string;
   description?: string;
   order: number;
@@ -91,7 +91,7 @@ export const DroppableLessonList: React.FC<DroppableLessonListProps> = ({
     setIsDragging(true);
     
     // Find the dragged lesson
-    const lesson = lessons.find(ls => ls._id === active.id);
+    const lesson = lessons.find(ls => ls.id === active.id);
     setDraggedLesson(lesson || null);
     
     // Add visual feedback
@@ -110,8 +110,8 @@ export const DroppableLessonList: React.FC<DroppableLessonListProps> = ({
       return;
     }
 
-    const oldIndex = lessons.findIndex(lesson => lesson._id === active.id);
-    const newIndex = lessons.findIndex(lesson => lesson._id === over.id);
+    const oldIndex = lessons.findIndex(lesson => lesson.id === active.id);
+    const newIndex = lessons.findIndex(lesson => lesson.id === over.id);
 
     if (oldIndex === -1 || newIndex === -1) {
       return;
@@ -148,7 +148,7 @@ export const DroppableLessonList: React.FC<DroppableLessonListProps> = ({
 
   // Sort lessons by order
   const sortedLessons = [...lessons].sort((a, b) => a.order - b.order);
-  const lessonIds = sortedLessons.map(lesson => lesson._id);
+  const lessonIds = sortedLessons.map(lesson => lesson.id);
 
   return (
     <DndContext
@@ -163,13 +163,13 @@ export const DroppableLessonList: React.FC<DroppableLessonListProps> = ({
         <div className="space-y-2">
           {sortedLessons.map((lesson, index) => (
             <SortableLessonCard
-              key={lesson._id}
+              key={lesson.id}
               lesson={lesson}
               chapterId={chapterId}
               index={index}
               isEditable={isEditable}
               isDragging={isDragging}
-              isActiveItem={activeId === lesson._id}
+              isActiveItem={activeId === lesson.id}
               isEnrolled={isEnrolled}
               onLessonClick={onLessonClick}
               onPreviewClick={onPreviewClick}

@@ -73,11 +73,11 @@ const LessonEditPage = () => {
     {
       delay: 2000,
       onSave: async (data) => {
-        if (!data || !data._id) return;
+        if (!data || !data.id) return;
         
         try {
           await updateLessonAction({ 
-            lessonId: data._id, 
+            lessonId: data.id, 
             data: {
               title: data.title,
               description: data.description,

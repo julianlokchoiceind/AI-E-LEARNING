@@ -5,7 +5,7 @@
 export type FAQCategory = 'general' | 'pricing' | 'learning' | 'technical' | 'creator' | 'admin';
 
 export interface FAQ {
-  _id: string;
+  id: string;
   question: string;
   answer: string;
   category: FAQCategory;

@@ -182,7 +182,7 @@ export default function TicketDetailPage() {
                 {priorityInfo?.label} Priority
               </Badge>
               
-              <span>Ticket #{ticket._id.slice(-8)}</span>
+              <span>Ticket #{ticket.id.slice(-8)}</span>
               
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -220,7 +220,7 @@ export default function TicketDetailPage() {
               
               return (
                 <div
-                  key={msg._id}
+                  key={msg.id}
                   className={`flex ${isSupport ? 'justify-start' : 'justify-end'}`}
                 >
                   <div

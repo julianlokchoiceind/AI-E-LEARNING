@@ -50,9 +50,9 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
 
   const handleView = () => {
     if (onView) {
-      onView(certificate._id);
+      onView(certificate.id);
     } else {
-      router.push(`/certificates/${certificate._id}`);
+      router.push(`/certificates/${certificate.id}`);
     }
   };
 

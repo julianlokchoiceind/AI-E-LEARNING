@@ -69,7 +69,7 @@ class LessonReorder(BaseModel):
 
 class LessonResponse(BaseModel):
     """Response schema for lesson data."""
-    id: str
+    id: str = Field(alias="_id")
     course_id: str
     chapter_id: str
     title: str
@@ -89,6 +89,7 @@ class LessonResponse(BaseModel):
     progress_percentage: Optional[int] = None
     
     class Config:
+        populate_by_name = True
         json_schema_extra = {
             "example": {
                 "id": "507f1f77bcf86cd799439011",

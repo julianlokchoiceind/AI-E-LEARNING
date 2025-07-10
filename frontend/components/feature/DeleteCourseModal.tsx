@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 
 export interface CourseDeleteData {
-  _id: string;
+  id: string;
   title: string;
   description?: string;
   total_lessons: number;
@@ -37,7 +37,7 @@ export const DeleteCourseModal: React.FC<DeleteCourseModalProps> = ({
     
     try {
       setLoading(true);
-      await onConfirmDelete(course._id);
+      await onConfirmDelete(course.id);
       setConfirmText(''); // Reset form
       onClose();
     } catch (error) {

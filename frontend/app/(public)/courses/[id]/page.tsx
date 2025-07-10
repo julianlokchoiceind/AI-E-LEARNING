@@ -345,7 +345,7 @@ const CourseDetailPage = () => {
             <h2 className="text-2xl font-bold mb-6">Course Curriculum</h2>
             <div className="space-y-4">
               {chapters.map((chapter: any) => (
-                <Card key={chapter._id} className="overflow-hidden">
+                <Card key={chapter.id} className="overflow-hidden">
                   <div className="p-4 bg-gray-50">
                     <h3 className="font-semibold text-lg">{chapter.title}</h3>
                     <p className="text-sm text-gray-600">
@@ -355,7 +355,7 @@ const CourseDetailPage = () => {
                   <div className="divide-y">
                     {(chapter.lessons || []).map((lesson: any) => (
                       <div
-                        key={lesson._id}
+                        key={lesson.id}
                         className="p-4 flex items-center justify-between hover:bg-gray-50"
                       >
                         <div className="flex items-center gap-3">
@@ -383,7 +383,7 @@ const CourseDetailPage = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push(`/preview/${courseId}/${lesson._id}`)}
+                            onClick={() => router.push(`/preview/${courseId}/${lesson.id}`)}
                           >
                             Preview
                           </Button>

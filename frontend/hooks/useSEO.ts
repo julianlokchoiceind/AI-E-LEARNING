@@ -209,13 +209,13 @@ export function useSitemap() {
   };
 
   const generateCoursesSitemap = (courses: Array<{
-    _id: string;
+    id: string;
     title: string;
     updated_at: string;
   }>) => {
     return courses.map(course => 
       generateSitemapEntry(
-        `/courses/${course._id}`,
+        `/courses/${course.id}`,
         course.updated_at,
         'weekly',
         0.8
@@ -224,13 +224,13 @@ export function useSitemap() {
   };
 
   const generateLessonsSitemap = (lessons: Array<{
-    _id: string;
+    id: string;
     course_id: string;
     updated_at: string;
   }>) => {
     return lessons.map(lesson => 
       generateSitemapEntry(
-        `/learn/${lesson.course_id}/${lesson._id}`,
+        `/learn/${lesson.course_id}/${lesson.id}`,
         lesson.updated_at,
         'monthly',
         0.6

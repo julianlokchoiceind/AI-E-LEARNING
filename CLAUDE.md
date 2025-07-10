@@ -3704,3 +3704,80 @@ logger.warn("Payment retry", {
 - ✅ Stakeholder Approval: Complete with documented sign-off and implementation readiness
 
 This PRD now follows modern best practices and provides comprehensive guidance for building a production-ready AI E-Learning platform.
+
+---
+
+## 🧠 **AI MEMORY & CRITICAL RULES**
+
+### **🔒 NEXTAUTH SESSION STABILITY RULES**
+
+**🚨 CRITICAL: NextAuth configuration is now STABLE after fixing session clearing issues. DO NOT modify any NextAuth-related code!**
+
+#### **PROTECTED FILES - DO NOT MODIFY:**
+1. **`frontend/components/providers/SessionProvider.tsx`** - Session provider configuration
+2. **`frontend/lib/auth.ts`** - NextAuth configuration
+3. **`frontend/app/api/auth/[...nextauth]/route.ts`** - NextAuth route handler
+4. **`frontend/middleware.ts`** - Authentication middleware
+
+#### **WHY THIS RULE EXISTS:**
+- **Previous Issue:** Users had to clear browser history/cache to login after session timeout on Chrome
+- **Root Cause:** Multiple competing token refresh mechanisms causing race conditions
+- **Solution Applied:** Disabled all timer-based refresh, using JWT callback for proactive token refresh
+- **Current State:** STABLE - Session persists properly without cache clearing
+
+#### **CURRENT WORKING CONFIGURATION:**
+```typescript
+// SessionProvider.tsx - DO NOT CHANGE
+refetchInterval={0}              // Disabled to prevent race conditions
+refetchOnWindowFocus={false}     // Disabled to prevent Chrome issues
+refetchWhenOffline={false}       // Keep false
+
+// lib/auth.ts JWT callback - REQUIRED IMPLEMENTATION
+async jwt({ token, user, account, trigger }) {
+  // Initial sign-in: store tokens and calculate expiry
+  if (user) {
+    token.expiresAt = Math.floor(Date.now() / 1000) + (30 * 60) // 30 minutes
+    token.accessToken = user.accessToken
+    token.refreshToken = user.refreshToken
+    // ... other user data
+  }
+  
+  // Check if token expired
+  if (token.expiresAt && Date.now() < (token.expiresAt as number) * 1000) {
+    return token // Still valid
+  }
+  
+  // Token expired - refresh it
+  if (token.refreshToken) {
+    // Call backend /auth/refresh endpoint
+    // Update tokens and reset expiry on success
+    // Set token.error = "RefreshTokenError" on failure
+  }
+  
+  return token
+}
+
+// lib/auth.ts session callback - MUST handle refresh errors
+async session({ session, token }) {
+  if (token.error === "RefreshTokenError") {
+    throw new Error("RefreshTokenError") // Forces re-authentication
+  }
+  // ... rest of session logic
+}
+```
+
+#### **TOKEN REFRESH ARCHITECTURE:**
+- **NextAuth JWT Callback:** Primary refresh mechanism - checks token expiry and refreshes proactively
+- **API Client:** Secondary fallback - handles 401 errors if JWT refresh fails
+- **Timing:** Access token expires after 30 minutes, auto-refreshes via JWT callback
+- **Result:** No race conditions, stable authentication with automatic refresh
+
+#### **WHEN WORKING ON AUTH-RELATED FEATURES:**
+1. **DO NOT** add any timer-based refresh mechanisms (refetchInterval > 0)
+2. **DO NOT** modify SessionProvider refetch settings
+3. **DO NOT** remove token expiry checking from JWT callback (it's required!)
+4. **DO NOT** create new token refresh hooks
+5. **DO** maintain the JWT callback refresh logic as primary mechanism
+6. **DO** keep api-client.ts 401 handling as secondary fallback
+
+**Remember:** The current setup works perfectly. Any changes to NextAuth configuration can reintroduce the Chrome session clearing bug.

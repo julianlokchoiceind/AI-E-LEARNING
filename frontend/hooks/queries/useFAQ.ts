@@ -103,8 +103,7 @@ export function useDeleteFAQ() {
         // Handle different data structures
         const faqs = old?.data?.faqs || old?.faqs || [];
         const filteredFAQs = faqs.filter((faq: any) => {
-          const id = faq._id || faq.id;
-          return id !== faqId;
+          return faq.id !== faqId;
         });
         
         // Maintain same structure

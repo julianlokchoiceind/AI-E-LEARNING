@@ -116,7 +116,7 @@ export function CourseBreadcrumbs({
   className = ''
 }: {
   course: {
-    _id: string;
+    id: string;
     title: string;
     category: string;
   };
@@ -136,7 +136,7 @@ export function CourseBreadcrumbs({
     },
     {
       name: course.title,
-      href: `/courses/${course._id}`,
+      href: `/courses/${course.id}`,
       current: !currentPage
     }
   ];
@@ -160,12 +160,12 @@ export function LessonBreadcrumbs({
   className = ''
 }: {
   course: {
-    _id: string;
+    id: string;
     title: string;
     category: string;
   };
   lesson: {
-    _id: string;
+    id: string;
     title: string;
   };
   className?: string;
@@ -183,7 +183,7 @@ export function LessonBreadcrumbs({
     },
     {
       name: course.title,
-      href: `/courses/${course._id}`
+      href: `/courses/${course.id}`
     },
     {
       name: lesson.title,

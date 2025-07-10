@@ -322,7 +322,7 @@ export function useToggleCourseFree() {
         // Handle different data structures
         const courses = old?.data?.courses || old?.courses || [];
         const updatedCourses = courses.map((course: any) => {
-          const id = course._id || course.id;
+          const id = course.id;
           if (id === courseId) {
             return {
               ...course,
@@ -456,7 +456,7 @@ export function useDeleteCourseOptimistic() {
           
           
           const filteredCourses = courses.filter((course: any) => {
-            const id = course._id || course.id;
+            const id = course.id;
             return id !== courseId;
           });
           
@@ -758,13 +758,13 @@ export function useReorderLessons() {
           
           // Update lessons within the specific chapter
           const updatedChapters = chapters.map((chapter: any) => {
-            const chapterIdMatch = (chapter._id || chapter.id) === chapterId;
+            const chapterIdMatch = chapter.id === chapterId;
             
             if (chapterIdMatch && chapter.lessons) {
               // Sort lessons based on new order
               const reorderedLessons = [...chapter.lessons].sort((a: any, b: any) => {
-                const aId = a._id || a.id;
-                const bId = b._id || b.id;
+                const aId = a.id;
+                const bId = b.id;
                 const aOrder = orderMap.get(aId) || a.order || 999;
                 const bOrder = orderMap.get(bId) || b.order || 999;
                 return aOrder - bOrder;
@@ -772,7 +772,7 @@ export function useReorderLessons() {
               
               // Update order property on each lesson
               const updatedLessons = reorderedLessons.map((lesson: any, index: number) => {
-                const lessonId = lesson._id || lesson.id;
+                const lessonId = lesson.id;
                 const newOrder = orderMap.get(lessonId);
                 return {
                   ...lesson,

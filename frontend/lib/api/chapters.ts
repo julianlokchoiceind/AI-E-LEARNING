@@ -8,7 +8,7 @@ import {
 } from '@/lib/utils/error-handler';
 
 export interface ChapterResponse {
-  _id: string;
+  id: string;
   course_id: string;
   title: string;
   description?: string;
@@ -178,12 +178,12 @@ export const getChaptersWithLessons = async (courseId: string): Promise<Standard
             
             return {
               ...lesson,
-              _id: lesson.id || lesson._id, // Maps backend 'id' to frontend '_id'
+              // Backend already returns id via Pydantic alias
             };
           });
           
           return {
-            _id: chapter.id, // Maps backend 'id' to frontend '_id'
+            id: chapter.id, // Use backend 'id' directly
             course_id: chapter.course_id,
             title: chapter.title,
             description: chapter.description,

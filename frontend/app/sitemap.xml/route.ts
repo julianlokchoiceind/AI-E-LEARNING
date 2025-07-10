@@ -80,7 +80,7 @@ export async function GET() {
     // In a real application, you would fetch dynamic content from your database
     // const courses = await fetchCourses();
     // const dynamicPages = courses.map(course => ({
-    //   url: `/courses/${course._id}`,
+    //   url: `/courses/${course.id}`,
     //   lastmod: course.updated_at,
     //   changefreq: 'weekly',
     //   priority: 0.8

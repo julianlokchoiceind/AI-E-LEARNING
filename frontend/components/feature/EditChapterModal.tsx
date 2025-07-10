@@ -9,7 +9,7 @@ import { ToastService } from '@/lib/toast/ToastService';
 import { useCallback } from 'react';
 
 export interface ChapterEditData {
-  _id: string;
+  id: string;
   title: string;
   description?: string;
   order: number;
@@ -48,7 +48,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
   // Chapter-specific data change detection
   const hasDataChanged = useCallback((current: any, previous: any): boolean => {
     if (!current || !previous) return false;
-    if (current._id !== previous._id) return false;
+    if (current.id !== previous.id) return false;
     
     return (
       current.title !== previous.title ||
@@ -59,13 +59,13 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
 
   // Chapter-specific save function
   const onSave = useCallback(async (data: any) => {
-    if (!data._id) {
+    if (!data.id) {
       throw new Error('Chapter ID is missing. Please refresh the page.');
     }
 
 
     const response = await updateChapterAction({
-      chapterId: data._id,
+      chapterId: data.id,
       chapterData: {
         title: data.title,
         description: data.description,
@@ -90,15 +90,15 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
     resolveConflict,
     conflictData
   } = useAutosave(
-    chapter && chapter._id ? {
-      _id: chapter._id,
+    chapter && chapter.id ? {
+      id: chapter.id,
       title: formData.title,
       description: formData.description,
       status: 'draft' // Default status for editing
     } : null,
     {
       delay: 2000,
-      enabled: isOpen && !!chapter && !!chapter._id,
+      enabled: isOpen && !!chapter && !!chapter.id,
       onSave,
       onConflict: (conflict) => {
         ToastService.error('Chapter was modified by another user. Manual save required.');
@@ -159,8 +159,8 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!chapter || !chapter._id || !validateForm()) {
-      if (!chapter?._id) {
+    if (!chapter || !chapter.id || !validateForm()) {
+      if (!chapter?.id) {
         ToastService.error('Chapter ID is missing. Please refresh the page.');
       }
       return;

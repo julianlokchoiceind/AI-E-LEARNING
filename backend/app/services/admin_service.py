@@ -162,13 +162,16 @@ class AdminService:
                 }}
             ]).to_list(5)
             
-            # Convert ObjectIds to strings
+            # Convert ObjectIds to strings - Fixed conversion
             for reg in recent_registrations:
-                reg["_id"] = str(reg["_id"])
+                reg["id"] = str(reg["_id"])
+                reg.pop("_id", None)  # Remove _id after conversion
             for course in recent_course_submissions:
-                course["_id"] = str(course["_id"])
+                course["id"] = str(course["_id"])
+                course.pop("_id", None)  # Remove _id after conversion
             for enr in recent_enrollments:
-                enr["_id"] = str(enr["_id"])
+                enr["id"] = str(enr["_id"])
+                enr.pop("_id", None)  # Remove _id after conversion
             
             return AdminDashboardStats(
                 total_users=total_users,

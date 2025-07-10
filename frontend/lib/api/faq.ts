@@ -12,7 +12,7 @@ export interface FAQCategory {
 }
 
 export interface FAQ {
-  _id: string;
+  id: string;
   question: string;
   answer: string;
   category: 'general' | 'pricing' | 'learning' | 'technical' | 'creator' | 'admin';

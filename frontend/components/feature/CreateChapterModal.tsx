@@ -6,7 +6,7 @@ import { useCreateChapter } from '@/hooks/queries/useChapters';
 import { ToastService } from '@/lib/toast/ToastService';
 
 export interface ChapterResponse {
-  _id: string;
+  id: string;
   course_id: string;
   title: string;
   description?: string;

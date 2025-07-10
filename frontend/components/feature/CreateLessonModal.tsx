@@ -6,7 +6,7 @@ import { useCreateLesson } from '@/hooks/queries/useLessons';
 import { ToastService } from '@/lib/toast/ToastService';
 
 export interface LessonResponse {
-  _id: string;
+  id: string;
   course_id: string;
   chapter_id: string;
   title: string;

@@ -23,7 +23,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { ChapterResponse } from '@/lib/api/chapters';
 
 interface Lesson {
-  _id: string;
+  id: string;
   title: string;
   description?: string;
   order: number;
@@ -81,7 +81,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
     transition,
     isDragging: isSortableDragging,
   } = useSortable({ 
-    id: chapter._id,
+    id: chapter.id,
     disabled: !isEditable || isOverlay
   });
 
@@ -198,7 +198,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onEdit(chapter._id)}
+                      onClick={() => onEdit(chapter.id)}
                       className="text-gray-600 hover:text-blue-600"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -210,7 +210,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        onDelete(chapter._id);
+                        onDelete(chapter.id);
                       }}
                       className="text-gray-600 hover:text-red-600"
                     >
@@ -242,7 +242,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      onCreateLesson(chapter._id);
+                      onCreateLesson(chapter.id);
                     }}
                     className="text-blue-600 border-blue-200 hover:bg-blue-50"
                   >
@@ -258,7 +258,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                   <div className="pl-4 border-l-2 border-gray-100">
                     <DroppableLessonList
                       lessons={lessons.sort((a, b) => a.order - b.order)}
-                      chapterId={chapter._id}
+                      chapterId={chapter.id}
                       onLessonsReorder={onLessonsReorder}
                       onEdit={onLessonEdit}
                       onEditDetailed={onLessonEditDetailed}
