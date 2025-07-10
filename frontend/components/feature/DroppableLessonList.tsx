@@ -51,6 +51,7 @@ interface DroppableLessonListProps {
   onLessonClick?: (chapterId: string, lessonId: string) => void;
   onPreviewClick?: (lessonId: string) => void;
   onEdit?: (lessonId: string) => void;
+  onEditDetailed?: (lessonId: string) => void;
   onDelete?: (lessonId: string) => void;
   isEditable?: boolean;
   isEnrolled?: boolean;
@@ -63,6 +64,7 @@ export const DroppableLessonList: React.FC<DroppableLessonListProps> = ({
   onLessonClick,
   onPreviewClick,
   onEdit,
+  onEditDetailed,
   onDelete,
   isEditable = true,
   isEnrolled = true
@@ -172,6 +174,7 @@ export const DroppableLessonList: React.FC<DroppableLessonListProps> = ({
               onLessonClick={onLessonClick}
               onPreviewClick={onPreviewClick}
               onEdit={onEdit}
+              onEditDetailed={onEditDetailed}
               onDelete={onDelete}
             />
           ))}
@@ -193,6 +196,7 @@ export const DroppableLessonList: React.FC<DroppableLessonListProps> = ({
               onLessonClick={onLessonClick}
               onPreviewClick={onPreviewClick}
               onEdit={onEdit}
+              onEditDetailed={onEditDetailed}
               onDelete={onDelete}
               isOverlay={true}
             />

@@ -50,6 +50,7 @@ interface SortableChapterCardProps {
   onEdit: (chapterId: string) => void;
   onDelete: (chapterId: string) => void;
   onLessonEdit: (lessonId: string) => void;
+  onLessonEditDetailed?: (lessonId: string) => void;
   onLessonDelete: (lessonId: string) => void;
   onCreateLesson: (chapterId: string) => void;
   onLessonsReorder: (chapterId: string, reorderedLessons: any[]) => Promise<void>;
@@ -65,6 +66,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
   onEdit,
   onDelete,
   onLessonEdit,
+  onLessonEditDetailed,
   onLessonDelete,
   onCreateLesson,
   onLessonsReorder
@@ -259,6 +261,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                       chapterId={chapter._id}
                       onLessonsReorder={onLessonsReorder}
                       onEdit={onLessonEdit}
+                      onEditDetailed={onLessonEditDetailed}
                       onDelete={onLessonDelete}
                       isEditable={isEditable}
                       isEnrolled={true}

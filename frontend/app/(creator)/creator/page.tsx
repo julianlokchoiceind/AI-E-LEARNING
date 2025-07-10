@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Plus, BookOpen, TrendingUp, Users, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { useCreatorDashboardQuery } from '@/hooks/queries/useCourses';
+import { useCreatorDashboardQuery, useCreateCourse } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
@@ -15,12 +15,14 @@ const CreatorDashboard = () => {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  // React Query hook - automatic caching and state management
+  // React Query hooks
   const { 
     data: dashboardResponse, 
     loading: dashboardLoading, 
     execute: refetchDashboard 
   } = useCreatorDashboardQuery(!!user);
+  
+  const { mutate: createCourse, loading: createLoading } = useCreateCourse();
 
   // Extract data from React Query response
   const dashboardData = dashboardResponse?.data || null;
@@ -44,7 +46,18 @@ const CreatorDashboard = () => {
   }, [user, authLoading, router]);
 
   const handleCreateCourse = () => {
-    router.push('/creator/courses/new');
+    createCourse({}, {
+      onSuccess: (response) => {
+        if (response.success && response.data?._id) {
+          // Redirect based on user role
+          if (user?.role === 'admin') {
+            router.push(`/admin/courses/${response.data._id}/edit`);
+          } else {
+            router.push(`/creator/courses/${response.data._id}/edit`);
+          }
+        }
+      }
+    });
   };
 
   // Manual refresh function for dashboard data
@@ -89,9 +102,18 @@ const CreatorDashboard = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Creator Dashboard</h1>
-            <Button variant="primary" onClick={handleCreateCourse}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create New Course
+            <Button variant="primary" onClick={handleCreateCourse} disabled={createLoading}>
+              {createLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create New Course
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -175,8 +197,8 @@ const CreatorDashboard = () => {
             <div className="text-center py-8">
               <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600 mb-4">You haven't created any courses yet</p>
-              <Button variant="primary" onClick={handleCreateCourse}>
-                Create Your First Course
+              <Button variant="primary" onClick={handleCreateCourse} disabled={createLoading}>
+                {createLoading ? 'Creating...' : 'Create Your First Course'}
               </Button>
             </div>
           ) : (

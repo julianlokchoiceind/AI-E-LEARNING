@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { SaveStatusIndicator } from '@/components/ui/SaveStatusIndicator';
@@ -7,6 +8,8 @@ import { useUpdateLesson } from '@/hooks/queries/useLearning';
 import { useAutosave } from '@/hooks/useAutosave';
 import { ToastService } from '@/lib/toast/ToastService';
 import { useCallback } from 'react';
+import { Settings } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface LessonEditData {
   _id: string;
@@ -55,6 +58,9 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
   lesson,
   onLessonUpdated
 }) => {
+  const router = useRouter();
+  const { user } = useAuth();
+  
   const [formData, setFormData] = useState<LessonFormData>({
     title: '',
     description: '',
@@ -303,6 +309,18 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
     }
   };
 
+  const handleAdvancedEdit = () => {
+    // Determine the route based on user role
+    const rolePrefix = user?.role === 'admin' ? 'admin' : 'creator';
+    const courseId = lesson?.course_id;
+    const lessonId = lesson?._id;
+    
+    if (courseId && lessonId) {
+      router.push(`/${rolePrefix}/courses/${courseId}/lessons/${lessonId}/edit`);
+      onClose();
+    }
+  };
+
   // Don't render if no lesson selected
   if (!lesson) {
     return null;
@@ -484,6 +502,16 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
 
           {/* Form Actions */}
           <MobileFormActions className="mt-8">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleAdvancedEdit}
+              disabled={loading}
+              className="mr-auto"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Advanced Edit
+            </Button>
             <Button
               type="button"
               variant="outline"

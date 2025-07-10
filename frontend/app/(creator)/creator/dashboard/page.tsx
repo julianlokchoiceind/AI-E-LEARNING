@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/hooks/useAuth';
-import { useCreatorDashboardQuery } from '@/hooks/queries/useCourses';
+import { useCreatorDashboardQuery, useCreateCourse } from '@/hooks/queries/useCourses';
 import { formatDate, formatCurrency } from '@/lib/utils/formatters';
 import { ToastService } from '@/lib/toast/ToastService';
 
@@ -47,12 +47,14 @@ const CreatorDashboardPage = () => {
   const router = useRouter();
   const { user } = useAuth();
   
-  // React Query hook for dashboard data
+  // React Query hooks
   const { 
     data: dashboardResponse, 
     loading, 
     execute: refetchDashboard 
   } = useCreatorDashboardQuery(user?.id || '', !!user?.id);
+  
+  const { mutate: createCourse, loading: createLoading } = useCreateCourse();
 
   // Check permissions
   useEffect(() => {
@@ -164,11 +166,34 @@ const CreatorDashboardPage = () => {
               <p className="text-gray-600">Welcome back, {user?.name}!</p>
             </div>
             <Button
-              onClick={() => router.push('/creator/courses/new')}
+              onClick={() => {
+                createCourse({}, {
+                  onSuccess: (response) => {
+                    if (response.success && response.data?._id) {
+                      // Redirect based on user role
+                      if (user?.role === 'admin') {
+                        router.push(`/admin/courses/${response.data._id}/edit`);
+                      } else {
+                        router.push(`/creator/courses/${response.data._id}/edit`);
+                      }
+                    }
+                  }
+                });
+              }}
+              disabled={createLoading}
               className="flex items-center gap-2"
             >
-              <Plus className="w-4 h-4" />
-              Create New Course
+              {createLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Create New Course
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -237,11 +262,25 @@ const CreatorDashboardPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button
               variant="outline"
-              onClick={() => router.push('/creator/courses/new')}
+              onClick={() => {
+                createCourse({}, {
+                  onSuccess: (response) => {
+                    if (response.success && response.data?._id) {
+                      // Redirect based on user role
+                      if (user?.role === 'admin') {
+                        router.push(`/admin/courses/${response.data._id}/edit`);
+                      } else {
+                        router.push(`/creator/courses/${response.data._id}/edit`);
+                      }
+                    }
+                  }
+                });
+              }}
+              disabled={createLoading}
               className="justify-start"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create New Course
+              {createLoading ? 'Creating...' : 'Create New Course'}
             </Button>
             <Button
               variant="outline"
@@ -330,8 +369,24 @@ const CreatorDashboardPage = () => {
           ) : (
             <div className="text-center py-8">
               <p className="text-gray-600 mb-4">No courses yet</p>
-              <Button onClick={() => router.push('/creator/courses/new')}>
-                Create Your First Course
+              <Button 
+                onClick={() => {
+                  createCourse({}, {
+                    onSuccess: (response) => {
+                      if (response.success && response.data?._id) {
+                        // Redirect based on user role
+                        if (user?.role === 'admin') {
+                          router.push(`/admin/courses/${response.data._id}/edit`);
+                        } else {
+                          router.push(`/creator/courses/${response.data._id}/edit`);
+                        }
+                      }
+                    }
+                  });
+                }}
+                disabled={createLoading}
+              >
+                {createLoading ? 'Creating...' : 'Create Your First Course'}
               </Button>
             </div>
           )}

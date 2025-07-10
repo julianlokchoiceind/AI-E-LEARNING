@@ -795,6 +795,7 @@ const CourseBuilderPage = () => {
                       onEdit={handleChapterEdit}
                       onDelete={handleChapterDelete}
                       onLessonEdit={handleLessonEdit}
+                      onLessonEditDetailed={handleLessonEditDetailed}
                       onLessonDelete={handleLessonDelete}
                       onCreateLesson={handleCreateLesson}
                       onLessonsReorder={handleLessonsReorder}

@@ -33,6 +33,7 @@ interface DroppableChapterListProps {
   onEdit: (chapterId: string) => void;
   onDelete: (chapterId: string) => void;
   onLessonEdit: (lessonId: string) => void;
+  onLessonEditDetailed?: (lessonId: string) => void;
   onLessonDelete: (lessonId: string) => void;
   onCreateLesson: (chapterId: string) => void;
   onLessonsReorder: (chapterId: string, reorderedLessons: any[]) => Promise<void>;
@@ -45,6 +46,7 @@ export const DroppableChapterList: React.FC<DroppableChapterListProps> = ({
   onEdit,
   onDelete,
   onLessonEdit,
+  onLessonEditDetailed,
   onLessonDelete,
   onCreateLesson,
   onLessonsReorder,
@@ -153,6 +155,7 @@ export const DroppableChapterList: React.FC<DroppableChapterListProps> = ({
               onEdit={onEdit}
               onDelete={onDelete}
               onLessonEdit={onLessonEdit}
+              onLessonEditDetailed={onLessonEditDetailed}
               onLessonDelete={onLessonDelete}
               onCreateLesson={onCreateLesson}
               onLessonsReorder={onLessonsReorder}
@@ -174,6 +177,7 @@ export const DroppableChapterList: React.FC<DroppableChapterListProps> = ({
               onEdit={onEdit}
               onDelete={onDelete}
               onLessonEdit={onLessonEdit}
+              onLessonEditDetailed={onLessonEditDetailed}
               onLessonDelete={onLessonDelete}
               onCreateLesson={onCreateLesson}
               onLessonsReorder={onLessonsReorder}

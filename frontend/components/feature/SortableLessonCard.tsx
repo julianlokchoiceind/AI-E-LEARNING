@@ -10,7 +10,8 @@ import {
   Edit3, 
   Trash2, 
   GripVertical,
-  Clock 
+  Clock,
+  Settings 
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -49,6 +50,7 @@ interface SortableLessonCardProps {
   onLessonClick?: (chapterId: string, lessonId: string) => void;
   onPreviewClick?: (lessonId: string) => void;
   onEdit?: (lessonId: string) => void;
+  onEditDetailed?: (lessonId: string) => void;
   onDelete?: (lessonId: string) => void;
 }
 
@@ -64,6 +66,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
   onLessonClick,
   onPreviewClick,
   onEdit,
+  onEditDetailed,
   onDelete
 }) => {
   const {
@@ -221,9 +224,25 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
                     onEdit?.(lesson._id);
                   }}
                   className="text-gray-600 hover:text-blue-600 h-8 w-8 p-0"
+                  title="Quick edit"
                 >
                   <Edit3 className="w-3 h-3" />
                 </Button>
+                
+                {onEditDetailed && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditDetailed(lesson._id);
+                    }}
+                    className="text-gray-600 hover:text-blue-600 h-8 w-8 p-0"
+                    title="Advanced edit"
+                  >
+                    <Settings className="w-3 h-3" />
+                  </Button>
+                )}
                 
                 <Button
                   variant="ghost"
