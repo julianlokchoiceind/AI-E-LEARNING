@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useBeforeUnload } from '@/hooks/useBeforeUnload';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { ButtonSkeleton } from '@/components/ui/LoadingStates';
 import { AlertTriangle, Save, X } from 'lucide-react';
 import { ToastService } from '@/lib/toast/ToastService';
 
@@ -177,10 +178,7 @@ const NavigationGuard: React.FC<NavigationGuardProps> = ({
                 disabled={isSaving}
               >
                 {isSaving ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Saving...
-                  </>
+                  <ButtonSkeleton variant="primary" />
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-1" />

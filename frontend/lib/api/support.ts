@@ -104,7 +104,8 @@ export const supportAPI = {
 
     return apiClient.upload<StandardResponse<{ url: string }>>(
       `/support/tickets/${ticketId}/attachments`,
-      formData
+      formData,
+      { requireAuth: true }
     );
   },
 

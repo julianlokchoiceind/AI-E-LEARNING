@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { ButtonSkeleton } from '@/components/ui/LoadingStates';
 import { SaveStatusIndicator } from '@/components/ui/SaveStatusIndicator';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
 import { useUpdateChapter } from '@/hooks/queries/useCourses';
@@ -78,7 +79,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
     }
 
     return response;
-  }, []);
+  }, [updateChapterAction]);
 
   // Autosave functionality using generic useAutosave hook
   const {
@@ -347,10 +348,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
               className="flex-1"
             >
               {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Updating...
-                </>
+                <ButtonSkeleton variant="primary" />
               ) : (
                 'Update Chapter'
               )}

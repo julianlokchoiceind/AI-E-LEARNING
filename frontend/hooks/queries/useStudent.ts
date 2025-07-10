@@ -354,17 +354,27 @@ export function useCompleteOnboarding() {
 
 /**
  * Export student progress data
+ * FIXED: Use download() method for binary data (PDF/CSV) instead of get()
  */
 export function useExportProgress() {
   return useApiMutation(
-    async (params?: { format?: 'pdf' | 'excel' | 'csv'; courseIds?: string[] }) => {
+    async (params?: { format?: 'pdf' | 'csv'; courseIds?: string[] }) => {
       const { format = 'pdf', courseIds } = params || {};
       
-      return api.get<any>(`/users/export-progress?format=${format}`, { requireAuth: true });
+      // Use download() method which returns Blob for binary data
+      const blob = await api.download(`/progress/export/${format}`, { requireAuth: true });
+      
+      // Return blob wrapped in StandardResponse format for consistency
+      return {
+        success: true,
+        data: blob,
+        message: `Progress exported as ${format.toUpperCase()} successfully`
+      };
     },
     {
       // No need to invalidate queries for export
       operationName: 'export-progress', // Unique operation ID for toast deduplication
+      showToast: false, // We'll show custom toast in component
     }
   );
 }

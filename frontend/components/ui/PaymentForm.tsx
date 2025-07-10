@@ -9,6 +9,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/Button';
+import { ButtonSkeleton } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 
 // Initialize Stripe
@@ -120,7 +121,11 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
           disabled={!stripe || isProcessing}
           className="flex-1"
         >
-          {isProcessing ? 'Processing...' : `Pay ${formatAmount(amount, currency)}`}
+          {isProcessing ? (
+            <ButtonSkeleton variant="primary" />
+          ) : (
+            `Pay ${formatAmount(amount, currency)}`
+          )}
         </Button>
         {onCancel && (
           <Button

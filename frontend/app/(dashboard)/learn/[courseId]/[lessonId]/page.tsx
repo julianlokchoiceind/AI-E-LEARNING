@@ -146,9 +146,11 @@ export default function LessonPlayerPage() {
 
   // React Query data processing - automatic lesson navigation setup
   useEffect(() => {
-    if (chapters.length > 0) {
+    // Extract chapters from React Query response for optimal dependency tracking
+    const chaptersData = chaptersResponse?.data || [];
+    if (chaptersData.length > 0) {
       // Process chapters data to find current chapter and next lesson
-      for (const chapter of chapters) {
+      for (const chapter of chaptersData) {
         const lessonIndex = chapter.lessons.findIndex((l: Lesson) => l.id === lessonId);
         if (lessonIndex !== -1) {
           setCurrentChapter(chapter);
@@ -158,9 +160,9 @@ export default function LessonPlayerPage() {
             setNextLesson(chapter.lessons[lessonIndex + 1]);
           } else {
             // Check for first lesson in next chapter
-            const chapterIndex = chapters.findIndex((c: Chapter) => c.id === chapter.id);
-            if (chapterIndex < chapters.length - 1 && chapters[chapterIndex + 1].lessons.length > 0) {
-              setNextLesson(chapters[chapterIndex + 1].lessons[0]);
+            const chapterIndex = chaptersData.findIndex((c: Chapter) => c.id === chapter.id);
+            if (chapterIndex < chaptersData.length - 1 && chaptersData[chapterIndex + 1].lessons.length > 0) {
+              setNextLesson(chaptersData[chapterIndex + 1].lessons[0]);
             }
           }
           break;
@@ -170,7 +172,7 @@ export default function LessonPlayerPage() {
       // Note: Lesson progress is now automatically fetched via useBatchLessonProgressQuery
       // No need for manual fetchAllLessonsProgress calls
     }
-  }, [chapters, lessonId]);
+  }, [chaptersResponse, lessonId]);
 
   // ✅ COMPLETED: Replaced manual fetchAllLessonsProgress with React Query useBatchLessonProgressQuery
   // This eliminates multiple individual API calls and provides automatic caching and error handling

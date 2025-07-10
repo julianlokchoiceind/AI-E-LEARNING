@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { ButtonSkeleton } from '@/components/ui/LoadingStates';
 import { useExportProgress } from '@/hooks/queries/useStudent';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Download, FileText, Table } from 'lucide-react';
@@ -153,8 +154,14 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
             disabled={isExporting}
             className="flex-1"
           >
-            <Download className="w-4 h-4 mr-2" />
-            {isExporting ? 'Preparing Export...' : `Export ${selectedFormat.toUpperCase()}`}
+            {isExporting ? (
+              <ButtonSkeleton variant="primary" />
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Export {selectedFormat.toUpperCase()}
+              </>
+            )}
           </Button>
           
           <Button

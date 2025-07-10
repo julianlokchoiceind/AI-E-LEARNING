@@ -73,7 +73,7 @@ export function useCoursesQuery(filters: CoursesFilters = {}) {
  * High-impact: Used when viewing any course
  */
 export function useCourseQuery(courseId: string, enabled: boolean = true) {
-  return useApiQuery(
+  return useApiQuery<any>(
     ['course', courseId],
     () => getCourseById(courseId),
     {
@@ -99,8 +99,8 @@ export function useCourseSearchQuery(query: string, filters: Omit<CoursesFilters
 }
 
 /**
- * CREATE COURSE - For creators and admins
- * Critical: Course creation workflow
+ * CREATE COURSE - For creators and admins with optimistic updates
+ * Critical: Course creation workflow with instant feedback
  */
 export function useCreateCourse() {
   const queryClient = useQueryClient();
@@ -109,16 +109,102 @@ export function useCreateCourse() {
     () => createCourse(),
     {
       operationName: 'create-course',
-      onSuccess: () => {
-        // Invalidate all queries that start with 'admin-courses'
-        queryClient.invalidateQueries({ 
-          predicate: (query) => {
-            const queryKey = query.queryKey;
-            return Array.isArray(queryKey) && queryKey[0] === 'admin-courses';
+      optimistic: {
+        // Optimistic update: Add temporary course immediately
+        onMutate: async () => {
+          // Cancel any outgoing refetches
+          await queryClient.cancelQueries({ 
+            predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-courses'
+          });
+          
+          // Snapshot previous values
+          const previousAdminCourses = queryClient.getQueryData(['admin-courses']);
+          const previousCourses = queryClient.getQueryData(['courses']);
+          const previousCreatorCourses = queryClient.getQueryData(['creator-courses']);
+          
+          // Generate temporary course data
+          const tempCourse = {
+            id: `temp-${Date.now()}`, // Temporary ID
+            title: `Untitled Course #${Math.floor(Math.random() * 100)} (${new Date().toLocaleDateString()})`,
+            description: "New course being created...",
+            status: 'draft',
+            creator_name: 'You',
+            total_lessons: 0,
+            total_chapters: 0,
+            total_duration: 0,
+            pricing: {
+              is_free: false,
+              price: 0,
+              currency: 'USD'
+            },
+            stats: {
+              total_enrollments: 0,
+              average_rating: 0,
+              total_reviews: 0
+            },
+            created_at: new Date().toISOString(),
+            category: 'programming',
+            level: 'beginner',
+            thumbnail: null
+          };
+          
+          // Optimistically add new course to admin courses (at the top)
+          queryClient.setQueryData(['admin-courses'], (old: any) => {
+            if (!old) return old;
+            
+            const courses = old?.data?.courses || old?.courses || [];
+            const updatedCourses = [tempCourse, ...courses];
+            
+            // Maintain same structure
+            if (old?.data?.courses) {
+              return {
+                ...old,
+                data: {
+                  ...old.data,
+                  courses: updatedCourses,
+                  total: updatedCourses.length
+                }
+              };
+            }
+            
+            return {
+              ...old,
+              courses: updatedCourses,
+              total: updatedCourses.length
+            };
+          });
+          
+          return { 
+            previousAdminCourses, 
+            previousCourses, 
+            previousCreatorCourses,
+            tempCourse 
+          };
+        },
+        
+        // Replace temp course with real course on success
+        onError: (error, variables, context) => {
+          // Rollback all optimistic updates
+          if (context?.previousAdminCourses) {
+            queryClient.setQueryData(['admin-courses'], context.previousAdminCourses);
           }
-        });
-        queryClient.invalidateQueries({ queryKey: ['courses'] });
-        queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
+          if (context?.previousCourses) {
+            queryClient.setQueryData(['courses'], context.previousCourses);
+          }
+          if (context?.previousCreatorCourses) {
+            queryClient.setQueryData(['creator-courses'], context.previousCreatorCourses);
+          }
+        },
+        
+        // Always refetch to ensure consistency and get real course data
+        onSettled: () => {
+          queryClient.invalidateQueries({ 
+            queryKey: ['admin-courses'],
+            refetchType: 'active'
+          });
+          queryClient.invalidateQueries({ queryKey: ['courses'] });
+          queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
+        }
       }
     }
   );
@@ -173,21 +259,274 @@ export function useDeleteCourse() {
 }
 
 /**
- * ENROLL IN COURSE - Student enrollment
- * Critical: Primary business action
+ * ENROLL IN COURSE - Student enrollment with comprehensive optimistic updates
+ * Critical: Primary business action with instant feedback across entire platform
  */
 export function useEnrollInCourse() {
-  return useApiMutation(
-    ({ courseId }: CourseEnrollment) => enrollInCourse(courseId),
-    {
-      invalidateQueries: [
-        ['my-courses'], // Refresh student courses
-        ['course'], // Refresh course details (enrollment status)
-        ['student-dashboard'], // Refresh dashboard
-      ],
-      operationName: 'enroll-course', // Unique operation ID for toast deduplication
+  const queryClient = useQueryClient();
+  
+  // Using native React Query for complex multi-cache optimistic updates
+  const mutation = useMutation({
+    mutationFn: ({ courseId, enrollmentData }: { courseId: string; enrollmentData?: any }) => 
+      enrollInCourse(courseId, enrollmentData),
+    
+    // Comprehensive optimistic update across all enrollment-related caches
+    onMutate: async ({ courseId, enrollmentData }) => {
+      // Cancel all outgoing refetches for enrollment-related queries
+      await queryClient.cancelQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return key === 'my-courses' || key === 'student-dashboard' || 
+                 key === 'course' || key === 'enrollment' || key === 'recent-courses';
+        }
+      });
+      
+      // Snapshot all previous values for comprehensive rollback
+      const previousMyCourses = queryClient.getQueryData(['my-courses']);
+      const previousDashboard = queryClient.getQueryData(['student-dashboard']);
+      const previousCourse = queryClient.getQueryData(['course', courseId]);
+      const previousEnrollment = queryClient.getQueryData(['enrollment', courseId]);
+      const previousRecentCourses = queryClient.getQueryData(['recent-courses']);
+      
+      // Generate comprehensive optimistic enrollment data
+      const optimisticEnrollment = {
+        id: `temp-enrollment-${Date.now()}`,
+        user_id: 'current-user', // Will be corrected by backend
+        course_id: courseId,
+        enrollment_type: enrollmentData?.enrollment_type || 'free' as const,
+        payment_id: enrollmentData?.payment_id || null,
+        progress: {
+          lessons_completed: 0,
+          total_lessons: 0, // Will be updated with real course data
+          completion_percentage: 0,
+          total_watch_time: 0,
+          current_lesson_id: null,
+          is_completed: false,
+          completed_at: null
+        },
+        certificate: {
+          is_issued: false,
+          issued_at: null,
+          certificate_id: null,
+          final_score: null,
+          verification_url: null
+        },
+        is_active: true,
+        expires_at: null,
+        enrolled_at: new Date().toISOString(),
+        last_accessed: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // 1. OPTIMISTICALLY UPDATE MY-COURSES LIST
+      queryClient.setQueryData(['my-courses'], (old: any) => {
+        if (!old) return old;
+        
+        // Get course data from course cache to populate my-courses entry
+        const courseData = queryClient.getQueryData(['course', courseId]);
+        const course = courseData?.data || courseData || {};
+        
+        const optimisticCourseEntry = {
+          id: courseId,
+          title: course.title || 'Loading...',
+          description: course.description || '',
+          thumbnail: course.thumbnail || null,
+          instructor_name: course.creator_name || course.instructor_name || 'Unknown',
+          progress: {
+            completion_percentage: 0,
+            lessons_completed: 0,
+            total_lessons: course.total_lessons || 0,
+            last_accessed: new Date().toISOString()
+          },
+          enrollment: optimisticEnrollment,
+          enrolled_at: new Date().toISOString()
+        };
+        
+        // Add to my courses list
+        const courses = old?.data?.courses || old?.courses || [];
+        const updatedCourses = [optimisticCourseEntry, ...courses];
+        
+        // Maintain same structure
+        if (old?.data?.courses) {
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              courses: updatedCourses,
+              total: updatedCourses.length
+            }
+          };
+        }
+        
+        return {
+          ...old,
+          courses: updatedCourses,
+          total: updatedCourses.length
+        };
+      });
+      
+      // 2. OPTIMISTICALLY UPDATE STUDENT DASHBOARD
+      queryClient.setQueryData(['student-dashboard'], (old: any) => {
+        if (!old) return old;
+        
+        // Update enrollment statistics
+        const currentStats = old?.data?.stats || old?.stats || {};
+        const updatedStats = {
+          ...currentStats,
+          courses_enrolled: (currentStats.courses_enrolled || 0) + 1,
+          last_activity: new Date().toISOString()
+        };
+        
+        // Maintain same structure
+        if (old?.data?.stats) {
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              stats: updatedStats
+            }
+          };
+        }
+        
+        return {
+          ...old,
+          stats: updatedStats
+        };
+      });
+      
+      // 3. OPTIMISTICALLY UPDATE COURSE DETAIL (enrollment status)
+      queryClient.setQueryData(['course', courseId], (old: any) => {
+        if (!old) return old;
+        
+        // Mark course as enrolled
+        const updatedCourse = {
+          ...(old?.data || old),
+          is_enrolled: true,
+          enrollment_status: 'enrolled',
+          enrollment_type: enrollmentData?.enrollment_type || 'free',
+          enrollment_date: new Date().toISOString()
+        };
+        
+        // Maintain same structure
+        if (old?.data) {
+          return {
+            ...old,
+            data: updatedCourse
+          };
+        }
+        
+        return updatedCourse;
+      });
+      
+      // 4. OPTIMISTICALLY CREATE ENROLLMENT RECORD
+      queryClient.setQueryData(['enrollment', courseId], {
+        success: true,
+        data: optimisticEnrollment,
+        message: 'Enrollment created successfully'
+      });
+      
+      // 5. OPTIMISTICALLY UPDATE RECENT COURSES
+      queryClient.setQueryData(['recent-courses'], (old: any) => {
+        if (!old) return old;
+        
+        const courseData = queryClient.getQueryData(['course', courseId]);
+        const course = courseData?.data || courseData || {};
+        
+        const recentCourseEntry = {
+          id: courseId,
+          title: course.title || 'Loading...',
+          thumbnail: course.thumbnail || null,
+          last_accessed: new Date().toISOString(),
+          progress: { completion_percentage: 0 }
+        };
+        
+        const recentCourses = old?.data?.courses || old?.courses || [];
+        const updatedRecent = [recentCourseEntry, ...recentCourses.slice(0, 4)]; // Keep max 5
+        
+        // Maintain same structure
+        if (old?.data?.courses) {
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              courses: updatedRecent
+            }
+          };
+        }
+        
+        return {
+          ...old,
+          courses: updatedRecent
+        };
+      });
+      
+      return { 
+        previousMyCourses, 
+        previousDashboard, 
+        previousCourse, 
+        previousEnrollment, 
+        previousRecentCourses,
+        courseId,
+        optimisticEnrollment 
+      };
+    },
+    
+    // Comprehensive rollback on error
+    onError: (error: any, variables, context: any) => {
+      // Rollback all optimistic updates
+      if (context?.previousMyCourses) {
+        queryClient.setQueryData(['my-courses'], context.previousMyCourses);
+      }
+      if (context?.previousDashboard) {
+        queryClient.setQueryData(['student-dashboard'], context.previousDashboard);
+      }
+      if (context?.previousCourse) {
+        queryClient.setQueryData(['course', context.courseId], context.previousCourse);
+      }
+      if (context?.previousEnrollment) {
+        queryClient.setQueryData(['enrollment', context.courseId], context.previousEnrollment);
+      }
+      if (context?.previousRecentCourses) {
+        queryClient.setQueryData(['recent-courses'], context.previousRecentCourses);
+      }
+    },
+    
+    // Ensure data consistency after enrollment
+    onSettled: () => {
+      // Invalidate all enrollment-related queries for fresh data
+      queryClient.invalidateQueries({ queryKey: ['my-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['student-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['course'] });
+      queryClient.invalidateQueries({ queryKey: ['enrollment'] });
+      queryClient.invalidateQueries({ queryKey: ['recent-courses'] });
     }
-  );
+  });
+  
+  // Return wrapper to maintain useApiMutation interface
+  return {
+    mutate: (data: { courseId: string; enrollmentData?: any }, options?: { onSuccess?: (response: any) => void; onError?: (error: any) => void }) => {
+      mutation.mutate(data, {
+        onSuccess: (response) => {
+          ToastService.success(response?.message || 'Successfully enrolled in course!', 'enroll-course');
+          if (options?.onSuccess) {
+            options.onSuccess(response);
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error?.message || 'Something went wrong', 'enroll-course-error');
+          if (options?.onError) {
+            options.onError(error);
+          }
+        }
+      });
+    },
+    mutateAsync: mutation.mutateAsync,
+    loading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    data: mutation.data,
+  };
 }
 
 /**
@@ -248,7 +587,8 @@ export function useAdminCoursesQuery(filters: AdminCoursesFilters = {}) {
 }
 
 /**
- * Mutation for approving courses with automatic query invalidation
+ * Mutation for approving courses with optimistic updates
+ * Provides instant UI feedback while API call happens in background
  */
 export function useApproveCourse() {
   const queryClient = useQueryClient();
@@ -257,21 +597,76 @@ export function useApproveCourse() {
     (courseId: string) => approveCourse(courseId),
     {
       operationName: 'approve-course',
-      onSuccess: () => {
-        // Invalidate all queries that start with 'admin-courses'
-        queryClient.invalidateQueries({ 
-          predicate: (query) => {
-            const queryKey = query.queryKey;
-            return Array.isArray(queryKey) && queryKey[0] === 'admin-courses';
+      optimistic: {
+        // Optimistic update: Update UI immediately before API call
+        onMutate: async (courseId: string) => {
+          // Cancel any outgoing refetches
+          await queryClient.cancelQueries({ 
+            predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-courses'
+          });
+          
+          // Snapshot the previous value
+          const previousCourses = queryClient.getQueryData(['admin-courses']);
+          
+          // Optimistically update course status to 'published'
+          queryClient.setQueryData(['admin-courses'], (old: any) => {
+            if (!old) return old;
+            
+            // Handle different data structures from useApiQuery
+            const courses = old?.data?.courses || old?.courses || [];
+            const updatedCourses = courses.map((course: any) => {
+              const id = course.id;
+              if (id === courseId) {
+                return {
+                  ...course,
+                  status: 'published'
+                };
+              }
+              return course;
+            });
+            
+            // Maintain same structure
+            if (old?.data?.courses) {
+              return {
+                ...old,
+                data: {
+                  ...old.data,
+                  courses: updatedCourses
+                }
+              };
+            }
+            
+            return {
+              ...old,
+              courses: updatedCourses
+            };
+          });
+          
+          return { previousCourses, courseId };
+        },
+        
+        // Rollback on error
+        onError: (error, courseId, context) => {
+          if (context?.previousCourses) {
+            queryClient.setQueryData(['admin-courses'], context.previousCourses);
           }
-        });
+        },
+        
+        // Always refetch to ensure consistency
+        onSettled: () => {
+          queryClient.invalidateQueries({ 
+            queryKey: ['admin-courses'],
+            refetchType: 'active'
+          });
+        }
       }
     }
   );
 }
 
 /**
- * Mutation for rejecting courses with automatic query invalidation
+ * Mutation for rejecting courses with optimistic updates
+ * Provides instant UI feedback while API call happens in background
  */
 export function useRejectCourse() {
   const queryClient = useQueryClient();
@@ -281,14 +676,69 @@ export function useRejectCourse() {
       rejectCourse(courseId, reason),
     {
       operationName: 'reject-course',
-      onSuccess: () => {
-        // Invalidate all queries that start with 'admin-courses'
-        queryClient.invalidateQueries({ 
-          predicate: (query) => {
-            const queryKey = query.queryKey;
-            return Array.isArray(queryKey) && queryKey[0] === 'admin-courses';
+      optimistic: {
+        // Optimistic update: Update UI immediately before API call
+        onMutate: async ({ courseId, reason }: { courseId: string; reason: string }) => {
+          // Cancel any outgoing refetches
+          await queryClient.cancelQueries({ 
+            predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-courses'
+          });
+          
+          // Snapshot the previous value
+          const previousCourses = queryClient.getQueryData(['admin-courses']);
+          
+          // Optimistically update course status to 'rejected' with reason
+          queryClient.setQueryData(['admin-courses'], (old: any) => {
+            if (!old) return old;
+            
+            // Handle different data structures from useApiQuery
+            const courses = old?.data?.courses || old?.courses || [];
+            const updatedCourses = courses.map((course: any) => {
+              const id = course.id;
+              if (id === courseId) {
+                return {
+                  ...course,
+                  status: 'rejected',
+                  rejection_reason: reason
+                };
+              }
+              return course;
+            });
+            
+            // Maintain same structure
+            if (old?.data?.courses) {
+              return {
+                ...old,
+                data: {
+                  ...old.data,
+                  courses: updatedCourses
+                }
+              };
+            }
+            
+            return {
+              ...old,
+              courses: updatedCourses
+            };
+          });
+          
+          return { previousCourses, courseId, reason };
+        },
+        
+        // Rollback on error
+        onError: (error, variables, context) => {
+          if (context?.previousCourses) {
+            queryClient.setQueryData(['admin-courses'], context.previousCourses);
           }
-        });
+        },
+        
+        // Always refetch to ensure consistency
+        onSettled: () => {
+          queryClient.invalidateQueries({ 
+            queryKey: ['admin-courses'],
+            refetchType: 'active'
+          });
+        }
       }
     }
   );
@@ -600,52 +1050,328 @@ export function useCourseChaptersQuery(courseId: string, enabled: boolean = true
 }
 
 /**
- * Mutation for creating new chapters
+ * Mutation for creating new chapters with optimistic updates
+ * Critical: Instant chapter addition for course builder workflow
  */
 export function useCreateChapter() {
-  return useApiMutation(
-    ({ courseId, chapterData }: { courseId: string; chapterData: any }) => 
+  const queryClient = useQueryClient();
+  
+  // Using native React Query for optimistic updates
+  const mutation = useMutation({
+    mutationFn: ({ courseId, chapterData }: { courseId: string; chapterData: any }) => 
       createChapter({ course_id: courseId, ...chapterData }),
-    {
-      invalidateQueries: [
-        ['course-chapters'], // Refresh chapters list
-        ['course-editor'], // Refresh course data
-      ],
-      operationName: 'create-chapter', // Unique operation ID for toast deduplication
+    
+    // Optimistic update: Add chapter immediately to UI
+    onMutate: async ({ courseId, chapterData }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
+      });
+      
+      // Snapshot previous data for rollback
+      const previousData = queryClient.getQueryData(['course-chapters', courseId]);
+      
+      // Generate optimistic chapter data
+      const tempChapter = {
+        id: `temp-${Date.now()}`, // Temporary ID
+        course_id: courseId,
+        title: chapterData.title || `Untitled Chapter #${Math.floor(Math.random() * 100)}`,
+        description: chapterData.description || '',
+        order: 999, // Will be corrected by backend
+        total_lessons: 0,
+        total_duration: 0,
+        status: 'draft',
+        lessons: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // Optimistically add new chapter to course chapters
+      queryClient.setQueryData(['course-chapters', courseId], (old: any) => {
+        if (!old) return old;
+        
+        // Handle different data structures
+        const chapters = old?.data?.chapters || old?.chapters || [];
+        const updatedChapters = [...chapters, tempChapter];
+        
+        // Maintain same structure
+        if (old?.data?.chapters) {
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              chapters: updatedChapters,
+              total_chapters: updatedChapters.length
+            }
+          };
+        }
+        
+        return {
+          ...old,
+          chapters: updatedChapters,
+          total_chapters: updatedChapters.length
+        };
+      });
+      
+      return { previousData, courseId, tempChapter };
+    },
+    
+    // Rollback on error
+    onError: (error: any, variables, context: any) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['course-chapters', context.courseId], context.previousData);
+      }
+    },
+    
+    // Always refetch to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
+      queryClient.invalidateQueries({ queryKey: ['course-editor'] });
     }
-  );
+  });
+  
+  // Return wrapper to maintain useApiMutation interface
+  return {
+    mutate: (data: { courseId: string; chapterData: any }, options?: { onSuccess?: (response: any) => void; onError?: (error: any) => void }) => {
+      mutation.mutate(data, {
+        onSuccess: (response) => {
+          ToastService.success(response?.message || 'Chapter created successfully', 'create-chapter');
+          if (options?.onSuccess) {
+            options.onSuccess(response);
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error?.message || 'Something went wrong', 'create-chapter-error');
+          if (options?.onError) {
+            options.onError(error);
+          }
+        }
+      });
+    },
+    mutateAsync: mutation.mutateAsync,
+    loading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    data: mutation.data,
+  };
 }
 
 /**
- * Mutation for updating chapter data
+ * Mutation for updating chapter data with optimistic updates
+ * Critical: Instant chapter edits for content management workflow
  */
 export function useUpdateChapter() {
-  return useApiMutation(
-    ({ chapterId, chapterData }: { chapterId: string; chapterData: any }) => 
+  const queryClient = useQueryClient();
+  
+  // Using native React Query for optimistic updates
+  const mutation = useMutation({
+    mutationFn: ({ chapterId, chapterData }: { chapterId: string; chapterData: any }) => 
       updateChapter(chapterId, chapterData),
-    {
-      invalidateQueries: [
-        ['course-chapters'], // Refresh chapters list
-      ],
-      operationName: 'update-chapter', // Unique operation ID for toast deduplication
+    
+    // Optimistic update: Update chapter data immediately
+    onMutate: async ({ chapterId, chapterData }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
+      });
+      
+      // Store snapshots for all course-chapters caches
+      const cacheKeys = queryClient.getQueryCache().findAll({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
+      });
+      
+      const snapshots: any[] = [];
+      
+      // Update all course-chapters caches that contain this chapter
+      cacheKeys.forEach((cache) => {
+        const data = queryClient.getQueryData(cache.queryKey);
+        snapshots.push({ key: cache.queryKey, data });
+        
+        // Optimistically update chapter data
+        queryClient.setQueryData(cache.queryKey, (old: any) => {
+          if (!old) return old;
+          
+          // Handle different data structures
+          const chapters = old?.data?.chapters || old?.chapters || [];
+          
+          const updatedChapters = chapters.map((chapter: any) => {
+            if (chapter.id === chapterId) {
+              return {
+                ...chapter,
+                ...chapterData,
+                updated_at: new Date().toISOString()
+              };
+            }
+            return chapter;
+          });
+          
+          // Maintain same structure
+          if (old?.data?.chapters) {
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                chapters: updatedChapters
+              }
+            };
+          }
+          
+          return {
+            ...old,
+            chapters: updatedChapters
+          };
+        });
+      });
+      
+      return { snapshots, chapterId, chapterData };
+    },
+    
+    // Rollback on error
+    onError: (error: any, variables, context: any) => {
+      if (context?.snapshots) {
+        context.snapshots.forEach((snapshot: any) => {
+          queryClient.setQueryData(snapshot.key, snapshot.data);
+        });
+      }
+    },
+    
+    // Always refetch to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
     }
-  );
+  });
+  
+  // Return wrapper to maintain useApiMutation interface
+  return {
+    mutate: (data: { chapterId: string; chapterData: any }, options?: { onSuccess?: (response: any) => void; onError?: (error: any) => void }) => {
+      mutation.mutate(data, {
+        onSuccess: (response) => {
+          ToastService.success(response?.message || 'Chapter updated successfully', 'update-chapter');
+          if (options?.onSuccess) {
+            options.onSuccess(response);
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error?.message || 'Something went wrong', 'update-chapter-error');
+          if (options?.onError) {
+            options.onError(error);
+          }
+        }
+      });
+    },
+    mutateAsync: mutation.mutateAsync,
+    loading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    data: mutation.data,
+  };
 }
 
 /**
- * Mutation for deleting chapters
+ * Mutation for deleting chapters with optimistic updates
+ * Critical: Instant chapter removal for content management workflow
  */
 export function useDeleteChapter() {
-  return useApiMutation(
-    (chapterId: string) => deleteChapter(chapterId),
-    {
-      invalidateQueries: [
-        ['course-chapters'], // Refresh chapters list
-        ['course-editor'], // Refresh course data
-      ],
-      operationName: 'delete-chapter', // Unique operation ID for toast deduplication
+  const queryClient = useQueryClient();
+  
+  // Using native React Query for optimistic updates
+  const mutation = useMutation({
+    mutationFn: (chapterId: string) => deleteChapter(chapterId),
+    
+    // Optimistic update: Remove chapter immediately from UI
+    onMutate: async (chapterId: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
+      });
+      
+      // Store snapshots for all course-chapters caches
+      const cacheKeys = queryClient.getQueryCache().findAll({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
+      });
+      
+      const snapshots: any[] = [];
+      
+      // Remove chapter from all course-chapters caches
+      cacheKeys.forEach((cache) => {
+        const data = queryClient.getQueryData(cache.queryKey);
+        snapshots.push({ key: cache.queryKey, data });
+        
+        // Optimistically remove chapter
+        queryClient.setQueryData(cache.queryKey, (old: any) => {
+          if (!old) return old;
+          
+          // Handle different data structures
+          const chapters = old?.data?.chapters || old?.chapters || [];
+          
+          const filteredChapters = chapters.filter((chapter: any) => chapter.id !== chapterId);
+          
+          // Maintain same structure
+          if (old?.data?.chapters) {
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                chapters: filteredChapters,
+                total_chapters: filteredChapters.length
+              }
+            };
+          }
+          
+          return {
+            ...old,
+            chapters: filteredChapters,
+            total_chapters: filteredChapters.length
+          };
+        });
+      });
+      
+      return { snapshots, chapterId };
+    },
+    
+    // Rollback on error
+    onError: (error: any, chapterId: string, context: any) => {
+      if (context?.snapshots) {
+        context.snapshots.forEach((snapshot: any) => {
+          queryClient.setQueryData(snapshot.key, snapshot.data);
+        });
+      }
+    },
+    
+    // Always refetch to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
+      queryClient.invalidateQueries({ queryKey: ['course-editor'] });
     }
-  );
+  });
+  
+  // Return wrapper to maintain useApiMutation interface
+  return {
+    mutate: (chapterId: string, options?: { onSuccess?: (response: any) => void; onError?: (error: any) => void }) => {
+      mutation.mutate(chapterId, {
+        onSuccess: (response) => {
+          ToastService.success(response?.message || 'Chapter deleted successfully', 'delete-chapter');
+          if (options?.onSuccess) {
+            options.onSuccess(response);
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error?.message || 'Something went wrong', 'delete-chapter-error');
+          if (options?.onError) {
+            options.onError(error);
+          }
+        }
+      });
+    },
+    mutateAsync: mutation.mutateAsync,
+    loading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    data: mutation.data,
+  };
 }
 
 /**
@@ -665,50 +1391,388 @@ export function useReorderChapters() {
 }
 
 /**
- * Mutation for creating new lessons
+ * Mutation for creating new lessons with optimistic updates
+ * Critical: Instant lesson addition for course builder workflow
  */
 export function useCreateLesson() {
-  return useApiMutation(
-    ({ chapterId, lessonData }: { chapterId: string; lessonData: any }) => 
-      createLesson({ chapter_id: chapterId, ...lessonData }),
-    {
-      invalidateQueries: [
-        ['course-chapters'], // Refresh chapters list with lessons
-      ],
-      operationName: 'create-lesson', // Unique operation ID for toast deduplication
+  const queryClient = useQueryClient();
+  
+  // Using native React Query for optimistic updates
+  const mutation = useMutation({
+    mutationFn: (lessonData: any) => 
+      createLesson(lessonData),
+    
+    // Optimistic update: Add lesson immediately to chapter
+    onMutate: async (lessonData: any) => {
+      const chapterId = lessonData.chapter_id;
+      const courseId = lessonData.course_id;
+      
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
+      });
+      
+      // Store snapshots for all course-chapters caches
+      const cacheKeys = queryClient.getQueryCache().findAll({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
+      });
+      
+      const snapshots: any[] = [];
+      
+      // Generate optimistic lesson data
+      const tempLesson = {
+        id: `temp-${Date.now()}`, // Temporary ID
+        chapter_id: chapterId,
+        course_id: courseId,
+        title: lessonData.title || `Untitled Lesson #${Math.floor(Math.random() * 100)}`,
+        description: lessonData.description || '',
+        order: 999, // Will be corrected by backend
+        video: lessonData.video || null,
+        content: lessonData.content || '',
+        resources: lessonData.resources || [],
+        has_quiz: false,
+        quiz_required: false,
+        status: 'draft',
+        unlock_conditions: {
+          previous_lesson_required: true,
+          quiz_pass_required: false,
+          minimum_watch_percentage: 80
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      // Add lesson to relevant chapter in all caches
+      cacheKeys.forEach((cache) => {
+        const data = queryClient.getQueryData(cache.queryKey);
+        snapshots.push({ key: cache.queryKey, data });
+        
+        // Optimistically add new lesson to chapter
+        queryClient.setQueryData(cache.queryKey, (old: any) => {
+          if (!old) return old;
+          
+          // Handle different data structures
+          const chapters = old?.data?.chapters || old?.chapters || [];
+          
+          const updatedChapters = chapters.map((chapter: any) => {
+            if (chapter.id === chapterId) {
+              const existingLessons = chapter.lessons || [];
+              return {
+                ...chapter,
+                lessons: [...existingLessons, tempLesson],
+                total_lessons: existingLessons.length + 1,
+                total_duration: chapter.total_duration || 0 // Keep existing or default
+              };
+            }
+            return chapter;
+          });
+          
+          // Maintain same structure
+          if (old?.data?.chapters) {
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                chapters: updatedChapters
+              }
+            };
+          }
+          
+          return {
+            ...old,
+            chapters: updatedChapters
+          };
+        });
+      });
+      
+      return { snapshots, chapterId, courseId, tempLesson };
+    },
+    
+    // Rollback on error
+    onError: (error: any, variables, context: any) => {
+      if (context?.snapshots) {
+        context.snapshots.forEach((snapshot: any) => {
+          queryClient.setQueryData(snapshot.key, snapshot.data);
+        });
+      }
+    },
+    
+    // Always refetch to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
     }
-  );
+  });
+  
+  // Return wrapper to maintain useApiMutation interface
+  return {
+    mutate: (data: any, options?: { onSuccess?: (response: any) => void; onError?: (error: any) => void }) => {
+      mutation.mutate(data, {
+        onSuccess: (response) => {
+          ToastService.success(response?.message || 'Lesson created successfully', 'create-lesson');
+          if (options?.onSuccess) {
+            options.onSuccess(response);
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error?.message || 'Something went wrong', 'create-lesson-error');
+          if (options?.onError) {
+            options.onError(error);
+          }
+        }
+      });
+    },
+    mutateAsync: mutation.mutateAsync,
+    loading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    data: mutation.data,
+  };
 }
 
 /**
- * Mutation for updating lesson data
+ * Mutation for updating lesson data with optimistic updates
+ * Critical: Instant lesson edits for content management workflow
  */
 export function useUpdateLesson() {
-  return useApiMutation(
-    ({ lessonId, lessonData }: { lessonId: string; lessonData: any }) => 
-      updateLesson(lessonId, lessonData),
-    {
-      invalidateQueries: [
-        ['course-chapters'], // Refresh chapters list with lessons
-      ],
-      operationName: 'update-lesson', // Unique operation ID for toast deduplication
+  const queryClient = useQueryClient();
+  
+  // Using native React Query for optimistic updates
+  const mutation = useMutation({
+    mutationFn: ({ lessonId, data }: { lessonId: string; data: any }) => 
+      updateLesson(lessonId, data),
+    
+    // Optimistic update: Update lesson data immediately
+    onMutate: async ({ lessonId, data: lessonData }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
+      });
+      
+      // Store snapshots for all course-chapters caches
+      const cacheKeys = queryClient.getQueryCache().findAll({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
+      });
+      
+      const snapshots: any[] = [];
+      
+      // Update lesson in all relevant caches
+      cacheKeys.forEach((cache) => {
+        const data = queryClient.getQueryData(cache.queryKey);
+        snapshots.push({ key: cache.queryKey, data });
+        
+        // Optimistically update lesson data
+        queryClient.setQueryData(cache.queryKey, (old: any) => {
+          if (!old) return old;
+          
+          // Handle different data structures
+          const chapters = old?.data?.chapters || old?.chapters || [];
+          
+          const updatedChapters = chapters.map((chapter: any) => {
+            if (chapter.lessons && Array.isArray(chapter.lessons)) {
+              const updatedLessons = chapter.lessons.map((lesson: any) => {
+                if (lesson.id === lessonId) {
+                  return {
+                    ...lesson,
+                    ...lessonData,
+                    updated_at: new Date().toISOString()
+                  };
+                }
+                return lesson;
+              });
+              
+              // Only update chapter if lessons changed
+              if (updatedLessons !== chapter.lessons) {
+                return {
+                  ...chapter,
+                  lessons: updatedLessons
+                };
+              }
+            }
+            return chapter;
+          });
+          
+          // Maintain same structure
+          if (old?.data?.chapters) {
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                chapters: updatedChapters
+              }
+            };
+          }
+          
+          return {
+            ...old,
+            chapters: updatedChapters
+          };
+        });
+      });
+      
+      return { snapshots, lessonId, lessonData };
+    },
+    
+    // Rollback on error
+    onError: (error: any, variables, context: any) => {
+      if (context?.snapshots) {
+        context.snapshots.forEach((snapshot: any) => {
+          queryClient.setQueryData(snapshot.key, snapshot.data);
+        });
+      }
+    },
+    
+    // Always refetch to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
     }
-  );
+  });
+  
+  // Return wrapper to maintain useApiMutation interface
+  return {
+    mutate: (data: { lessonId: string; data: any }, options?: { onSuccess?: (response: any) => void; onError?: (error: any) => void }) => {
+      mutation.mutate(data, {
+        onSuccess: (response) => {
+          ToastService.success(response?.message || 'Lesson updated successfully', 'update-lesson');
+          if (options?.onSuccess) {
+            options.onSuccess(response);
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error?.message || 'Something went wrong', 'update-lesson-error');
+          if (options?.onError) {
+            options.onError(error);
+          }
+        }
+      });
+    },
+    mutateAsync: mutation.mutateAsync,
+    loading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    data: mutation.data,
+  };
 }
 
 /**
- * Mutation for deleting lessons
+ * Mutation for deleting lessons with optimistic updates
+ * Critical: Instant lesson removal for content management workflow
  */
 export function useDeleteLesson() {
-  return useApiMutation(
-    (lessonId: string) => deleteLesson(lessonId),
-    {
-      invalidateQueries: [
-        ['course-chapters'], // Refresh chapters list with lessons
-      ],
-      operationName: 'delete-lesson', // Unique operation ID for toast deduplication
+  const queryClient = useQueryClient();
+  
+  // Using native React Query for optimistic updates
+  const mutation = useMutation({
+    mutationFn: (lessonId: string) => deleteLesson(lessonId),
+    
+    // Optimistic update: Remove lesson immediately from chapter
+    onMutate: async (lessonId: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
+      });
+      
+      // Store snapshots for all course-chapters caches
+      const cacheKeys = queryClient.getQueryCache().findAll({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
+      });
+      
+      const snapshots: any[] = [];
+      
+      // Remove lesson from all relevant caches
+      cacheKeys.forEach((cache) => {
+        const data = queryClient.getQueryData(cache.queryKey);
+        snapshots.push({ key: cache.queryKey, data });
+        
+        // Optimistically remove lesson
+        queryClient.setQueryData(cache.queryKey, (old: any) => {
+          if (!old) return old;
+          
+          // Handle different data structures
+          const chapters = old?.data?.chapters || old?.chapters || [];
+          
+          const updatedChapters = chapters.map((chapter: any) => {
+            if (chapter.lessons && Array.isArray(chapter.lessons)) {
+              const filteredLessons = chapter.lessons.filter((lesson: any) => lesson.id !== lessonId);
+              
+              // Only update chapter if lessons changed
+              if (filteredLessons.length !== chapter.lessons.length) {
+                return {
+                  ...chapter,
+                  lessons: filteredLessons,
+                  total_lessons: filteredLessons.length,
+                  // Recalculate total duration if needed
+                  total_duration: filteredLessons.reduce((total: number, lesson: any) => {
+                    return total + (lesson.video?.duration || 0);
+                  }, 0)
+                };
+              }
+            }
+            return chapter;
+          });
+          
+          // Maintain same structure
+          if (old?.data?.chapters) {
+            return {
+              ...old,
+              data: {
+                ...old.data,
+                chapters: updatedChapters
+              }
+            };
+          }
+          
+          return {
+            ...old,
+            chapters: updatedChapters
+          };
+        });
+      });
+      
+      return { snapshots, lessonId };
+    },
+    
+    // Rollback on error
+    onError: (error: any, lessonId: string, context: any) => {
+      if (context?.snapshots) {
+        context.snapshots.forEach((snapshot: any) => {
+          queryClient.setQueryData(snapshot.key, snapshot.data);
+        });
+      }
+    },
+    
+    // Always refetch to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
     }
-  );
+  });
+  
+  // Return wrapper to maintain useApiMutation interface
+  return {
+    mutate: (lessonId: string, options?: { onSuccess?: (response: any) => void; onError?: (error: any) => void }) => {
+      mutation.mutate(lessonId, {
+        onSuccess: (response) => {
+          ToastService.success(response?.message || 'Lesson deleted successfully', 'delete-lesson');
+          if (options?.onSuccess) {
+            options.onSuccess(response);
+          }
+        },
+        onError: (error: any) => {
+          ToastService.error(error?.message || 'Something went wrong', 'delete-lesson-error');
+          if (options?.onError) {
+            options.onError(error);
+          }
+        }
+      });
+    },
+    mutateAsync: mutation.mutateAsync,
+    loading: mutation.isPending,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+    error: mutation.error,
+    data: mutation.data,
+  };
 }
 
 /**

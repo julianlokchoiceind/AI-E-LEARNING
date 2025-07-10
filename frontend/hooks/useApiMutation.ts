@@ -5,17 +5,58 @@ import { StandardResponse } from '@/lib/types/api';
 import { handleError, AppError } from '@/lib/utils/error-handler';
 import { ToastService } from '@/lib/toast/ToastService';
 
+interface OptimisticConfig<TVariables> {
+  onMutate?: (variables: TVariables) => Promise<any> | any;
+  onError?: (error: AppError, variables: TVariables, context: any) => void;
+  onSettled?: (data: any, error: AppError | null, variables: TVariables, context: any) => void;
+}
+
 interface UseApiMutationOptions<TData, TVariables> {
   onSuccess?: (response: StandardResponse<TData>, variables: TVariables) => void;
   onError?: (error: AppError, variables: TVariables) => void;
   invalidateQueries?: string[][];
   showToast?: boolean;
   operationName?: string; // For toast deduplication
+  optimistic?: OptimisticConfig<TVariables>; // NEW: Optional optimistic updates
 }
 
 /**
- * Drop-in replacement for useApiCall mutations with React Query
- * Maintains the same interface while adding query invalidation
+ * Enhanced useApiMutation with optional optimistic updates
+ * 
+ * FEATURES:
+ * - Drop-in replacement for useApiCall mutations with React Query
+ * - Maintains backward compatibility with existing hooks
+ * - Optional optimistic updates with onMutate/onError/onSettled
+ * - Automatic toast handling with operation ID deduplication
+ * - Query invalidation support
+ * 
+ * USAGE:
+ * 
+ * // Standard usage (backward compatible):
+ * const { mutate } = useApiMutation(updateCourse, {
+ *   operationName: 'update-course',
+ *   invalidateQueries: [['courses']]
+ * });
+ * 
+ * // With optimistic updates:
+ * const { mutate } = useApiMutation(deleteCourse, {
+ *   operationName: 'delete-course',
+ *   optimistic: {
+ *     onMutate: async (courseId) => {
+ *       const previousData = queryClient.getQueryData(['courses']);
+ *       queryClient.setQueryData(['courses'], (old) => 
+ *         old.filter(course => course.id !== courseId)
+ *       );
+ *       return { previousData };
+ *     },
+ *     onError: (error, variables, context) => {
+ *       queryClient.setQueryData(['courses'], context.previousData);
+ *     },
+ *     onSettled: () => {
+ *       queryClient.invalidateQueries(['courses']);
+ *     }
+ *   }
+ * });
  */
 export function useApiMutation<TData = any, TVariables = any>(
   mutationFn: (variables: TVariables) => Promise<StandardResponse<TData>>,
@@ -28,8 +69,10 @@ export function useApiMutation<TData = any, TVariables = any>(
     invalidateQueries = [],
     showToast = true,
     operationName = 'mutation',
+    optimistic,
   } = options;
 
+  // DECISION: Use optimistic path if optimistic config provided, otherwise standard path
   const mutation = useMutation<StandardResponse<TData>, AppError, TVariables>({
     mutationFn: async (variables: TVariables) => {
       try {
@@ -53,7 +96,11 @@ export function useApiMutation<TData = any, TVariables = any>(
         throw appError;
       }
     },
-    onSuccess: (response, variables) => {
+    
+    // OPTIMISTIC: Add onMutate if optimistic config provided
+    onMutate: optimistic?.onMutate,
+    
+    onSuccess: (response, variables, context) => {
       // Invalidate specified queries FIRST
       invalidateQueries.forEach(queryKey => {
         queryClient.invalidateQueries({ queryKey });
@@ -64,14 +111,24 @@ export function useApiMutation<TData = any, TVariables = any>(
         onSuccess(response, variables);
       }
     },
-    onError: (error: AppError, variables) => {
+    
+    onError: (error: AppError, variables, context) => {
       const appError = handleError(error, false); // Prevent auto-toast duplication
       
-      // Call custom error handler
+      // OPTIMISTIC: Call optimistic error handler first (for rollback)
+      if (optimistic?.onError) {
+        optimistic.onError(appError, variables, context);
+      }
+      
+      // Then call custom error handler
       if (onError) {
         onError(appError, variables);
       }
     },
+    
+    // OPTIMISTIC: Add onSettled if optimistic config provided
+    onSettled: optimistic?.onSettled,
+    
     retry: 1,
   });
 

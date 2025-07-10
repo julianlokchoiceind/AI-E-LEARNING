@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, AdminFAQTableSkeleton } from '@/components/ui/LoadingStates';
 import { 
   useFAQsQuery,
   useCreateFAQ,
@@ -257,13 +257,12 @@ export default function AdminFAQPage() {
       </Card>
 
       {/* FAQ Table */}
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <LoadingSpinner size="lg" message="Loading FAQs..." />
-            </div>
-          ) : faqs.length === 0 ? (
+      {loading ? (
+        <AdminFAQTableSkeleton />
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            {faqs.length === 0 ? (
             <div className="flex justify-center items-center h-64">
               <EmptyState
                 title="No FAQs found"
@@ -372,9 +371,10 @@ export default function AdminFAQPage() {
                 </tbody>
               </table>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Create/Edit Modal */}
       <Modal

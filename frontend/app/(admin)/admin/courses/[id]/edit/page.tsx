@@ -47,7 +47,7 @@ const CourseBuilderPage = () => {
   const [chapters, setChapters] = useState<any[]>([]);
   
   // React Query hooks - automatic caching and state management
-  const { data: courseResponse, loading: courseLoading, refetch: refetchCourse } = useCourseQuery(courseId);
+  const { data: courseResponse, loading: courseLoading, refetch: refetchCourse } = useCourseQuery(courseId) as any;
   const { data: chaptersResponse, loading: chaptersLoading, refetch: refetchChapters } = useCourseChaptersQuery(courseId);
   const { mutateAsync: updateCourseAction } = useUpdateCourse();
   
@@ -90,7 +90,7 @@ const CourseBuilderPage = () => {
         };
         
         try {
-          await updateCourseAction({ courseId: data.id, courseData: minimalData });
+          await updateCourseAction({ courseId: data.id, data: minimalData });
         } catch (error) {
           // Autosave failed - error will be handled by useAutosave hook
           throw error;

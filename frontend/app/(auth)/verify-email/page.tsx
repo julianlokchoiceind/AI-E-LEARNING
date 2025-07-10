@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useVerifyEmail } from '@/hooks/queries/useAuth'
+import { useVerifyEmail } from '@/hooks/useAuth'
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams()

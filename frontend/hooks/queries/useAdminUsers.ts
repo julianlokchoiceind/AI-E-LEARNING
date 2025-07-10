@@ -50,19 +50,81 @@ export function useAdminUsersQuery(filters: AdminUsersFilters = {}) {
 }
 
 /**
- * UPDATE USER ROLE - Change user permissions
- * Critical: Admin role management
+ * UPDATE USER ROLE - Change user permissions with optimistic updates
+ * Critical: Admin role management with instant feedback
  */
 export function useUpdateUserRole() {
+  const queryClient = useQueryClient();
+  
   return useApiMutation(
     ({ userId, role }: UserRoleUpdate) => updateUserRole(userId, role),
     {
       operationName: 'update-user-role',
-      invalidateQueries: [
-        ['admin-users'], // Refresh user list
-        ['admin-dashboard'], // Update dashboard stats
-        ['user-analytics'], // Update analytics
-      ],
+      optimistic: {
+        // Optimistic update: Update UI immediately before API call
+        onMutate: async ({ userId, role }: UserRoleUpdate) => {
+          // Cancel any outgoing refetches
+          await queryClient.cancelQueries({ 
+            predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-users'
+          });
+          
+          // Snapshot previous value
+          const previousUsers = queryClient.getQueryData(['admin-users']);
+          
+          // Optimistically update user role
+          queryClient.setQueryData(['admin-users'], (old: any) => {
+            if (!old) return old;
+            
+            // Handle different data structures
+            const users = old?.data?.users || old?.users || [];
+            const updatedUsers = users.map((user: any) => {
+              const id = user.id;
+              if (id === userId) {
+                return {
+                  ...user,
+                  role: role
+                };
+              }
+              return user;
+            });
+            
+            // Maintain same structure
+            if (old?.data?.users) {
+              return {
+                ...old,
+                data: {
+                  ...old.data,
+                  users: updatedUsers
+                }
+              };
+            }
+            
+            return {
+              ...old,
+              users: updatedUsers
+            };
+          });
+          
+          return { previousUsers, userId, role };
+        },
+        
+        // Rollback on error
+        onError: (error, variables, context) => {
+          if (context?.previousUsers) {
+            queryClient.setQueryData(['admin-users'], context.previousUsers);
+          }
+        },
+        
+        // Always refetch to ensure consistency
+        onSettled: () => {
+          queryClient.invalidateQueries({ 
+            queryKey: ['admin-users'],
+            refetchType: 'active'
+          });
+          queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] });
+          queryClient.invalidateQueries({ queryKey: ['user-analytics'] });
+        }
+      }
     }
   );
 }

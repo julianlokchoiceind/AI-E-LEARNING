@@ -9,6 +9,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/Button';
+import { ButtonSkeleton } from '@/components/ui/LoadingStates';
 import { useCreateCoursePayment } from '@/hooks/queries/usePayments';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -327,8 +328,14 @@ function CheckoutForm({
         className="w-full"
         size="lg"
       >
-        <Lock className="w-4 h-4 mr-2" />
-        {isLoading ? 'Processing Payment...' : `Pay $${course.pricing.discount_price || course.pricing.price}`}
+        {isLoading ? (
+          <ButtonSkeleton variant="primary" />
+        ) : (
+          <>
+            <Lock className="w-4 h-4 mr-2" />
+            Pay ${course.pricing.discount_price || course.pricing.price}
+          </>
+        )}
       </Button>
 
       {/* Features Included */}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
+import { ButtonSkeleton } from '@/components/ui/LoadingStates';
 import { useCreateChapter } from '@/hooks/queries/useChapters';
 import { ToastService } from '@/lib/toast/ToastService';
 
@@ -201,10 +202,7 @@ export const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
               className="flex-1"
             >
               {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Creating...
-                </>
+                <ButtonSkeleton variant="primary" />
               ) : (
                 'Create Chapter'
               )}

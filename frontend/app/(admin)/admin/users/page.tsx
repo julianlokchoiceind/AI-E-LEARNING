@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, UserListSkeleton } from '@/components/ui/LoadingStates';
 import { 
   useAdminUsersQuery,
   useToggleUserPremium,
@@ -204,9 +204,7 @@ export default function UserManagement() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <LoadingSpinner size="lg" message="Loading users..." />
-          </div>
+          <UserListSkeleton rows={6} />
         ) : filteredUsers.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             <EmptyState

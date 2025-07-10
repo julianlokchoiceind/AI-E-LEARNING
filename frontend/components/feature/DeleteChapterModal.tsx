@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { ButtonSkeleton } from '@/components/ui/LoadingStates';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 
 export interface ChapterDeleteData {
@@ -168,10 +169,7 @@ export const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
               className="flex-1"
             >
               {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Deleting...
-                </>
+                <ButtonSkeleton variant="danger" />
               ) : (
                 <>
                   <Trash2 className="w-4 h-4 mr-2" />

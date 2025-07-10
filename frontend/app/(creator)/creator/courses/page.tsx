@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
+import { CreatorCoursesTableSkeleton } from '@/components/ui/LoadingStates';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { 
@@ -51,11 +52,10 @@ const CreatorCoursesPage = () => {
   const { mutate: deleteCourse, loading: deleteLoading } = useDeleteCourse();
   const { mutate: createCourse, loading: createLoading } = useCreateCourse();
 
-  // Extract courses from React Query response
-  const courses = coursesResponse?.success ? coursesResponse.data?.courses || [] : [];
-
-  // Filter and sort courses
+  // Filter and sort courses with memoized course extraction
   const filteredCourses = React.useMemo(() => {
+    // Extract courses from React Query response inside useMemo for optimal performance
+    const courses = coursesResponse?.success ? coursesResponse.data?.courses || [] : [];
     let filtered = [...courses];
 
     // Search filter
@@ -90,7 +90,7 @@ const CreatorCoursesPage = () => {
     }
 
     return filtered;
-  }, [courses, searchTerm, filterStatus, sortBy]);
+  }, [coursesResponse, searchTerm, filterStatus, sortBy]);
 
   // Check permissions when user loads
   useEffect(() => {
@@ -240,11 +240,7 @@ const CreatorCoursesPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <CreatorCoursesTableSkeleton />;
   }
 
   return (

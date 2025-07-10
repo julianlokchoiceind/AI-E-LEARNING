@@ -19,7 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFAQsQuery, useFAQCategoriesQuery, useVoteFAQ } from '@/hooks/queries/useFAQ';
 import { FAQ, FAQCategory, FAQListResponse } from '@/lib/api/faq';
 import { FAQ_CATEGORIES } from '@/lib/types/faq';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, FAQListSkeleton } from '@/components/ui/LoadingStates';
 
 export default function FAQPage() {
   const { user } = useAuth();
@@ -105,6 +105,10 @@ export default function FAQPage() {
     return FAQ_CATEGORIES.find(c => c.value === category);
   };
 
+  if (loading) {
+    return <FAQListSkeleton />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -158,11 +162,7 @@ export default function FAQPage() {
         </div>
 
         {/* FAQ List */}
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        ) : faqs.length === 0 ? (
+        {faqs.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <HelpCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import DeleteCourseModal, { CourseDeleteData } from '@/components/feature/DeleteCourseModal';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, CourseListSkeleton } from '@/components/ui/LoadingStates';
 import { 
   useAdminCoursesQuery, 
   useApproveCourse, 
@@ -348,9 +348,7 @@ export default function CourseApproval() {
         </div>
 
         {showLoadingSpinner ? (
-          <div className="flex justify-center items-center h-64">
-            <LoadingSpinner size="lg" message="Loading courses..." />
-          </div>
+          <CourseListSkeleton rows={6} />
         ) : filteredCourses.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             <EmptyState

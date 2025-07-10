@@ -3,7 +3,7 @@
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useApiMutation } from '@/hooks/useApiMutation'
-import { logoutUser } from '@/lib/api/auth'
+import { logoutUser, verifyEmail } from '@/lib/api/auth'
 
 export function useAuth() {
   const { data: session, status } = useSession()
@@ -55,4 +55,15 @@ export function useAuth() {
     logout,
     session,
   }
+}
+
+// Email verification hook
+export function useVerifyEmail() {
+  return useApiMutation(
+    (token: string) => verifyEmail(token),
+    {
+      operationName: 'verify-email',
+      showToast: false, // We handle feedback in the component
+    }
+  )
 }

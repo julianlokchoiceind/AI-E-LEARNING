@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { ButtonSkeleton } from '@/components/ui/LoadingStates';
 import { SaveStatusIndicator } from '@/components/ui/SaveStatusIndicator';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
 import { useUpdateLesson } from '@/hooks/queries/useLearning';
@@ -527,10 +528,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
               className="flex-1"
             >
               {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Updating...
-                </>
+                <ButtonSkeleton variant="primary" />
               ) : (
                 'Update Lesson'
               )}

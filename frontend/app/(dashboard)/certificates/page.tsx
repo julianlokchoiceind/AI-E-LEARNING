@@ -5,6 +5,7 @@ import { Trophy, Award, Clock, TrendingUp, Download, BookOpen } from 'lucide-rea
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { CertificateCard } from '@/components/feature/CertificateCard';
+import { CertificatesGridSkeleton } from '@/components/ui/LoadingStates';
 import { useAuth } from '@/hooks/useAuth';
 import { CertificateWithDetails } from '@/lib/types/certificate';
 import { useCertificatesQuery, useCertificateStatsQuery } from '@/hooks/queries/useCertificates';
@@ -74,11 +75,7 @@ const CertificatesPage = () => {
 
   // Handle loading state
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <CertificatesGridSkeleton />;
   }
 
   return (

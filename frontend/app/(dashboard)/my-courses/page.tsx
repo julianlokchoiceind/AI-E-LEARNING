@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { MyCoursesGridSkeleton } from '@/components/ui/LoadingStates';
 import { useMyCoursesQuery } from '@/hooks/queries/useStudent';
 import { ToastService } from '@/lib/toast/ToastService';
 
@@ -75,11 +76,7 @@ export default function MyCoursesPage() {
   });
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <MyCoursesGridSkeleton />;
   }
 
   return (

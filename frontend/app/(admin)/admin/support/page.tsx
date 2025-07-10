@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, SupportTicketsTableSkeleton } from '@/components/ui/LoadingStates';
 import { 
   useSupportTicketsQuery, 
   useSupportStatsQuery, 
@@ -225,9 +225,7 @@ export default function AdminSupportPage() {
       <Card>
         <CardContent className="p-0">
           {ticketsLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <LoadingSpinner size="lg" message="Loading support tickets..." />
-            </div>
+            <SupportTicketsTableSkeleton />
           ) : tickets.length === 0 ? (
             <div className="flex justify-center items-center h-64">
               <EmptyState

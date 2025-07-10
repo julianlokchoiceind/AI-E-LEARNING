@@ -1,4 +1,5 @@
-import { useApiQuery, useApiMutation } from '@/hooks/useApiQuery';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { useApiMutation } from '@/hooks/useApiMutation';
 import { 
   getCreatorOverview, 
   getCourseAnalytics, 
