@@ -24,7 +24,7 @@ class CertificateSchema(BaseModel):
     verification_url: Optional[str]
 
 class EnrollmentSchema(BaseModel):
-    id: str = Field(alias="_id")
+    id: str
     user_id: str
     course_id: str
     enrollment_type: EnrollmentType

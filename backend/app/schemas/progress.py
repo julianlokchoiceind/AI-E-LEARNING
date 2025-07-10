@@ -31,7 +31,7 @@ class QuizProgressSchema(BaseModel):
     passed_at: Optional[datetime]
 
 class ProgressSchema(BaseModel):
-    id: str = Field(alias="_id")
+    id: str
     user_id: str
     course_id: str
     lesson_id: str

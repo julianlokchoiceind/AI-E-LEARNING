@@ -9,7 +9,7 @@ from slugify import slugify
 from app.models.course import Course, CourseCategory, CourseLevel, CourseStatus, Pricing
 from app.models.user import User
 from app.models.enrollment import Enrollment
-from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse
+from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse, CourseCreateResponse
 from app.core.exceptions import (
     NotFoundException,
     ForbiddenException,
@@ -91,11 +91,13 @@ class CourseService:
         # Save to database
         await course.create()
         
-        return {
-            "_id": str(course.id),
-            "redirect_url": f"/courses/{course.id}/edit",
-            "message": "Course created successfully"
-        }
+        # Return a Pydantic model instance to ensure proper field serialization
+        # Use the Python field name 'id', not the alias '_id'
+        return CourseCreateResponse(
+            id=str(course.id),
+            redirect_url=f"/admin/courses/{course.id}/edit",
+            message="Course created successfully"
+        )
     
     @staticmethod
     async def get_course(course_id: str, user: Optional[User] = None) -> Course:

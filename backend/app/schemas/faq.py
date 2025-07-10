@@ -60,7 +60,7 @@ class FAQUpdate(BaseModel):
 
 class FAQResponse(FAQBase):
     """FAQ response schema"""
-    id: PyObjectId = Field(alias="_id")
+    id: PyObjectId
     view_count: int = 0
     helpful_votes: int = 0
     unhelpful_votes: int = 0

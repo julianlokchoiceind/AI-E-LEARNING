@@ -85,7 +85,7 @@ class ReviewUser(BaseModel):
 
 class Review(BaseModel):
     """Response schema for review"""
-    id: str = Field(..., alias="_id")
+    id: str
     course_id: str
     user: ReviewUser
     rating: int

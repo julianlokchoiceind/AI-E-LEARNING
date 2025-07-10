@@ -72,7 +72,7 @@ class ContactFormRequest(BaseModel):
 # Response schemas
 class TicketMessage(BaseModel):
     """Response schema for ticket message"""
-    id: str = Field(..., alias="_id")
+    id: str
     ticket_id: str
     sender_id: str
     sender_name: str
@@ -89,7 +89,7 @@ class TicketMessage(BaseModel):
 
 class SupportTicket(BaseModel):
     """Response schema for support ticket"""
-    id: str = Field(..., alias="_id")
+    id: str
     user_id: str
     user_email: str
     user_name: str

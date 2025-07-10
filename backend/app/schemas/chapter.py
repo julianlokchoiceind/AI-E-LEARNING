@@ -39,7 +39,7 @@ class ChapterReorder(BaseModel):
 
 class ChapterResponse(BaseModel):
     """Response schema for chapter data."""
-    id: str = Field(alias="_id")
+    id: str
     course_id: str
     title: str
     description: Optional[str]
@@ -76,7 +76,7 @@ class ChapterListResponse(BaseModel):
 
 class ChapterWithLessonsResponse(BaseModel):
     """Response schema for chapter data with lessons included."""
-    id: str = Field(alias="_id")
+    id: str
     course_id: str
     title: str
     description: Optional[str]

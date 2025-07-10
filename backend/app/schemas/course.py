@@ -5,6 +5,7 @@ Based on CLAUDE.md specifications.
 from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel, Field
+from beanie import PydanticObjectId
 from app.models.course import CourseCategory, CourseLevel, CourseStatus
 
 
@@ -53,7 +54,7 @@ class CourseStatsResponse(BaseModel):
 
 class CourseResponse(BaseModel):
     """Complete course response schema"""
-    id: str = Field(alias="_id")
+    id: str
     title: str
     description: str
     short_description: Optional[str]
@@ -98,9 +99,11 @@ class CourseListResponse(BaseModel):
 
 class CourseCreateResponse(BaseModel):
     """Response after creating a course"""
-    id: str = Field(alias="_id")
+    id: str  # Remove alias since service returns 'id' directly
     redirect_url: str
     message: str
     
     class Config:
-        populate_by_name = True
+        json_encoders = {
+            PydanticObjectId: str
+        }

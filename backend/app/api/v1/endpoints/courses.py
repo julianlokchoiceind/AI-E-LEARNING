@@ -53,7 +53,7 @@ async def create_course(
         result = await CourseService.create_course(current_user)
         return StandardResponse(
             success=True,
-            data=result,
+            data=result,  # Return Pydantic model directly, let FastAPI handle serialization
             message="Course created successfully. Redirecting to editor..."
         )
     except ForbiddenException as e:

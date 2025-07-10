@@ -29,7 +29,7 @@ class CertificateUpdate(BaseModel):
 
 class CertificateInDB(CertificateBase):
     """Certificate schema with database fields"""
-    id: str = Field(..., alias="_id")
+    id: str
     user_id: str
     course_id: str
     enrollment_id: str

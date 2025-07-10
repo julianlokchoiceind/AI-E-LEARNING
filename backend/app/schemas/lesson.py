@@ -69,7 +69,7 @@ class LessonReorder(BaseModel):
 
 class LessonResponse(BaseModel):
     """Response schema for lesson data."""
-    id: str = Field(alias="_id")
+    id: str
     course_id: str
     chapter_id: str
     title: str

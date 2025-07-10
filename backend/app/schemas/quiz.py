@@ -69,7 +69,7 @@ class QuizUpdate(BaseModel):
 
 class QuizInDB(QuizBase):
     """Schema for quiz in database."""
-    id: PydanticObjectId = Field(alias="_id")
+    id: PydanticObjectId
     lesson_id: PydanticObjectId
     course_id: PydanticObjectId
     questions: List[QuizQuestionBase]
@@ -84,7 +84,7 @@ class QuizInDB(QuizBase):
 
 class QuizResponse(QuizBase):
     """Schema for returning quiz to students (questions without answers)."""
-    id: PydanticObjectId = Field(alias="_id")
+    id: PydanticObjectId
     lesson_id: PydanticObjectId
     course_id: PydanticObjectId
     questions: List[QuizQuestionResponse]
