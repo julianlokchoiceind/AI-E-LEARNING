@@ -139,7 +139,8 @@ async def get_lesson_detail(
     """
     lesson = await lesson_service.get_lesson_detail(
         lesson_id=lesson_id,
-        user_id=str(current_user.id) if current_user else None
+        user_id=str(current_user.id) if current_user else None,
+        user_role=current_user.role if current_user else None
     )
     
     return StandardResponse(

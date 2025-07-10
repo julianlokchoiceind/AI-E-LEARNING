@@ -150,7 +150,8 @@ class LessonService:
     @staticmethod
     async def get_lesson_detail(
         lesson_id: str,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
+        user_role: Optional[str] = None
     ) -> Lesson:
         """Get lesson details."""
         lesson = await Lesson.get(PydanticObjectId(lesson_id))
@@ -162,21 +163,35 @@ class LessonService:
         
         # Check if user has access to this lesson
         if user_id:
-            # Check enrollment
-            enrollment = await Enrollment.find_one({
-                "user_id": user_id,
-                "course_id": str(lesson.course_id),
-                "is_active": True
-            })
+            # Skip enrollment check for admin or course creator
+            should_check_enrollment = True
             
-            if not enrollment:
-                # Check if course is free or user has special access
+            if user_role == "admin":
+                # Admin can access any lesson
+                should_check_enrollment = False
+            elif user_role == "creator":
+                # Check if user is the course creator
                 course = await Course.get(lesson.course_id)
-                if not (course and course.pricing.is_free):
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="You are not enrolled in this course"
-                    )
+                if course and str(course.creator_id) == user_id:
+                    should_check_enrollment = False
+            
+            # Only check enrollment for regular students
+            if should_check_enrollment:
+                # Check enrollment
+                enrollment = await Enrollment.find_one({
+                    "user_id": user_id,
+                    "course_id": str(lesson.course_id),
+                    "is_active": True
+                })
+                
+                if not enrollment:
+                    # Check if course is free or user has special access
+                    course = await Course.get(lesson.course_id)
+                    if not (course and course.pricing.is_free):
+                        raise HTTPException(
+                            status_code=status.HTTP_403_FORBIDDEN,
+                            detail="You are not enrolled in this course"
+                        )
             
             # Add progress data for authenticated users
             progress = await Progress.find_one({
