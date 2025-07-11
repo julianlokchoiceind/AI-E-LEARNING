@@ -13,7 +13,11 @@
     "lint": "next lint",
     "analyze": "ANALYZE=true npm run build",
     "analyze:server": "BUNDLE_ANALYZE=server npm run build",
-    "analyze:browser": "BUNDLE_ANALYZE=browser npm run build"
+    "analyze:browser": "BUNDLE_ANALYZE=browser npm run build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:save-status": "jest __tests__/save-status.test.tsx"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -37,9 +37,15 @@ export const useAutosave = <T = any>(
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(() => {
     // Initialize with provided date if available
     if (initialLastSavedAt) {
-      return typeof initialLastSavedAt === 'string' 
-        ? new Date(initialLastSavedAt) 
-        : initialLastSavedAt;
+      if (typeof initialLastSavedAt === 'string') {
+        // Add 'Z' to timestamp if it doesn't have timezone indicator
+        // This ensures JavaScript treats it as UTC time
+        const timestampWithTZ = initialLastSavedAt.includes('Z') || initialLastSavedAt.includes('+') 
+          ? initialLastSavedAt 
+          : initialLastSavedAt + 'Z';
+        return new Date(timestampWithTZ);
+      }
+      return initialLastSavedAt;
     }
     return null;
   });
@@ -97,6 +103,28 @@ export const useAutosave = <T = any>(
       lastSavedDataRef.current = data;
     }
   }, [data]);
+
+  // Fix: Update lastSavedAt when initialLastSavedAt changes (e.g., when courseData loads)
+  useEffect(() => {
+    if (initialLastSavedAt && !lastSavedAt) {
+      let parsedDate;
+      
+      if (typeof initialLastSavedAt === 'string') {
+        // Add 'Z' to timestamp if it doesn't have timezone indicator
+        // This ensures JavaScript treats it as UTC time
+        const timestampWithTZ = initialLastSavedAt.includes('Z') || initialLastSavedAt.includes('+') 
+          ? initialLastSavedAt 
+          : initialLastSavedAt + 'Z';
+        
+        parsedDate = new Date(timestampWithTZ);
+      } else {
+        parsedDate = initialLastSavedAt;
+      }
+        
+      
+      setLastSavedAt(parsedDate);
+    }
+  }, [initialLastSavedAt]);
 
   // Default data change detection
   const defaultHasDataChanged = useCallback((current: T | null, previous: T | null): boolean => {
