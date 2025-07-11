@@ -21,11 +21,11 @@ import {
   useCourseQuery,
   useUpdateCourse,
   useCourseChaptersQuery, 
-  useDeleteChapter, 
   useReorderChapters,
-  useDeleteLesson, 
   useReorderLessons 
 } from '@/hooks/queries/useCourses';
+import { useDeleteChapter } from '@/hooks/queries/useChapters';
+import { useDeleteLesson } from '@/hooks/queries/useLessons';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 
@@ -47,13 +47,13 @@ const CourseBuilderPage = () => {
   const [chapters, setChapters] = useState<any[]>([]);
   
   // React Query hooks - automatic caching and state management
-  const { data: courseResponse, loading: courseLoading, refetch: refetchCourse } = useCourseQuery(courseId) as any;
+  const { data: courseResponse, loading: courseLoading, refetch: refetchCourse } = useCourseQuery(courseId);
   const { data: chaptersResponse, loading: chaptersLoading, refetch: refetchChapters } = useCourseChaptersQuery(courseId);
   const { mutateAsync: updateCourseAction } = useUpdateCourse();
   
   // React Query mutations for chapter and lesson operations
-  const { mutateAsync: deleteChapterMutation } = useDeleteChapter();
-  const { mutateAsync: deleteLessonMutation } = useDeleteLesson();
+  const { mutate: deleteChapterMutation } = useDeleteChapter();
+  const { mutate: deleteLessonMutation } = useDeleteLesson();
   const { mutateAsync: reorderChaptersMutation } = useReorderChapters();
   const { mutateAsync: reorderLessonsMutation } = useReorderLessons();
   
@@ -73,25 +73,65 @@ const CourseBuilderPage = () => {
   const [selectedLessonForEdit, setSelectedLessonForEdit] = useState<LessonEditData | null>(null);
   const [selectedLessonForDelete, setSelectedLessonForDelete] = useState<LessonDeleteData | null>(null);
 
-  // Auto-save hook
+  // Auto-save hook - only initialize when courseData is available
   const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges, isOnline, hasPendingChanges } = useAutosave(
     courseData,
     {
-      delay: 5000, // Increased delay to 5 seconds to reduce timeout issues
+      delay: 2000, // 🔧 CHANGED: 2s after user stops typing as requested
+      initialLastSavedAt: courseData?.updated_at || courseData?.created_at, // Initialize from server data
+      enabled: !!courseData, // 🔧 FIX: Only enable when courseData exists
       onSave: async (data) => {
-        if (!data || !data.id) return;
+        console.log('🚀 [FORCE SAVE DEBUG] onSave called with data:', {
+          hasData: !!data,
+          hasId: !!data?.id,
+          hasUnderscore_id: !!data?._id,
+          dataKeys: data ? Object.keys(data) : [],
+          idValue: data?.id,
+          _idValue: data?._id,
+          title: data?.title
+        });
+        
+        if (!data) {
+          console.error('❌ [FORCE SAVE] No data provided');
+          return;
+        }
+        
+        // Get courseId from data or use the route param as fallback
+        const courseIdToUse = data.id || data._id || courseId;
+        
+        if (!courseIdToUse) {
+          console.error('❌ [FORCE SAVE] No course ID found in data or route params');
+          return;
+        }
         
         // Autosave triggered with course data
+        console.log('✅ [FORCE SAVE] Proceeding with save, courseId:', courseIdToUse);
         
-        // Try with minimal data first to isolate the issue
-        const minimalData = {
-          title: data.title,
-          description: data.description,
-        };
+        // Send ALL fields dynamically - no need to list manually!
+        // We filter out system/read-only fields that shouldn't be sent in updates
+        const { 
+          _id,           // MongoDB ID
+          id,            // Our ID  
+          created_at,    // System timestamp
+          updated_at,    // System timestamp
+          stats,         // Read-only statistics
+          creator_id,    // Can't change creator
+          creator_name,  // Derived from creator
+          slug,          // Auto-generated
+          ...userEditableFields  // Everything else can be edited
+        } = data;
+        
+        // Remove undefined/null fields to keep payload clean
+        const updateData = Object.fromEntries(
+          Object.entries(userEditableFields).filter(([_, v]) => v !== undefined && v !== null)
+        );
         
         try {
-          await updateCourseAction({ courseId: data.id, data: minimalData });
+          console.log('📤 [FORCE SAVE] Calling updateCourseAction with ALL fields:', { courseId: courseIdToUse, data: updateData });
+          await updateCourseAction({ courseId: courseIdToUse, data: updateData });
+          console.log('✅ [FORCE SAVE] Update successful');
         } catch (error) {
+          console.error('❌ [FORCE SAVE] Update failed:', error);
           // Autosave failed - error will be handled by useAutosave hook
           throw error;
         }
@@ -103,14 +143,27 @@ const CourseBuilderPage = () => {
   // Initialize data from React Query responses
   useEffect(() => {
     if (courseResponse?.data) {
-      setCourseData(courseResponse.data);
-      setTitleInput(courseResponse.data.title);
+      // Backend returns { success: true, data: { id, title, ... } }
+      // So courseResponse.data is the actual course data
+      const courseData = courseResponse.data;
+      console.log('🔍 [DEBUG] Course response data:', {
+        hasId: !!courseData?.id,
+        hasUnderscore_id: !!(courseData as any)?._id,
+        keys: courseData ? Object.keys(courseData) : [],
+        idValue: courseData?.id,
+        _idValue: (courseData as any)?._id
+      });
+      setCourseData(courseData);
+      setTitleInput(courseData?.title || '');
     }
   }, [courseResponse, setCourseData]);
   
   useEffect(() => {
-    if (chaptersResponse?.data?.chapters) {
-      setChapters(chaptersResponse.data.chapters);
+    if (chaptersResponse?.data) {
+      // Backend returns { success: true, data: { chapters: [...] } }
+      // So chaptersResponse.data.chapters is the chapters array
+      const chapters = (chaptersResponse.data as any)?.chapters || [];
+      setChapters(chapters);
     }
   }, [chaptersResponse]);
   
@@ -157,20 +210,8 @@ const CourseBuilderPage = () => {
   };
 
   const handleChapterCreated = (newChapter: ChapterResponse) => {
-    // Immediately update local state for instant UI feedback
-    if (newChapter?.id) {
-      const chapterToAdd = {
-        ...newChapter,
-        lessons: [],
-        total_lessons: 0,
-        total_duration: 0
-      };
-      
-      setChapters(prev => [...prev, chapterToAdd]);
-    }
-    
-    // Also refetch to ensure consistency
-    refetchChapters();
+    // React Query cache invalidation handles updates automatically
+    // Manual state update removed to prevent conflicts with React Query
     
     // Toast is already shown in CreateChapterModal
   };
@@ -184,25 +225,8 @@ const CourseBuilderPage = () => {
   };
 
   const handleLessonCreated = (newLesson: LessonResponse) => {
-    // Immediately update local state for instant UI feedback
-    if (newLesson?.id) {
-      setChapters(prevChapters => {
-        return prevChapters.map(chapter => {
-          if (chapter.id === newLesson.chapter_id) {
-            const updatedLessons = [...(chapter.lessons || []), newLesson];
-            return {
-              ...chapter,
-              lessons: updatedLessons,
-              total_lessons: updatedLessons.length
-            };
-          }
-          return chapter;
-        });
-      });
-    }
-    
-    // Also refetch to ensure consistency
-    refetchChapters();
+    // React Query cache invalidation handles updates automatically
+    // Manual state update removed to prevent conflicts with React Query
     
     // Toast is already shown in CreateLessonModal
   };
@@ -260,17 +284,9 @@ const CourseBuilderPage = () => {
     }
   };
 
-  const handleConfirmChapterDelete = async (chapterId: string) => {
-    try {
-      // Use React Query mutation instead of direct API call
-      const response = await deleteChapterMutation(chapterId);
-      setChapters(chapters.filter(ch => ch.id !== chapterId));
-      ToastService.success(response.message || 'Something went wrong');
-    } catch (error: any) {
-      console.error('Failed to delete chapter:', error);
-      ToastService.error(error.message || 'Something went wrong');
-      throw error; // Re-throw to handle in modal
-    }
+  const handleConfirmChapterDelete = (chapterId: string) => {
+    // Simply call the delete action - optimistic updates and toasts are handled in the hook
+    deleteChapterMutation(chapterId);
   };
 
   const handleLessonEdit = (lessonId: string) => {
@@ -369,29 +385,9 @@ const CourseBuilderPage = () => {
     }
   };
 
-  const handleConfirmLessonDelete = async (lessonId: string) => {
-    try {
-      // Use React Query mutation instead of direct API call
-      const response = await deleteLessonMutation(lessonId);
-      
-      // Update local state - remove lesson from the chapter
-      setChapters(prevChapters => {
-        return prevChapters.map(chapter => {
-          const updatedLessons = chapter.lessons.filter((l: any) => l.id !== lessonId);
-          return {
-            ...chapter,
-            lessons: updatedLessons,
-            total_lessons: updatedLessons.length
-          };
-        });
-      });
-      
-      ToastService.success(response.message || 'Something went wrong');
-    } catch (error: any) {
-      console.error('Failed to delete lesson:', error);
-      ToastService.error(error.message || 'Something went wrong');
-      throw error; // Re-throw to handle in modal
-    }
+  const handleConfirmLessonDelete = (lessonId: string) => {
+    // Simply call the delete action - optimistic updates and toasts are handled in the hook
+    deleteLessonMutation(lessonId);
   };
 
   const handleChaptersReorder = async (reorderedChapters: any[]) => {
@@ -408,7 +404,7 @@ const CourseBuilderPage = () => {
       // Use React Query mutation instead of direct API call
       const response = await reorderChaptersMutation({ courseId, chapterOrders });
       
-      if (response.success && response.data) {
+      if (response?.success && response?.data) {
         // Update with response data to ensure consistency
         setChapters(response.data.chapters || reorderedChapters);
       }
@@ -416,8 +412,7 @@ const CourseBuilderPage = () => {
       console.error('Failed to reorder chapters:', error);
       ToastService.error(error.message || 'Something went wrong');
       
-      // Revert to original order on error
-      refetchChapters();
+      // Error handled by optimistic update rollback in React Query
       throw error; // Re-throw so DroppableChapterList can handle it
     }
   };
@@ -504,7 +499,7 @@ const CourseBuilderPage = () => {
     >
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="bg-white border-b sticky top-0 z-10">
+        <div className="bg-white border-b sticky top-0 z-40">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -539,13 +534,11 @@ const CourseBuilderPage = () => {
               </div>
 
               <div className="flex items-center gap-4">
-                {saveStatus !== 'saving' && (
-                  <SaveStatusIndicator
-                    status={saveStatus}
-                    lastSavedAt={lastSavedAt}
-                    error={error}
-                  />
-                )}
+                <SaveStatusIndicator
+                  status={saveStatus}
+                  lastSavedAt={lastSavedAt}
+                  error={error}
+                />
                 
                 <Button
                   variant="outline"
@@ -558,18 +551,13 @@ const CourseBuilderPage = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => forceSave()}
-                  loading={saveStatus === 'saving'}
-                  disabled={saveStatus === 'saving'}
+                  onClick={() => {
+                    console.log('🔄 [FORCE SAVE DEBUG] Save button clicked');
+                    forceSave();
+                  }}
                 >
-                  {saveStatus === 'saving' ? (
-                    'Saving...'
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Save
-                    </>
-                  )}
+                  <Save className="w-4 h-4 mr-2" />
+                  Save
                 </Button>
               </div>
             </div>

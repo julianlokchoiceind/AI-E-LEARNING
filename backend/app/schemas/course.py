@@ -6,7 +6,7 @@ from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel, Field
 from beanie import PydanticObjectId
-from app.models.course import CourseCategory, CourseLevel, CourseStatus
+from app.models.course import CourseCategory, CourseLevel, CourseStatus, Pricing
 
 
 class CourseCreate(BaseModel):
@@ -29,6 +29,8 @@ class CourseUpdate(BaseModel):
     syllabus: Optional[List[str]] = None
     prerequisites: Optional[List[str]] = None
     target_audience: Optional[List[str]] = None
+    # Pricing update (admin/creator only)
+    pricing: Optional[Pricing] = None
     # Admin only fields
     status: Optional[CourseStatus] = None
 

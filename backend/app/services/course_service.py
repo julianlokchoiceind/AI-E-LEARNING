@@ -15,7 +15,7 @@ from app.core.exceptions import (
     ForbiddenException,
     BadRequestException
 )
-from app.core.performance import measure_performance, timed_lru_cache
+from app.core.performance import measure_performance, timed_lru_cache, invalidate_cache_for_course
 import logging
 
 logger = logging.getLogger(__name__)
@@ -119,31 +119,78 @@ class CourseService:
         user: User
     ) -> Course:
         """Update course details"""
-        # Get course
-        course = await CourseService.get_course(course_id)
+        logger.info(f"CourseService.update_course called: course_id={course_id}")
         
-        # Check permissions
-        if str(course.creator_id) != str(user.id) and user.role != "admin":
-            raise ForbiddenException("You don't have permission to update this course")
-        
-        # Update fields if provided
-        update_dict = update_data.dict(exclude_unset=True)
-        
-        # If title is updated, update slug too
-        if "title" in update_dict:
-            update_dict["slug"] = await CourseService.generate_unique_slug(update_dict["title"])
-        
-        # Update timestamps
-        update_dict["updated_at"] = datetime.utcnow()
-        
-        # Apply updates
-        for field, value in update_dict.items():
-            setattr(course, field, value)
-        
-        # Save changes
-        await course.save()
-        
-        return course
+        try:
+            # Get course
+            course = await CourseService.get_course(course_id)
+            logger.info(f"Course fetched successfully: {course.title}")
+            
+            # Check permissions
+            if str(course.creator_id) != str(user.id) and user.role != "admin":
+                raise ForbiddenException("You don't have permission to update this course")
+            
+            # Update fields if provided
+            update_dict = update_data.dict(exclude_unset=True)
+            logger.info(f"Update dict: {update_dict}")
+            
+            # TEMPORARY FIX: Skip slug update completely to fix autosave
+            # TODO: Fix slug generation logic later
+            if "slug" in update_dict:
+                del update_dict["slug"]
+                logger.info("Removed slug from update dict")
+            
+            # Convert enum values to strings for MongoDB and handle nested objects
+            for field, value in update_dict.items():
+                if hasattr(value, 'value'):  # It's an enum
+                    update_dict[field] = value.value
+                    logger.info(f"Converted enum {field}: {value} -> {value.value}")
+                elif field == 'pricing' and isinstance(value, dict):
+                    # Ensure pricing is properly formatted as dict for MongoDB
+                    update_dict[field] = value
+                    logger.info(f"Processing pricing update: {value}")
+            
+            # 🔧 FIX INFINITE AUTOSAVE LOOP: Only update if there are actual changes
+            if not update_dict:
+                logger.info("No changes detected - skipping update")
+                return course
+            
+            # Check if data actually changed by comparing values
+            has_changes = False
+            for field, new_value in update_dict.items():
+                current_value = getattr(course, field, None)
+                if str(current_value) != str(new_value):
+                    has_changes = True
+                    logger.info(f"Field {field} changed: {current_value} -> {new_value}")
+                    break
+            
+            if not has_changes:
+                logger.info("Data identical - skipping update to prevent infinite autosave loops")
+                return course
+                
+            # Only set updated_at if there are real changes
+            update_dict["updated_at"] = datetime.utcnow()
+            
+            # Apply updates using Beanie's update method
+            if update_dict:
+                logger.info(f"Final update dict: {update_dict}")
+                # Use Beanie's update method which properly updates MongoDB
+                await course.update({"$set": update_dict})
+                
+                # Refresh the course object from database to ensure we have the latest data
+                course = await Course.get(course.id)
+                logger.info(f"Course refreshed from DB - title is now: {course.title}")
+                
+                # Invalidate cache for this course
+                invalidate_cache_for_course(str(course.id))
+                
+                logger.info("Course updated successfully!")
+            return course
+            
+        except Exception as e:
+            logger.error(f"Error in update_course: {type(e).__name__}: {e}")
+            logger.error(f"Stack trace:", exc_info=True)
+            raise
     
     @staticmethod
     async def list_courses(

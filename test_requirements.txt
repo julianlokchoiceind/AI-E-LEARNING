@@ -1,0 +1,3 @@
+# Requirements for test_save_status_cache.py
+httpx>=0.24.0
+asyncio

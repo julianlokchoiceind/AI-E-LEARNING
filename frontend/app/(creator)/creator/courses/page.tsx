@@ -55,7 +55,7 @@ const CreatorCoursesPage = () => {
   // Filter and sort courses with memoized course extraction
   const filteredCourses = React.useMemo(() => {
     // Extract courses from React Query response inside useMemo for optimal performance
-    const courses = coursesResponse?.success ? coursesResponse.data?.courses || [] : [];
+    const courses = coursesResponse?.data?.data?.courses || [];
     let filtered = [...courses];
 
     // Search filter
@@ -102,15 +102,15 @@ const CreatorCoursesPage = () => {
 
   // Handle courses loading errors
   useEffect(() => {
-    if (coursesResponse && !coursesResponse.success) {
-      ToastService.error(coursesResponse.message || 'Something went wrong');
+    if (coursesResponse?.data && !coursesResponse.data.success) {
+      ToastService.error(coursesResponse.data.message || 'Something went wrong');
     }
   }, [coursesResponse]);
 
   const handleCreateCourse = () => {
     createCourse({}, {
       onSuccess: (response) => {
-        if (response.success && response.data?.id) {
+        if (response?.success && response?.data?.id) {
           // Redirect based on user role
           if (user?.role === 'admin') {
             router.push(`/admin/courses/${response.data.id}/edit`);
@@ -138,11 +138,11 @@ const CreatorCoursesPage = () => {
 
     deleteCourse(courseId, {
       onSuccess: (response) => {
-        if (response.success) {
-          ToastService.success(response.message || 'Something went wrong');
+        if (response?.success) {
+          ToastService.success(response?.message || 'Something went wrong');
           refetchCourses(); // Refresh courses list
         } else {
-          ToastService.error(response.message || 'Something went wrong');
+          ToastService.error(response?.message || 'Something went wrong');
         }
       },
       onError: (error: any) => {
@@ -381,7 +381,7 @@ const CreatorCoursesPage = () => {
       <div className="container mx-auto px-4 py-8">
         {filteredCourses.length === 0 ? (
           <Card className="p-12 text-center">
-            {courses.length === 0 ? (
+            {coursesResponse?.data?.courses?.length === 0 ? (
               <>
                 <Plus className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">No courses yet</h2>

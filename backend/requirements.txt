@@ -15,6 +15,7 @@ email-validator
 pydantic[email]>=2.10
 pydantic-settings
 slowapi
+nh3==0.2.14  # Fast HTML sanitization for XSS prevention
 
 # AI Integration
 pydantic-ai

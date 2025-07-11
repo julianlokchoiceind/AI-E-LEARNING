@@ -9,7 +9,8 @@ import {
   getCourseById, 
   createCourse, 
   updateCourse, 
-  deleteCourse
+  deleteCourse,
+  type CourseDetailData
 } from '@/lib/api/courses';
 import { enrollInCourse } from '@/lib/api/enrollments';
 import { 
@@ -73,12 +74,12 @@ export function useCoursesQuery(filters: CoursesFilters = {}) {
  * High-impact: Used when viewing any course
  */
 export function useCourseQuery(courseId: string, enabled: boolean = true) {
-  return useApiQuery<any>(
+  return useApiQuery<CourseDetailData>(
     ['course', courseId],
     () => getCourseById(courseId),
     {
       enabled: enabled && !!courseId,
-      ...CACHE_CONFIGS.CONTENT_DETAILS, // 5 minutes - course details
+      ...CACHE_CONFIGS.CONTENT_DETAILS // 5 minutes - standard content details
     }
   );
 }
@@ -1029,7 +1030,7 @@ export function useCourseEditorQuery(courseId: string, enabled: boolean = true) 
     () => getCourseById(courseId),
     {
       enabled: enabled && !!courseId,
-      ...CACHE_CONFIGS.CREATOR_EDITING, // 1 minute - course metadata changes frequently during editing
+      ...CACHE_CONFIGS.CREATOR_EDITING // 1 minute - frequent updates for creator editing
     }
   );
 }
@@ -1044,7 +1045,7 @@ export function useCourseChaptersQuery(courseId: string, enabled: boolean = true
     () => getChaptersWithLessons(courseId),
     {
       enabled: enabled && !!courseId,
-      ...CACHE_CONFIGS.CREATOR_EDITING, // 1 minute - chapters change during editing
+      ...CACHE_CONFIGS.CREATOR_EDITING // 1 minute - frequent updates for creator editing
     }
   );
 }
@@ -1124,9 +1125,12 @@ export function useCreateChapter() {
     },
     
     // Always refetch to ensure consistency
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
-      queryClient.invalidateQueries({ queryKey: ['course-editor'] });
+    onSettled: (data, error, variables) => {
+      // Invalidate with specific courseId
+      queryClient.invalidateQueries({ queryKey: ['course-chapters', variables.courseId] });
+      queryClient.invalidateQueries({ queryKey: ['course-editor', variables.courseId] });
+      // Also invalidate general lists
+      queryClient.invalidateQueries({ queryKey: ['chapters', variables.courseId] });
     }
   });
   
@@ -1237,8 +1241,14 @@ export function useUpdateChapter() {
     },
     
     // Always refetch to ensure consistency
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
+    onSettled: (data, error, variables) => {
+      // Need to extract courseId from the response or cache
+      if (data?.data?.course_id) {
+        queryClient.invalidateQueries({ queryKey: ['course-chapters', data.data.course_id] });
+        queryClient.invalidateQueries({ queryKey: ['chapters', data.data.course_id] });
+      }
+      // Also invalidate the specific chapter
+      queryClient.invalidateQueries({ queryKey: ['chapter', variables.chapterId] });
     }
   });
   
@@ -1269,110 +1279,6 @@ export function useUpdateChapter() {
   };
 }
 
-/**
- * Mutation for deleting chapters with optimistic updates
- * Critical: Instant chapter removal for content management workflow
- */
-export function useDeleteChapter() {
-  const queryClient = useQueryClient();
-  
-  // Using native React Query for optimistic updates
-  const mutation = useMutation({
-    mutationFn: (chapterId: string) => deleteChapter(chapterId),
-    
-    // Optimistic update: Remove chapter immediately from UI
-    onMutate: async (chapterId: string) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ 
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
-      });
-      
-      // Store snapshots for all course-chapters caches
-      const cacheKeys = queryClient.getQueryCache().findAll({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
-      });
-      
-      const snapshots: any[] = [];
-      
-      // Remove chapter from all course-chapters caches
-      cacheKeys.forEach((cache) => {
-        const data = queryClient.getQueryData(cache.queryKey);
-        snapshots.push({ key: cache.queryKey, data });
-        
-        // Optimistically remove chapter
-        queryClient.setQueryData(cache.queryKey, (old: any) => {
-          if (!old) return old;
-          
-          // Handle different data structures
-          const chapters = old?.data?.chapters || old?.chapters || [];
-          
-          const filteredChapters = chapters.filter((chapter: any) => chapter.id !== chapterId);
-          
-          // Maintain same structure
-          if (old?.data?.chapters) {
-            return {
-              ...old,
-              data: {
-                ...old.data,
-                chapters: filteredChapters,
-                total_chapters: filteredChapters.length
-              }
-            };
-          }
-          
-          return {
-            ...old,
-            chapters: filteredChapters,
-            total_chapters: filteredChapters.length
-          };
-        });
-      });
-      
-      return { snapshots, chapterId };
-    },
-    
-    // Rollback on error
-    onError: (error: any, chapterId: string, context: any) => {
-      if (context?.snapshots) {
-        context.snapshots.forEach((snapshot: any) => {
-          queryClient.setQueryData(snapshot.key, snapshot.data);
-        });
-      }
-    },
-    
-    // Always refetch to ensure consistency
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
-      queryClient.invalidateQueries({ queryKey: ['course-editor'] });
-    }
-  });
-  
-  // Return wrapper to maintain useApiMutation interface
-  return {
-    mutate: (chapterId: string, options?: { onSuccess?: (response: any) => void; onError?: (error: any) => void }) => {
-      mutation.mutate(chapterId, {
-        onSuccess: (response) => {
-          ToastService.success(response?.message || 'Chapter deleted successfully', 'delete-chapter');
-          if (options?.onSuccess) {
-            options.onSuccess(response);
-          }
-        },
-        onError: (error: any) => {
-          ToastService.error(error?.message || 'Something went wrong', 'delete-chapter-error');
-          if (options?.onError) {
-            options.onError(error);
-          }
-        }
-      });
-    },
-    mutateAsync: mutation.mutateAsync,
-    loading: mutation.isPending,
-    isSuccess: mutation.isSuccess,
-    isError: mutation.isError,
-    error: mutation.error,
-    data: mutation.data,
-  };
-}
 
 /**
  * Mutation for reordering chapters
@@ -1655,125 +1561,6 @@ export function useUpdateLesson() {
   };
 }
 
-/**
- * Mutation for deleting lessons with optimistic updates
- * Critical: Instant lesson removal for content management workflow
- */
-export function useDeleteLesson() {
-  const queryClient = useQueryClient();
-  
-  // Using native React Query for optimistic updates
-  const mutation = useMutation({
-    mutationFn: (lessonId: string) => deleteLesson(lessonId),
-    
-    // Optimistic update: Remove lesson immediately from chapter
-    onMutate: async (lessonId: string) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ 
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
-      });
-      
-      // Store snapshots for all course-chapters caches
-      const cacheKeys = queryClient.getQueryCache().findAll({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'course-chapters'
-      });
-      
-      const snapshots: any[] = [];
-      
-      // Remove lesson from all relevant caches
-      cacheKeys.forEach((cache) => {
-        const data = queryClient.getQueryData(cache.queryKey);
-        snapshots.push({ key: cache.queryKey, data });
-        
-        // Optimistically remove lesson
-        queryClient.setQueryData(cache.queryKey, (old: any) => {
-          if (!old) return old;
-          
-          // Handle different data structures
-          const chapters = old?.data?.chapters || old?.chapters || [];
-          
-          const updatedChapters = chapters.map((chapter: any) => {
-            if (chapter.lessons && Array.isArray(chapter.lessons)) {
-              const filteredLessons = chapter.lessons.filter((lesson: any) => lesson.id !== lessonId);
-              
-              // Only update chapter if lessons changed
-              if (filteredLessons.length !== chapter.lessons.length) {
-                return {
-                  ...chapter,
-                  lessons: filteredLessons,
-                  total_lessons: filteredLessons.length,
-                  // Recalculate total duration if needed
-                  total_duration: filteredLessons.reduce((total: number, lesson: any) => {
-                    return total + (lesson.video?.duration || 0);
-                  }, 0)
-                };
-              }
-            }
-            return chapter;
-          });
-          
-          // Maintain same structure
-          if (old?.data?.chapters) {
-            return {
-              ...old,
-              data: {
-                ...old.data,
-                chapters: updatedChapters
-              }
-            };
-          }
-          
-          return {
-            ...old,
-            chapters: updatedChapters
-          };
-        });
-      });
-      
-      return { snapshots, lessonId };
-    },
-    
-    // Rollback on error
-    onError: (error: any, lessonId: string, context: any) => {
-      if (context?.snapshots) {
-        context.snapshots.forEach((snapshot: any) => {
-          queryClient.setQueryData(snapshot.key, snapshot.data);
-        });
-      }
-    },
-    
-    // Always refetch to ensure consistency
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
-    }
-  });
-  
-  // Return wrapper to maintain useApiMutation interface
-  return {
-    mutate: (lessonId: string, options?: { onSuccess?: (response: any) => void; onError?: (error: any) => void }) => {
-      mutation.mutate(lessonId, {
-        onSuccess: (response) => {
-          ToastService.success(response?.message || 'Lesson deleted successfully', 'delete-lesson');
-          if (options?.onSuccess) {
-            options.onSuccess(response);
-          }
-        },
-        onError: (error: any) => {
-          ToastService.error(error?.message || 'Something went wrong', 'delete-lesson-error');
-          if (options?.onError) {
-            options.onError(error);
-          }
-        }
-      });
-    },
-    mutateAsync: mutation.mutateAsync,
-    loading: mutation.isPending,
-    isSuccess: mutation.isSuccess,
-    isError: mutation.isError,
-    error: mutation.error,
-    data: mutation.data,
-  };
-}
 
 /**
  * Mutation for reordering lessons within a chapter with optimistic updates

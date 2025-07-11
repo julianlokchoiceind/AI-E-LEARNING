@@ -43,7 +43,7 @@ interface CoursesListData {
   total_pages: number;
 }
 
-interface CourseDetailData extends CourseResponse {
+export interface CourseDetailData extends CourseResponse {
   syllabus: string[];
   prerequisites: string[];
   target_audience: string[];
@@ -83,15 +83,40 @@ export const createCourse = async (): Promise<StandardResponse<CreateCourseData>
 
 // Update course
 export const updateCourse = async (courseId: string, data: Partial<CourseResponse>): Promise<StandardResponse<CourseDetailData>> => {
-  
-  return api.put<StandardResponse<CourseDetailData>>(
-    `/courses/${courseId}`,
+  console.log('🔧 [API DEBUG] updateCourse called:', {
+    courseId,
     data,
-    { 
-      requireAuth: true
-      // Remove specific timeout to use default 120000ms
-    }
-  );
+    dataKeys: data ? Object.keys(data) : null,
+    url: `/courses/${courseId}`,
+    fullURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/courses/${courseId}`
+  });
+  
+  try {
+    const result = await api.put<StandardResponse<CourseDetailData>>(
+      `/courses/${courseId}`,
+      data,
+      { 
+        requireAuth: true,
+        timeout: 10000 // 10 seconds - standardized timeout
+      }
+    );
+    
+    console.log('🔧 [API DEBUG] updateCourse success:', {
+      result,
+      hasSuccess: !!result?.success,
+      hasData: !!result?.data,
+      hasMessage: !!result?.message
+    });
+    return result;
+  } catch (error) {
+    console.error('🔧 [API DEBUG] updateCourse failed:', {
+      error,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorName: error instanceof Error ? error.name : 'Unknown',
+      errorStack: error instanceof Error ? error.stack : 'No stack'
+    });
+    throw error;
+  }
 };
 
 // Delete course

@@ -21,11 +21,11 @@ import {
   useCourseEditorQuery, 
   useCourseChaptersQuery, 
   useUpdateCourse,
-  useDeleteChapter,
-  useDeleteLesson,
   useReorderChapters,
   useReorderLessons
 } from '@/hooks/queries/useCourses';
+import { useDeleteChapter } from '@/hooks/queries/useChapters';
+import { useDeleteLesson } from '@/hooks/queries/useLessons';
 import { ToastService } from '@/lib/toast/ToastService';
 
 const CourseBuilderPage = () => {
@@ -59,7 +59,13 @@ const CourseBuilderPage = () => {
   
   // Computed data from React Query responses
   const chapters = React.useMemo(() => {
-    return chaptersResponse?.data?.chapters || [];
+    console.log('[DEBUG] chaptersResponse:', chaptersResponse);
+    if (chaptersResponse?.data) {
+      // Backend returns { success: true, data: { chapters: [...] } }
+      // So chaptersResponse.data.chapters is the chapters array
+      return (chaptersResponse.data as any)?.chapters || [];
+    }
+    return [];
   }, [chaptersResponse]);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
@@ -75,24 +81,61 @@ const CourseBuilderPage = () => {
   const [selectedLessonForEdit, setSelectedLessonForEdit] = useState<LessonEditData | null>(null);
   const [selectedLessonForDelete, setSelectedLessonForDelete] = useState<LessonDeleteData | null>(null);
 
-  // Auto-save hook with React Query mutation
+  // Auto-save hook with React Query mutation - only when courseData available
   const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges, isOnline, hasPendingChanges } = useAutosave(
     courseData,
     {
       delay: 2000,
+      initialLastSavedAt: courseData?.updated_at || courseData?.created_at,
+      enabled: !!courseData, // 🔧 FIX: Only enable when courseData exists
       onSave: async (data) => {
-        if (!data || !data.id) return;
-        await updateCourseAction({ courseId: data.id, courseData: data });
+        console.log('🔧 [AUTOSAVE DEBUG] onSave called with data:', {
+          hasData: !!data,
+          dataId: data?.id,
+          dataTitle: data?.title,
+          dataKeys: data ? Object.keys(data) : null
+        });
+        
+        if (!data) {
+          console.log('🔧 [AUTOSAVE DEBUG] onSave early return - no data');
+          return;
+        }
+        
+        // Get courseId from data or use the route param as fallback
+        const courseIdToUse = data.id || data._id || courseId;
+        
+        if (!courseIdToUse) {
+          console.error('❌ [AUTOSAVE DEBUG] No course ID found in data or route params');
+          return;
+        }
+        
+        try {
+          console.log('🔧 [AUTOSAVE DEBUG] Calling updateCourseAction with:', {
+            courseId: courseIdToUse,
+            data: data
+          });
+          
+          const result = await updateCourseAction({ courseId: courseIdToUse, data: data });
+          
+          console.log('🔧 [AUTOSAVE DEBUG] updateCourseAction success:', result);
+        } catch (error) {
+          console.error('🔧 [AUTOSAVE DEBUG] Autosave failed:', error);
+          throw error;
+        }
       },
       enabled: !!courseData,
+      showToastOnError: false, // Prevent duplicate toast notifications
     }
   );
 
   // Initialize data from React Query responses
   useEffect(() => {
     if (courseResponse?.data) {
-      setCourseData(courseResponse.data);
-      setTitleInput(courseResponse.data.title);
+      // Backend returns { success: true, data: { id, title, ... } }
+      // So courseResponse.data is the actual course data
+      const courseData = courseResponse.data;
+      setCourseData(courseData);
+      setTitleInput(courseData?.title || '');
     }
   }, [courseResponse, setCourseData]);
 
@@ -115,7 +158,14 @@ const CourseBuilderPage = () => {
   // React Query handles data fetching automatically
 
   const handleTitleSave = () => {
+    console.log('🔧 [TITLE DEBUG] handleTitleSave called:', {
+      titleInput: titleInput.trim(),
+      currentTitle: courseData?.title,
+      willUpdate: titleInput.trim() && titleInput !== courseData?.title
+    });
+    
     if (titleInput.trim() && titleInput !== courseData?.title) {
+      console.log('🔧 [TITLE DEBUG] Calling updateCourseData with title:', titleInput.trim());
       updateCourseData({ title: titleInput.trim() });
       setIsEditingTitle(false);
     }
@@ -126,8 +176,8 @@ const CourseBuilderPage = () => {
   };
 
   const handleChapterCreated = (newChapter: ChapterResponse) => {
-    // React Query will automatically refetch chapters
-    refetchChapters();
+    // React Query cache invalidation handles updates automatically
+    // No manual refetch needed - this prevents loading states
     
     // Toast is already shown in CreateChapterModal
   };
@@ -138,8 +188,8 @@ const CourseBuilderPage = () => {
   };
 
   const handleLessonCreated = (newLesson: LessonResponse) => {
-    // React Query will automatically refetch chapters with lessons
-    refetchChapters();
+    // React Query cache invalidation handles updates automatically
+    // No manual refetch needed - this prevents loading states
     
     // Toast is already shown in CreateLessonModal
   };
@@ -164,8 +214,8 @@ const CourseBuilderPage = () => {
   };
 
   const handleChapterUpdated = (updatedChapter: ChapterEditData) => {
-    // React Query will automatically refetch chapters
-    refetchChapters();
+    // React Query cache invalidation handles updates automatically
+    // No manual refetch needed - this prevents loading states
     
     // Toast is already shown in EditChapterModal
   };
@@ -185,20 +235,8 @@ const CourseBuilderPage = () => {
   };
 
   const handleConfirmChapterDelete = async (chapterId: string) => {
-    try {
-      deleteChapterAction(chapterId, {
-        onSuccess: () => {
-          // Toast is already shown in useDeleteChapter hook
-          // React Query will automatically refetch chapters
-        },
-        onError: (error: any) => {
-          ToastService.error(error.message || 'Something went wrong');
-          throw error; // Re-throw to handle in modal
-        }
-      });
-    } catch (error: any) {
-      throw error;
-    }
+    // Simply call the delete action - optimistic updates and toasts are handled in the hook
+    deleteChapterAction(chapterId);
   };
 
   const handleLessonEdit = (lessonId: string) => {
@@ -239,8 +277,8 @@ const CourseBuilderPage = () => {
   };
 
   const handleLessonUpdated = (updatedLesson: LessonEditData) => {
-    // React Query will automatically refetch chapters with lessons
-    refetchChapters();
+    // React Query cache invalidation handles updates automatically
+    // No manual refetch needed - this prevents loading states
     
     // Toast is already shown in EditLessonModal
   };
@@ -276,22 +314,9 @@ const CourseBuilderPage = () => {
     }
   };
 
-  const handleConfirmLessonDelete = async (lessonId: string) => {
-    try {
-      deleteLessonAction(lessonId, {
-        onSuccess: () => {
-          // Toast is already shown in useDeleteLesson hook
-          // React Query will automatically refetch chapters with lessons
-        },
-        onError: (error: any) => {
-          console.error('Failed to delete lesson:', error);
-          ToastService.error(error.message || 'Something went wrong');
-          throw error; // Re-throw to handle in modal
-        }
-      });
-    } catch (error: any) {
-      throw error;
-    }
+  const handleConfirmLessonDelete = (lessonId: string) => {
+    // Simply call the delete action - optimistic updates and toasts are handled in the hook
+    deleteLessonAction(lessonId);
   };
 
   const handleChaptersReorder = async (reorderedChapters: any[]) => {
@@ -367,7 +392,7 @@ const CourseBuilderPage = () => {
     >
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="bg-white border-b sticky top-0 z-10">
+        <div className="bg-white border-b sticky top-0 z-50">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -490,7 +515,13 @@ const CourseBuilderPage = () => {
                       </label>
                       <textarea
                         value={courseData.description || ''}
-                        onChange={(e) => updateCourseData({ description: e.target.value })}
+                        onChange={(e) => {
+                          console.log('🔧 [DESCRIPTION DEBUG] onChange called:', {
+                            newValue: e.target.value,
+                            currentValue: courseData.description
+                          });
+                          updateCourseData({ description: e.target.value });
+                        }}
                         rows={4}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter course description..."

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Check, Loader2, AlertCircle, AlertTriangle } from 'lucide-react';
+import { Check, Loader2, AlertCircle, AlertTriangle, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'conflict' | 'offline';
 
 interface SaveStatusIndicatorProps {
   status: SaveStatus;
@@ -18,26 +18,37 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
   className,
 }) => {
   const formatTime = (date: Date) => {
+    // Format as HH:MM for today, or MM/DD for other days
     const now = new Date();
-    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+    const isToday = date.toDateString() === now.toDateString();
     
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-    return date.toLocaleDateString();
+    if (isToday) {
+      return date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        month: '2-digit', 
+        day: '2-digit' 
+      });
+    }
   };
 
-  if (status === 'idle') return null;
+  // Always show the component, even when idle
+  // if (status === 'idle') return null;
 
   return (
     <div
       className={cn(
         'flex items-center gap-2 text-sm',
         {
-          'text-gray-500': status === 'saving',
-          'text-green-600': status === 'saved',
-          'text-red-600': status === 'error',
-          'text-orange-600': status === 'conflict',
+          'text-gray-400': status === 'saving',
+          'text-gray-500': status === 'saved', // Light grey for saved status
+          'text-red-500': status === 'error',
+          'text-orange-500': status === 'conflict',
+          'text-gray-600': status === 'offline',
         },
         className
       )}
@@ -53,7 +64,7 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
         <>
           <Check className="w-4 h-4" />
           <span>
-            Saved {lastSavedAt ? formatTime(lastSavedAt) : ''}
+            Saved at {lastSavedAt ? formatTime(lastSavedAt) : ''}
           </span>
         </>
       )}
@@ -69,6 +80,26 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
         <>
           <AlertTriangle className="w-4 h-4" />
           <span>{error || 'Conflict detected'}</span>
+        </>
+      )}
+      
+      {status === 'idle' && lastSavedAt && (
+        <>
+          <Check className="w-4 h-4 text-gray-400" />
+          <span className="text-gray-400">
+            Last saved at {formatTime(lastSavedAt)}
+          </span>
+        </>
+      )}
+      
+      {status === 'idle' && !lastSavedAt && (
+        <span className="text-gray-400">Not saved yet</span>
+      )}
+      
+      {status === 'offline' && (
+        <>
+          <WifiOff className="w-4 h-4" />
+          <span>Offline - changes will sync when reconnected</span>
         </>
       )}
     </div>

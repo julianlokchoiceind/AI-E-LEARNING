@@ -10,7 +10,7 @@ interface RequestOptions extends RequestInit {
 
 class ApiClient {
   private baseUrl: string;
-  private defaultTimeout: number = 120000; // 🔧 FIX: Increase to 120 seconds (2 minutes) for course operations
+  private defaultTimeout: number = 10000; // 10 seconds timeout for course operations
 
   constructor(baseUrl?: string) {
     // Use the provided baseUrl or fall back to API_ENDPOINTS.BASE_URL
@@ -25,10 +25,18 @@ class ApiClient {
         const { getSession } = await import('next-auth/react');
         const session = await getSession();
         
+        console.log('🔐 [AUTH DEBUG] Session check:', {
+          hasSession: !!session,
+          hasAccessToken: !!session?.accessToken,
+          sessionKeys: session ? Object.keys(session) : [],
+          tokenLength: session?.accessToken ? (session.accessToken as string).length : 0
+        });
+        
         if (session?.accessToken) {
           return session.accessToken as string;
         }
       } catch (error) {
+        console.error('🔐 [AUTH DEBUG] Failed to get session:', error);
       }
     }
     return null;
@@ -53,16 +61,23 @@ class ApiClient {
     const controller = new AbortController();
     const actualTimeout = timeout || this.defaultTimeout;
     
-    
-    const timeoutId = setTimeout(
-      () => {
-        controller.abort();
-      },
-      actualTimeout
-    );
+    // 🔧 SIMPLE: Just abort after timeout - no complex logic
+    const timeoutId = setTimeout(() => {
+      console.log('🚨 REQUEST TIMEOUT - ABORTING AFTER', actualTimeout, 'ms');
+      controller.abort();
+    }, actualTimeout);
 
-    // Clear timeout when request completes
-    controller.signal.addEventListener('abort', () => clearTimeout(timeoutId));
+    // Clear timeout when request completes naturally
+    const originalAbort = controller.abort;
+    let timeoutCleared = false;
+    
+    controller.abort = () => {
+      if (!timeoutCleared) {
+        clearTimeout(timeoutId);
+        timeoutCleared = true;
+      }
+      originalAbort.call(controller);
+    };
 
     return controller;
   }
@@ -130,9 +145,28 @@ class ApiClient {
       ? await this.addAuthHeader(requestHeaders)
       : requestHeaders;
 
+    console.log('🔐 [AUTH DEBUG] Final headers:', {
+      requireAuth,
+      hasAuthHeader: !!(finalHeaders as any)['Authorization'],
+      authHeaderLength: (finalHeaders as any)['Authorization'] ? (finalHeaders as any)['Authorization'].length : 0,
+      allHeaders: Object.keys(finalHeaders as any)
+    });
+
     debug('API-CLIENT', 'Request headers:', finalHeaders);
 
     try {
+      console.log('🚀 [API-CLIENT] Making fetch request:', {
+        url: fullUrl,
+        method: fetchOptions.method,
+        headers: Object.fromEntries(Object.entries(finalHeaders)),
+        bodySize: fetchOptions.body ? 
+          (typeof fetchOptions.body === 'string' ? fetchOptions.body.length : 
+           fetchOptions.body instanceof FormData ? '[FormData]' : 
+           fetchOptions.body instanceof Blob ? fetchOptions.body.size : 
+           '[Unknown]') : 0,
+        timeout: timeout || this.defaultTimeout
+      });
+      
       const response = await fetch(fullUrl, {
         ...fetchOptions,
         headers: finalHeaders,
@@ -278,11 +312,19 @@ class ApiClient {
 
       debug('API-CLIENT', 'Request successful, returning:', data);
       
+      // 🔧 FIX: Clear timeout on successful response
+      controller.abort(); // This will clear timeout via our custom logic
+      
       // Return the full response to maintain access to success, data, and message
       // This allows frontend to display backend messages and handle responses consistently
       debug('API-CLIENT', 'Returning full response with StandardResponse format');
       return data;
     } catch (error) {
+      // 🔧 FIX: Clear timeout on error response (except abort errors)
+      if (!(error instanceof Error && error.name === 'AbortError')) {
+        controller.abort(); // This will clear timeout via our custom logic
+      }
+      
       debug('API-CLIENT', 'Caught error:', {
         errorType: error?.constructor?.name,
         errorMessage: error instanceof Error ? error.message : String(error),

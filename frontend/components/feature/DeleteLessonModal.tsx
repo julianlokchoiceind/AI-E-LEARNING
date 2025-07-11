@@ -22,7 +22,7 @@ interface DeleteLessonModalProps {
   isOpen: boolean;
   onClose: () => void;
   lesson: LessonDeleteData | null;
-  onConfirmDelete: (lessonId: string) => Promise<void>;
+  onConfirmDelete: (lessonId: string) => void;
 }
 
 export const DeleteLessonModal: React.FC<DeleteLessonModalProps> = ({

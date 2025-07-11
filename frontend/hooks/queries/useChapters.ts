@@ -69,15 +69,25 @@ export function useChapterQuery(chapterId: string, enabled: boolean = true) {
  * Critical: Content creation process
  */
 export function useCreateChapter() {
+  const queryClient = useQueryClient();
+  
   return useApiMutation(
     (chapterData: ChapterData) => createChapter(chapterData),
     {
-      invalidateQueries: [
-        ['chapters'], // Refresh chapter lists
-        ['course'], // Refresh course details (chapter count)
-        ['creator-courses'], // Refresh creator dashboard
-        ['admin-courses'], // Refresh admin view
-      ],
+      onSuccess: (data, variables) => {
+        // Get the courseId from the chapter data
+        const courseId = variables.course_id;
+        
+        // Invalidate specific queries with courseId
+        queryClient.invalidateQueries({ queryKey: ['course-chapters', courseId] });
+        queryClient.invalidateQueries({ queryKey: ['chapters', courseId] });
+        queryClient.invalidateQueries({ queryKey: ['chapters-with-lessons', courseId] });
+        queryClient.invalidateQueries({ queryKey: ['course', courseId] });
+        
+        // Also invalidate general lists
+        queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+      },
       operationName: 'create-chapter', // Unique operation ID for toast deduplication
     }
   );
@@ -88,16 +98,28 @@ export function useCreateChapter() {
  * Critical: Content management workflow
  */
 export function useUpdateChapter() {
+  const queryClient = useQueryClient();
+  
   return useApiMutation(
     ({ chapterId, data }: { chapterId: string; data: ChapterUpdateData }) => 
       updateChapter(chapterId, data),
     {
-      invalidateQueries: [
-        ['chapter'], // Refresh chapter details
-        ['chapters'], // Refresh chapter lists
-        ['course'], // Refresh course details
-        ['creator-courses'], // Refresh creator dashboard
-      ],
+      onSuccess: async (response, variables) => {
+        // Get the courseId from the response data
+        const courseId = response.data?.course_id;
+        
+        if (courseId) {
+          // Invalidate specific queries with courseId
+          queryClient.invalidateQueries({ queryKey: ['course-chapters', courseId] });
+          queryClient.invalidateQueries({ queryKey: ['chapters', courseId] });
+          queryClient.invalidateQueries({ queryKey: ['chapters-with-lessons', courseId] });
+          queryClient.invalidateQueries({ queryKey: ['course', courseId] });
+        }
+        
+        // Also invalidate chapter-specific queries
+        queryClient.invalidateQueries({ queryKey: ['chapter', variables.chapterId] });
+        queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
+      },
       operationName: 'update-chapter', // Unique operation ID for toast deduplication
     }
   );
@@ -116,14 +138,16 @@ export function useDeleteChapter() {
     
     // Optimistic update - Update UI immediately
     onMutate: async (chapterId: string) => {
-      // Cancel any outgoing refetches
+      // Cancel any outgoing refetches for chapter-related queries
       await queryClient.cancelQueries({ 
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'chapters'
+        predicate: (query) => Array.isArray(query.queryKey) && 
+          (query.queryKey[0] === 'chapters' || query.queryKey[0] === 'course-chapters')
       });
       
-      // Get all chapter-related cache keys
+      // Get all chapter-related cache keys (including course-chapters)
       const cacheKeys = queryClient.getQueryCache().findAll({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'chapters'
+        predicate: (query) => Array.isArray(query.queryKey) && 
+          (query.queryKey[0] === 'chapters' || query.queryKey[0] === 'course-chapters')
       });
       
       // Store snapshots for rollback
@@ -178,10 +202,12 @@ export function useDeleteChapter() {
     
     // Always refetch to ensure consistency
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['chapters'] });
-      queryClient.invalidateQueries({ queryKey: ['course'] });
-      queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+      // Minimal invalidation - only refresh specific queries that need server sync
+      queryClient.invalidateQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && 
+          (query.queryKey[0] === 'chapters' || query.queryKey[0] === 'course-chapters'),
+        refetchType: 'active' // Only refetch if query is actively used
+      });
     }
   });
   

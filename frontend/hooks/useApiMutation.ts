@@ -75,8 +75,21 @@ export function useApiMutation<TData = any, TVariables = any>(
   // DECISION: Use optimistic path if optimistic config provided, otherwise standard path
   const mutation = useMutation<StandardResponse<TData>, AppError, TVariables>({
     mutationFn: async (variables: TVariables) => {
+      console.log('🔧 [MUTATION DEBUG] mutationFn called:', {
+        operationName,
+        variables,
+        mutationFnName: mutationFn.name
+      });
+      
       try {
+        console.log('🔧 [MUTATION DEBUG] Calling actual mutation function...');
         const response = await mutationFn(variables);
+        
+        console.log('🔧 [MUTATION DEBUG] Mutation success:', {
+          operationName,
+          response,
+          hasMessage: !!response?.message
+        });
         
         // Show success toast if enabled and message exists
         if (showToast && response.message) {
@@ -87,6 +100,13 @@ export function useApiMutation<TData = any, TVariables = any>(
         
         return response;
       } catch (error: any) {
+        console.error('🔧 [MUTATION DEBUG] Mutation failed:', {
+          operationName,
+          error,
+          errorMessage: error?.message,
+          variables
+        });
+        
         const appError = handleError(error, false); // Prevent auto-toast, handle manually
         if (showToast) {
           // Generate operation-based ID for deduplication

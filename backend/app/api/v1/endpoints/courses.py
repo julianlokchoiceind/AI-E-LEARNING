@@ -148,7 +148,7 @@ async def list_courses(
 
 @router.get("/{course_id}", response_model=StandardResponse[CourseResponse])
 @measure_performance("api.courses.get")
-@cache_response(ttl_seconds=300)  # Cache for 5 minutes
+@cache_response(ttl_seconds=60)  # 60 seconds cache with automatic invalidation on update
 async def get_course(
     course_id: str,
     current_user: Optional[User] = Depends(get_current_user_optional)
@@ -204,14 +204,28 @@ async def update_course(
     Only course creator or admin can update.
     Supports partial updates.
     """
+    logger.info(f"PUT /courses/{course_id} endpoint hit!")
     try:
+        logger.info(f"Starting course update: course_id={course_id}, update_data={course_update.dict(exclude_unset=True)}")
+        
         # Update course
         course = await CourseService.update_course(course_id, course_update, current_user)
         
+        logger.info(f"Course updated successfully, converting to response format")
+        
         # Convert to response format
         course_dict = course.dict()
+        
+        # Convert ObjectId fields to strings - Fixed conversion
+        course_dict["id"] = str(course.id)
+        course_dict["creator_id"] = str(course.creator_id)
+        
+        # Check access
         access_info = await CourseService.check_course_access(course, current_user)
         course_dict.update(access_info)
+        
+        # TODO: Add progress percentage when Progress model is implemented
+        course_dict["progress_percentage"] = 0
         
         return StandardResponse(
             success=True,
@@ -223,6 +237,7 @@ async def update_course(
     except ForbiddenException as e:
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
+        logger.error(f"Error updating course: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to update course")
 
 

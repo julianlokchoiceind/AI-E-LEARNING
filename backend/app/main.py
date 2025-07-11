@@ -161,7 +161,8 @@ app.add_middleware(
 
 # Add security middleware - DEBUG: Testing each middleware individually
 app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(InputValidationMiddleware)  # Fixed: now properly handles OAuth2 and form data
+# Re-enabled with smart 3-layer validation approach
+app.add_middleware(InputValidationMiddleware)  # Fixed: field-aware validation with nh3 sanitization
 app.add_middleware(TokenBlacklistMiddleware)  # Check blacklisted tokens for secure logout
 
 

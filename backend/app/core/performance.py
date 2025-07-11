@@ -248,8 +248,24 @@ class ResponseCache:
 response_cache = ResponseCache()
 
 
-def cache_response(ttl_seconds: int = 300):
-    """Decorator to cache API responses"""
+def invalidate_cache_for_course(course_id: str):
+    """Invalidate cache entries for a specific course"""
+    keys_to_remove = []
+    for key in list(response_cache.cache.keys()):
+        if course_id in key:
+            keys_to_remove.append(key)
+    
+    for key in keys_to_remove:
+        if key in response_cache.cache:
+            del response_cache.cache[key]
+        if key in response_cache.ttl:
+            del response_cache.ttl[key]
+    
+    logger.info(f"Invalidated {len(keys_to_remove)} cache entries for course {course_id}")
+
+
+def cache_response(ttl_seconds: int = 300, invalidate_on_update: bool = True):
+    """Decorator to cache API responses with automatic invalidation"""
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):

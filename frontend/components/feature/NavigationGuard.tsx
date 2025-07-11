@@ -11,7 +11,7 @@ import { ToastService } from '@/lib/toast/ToastService';
 
 interface NavigationGuardProps {
   hasUnsavedChanges: boolean;
-  saveStatus?: 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
+  saveStatus?: 'idle' | 'saving' | 'saved' | 'error' | 'conflict' | 'offline';
   errorMessage?: string | null;
   onForceSave?: () => Promise<boolean>;
   message?: string;

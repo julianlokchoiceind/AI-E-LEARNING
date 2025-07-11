@@ -102,6 +102,7 @@ export function useCreateLesson() {
       invalidateQueries: [
         ['lessons'], // Refresh lesson lists
         ['chapters'], // Refresh chapter details (lesson count)
+        ['course-chapters'], // Refresh course editor chapter lists (CRITICAL FIX)
         ['chapters-with-lessons'], // Refresh course structure
         ['course'], // Refresh course details
         ['creator-courses'], // Refresh creator dashboard
@@ -124,6 +125,7 @@ export function useUpdateLesson() {
       invalidateQueries: [
         ['lesson'], // Refresh lesson details
         ['lessons'], // Refresh lesson lists
+        ['course-chapters'], // Refresh course editor chapter lists
         ['chapters-with-lessons'], // Refresh course structure
         ['course'], // Refresh course details
         ['creator-courses'], // Refresh creator dashboard
@@ -146,14 +148,16 @@ export function useDeleteLesson() {
     
     // Optimistic update - Update UI immediately
     onMutate: async (lessonId: string) => {
-      // Cancel any outgoing refetches
+      // Cancel any outgoing refetches for lesson-related queries
       await queryClient.cancelQueries({ 
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'lessons'
+        predicate: (query) => Array.isArray(query.queryKey) && 
+          (query.queryKey[0] === 'lessons' || query.queryKey[0] === 'course-chapters')
       });
       
-      // Get all lesson-related cache keys
+      // Get all lesson-related cache keys (including course-chapters for nested lessons)
       const cacheKeys = queryClient.getQueryCache().findAll({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'lessons'
+        predicate: (query) => Array.isArray(query.queryKey) && 
+          (query.queryKey[0] === 'lessons' || query.queryKey[0] === 'course-chapters')
       });
       
       // Store snapshots for rollback
@@ -168,7 +172,44 @@ export function useDeleteLesson() {
         queryClient.setQueryData(cache.queryKey, (old: any) => {
           if (!old) return old;
           
-          // Handle different data structures
+          // Handle course-chapters structure (lessons nested in chapters)
+          if (cache.queryKey[0] === 'course-chapters') {
+            const chapters = old?.data?.chapters || old?.chapters || [];
+            
+            const updatedChapters = chapters.map((chapter: any) => {
+              if (chapter.lessons && Array.isArray(chapter.lessons)) {
+                const filteredLessons = chapter.lessons.filter((lesson: any) => lesson.id !== lessonId);
+                
+                // Only update if lessons changed
+                if (filteredLessons.length !== chapter.lessons.length) {
+                  return {
+                    ...chapter,
+                    lessons: filteredLessons,
+                    total_lessons: filteredLessons.length
+                  };
+                }
+              }
+              return chapter;
+            });
+            
+            // Maintain same structure for course-chapters
+            if (old?.data?.chapters) {
+              return {
+                ...old,
+                data: {
+                  ...old.data,
+                  chapters: updatedChapters
+                }
+              };
+            }
+            
+            return {
+              ...old,
+              chapters: updatedChapters
+            };
+          }
+          
+          // Handle direct lessons structure
           const lessons = old?.data?.lessons || old?.lessons || [];
           const filteredLessons = lessons.filter((lesson: any) => {
             const id = lesson.id;
@@ -252,12 +293,12 @@ export function useDeleteLesson() {
     
     // Always refetch to ensure consistency
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['chapters'] });
-      queryClient.invalidateQueries({ queryKey: ['chapters-with-lessons'] });
-      queryClient.invalidateQueries({ queryKey: ['course'] });
-      queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+      // Minimal invalidation - only refresh queries that need server sync
+      queryClient.invalidateQueries({ 
+        predicate: (query) => Array.isArray(query.queryKey) && 
+          (query.queryKey[0] === 'lessons' || query.queryKey[0] === 'course-chapters'),
+        refetchType: 'active' // Only refetch if query is actively used
+      });
     }
   });
   

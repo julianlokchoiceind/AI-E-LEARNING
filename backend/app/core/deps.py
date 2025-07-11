@@ -18,8 +18,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     Get current authenticated user from JWT token.
     Raises HTTPException if token is invalid or user not found.
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info("get_current_user called")
+    
     # Extract token from Bearer header
     token = credentials.credentials
+    logger.info(f"Token extracted: {token[:20]}...")
     
     # Decode token
     user_id = decode_token(token)

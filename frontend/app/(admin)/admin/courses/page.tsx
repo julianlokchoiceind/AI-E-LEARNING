@@ -133,11 +133,11 @@ export default function CourseApproval() {
   };
 
   const handleDeleteCourse = (course: Course) => {
-    // Fix: Use course.id instead of course.id (API returns id field)
-    const courseId = course.id || (course as any).id;
+    // Use course.id (API consistently returns id field)
+    const courseId = course.id;
     
     setSelectedCourseForDelete({
-      _id: courseId,
+      id: courseId,  // Fix: Use 'id' to match DeleteCourseModal interface
       title: course.title,
       description: course.description,
       total_lessons: course.total_lessons,
