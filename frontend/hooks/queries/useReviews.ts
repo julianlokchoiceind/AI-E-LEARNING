@@ -118,7 +118,10 @@ export function useReportReview() {
       return reviewAPI.reportReview(reviewId, { reason, details });
     },
     {
-      // No cache invalidation needed for reports
+      operationName: 'report-review',
+      invalidateQueries: [
+        ['reviews'], // Refresh reviews to show reported status
+      ],
     }
   );
 }

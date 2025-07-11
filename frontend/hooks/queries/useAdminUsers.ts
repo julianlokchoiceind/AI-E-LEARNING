@@ -60,6 +60,12 @@ export function useUpdateUserRole() {
     ({ userId, role }: UserRoleUpdate) => updateUserRole(userId, role),
     {
       operationName: 'update-user-role',
+      invalidateQueries: [
+        ['admin-users'],      // Refresh user list
+        ['admin-dashboard'],  // Update dashboard stats
+        ['user-analytics'],   // Update analytics data
+        ['users-by-role'],    // Update role-based lists
+      ],
       optimistic: {
         // Optimistic update: Update UI immediately before API call
         onMutate: async ({ userId, role }: UserRoleUpdate) => {

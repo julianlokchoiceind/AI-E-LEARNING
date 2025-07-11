@@ -52,10 +52,14 @@ export function useCourseCompletionCheck() {
       return response as StandardResponse<any>;
     },
     {
+      operationName: 'course-completion-check',
       invalidateQueries: [
         ['course-progress'], // Refresh course progress
         ['student-dashboard'], // Refresh dashboard
         ['certificates'], // Refresh certificates
+        ['my-courses'], // Refresh my courses list
+        ['course'], // Refresh course details
+        ['enrollment'], // Refresh enrollment status
       ],
     }
   );
@@ -92,8 +96,12 @@ export function useGenerateQuizMutation() {
       return response as StandardResponse<any>;
     },
     {
+      operationName: 'generate-quiz',
       invalidateQueries: [
         ['lesson-quiz'], // Refresh lesson quiz
+        ['course-content'], // Refresh course content
+        ['lesson'], // Refresh lesson details
+        ['course-chapters'], // Refresh course structure
       ],
     }
   );
@@ -141,9 +149,13 @@ export function useSendAIMessage() {
       return response as StandardResponse<any>;
     },
     {
+      operationName: 'send-ai-message',
       invalidateQueries: [
         ['conversation-history'], // Refresh conversation history
+        // Note: If AI message affects course/lesson progress, manual invalidation needed
       ],
+      // Ultra-think: AI messages may provide hints/solutions that affect learning
+      // but we don't automatically invalidate progress queries here to avoid over-fetching
     }
   );
 }
@@ -180,8 +192,10 @@ export function useClearConversationHistory() {
       return response as StandardResponse<any>;
     },
     {
+      operationName: 'clear-conversation',
       invalidateQueries: [
         ['conversation-history'], // Refresh conversation history
+        ['ai-suggestions'], // Clear AI suggestions since they may depend on conversation context
       ],
     }
   );

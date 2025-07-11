@@ -110,6 +110,12 @@ export function useCreateCourse() {
     () => createCourse(),
     {
       operationName: 'create-course',
+      invalidateQueries: [
+        ['courses'],          // Refresh public course list
+        ['admin-courses'],    // Refresh admin view
+        ['creator-courses'],  // Refresh creator dashboard
+        ['featured-courses'], // Update featured list
+      ],
       optimistic: {
         // Optimistic update: Add temporary course immediately
         onMutate: async () => {
@@ -242,6 +248,13 @@ export function useDeleteCourse() {
     (courseId: string) => deleteCourse(courseId),
     {
       operationName: 'delete-course',
+      invalidateQueries: [
+        ['courses'],          // Refresh course lists
+        ['admin-courses'],    // Refresh admin view
+        ['creator-courses'],  // Refresh creator dashboard
+        ['my-courses'],       // Remove from enrolled courses
+        ['creator-dashboard'], // Update creator dashboard
+      ],
       onSuccess: async (response, variables) => {
         // IMPORTANT: Remove the specific course query to prevent 404 errors
         queryClient.removeQueries({ 
@@ -598,6 +611,11 @@ export function useApproveCourse() {
     (courseId: string) => approveCourse(courseId),
     {
       operationName: 'approve-course',
+      invalidateQueries: [
+        ['admin-courses'],    // Refresh admin view
+        ['courses'],          // Update public catalog
+        ['course'],           // Update course details
+      ],
       optimistic: {
         // Optimistic update: Update UI immediately before API call
         onMutate: async (courseId: string) => {
@@ -677,6 +695,11 @@ export function useRejectCourse() {
       rejectCourse(courseId, reason),
     {
       operationName: 'reject-course',
+      invalidateQueries: [
+        ['admin-courses'],    // Refresh admin view
+        ['courses'],          // Update public catalog
+        ['course'],           // Update course details
+      ],
       optimistic: {
         // Optimistic update: Update UI immediately before API call
         onMutate: async ({ courseId, reason }: { courseId: string; reason: string }) => {

@@ -113,8 +113,11 @@ export function useStartLesson() {
       return await api.post(`/progress/lessons/${lessonId}/start`, {}, { requireAuth: true });
     },
     {
+      operationName: 'start-lesson',
       invalidateQueries: [
         ['lesson-progress'], // Refresh lesson progress
+        ['course-chapters'], // Update lesson unlock status in navigation
+        ['student-dashboard'], // Update dashboard learning stats
       ],
       showToast: false, // Don't show toast for lesson start
     }
@@ -135,8 +138,11 @@ export function useUpdateLessonProgress() {
       }, { requireAuth: true });
     },
     {
+      operationName: 'update-lesson-progress',
       invalidateQueries: [
         ['lesson-progress'], // Refresh lesson progress
+        // Ultra-think: Don't invalidate course-progress on every update (too frequent)
+        // Only invalidate when progress is significant (e.g., 25%, 50%, 75%, 100%)
       ],
       showToast: false, // Don't show toast for progress updates (too frequent)
     }
@@ -155,6 +161,7 @@ export function useMarkLessonComplete() {
       }, { requireAuth: true });
     },
     {
+      operationName: 'mark-lesson-complete',
       invalidateQueries: [
         ['lesson-progress'], // Refresh lesson progress
         ['lesson-progress-batch'], // Refresh batch progress
@@ -162,6 +169,8 @@ export function useMarkLessonComplete() {
         ['next-lesson'], // Refresh next lesson availability
         ['student-dashboard'], // Update dashboard
         ['my-courses'], // Update course list
+        ['course-chapters'], // Update lesson unlock status
+        ['enrollment'], // Update enrollment progress
       ],
     }
   );
@@ -267,6 +276,7 @@ export function useUpdateChapter() {
       invalidateQueries: [
         ['chapter'], // Refresh chapter data
         ['course-chapters'], // Refresh course chapters list
+        ['courses'], // Chapter info may affect course metadata
       ],
     }
   );
@@ -288,6 +298,8 @@ export function useCreateLesson() {
       invalidateQueries: [
         ['chapter-lessons'], // Refresh chapter lessons
         ['course-chapters'], // Refresh course structure
+        ['course'], // Update course lesson count
+        ['lessons'], // Refresh lessons list
       ],
     }
   );
@@ -327,6 +339,7 @@ export function useUpdateLesson() {
       invalidateQueries: [
         ['lesson'], // Refresh lesson data
         ['chapter-lessons'], // Refresh chapter lessons
+        ['course-chapters'], // Lesson info shows in course structure
       ],
     }
   );
@@ -343,6 +356,7 @@ export function useCreateQuiz() {
     {
       invalidateQueries: [
         ['lesson-quiz'], // Refresh lesson quiz
+        ['lesson'], // Update has_quiz flag
       ],
     }
   );
@@ -359,6 +373,7 @@ export function useUpdateQuiz() {
     {
       invalidateQueries: [
         ['lesson-quiz'], // Refresh lesson quiz
+        ['lesson'], // Update has_quiz flag
       ],
     }
   );
@@ -376,6 +391,9 @@ export function useSubmitQuiz() {
       invalidateQueries: [
         ['quiz-progress'], // Refresh quiz progress
         ['lesson-progress'], // Refresh lesson progress
+        ['course-progress'], // Update overall course progress
+        ['student-dashboard'], // Update dashboard stats
+        ['course-chapters'], // May unlock next lesson
       ],
     }
   );
