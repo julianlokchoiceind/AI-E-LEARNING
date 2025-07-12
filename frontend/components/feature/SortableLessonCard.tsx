@@ -123,10 +123,6 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
             ? 'shadow-lg border-blue-300 bg-blue-50/50' 
             : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
         } ${
-          isSortableDragging 
-            ? 'transform rotate-1 scale-105' 
-            : ''
-        } ${
           isLocked 
             ? 'bg-gray-50' 
             : lesson.is_completed 

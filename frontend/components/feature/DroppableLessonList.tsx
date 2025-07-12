@@ -184,7 +184,7 @@ export const DroppableLessonList: React.FC<DroppableLessonListProps> = ({
       {/* Drag Overlay */}
       <DragOverlay>
         {activeId && draggedLesson ? (
-          <div className="opacity-90 transform rotate-1 shadow-2xl">
+          <div className="opacity-90 shadow-2xl">
             <SortableLessonCard
               lesson={draggedLesson}
               chapterId={chapterId}

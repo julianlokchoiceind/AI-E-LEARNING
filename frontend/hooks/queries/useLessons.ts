@@ -117,7 +117,7 @@ export function useCreateLesson() {
  * UPDATE LESSON - Lesson editing
  * Critical: Content management workflow
  */
-export function useUpdateLesson() {
+export function useUpdateLesson(silent: boolean = false) {
   return useApiMutation(
     ({ lessonId, data }: { lessonId: string; data: LessonUpdateData }) => 
       updateLesson(lessonId, data),
@@ -131,6 +131,7 @@ export function useUpdateLesson() {
         ['creator-courses'], // Refresh creator dashboard
       ],
       operationName: 'update-lesson', // Unique operation ID for toast deduplication
+      showToast: !silent, // 🔧 FIX: Disable toast when silent=true (for autosave)
     }
   );
 }

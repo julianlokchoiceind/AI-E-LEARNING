@@ -221,7 +221,7 @@ export function useCreateCourse() {
  * UPDATE COURSE - Course editing
  * Critical: Content management workflow
  */
-export function useUpdateCourse() {
+export function useUpdateCourse(silent: boolean = false) {
   return useApiMutation(
     ({ courseId, data }: { courseId: string; data: any }) => updateCourse(courseId, data),
     {
@@ -233,6 +233,7 @@ export function useUpdateCourse() {
         ['course-editor'], // Refresh course editor data
       ],
       operationName: 'update-course', // Unique operation ID for toast deduplication
+      showToast: !silent, // 🔧 FIX: Disable toast when silent=true (for autosave)
     }
   );
 }

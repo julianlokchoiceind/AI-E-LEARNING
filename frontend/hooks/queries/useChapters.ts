@@ -97,7 +97,7 @@ export function useCreateChapter() {
  * UPDATE CHAPTER - Chapter editing
  * Critical: Content management workflow
  */
-export function useUpdateChapter() {
+export function useUpdateChapter(silent: boolean = false) {
   const queryClient = useQueryClient();
   
   return useApiMutation(
@@ -121,6 +121,7 @@ export function useUpdateChapter() {
         queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
       },
       operationName: 'update-chapter', // Unique operation ID for toast deduplication
+      showToast: !silent, // 🔧 FIX: Disable toast when silent=true (for autosave)
     }
   );
 }

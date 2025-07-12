@@ -283,29 +283,29 @@ async def get_course_chapters_with_lessons(
     
     chapter_responses = [
         ChapterWithLessonsResponse(
-            id=str(chapter.id),
-            course_id=str(chapter.course_id),
-            title=chapter.title,
-            description=chapter.description,
-            order=chapter.order,
-            lesson_count=chapter.lesson_count,
-            total_duration=chapter.total_duration,
-            status=chapter.status,
-            created_at=chapter.created_at,
-            updated_at=chapter.updated_at,
+            id=chapter["id"],
+            course_id=chapter["course_id"],
+            title=chapter["title"],
+            description=chapter["description"],
+            order=chapter["order"],
+            lesson_count=chapter["lesson_count"],
+            total_duration=chapter["total_duration"],
+            status=chapter["status"],
+            created_at=chapter["created_at"],
+            updated_at=chapter["updated_at"],
             lessons=[
                 {
-                    "_id": str(lesson.id),
-                    "title": lesson.title,
-                    "description": lesson.description,
-                    "order": lesson.order,
-                    "video_duration": lesson.video.duration if lesson.video else 0,
-                    "has_quiz": lesson.has_quiz,
-                    "is_free_preview": getattr(lesson, 'is_free_preview', False),
+                    "_id": lesson["_id"],
+                    "title": lesson["title"],
+                    "description": lesson["description"],
+                    "order": lesson["order"],
+                    "video_duration": lesson["video_duration"],
+                    "has_quiz": lesson["has_quiz"],
+                    "is_free_preview": False,  # Default value
                     "is_completed": False,  # Will be populated based on user progress
                     "is_locked": False  # Will be calculated based on sequential learning
                 }
-                for lesson in getattr(chapter, 'lessons', [])
+                for lesson in chapter.get("lessons", [])
             ]
         )
         for chapter in chapters

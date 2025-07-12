@@ -85,7 +85,7 @@ class LessonService:
     async def get_lessons_by_chapter(
         chapter_id: str,
         user_id: Optional[str] = None
-    ) -> List[Lesson]:
+    ) -> List[dict]:
         """Get all lessons for a chapter."""
         # Verify chapter exists
         chapter = await Chapter.get(PydanticObjectId(chapter_id))
@@ -100,7 +100,10 @@ class LessonService:
             Lesson.chapter_id == PydanticObjectId(chapter_id)
         ).sort("order").to_list()
         
-        # Add unlock status and progress for authenticated users
+        # Convert to dict and add progress for authenticated users
+        result = []
+        progress_map = {}
+        
         if user_id:
             # Get progress data for all lessons
             progress_data = await Progress.find({
@@ -110,21 +113,58 @@ class LessonService:
             
             # Create progress map for quick lookup
             progress_map = {str(p.lesson_id): p for p in progress_data}
+        
+        # Process each lesson
+        for i, lesson in enumerate(lessons):
+            lesson_progress = progress_map.get(str(lesson.id))
             
-            # Check if previous lessons are completed
-            for i, lesson in enumerate(lessons):
-                lesson_progress = progress_map.get(str(lesson.id))
+            # Convert lesson to dict
+            lesson_dict = {
+                "id": str(lesson.id),
+                "_id": str(lesson.id),  # Frontend expects _id
+                "chapter_id": str(lesson.chapter_id),
+                "course_id": str(lesson.course_id),
+                "title": lesson.title,
+                "description": lesson.description or "",
+                "order": lesson.order,
+                "video": lesson.video.dict() if lesson.video else None,
+                "content": lesson.content,
+                "resources": lesson.resources or [],
+                "has_quiz": False,  # Default - will be updated when quiz system is implemented
+                "quiz_required": False,  # Default - will be updated when quiz system is implemented
+                "status": lesson.status,
+                "created_at": lesson.created_at,
+                "updated_at": lesson.updated_at
+            }
+            
+            # Add progress data if user is authenticated
+            if user_id:
+                # Check if previous lesson is completed (for sequential learning)
+                prev_completed = True
+                if i > 0:
+                    prev_lesson_progress = progress_map.get(str(lessons[i-1].id))
+                    prev_completed = prev_lesson_progress.video_progress.is_completed if prev_lesson_progress else False
                 
-                # Add progress data to lesson (as extra field)
-                lesson.progress = {
-                    "is_unlocked": i == 0 or (i > 0 and lessons[i-1].progress.get("is_completed", False)),
+                lesson_dict["progress"] = {
+                    "is_unlocked": i == 0 or prev_completed,
                     "is_completed": lesson_progress.video_progress.is_completed if lesson_progress else False,
                     "watch_percentage": lesson_progress.video_progress.watch_percentage if lesson_progress else 0,
                     "current_position": lesson_progress.video_progress.current_position if lesson_progress else 0,
-                    "quiz_passed": lesson_progress.quiz_progress.is_passed if lesson_progress and lesson.has_quiz else None
+                    "quiz_passed": lesson_progress.quiz_progress.is_passed if lesson_progress and lesson_dict["has_quiz"] else None
                 }
+            else:
+                # Default progress for non-authenticated users
+                lesson_dict["progress"] = {
+                    "is_unlocked": True,  # All lessons unlocked for preview
+                    "is_completed": False,
+                    "watch_percentage": 0,
+                    "current_position": 0,
+                    "quiz_passed": None
+                }
+            
+            result.append(lesson_dict)
         
-        return lessons
+        return result
     
     @staticmethod
     async def get_lessons_by_course(
@@ -152,7 +192,7 @@ class LessonService:
         lesson_id: str,
         user_id: Optional[str] = None,
         user_role: Optional[str] = None
-    ) -> Lesson:
+    ) -> dict:
         """Get lesson details."""
         lesson = await Lesson.get(PydanticObjectId(lesson_id))
         if not lesson:
@@ -192,15 +232,33 @@ class LessonService:
                             status_code=status.HTTP_403_FORBIDDEN,
                             detail="You are not enrolled in this course"
                         )
-            
-            # Add progress data for authenticated users
+        
+        # Convert lesson to dict to avoid Pydantic issues
+        lesson_dict = {
+            "id": str(lesson.id),
+            "_id": str(lesson.id),  # Frontend expects _id
+            "course_id": str(lesson.course_id),
+            "chapter_id": str(lesson.chapter_id),
+            "title": lesson.title,
+            "description": lesson.description or "",
+            "order": lesson.order,
+            "video": lesson.video.dict() if lesson.video else None,
+            "content": lesson.content,
+            "resources": lesson.resources or [],
+            "unlock_conditions": lesson.unlock_conditions.dict() if lesson.unlock_conditions else {},
+            "status": lesson.status,
+            "created_at": lesson.created_at,
+            "updated_at": lesson.updated_at
+        }
+        
+        # Add progress data for authenticated users
+        if user_id:
             progress = await Progress.find_one({
                 "user_id": user_id,
                 "lesson_id": lesson_id
             })
             
-            # Add progress as extra field
-            lesson.progress = {
+            lesson_dict["progress"] = {
                 "is_completed": progress.video_progress.is_completed if progress else False,
                 "watch_percentage": progress.video_progress.watch_percentage if progress else 0,
                 "current_position": progress.video_progress.current_position if progress else 0,
@@ -209,7 +267,7 @@ class LessonService:
                 "quiz_passed": progress.quiz_progress.is_passed if progress and progress.quiz_progress else False
             }
         
-        return lesson
+        return lesson_dict
     
     @staticmethod
     async def update_lesson(

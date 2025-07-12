@@ -49,7 +49,40 @@ const CourseBuilderPage = () => {
   // React Query hooks - automatic caching and state management
   const { data: courseResponse, loading: courseLoading, refetch: refetchCourse } = useCourseQuery(courseId);
   const { data: chaptersResponse, loading: chaptersLoading, refetch: refetchChapters } = useCourseChaptersQuery(courseId);
-  const { mutateAsync: updateCourseAction } = useUpdateCourse();
+  const { mutateAsync: updateCourseAction } = useUpdateCourse(true); // 🔧 FIX: silent=true for autosave (no toast spam)
+  const { mutateAsync: manualSaveCourseAction } = useUpdateCourse(false); // 🔧 Manual save with toast feedback
+
+  // 🔧 Custom manual save handler with toast feedback
+  const handleManualSave = async () => {
+    if (!courseData) {
+      ToastService.error('No course data to save');
+      return;
+    }
+
+    const courseIdToUse = courseData.id || courseData._id || courseId;
+    if (!courseIdToUse) {
+      ToastService.error('Course ID missing');
+      return;
+    }
+
+    // Filter out system fields (same logic as autosave)
+    const { 
+      _id, id, created_at, updated_at, stats, creator_id, creator_name, slug,
+      ...userEditableFields  
+    } = courseData;
+
+    const updateData = Object.fromEntries(
+      Object.entries(userEditableFields).filter(([_, v]) => v !== undefined && v !== null)
+    );
+
+    try {
+      await manualSaveCourseAction({ courseId: courseIdToUse, data: updateData });
+      // Toast will be shown automatically by useApiMutation (showToast=true)
+    } catch (error: any) {
+      // Error toast will be shown automatically by useApiMutation
+      console.error('Manual save failed:', error);
+    }
+  };
   
   // React Query mutations for chapter and lesson operations
   const { mutate: deleteChapterMutation } = useDeleteChapter();
@@ -551,10 +584,7 @@ const CourseBuilderPage = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => {
-                    console.log('🔄 [FORCE SAVE DEBUG] Save button clicked');
-                    forceSave();
-                  }}
+                  onClick={handleManualSave}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Save

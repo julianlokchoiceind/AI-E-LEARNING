@@ -231,25 +231,60 @@ class ChapterService:
             chapter.total_duration = total_duration
             await chapter.save()
 
-    async def get_chapters_with_lessons(self, course_id: str) -> List[Chapter]:
+    async def get_chapters_with_lessons(self, course_id: str) -> List[dict]:
         """Get all chapters for a course with lessons included."""
         from app.models.lesson import Lesson
+        from beanie import PydanticObjectId
+        
+        # Convert to MongoDB ObjectId if needed
+        if isinstance(course_id, str):
+            course_id = PydanticObjectId(course_id)
         
         # Get all chapters for the course
         chapters = await Chapter.find(
             Chapter.course_id == course_id
         ).sort("+order").to_list()
         
-        # Get all lessons for each chapter
+        # Build result with lessons
+        result = []
         for chapter in chapters:
+            # Get lessons for this chapter
             lessons = await Lesson.find(
-                Lesson.chapter_id == str(chapter.id)
+                Lesson.chapter_id == chapter.id
             ).sort("+order").to_list()
             
-            # Add lessons to chapter object
-            setattr(chapter, 'lessons', lessons)
+            # Convert chapter to dict
+            chapter_dict = {
+                "id": str(chapter.id),
+                "course_id": str(chapter.course_id),
+                "title": chapter.title,
+                "description": chapter.description,
+                "order": chapter.order,
+                "lesson_count": chapter.lesson_count,
+                "total_duration": chapter.total_duration,
+                "status": chapter.status,
+                "created_at": chapter.created_at,
+                "updated_at": chapter.updated_at,
+                "lessons": []
+            }
+            
+            # Add lessons to chapter
+            for lesson in lessons:
+                lesson_dict = {
+                    "_id": str(lesson.id),  # Frontend expects _id
+                    "id": str(lesson.id),
+                    "title": lesson.title,
+                    "description": lesson.description or "",
+                    "order": lesson.order,
+                    "video_duration": lesson.video.get("duration", 0) if lesson.video else 0,
+                    "has_quiz": False,  # Default - will be updated when quiz system is implemented
+                    "status": lesson.status
+                }
+                chapter_dict["lessons"].append(lesson_dict)
+            
+            result.append(chapter_dict)
         
-        return chapters
+        return result
 
 
 # Create service instance

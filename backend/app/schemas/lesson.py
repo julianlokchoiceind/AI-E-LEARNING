@@ -78,7 +78,7 @@ class LessonResponse(BaseModel):
     video: Optional[VideoContentSchema]
     content: Optional[str]
     resources: List[ResourceSchema]
-    unlock_conditions: UnlockConditionsSchema
+    unlock_conditions: Optional[UnlockConditionsSchema] = None
     status: str
     created_at: datetime
     updated_at: datetime

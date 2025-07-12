@@ -22,22 +22,22 @@ from app.api.deps import get_current_user, get_current_optional_user
 router = APIRouter()
 
 
-def lesson_to_response(lesson: Lesson) -> LessonResponse:
-    """Convert Lesson model to LessonResponse."""
+def lesson_to_response(lesson_dict: dict) -> LessonResponse:
+    """Convert lesson dict to LessonResponse."""
     return LessonResponse(
-        id=str(lesson.id),
-        course_id=str(lesson.course_id),
-        chapter_id=str(lesson.chapter_id),
-        title=lesson.title,
-        description=lesson.description,
-        order=lesson.order,
-        video=lesson.video.dict() if lesson.video else None,
-        content=lesson.content,
-        resources=lesson.resources,
-        unlock_conditions=lesson.unlock_conditions.dict() if lesson.unlock_conditions else None,
-        status=lesson.status,
-        created_at=lesson.created_at,
-        updated_at=lesson.updated_at
+        id=lesson_dict["id"],
+        course_id=lesson_dict["course_id"],
+        chapter_id=lesson_dict["chapter_id"],
+        title=lesson_dict["title"],
+        description=lesson_dict["description"],
+        order=lesson_dict["order"],
+        video=lesson_dict["video"],
+        content=lesson_dict["content"],
+        resources=lesson_dict["resources"],
+        unlock_conditions=lesson_dict.get("unlock_conditions"),  # Get from dict, can be None
+        status=lesson_dict["status"],
+        created_at=lesson_dict["created_at"],
+        updated_at=lesson_dict["updated_at"]
     )
 
 
@@ -66,9 +66,26 @@ async def create_lesson(
         user_id=str(current_user.id)
     )
     
+    # Convert Lesson object to dict for lesson_to_response
+    lesson_dict = {
+        "id": str(lesson.id),
+        "course_id": str(lesson.course_id),
+        "chapter_id": str(lesson.chapter_id),
+        "title": lesson.title,
+        "description": lesson.description or "",
+        "order": lesson.order,
+        "video": lesson.video.dict() if lesson.video else None,
+        "content": lesson.content,
+        "resources": lesson.resources or [],
+        "unlock_conditions": lesson.unlock_conditions.dict() if lesson.unlock_conditions else {},
+        "status": lesson.status,
+        "created_at": lesson.created_at,
+        "updated_at": lesson.updated_at
+    }
+    
     return StandardResponse(
         success=True,
-        data=lesson_to_response(lesson),
+        data=lesson_to_response(lesson_dict),
         message="Lesson created successfully"
     )
 
