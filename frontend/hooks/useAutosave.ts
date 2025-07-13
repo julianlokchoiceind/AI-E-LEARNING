@@ -106,7 +106,7 @@ export const useAutosave = <T = any>(
 
   // Fix: Update lastSavedAt when initialLastSavedAt changes (e.g., when courseData loads)
   useEffect(() => {
-    if (initialLastSavedAt && !lastSavedAt) {
+    if (initialLastSavedAt) {
       let parsedDate;
       
       if (typeof initialLastSavedAt === 'string') {
@@ -120,8 +120,9 @@ export const useAutosave = <T = any>(
       } else {
         parsedDate = initialLastSavedAt;
       }
-        
       
+      // 🔧 FIX: Always update lastSavedAt when initialLastSavedAt changes
+      // This ensures SaveStatusIndicator reflects latest timestamp changes
       setLastSavedAt(parsedDate);
     }
   }, [initialLastSavedAt]);

@@ -297,6 +297,14 @@ const CourseBuilderPage = () => {
         return chapter;
       });
     });
+    
+    // 🔧 FIX: Update SaveStatusIndicator manually since backend doesn't update course.updated_at
+    // When chapter updates, we know content changed, so update the UI timestamp
+    const updatedCourseData = { 
+      ...courseData, 
+      updated_at: new Date().toISOString() 
+    };
+    updateCourseData(updatedCourseData);
   };
 
   const handleChapterDelete = (chapterId: string) => {
@@ -385,6 +393,14 @@ const CourseBuilderPage = () => {
         return chapter;
       });
     });
+    
+    // 🔧 FIX: Update SaveStatusIndicator manually since backend doesn't update course.updated_at
+    // When lesson updates, we know content changed, so update the UI timestamp
+    const updatedCourseData = { 
+      ...courseData, 
+      updated_at: new Date().toISOString() 
+    };
+    updateCourseData(updatedCourseData);
   };
 
   const handleLessonDelete = (lessonId: string) => {
