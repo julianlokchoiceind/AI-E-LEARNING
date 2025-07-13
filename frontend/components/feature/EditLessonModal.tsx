@@ -3,12 +3,9 @@ import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { ButtonSkeleton } from '@/components/ui/LoadingStates';
-import { SaveStatusIndicator } from '@/components/ui/SaveStatusIndicator';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
 import { useUpdateLesson } from '@/hooks/queries/useLearning';
-import { useAutosave } from '@/hooks/useAutosave';
 import { ToastService } from '@/lib/toast/ToastService';
-import { useCallback } from 'react';
 import { Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -74,7 +71,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
   const [errors, setErrors] = useState<Partial<LessonFormData>>({});
   const [loading, setLoading] = useState(false);
 
-  // React Query mutation for updating lesson - replaces direct API call
+  // React Query mutation for updating lesson
   const { mutateAsync: updateLessonMutation } = useUpdateLesson();
 
   // Extract YouTube ID helper function
@@ -83,80 +80,61 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
     return match ? match[1] : null;
   };
 
-  // Lesson-specific data change detection with video object comparison
-  const hasDataChanged = useCallback((current: any, previous: any): boolean => {
-    if (!current || !previous) return false;
-    if (current.id !== previous.id) return false;
-    
-    // Deep comparison for video object
-    const videoChanged = JSON.stringify(current.video) !== JSON.stringify(previous.video);
-    
-    return (
-      current.title !== previous.title ||
-      current.description !== previous.description ||
-      current.content !== previous.content ||
-      current.status !== previous.status ||
-      videoChanged
-    );
-  }, []);
-
-  // Lesson-specific save function using React Query mutation
-  const onSave = useCallback(async (data: any) => {
-    const updateData = {
-      title: data.title,
-      description: data.description,
-      video: data.video,
-      content: data.content,
-      status: data.status
-    };
-    
-    // Use React Query mutation instead of direct API call
-    const response = await updateLessonMutation({ 
-      lessonId: data.id, 
-      data: updateData 
-    });
-
-    if (!response.success) {
-      throw new Error(response.message || 'Something went wrong');
+  // 🔧 MODAL PATTERN: Manual save only - no autosave, no save status, no unsaved changes
+  const handleSave = async () => {
+    if (!lesson?.id) {
+      ToastService.error('Lesson ID is missing');
+      return;
     }
 
-    return response;
-  }, [updateLessonMutation]);
-
-  // Autosave functionality using generic useAutosave hook
-  const {
-    saveStatus,
-    lastSavedAt,
-    error: autosaveError,
-    forceSave,
-    hasUnsavedChanges,
-    resolveConflict,
-    conflictData
-  } = useAutosave(
-    lesson ? {
-      id: lesson.id,
-      title: formData.title,
-      description: formData.description,
-      video: formData.video_url ? {
-        url: formData.video_url,
-        youtube_id: extractYouTubeId(formData.video_url) || undefined,
-        duration: formData.duration ? parseFloat(formData.duration) * 60 : undefined
-      } : null,
-      content: formData.content,
-      status: formData.status as 'draft' | 'published'
-    } : null,
-    {
-      delay: 2000,
-      enabled: isOpen && !!lesson,
-      onSave,
-      onConflict: (conflict) => {
-        ToastService.error('Lesson was modified by another user. Manual save required.');
-      },
-      hasDataChanged,
-      showToastOnError: true,
-      beforeUnloadWarning: true
+    if (!validateForm()) {
+      return;
     }
-  );
+
+    setLoading(true);
+    try {
+      const updateData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        video: formData.video_url ? {
+          url: formData.video_url.trim(),
+          youtube_id: extractYouTubeId(formData.video_url) || undefined,
+          duration: formData.duration ? parseFloat(formData.duration) * 60 : undefined
+        } : null,
+        content: formData.content.trim(),
+        status: formData.status
+      };
+
+      const response = await updateLessonMutation({ 
+        lessonId: lesson.id, 
+        data: updateData 
+      });
+
+      if (response.success) {
+        ToastService.success(response.message || 'Something went wrong');
+        
+        const updatedLesson = {
+          ...lesson,
+          title: formData.title.trim(),
+          description: formData.description.trim() || undefined,
+          content: formData.content.trim() || undefined,
+          status: formData.status,
+          video: formData.video_url ? {
+            url: formData.video_url.trim(),
+            youtube_id: extractYouTubeId(formData.video_url) || undefined,
+            duration: formData.duration ? parseFloat(formData.duration) * 60 : undefined
+          } : undefined
+        };
+        
+        onLessonUpdated(updatedLesson);
+        onClose();
+      }
+    } catch (error: any) {
+      ToastService.error(error.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Initialize form data when lesson changes
   useEffect(() => {
@@ -237,56 +215,11 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!lesson || !validateForm()) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setErrors({});
-
-      // Use force save to bypass autosave debouncing
-      const success = await forceSave();
-
-      if (success) {
-        const updatedLesson = {
-          ...lesson,
-          title: formData.title.trim(),
-          description: formData.description.trim() || undefined,
-          content: formData.content.trim() || undefined,
-          status: formData.status,
-          video: formData.video_url ? {
-            url: formData.video_url.trim(),
-            youtube_id: extractYouTubeId(formData.video_url) || undefined,
-            duration: formData.duration ? parseFloat(formData.duration) * 60 : undefined
-          } : undefined
-        };
-        
-        onLessonUpdated(updatedLesson);
-        ToastService.success('Lesson updated successfully');
-        onClose();
-      } else {
-        // Force save failed - error already handled by autosave hook
-        ToastService.error('Failed to update lesson');
-      }
-    } catch (error: any) {
-      console.error('Failed to update lesson:', error);
-      ToastService.error(error.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
+    await handleSave();
   };
 
   const handleClose = () => {
     if (!loading) {
-      // Don't close if there are unsaved changes - NavigationGuard handles warnings
-      if (hasUnsavedChanges) {
-        // Could show a toast or inline warning instead
-        ToastService.error('Please save or discard your changes before closing');
-        return;
-      }
-      
       // Reset form when closing
       if (lesson) {
         setFormData({
@@ -335,40 +268,6 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
       size="lg"
     >
       <div className="p-6" onKeyDown={handleKeyDown}>
-        {/* Autosave Status */}
-        <div className="mb-4">
-          <SaveStatusIndicator
-            status={saveStatus === 'conflict' ? 'error' : saveStatus}
-            lastSavedAt={lastSavedAt}
-            error={autosaveError}
-          />
-        </div>
-
-        {/* Conflict Resolution */}
-        {conflictData && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800 font-medium mb-2">
-              Conflict Detected: Another user has modified this lesson
-            </p>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => resolveConflict('remote', conflictData)}
-              >
-                Use Their Changes
-              </Button>
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => resolveConflict('local')}
-              >
-                Keep My Changes
-              </Button>
-            </div>
-          </div>
-        )}
-
         <MobileForm onSubmit={handleSubmit}>
           <div className="space-y-6">
             {/* Lesson Info */}
@@ -376,9 +275,6 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
               <p><strong>Lesson Order:</strong> {lesson.order}</p>
               <p><strong>Chapter ID:</strong> {lesson.chapter_id}</p>
               <p><strong>Course ID:</strong> {lesson.course_id}</p>
-              {hasUnsavedChanges && (
-                <p><strong>Status:</strong> <span className="text-amber-600">Unsaved changes</span></p>
-              )}
             </div>
 
             {/* Lesson Title */}
@@ -491,12 +387,11 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
             <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
               <p className="font-medium mb-1">Editing Tips:</p>
               <ul className="text-xs space-y-1 ml-4 list-disc">
-                <li>Changes are automatically saved every 2 seconds</li>
                 <li>Video URL will automatically extract YouTube/Vimeo IDs</li>
-                <li>Students will see changes right away for published lessons</li>
+                <li>Click "Update Lesson" button to save your changes</li>
                 <li>Use content field for detailed explanations or notes</li>
                 <li>Lesson order cannot be changed here - use drag & drop instead</li>
-                <li>Force save with the Update button or ⌘ + Enter</li>
+                <li>Use ⌘ + Enter to quickly save</li>
               </ul>
             </div>
           </div>
