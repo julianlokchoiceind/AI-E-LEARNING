@@ -9,8 +9,12 @@ from beanie import PydanticObjectId
 
 class VideoContentSchema(BaseModel):
     """Schema for video content."""
-    youtube_url: HttpUrl
-    duration: int = Field(..., ge=0, description="Duration in seconds")
+    url: Optional[str] = None  # Frontend compatibility
+    youtube_url: Optional[HttpUrl] = None
+    youtube_id: Optional[str] = None
+    duration: Optional[int] = Field(None, ge=0, description="Duration in seconds")
+    transcript: Optional[str] = None
+    captions: Optional[str] = None
     thumbnail: Optional[HttpUrl] = None
 
 

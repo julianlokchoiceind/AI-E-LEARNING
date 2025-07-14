@@ -220,7 +220,7 @@ class ChapterService:
         # Calculate stats
         lesson_count = len(lessons)
         total_duration = sum(
-            lesson.video.duration // 60 if lesson.video else 0
+            (lesson.video.duration or 0) // 60 if lesson.video and lesson.video.duration else 0
             for lesson in lessons
         )
         

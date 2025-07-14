@@ -75,7 +75,7 @@ class LessonService:
         
         # Update course stats
         course.total_lessons += 1
-        if lesson.video:
+        if lesson.video and lesson.video.duration:
             course.total_duration += lesson.video.duration // 60
         await course.save()
         
@@ -293,14 +293,18 @@ class LessonService:
             )
         
         # Track duration change for course stats
-        old_duration = lesson.video.duration if lesson.video else 0
+        old_duration = (lesson.video.duration or 0) if lesson.video else 0
         
         # Update fields
         update_data = lesson_update.dict(exclude_unset=True)
         
         # Handle nested objects
         if "video" in update_data and update_data["video"]:
-            lesson.video = VideoContent(**update_data["video"])
+            video_data = update_data["video"]
+            # Map frontend 'url' field to 'youtube_url' if needed
+            if "url" in video_data and not video_data.get("youtube_url"):
+                video_data["youtube_url"] = video_data["url"]
+            lesson.video = VideoContent(**video_data)
         if "resources" in update_data:
             lesson.resources = update_data["resources"]
         if "unlock_conditions" in update_data:
@@ -317,7 +321,7 @@ class LessonService:
         await chapter_service.update_chapter_stats(lesson.chapter_id)
         
         # Update course duration if video duration changed
-        new_duration = lesson.video.duration if lesson.video else 0
+        new_duration = (lesson.video.duration or 0) if lesson.video else 0
         if old_duration != new_duration:
             duration_diff = (new_duration - old_duration) // 60
             course.total_duration += duration_diff
@@ -355,7 +359,7 @@ class LessonService:
         
         # Update course stats
         course.total_lessons -= 1
-        if lesson.video:
+        if lesson.video and lesson.video.duration:
             course.total_duration -= lesson.video.duration // 60
         await course.save()
         
@@ -434,14 +438,14 @@ class LessonService:
             )
         
         # Update video info
-        old_duration = lesson.video.duration if lesson.video else 0
+        old_duration = (lesson.video.duration or 0) if lesson.video else 0
         lesson.video = VideoContent(**video_data)
         await lesson.save()
         
         # Update chapter and course stats
         await chapter_service.update_chapter_stats(lesson.chapter_id)
         
-        new_duration = lesson.video.duration
+        new_duration = lesson.video.duration or 0
         if old_duration != new_duration:
             duration_diff = (new_duration - old_duration) // 60
             course.total_duration += duration_diff

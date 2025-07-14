@@ -10,8 +10,12 @@ from beanie import PydanticObjectId
 
 class VideoContent(BaseModel):
     """Video content information for a lesson."""
-    youtube_url: HttpUrl = Field(..., description="YouTube video URL")
-    duration: int = Field(..., ge=0, description="Video duration in seconds")
+    url: Optional[str] = Field(None, description="Video URL (frontend compatibility)")
+    youtube_url: Optional[HttpUrl] = Field(None, description="YouTube video URL")
+    youtube_id: Optional[str] = Field(None, description="YouTube video ID")
+    duration: Optional[int] = Field(None, ge=0, description="Video duration in seconds")
+    transcript: Optional[str] = Field(None, description="Video transcript")
+    captions: Optional[str] = Field(None, description="Video captions URL")
     thumbnail: Optional[HttpUrl] = Field(None, description="Video thumbnail URL")
 
 
