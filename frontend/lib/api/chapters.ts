@@ -173,12 +173,12 @@ export const getChaptersWithLessons = async (courseId: string): Promise<Standard
       const transformedData = {
         chapters: (response.data.chapters || []).map((chapter: any) => {
           
-          // 🔧 FIX: Transform lessons inside chapters - same ID field mismatch issue
+          // 🔧 FIX: Transform lessons inside chapters - convert _id to id for consistency
           const transformedLessons = (chapter.lessons || []).map((lesson: any) => {
-            
             return {
               ...lesson,
-              // Backend already returns id via Pydantic alias
+              id: lesson.id, // Use backend id field directly
+              // Keep _id as well for compatibility if needed
             };
           });
           

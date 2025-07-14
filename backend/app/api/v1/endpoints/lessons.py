@@ -190,9 +190,26 @@ async def update_lesson(
         user_id=str(current_user.id)
     )
     
+    # Convert Lesson object to dict for lesson_to_response (same pattern as CREATE)
+    lesson_dict = {
+        "id": str(lesson.id),
+        "course_id": str(lesson.course_id),
+        "chapter_id": str(lesson.chapter_id),
+        "title": lesson.title,
+        "description": lesson.description or "",
+        "order": lesson.order,
+        "video": lesson.video.dict() if lesson.video else None,
+        "content": lesson.content,
+        "resources": lesson.resources or [],
+        "unlock_conditions": lesson.unlock_conditions.dict() if lesson.unlock_conditions else {},
+        "status": lesson.status,
+        "created_at": lesson.created_at,
+        "updated_at": lesson.updated_at
+    }
+    
     return StandardResponse(
         success=True,
-        data=lesson_to_response(lesson),
+        data=lesson_to_response(lesson_dict),
         message="Lesson updated successfully"
     )
 

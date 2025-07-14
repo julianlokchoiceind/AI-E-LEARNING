@@ -102,7 +102,7 @@ const CourseBuilderPage = () => {
         }
         
         // Get courseId from data or use the route param as fallback
-        const courseIdToUse = data.id || data._id || courseId;
+        const courseIdToUse = data.id || courseId;
         
         if (!courseIdToUse) {
           console.error('❌ [AUTOSAVE DEBUG] No course ID found in data or route params');

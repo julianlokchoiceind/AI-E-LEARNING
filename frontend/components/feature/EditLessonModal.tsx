@@ -4,7 +4,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { ButtonSkeleton } from '@/components/ui/LoadingStates';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
-import { useUpdateLesson } from '@/hooks/queries/useLearning';
+import { useUpdateLesson } from '@/hooks/queries/useLessons';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';

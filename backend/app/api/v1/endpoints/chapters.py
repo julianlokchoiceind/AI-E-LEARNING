@@ -295,7 +295,7 @@ async def get_course_chapters_with_lessons(
             updated_at=chapter["updated_at"],
             lessons=[
                 {
-                    "_id": lesson["_id"],
+                    "id": lesson["id"],  # Use standard 'id' field (service provides both _id and id)
                     "title": lesson["title"],
                     "description": lesson["description"],
                     "order": lesson["order"],

@@ -59,7 +59,7 @@ const CourseBuilderPage = () => {
       return;
     }
 
-    const courseIdToUse = courseData.id || courseData._id || courseId;
+    const courseIdToUse = courseData.id || courseId;
     if (!courseIdToUse) {
       ToastService.error('Course ID missing');
       return;
@@ -130,7 +130,7 @@ const CourseBuilderPage = () => {
         }
         
         // Get courseId from data or use the route param as fallback
-        const courseIdToUse = data.id || data._id || courseId;
+        const courseIdToUse = data.id || courseId;
         
         if (!courseIdToUse) {
           console.error('❌ [FORCE SAVE] No course ID found in data or route params');
