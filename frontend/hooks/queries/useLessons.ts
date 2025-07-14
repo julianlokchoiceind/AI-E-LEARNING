@@ -35,6 +35,12 @@ interface LessonUpdateData {
     duration?: number;
   };
   content?: string;
+  resources?: Array<{
+    title: string;
+    type: 'pdf' | 'code' | 'link' | 'exercise';
+    url: string;
+    description?: string;
+  }>;
   order?: number;
 }
 
