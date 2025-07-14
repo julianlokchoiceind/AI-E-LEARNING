@@ -112,7 +112,11 @@ export async function refreshToken(token: string): Promise<StandardResponse<Auth
  * Logout user
  */
 export async function logoutUser(): Promise<StandardResponse<any>> {
-  const response = await api.post<StandardResponse<any>>('/auth/logout', {})
+  const response = await api.post<StandardResponse<any>>(
+    '/auth/logout', 
+    {},
+    { requireAuth: true } // Need auth header to blacklist the token
+  )
   return response
 }
 

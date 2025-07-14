@@ -33,10 +33,15 @@ export function useAuth() {
     // Call backend logout endpoint to blacklist token
     if (session?.accessToken) {
       try {
-        logoutMutation({}, {
-          onError: (error) => {
-            console.error('Backend logout error:', error)
-          }
+        // Wait for backend to blacklist token before signing out
+        await new Promise<void>((resolve) => {
+          logoutMutation({}, {
+            onSuccess: () => resolve(),
+            onError: (error) => {
+              console.error('Backend logout error:', error)
+              resolve() // Continue logout even if backend fails
+            }
+          })
         })
       } catch (error) {
         console.error('Backend logout error:', error)
