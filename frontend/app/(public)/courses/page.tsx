@@ -34,7 +34,7 @@ const CourseCatalogPage = () => {
   const { mutate: enrollInCourse, loading: enrollingCourse } = useEnrollInCourse();
   
   // Extract courses from React Query response
-  const courses = coursesData?.courses || [];
+  const courses = coursesData?.data?.courses || [];
 
   const categories = [
     { value: '', label: 'All Categories' },
