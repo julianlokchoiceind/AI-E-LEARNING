@@ -101,3 +101,21 @@ class BulkApprovalResult(BaseModel):
     approved: List[str]
     failed: List[Dict[str, str]]  # course_id: error_message
     message: str
+
+
+class AdminCoursesQuery(BaseModel):
+    """Query parameters for admin courses list with pagination."""
+    search: Optional[str] = None
+    status: Optional[str] = None
+    category: Optional[str] = None
+    page: int = 1
+    per_page: int = 20
+
+
+class CourseStatistics(BaseModel):
+    """Course statistics for dashboard Quick Stats."""
+    total_courses: int
+    pending_review: int
+    published: int
+    rejected: int
+    free_courses: int

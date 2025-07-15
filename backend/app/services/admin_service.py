@@ -1479,3 +1479,27 @@ class AdminService:
                     "storage": {"status": "unknown"}
                 }
             }
+
+    @staticmethod
+    async def get_course_statistics() -> Dict[str, Any]:
+        """Get course statistics for dashboard Quick Stats (independent from pagination)."""
+        try:
+            db = get_database()
+            
+            # Get total counts from database - NOT from current page
+            total_courses = await db.courses.count_documents({})
+            pending_review = await db.courses.count_documents({"status": "review"})
+            published = await db.courses.count_documents({"status": "published"})
+            rejected = await db.courses.count_documents({"status": "rejected"})
+            free_courses = await db.courses.count_documents({"pricing.is_free": True})
+            
+            return {
+                "total_courses": total_courses,
+                "pending_review": pending_review,
+                "published": published,
+                "rejected": rejected,
+                "free_courses": free_courses
+            }
+        except Exception as e:
+            logger.error(f"Error getting course statistics: {str(e)}")
+            raise

@@ -432,6 +432,35 @@ export const getAdminCourses = async (params?: {
 };
 
 /**
+ * Get course statistics for dashboard Quick Stats
+ */
+export const getAdminStatistics = async (): Promise<StandardResponse<{
+  total_courses: number;
+  pending_review: number;
+  published: number;
+  rejected: number;
+  free_courses: number;
+}>> => {
+  try {
+    const response = await api.get<StandardResponse<{
+      total_courses: number;
+      pending_review: number;
+      published: number;
+      rejected: number;
+      free_courses: number;
+    }>>(
+      `/admin/course-statistics`,
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Get admin statistics failed:', error);
+    throw error;
+  }
+};
+
+/**
  * Get admin users (alias for listUsers)
  */
 export const getAdminUsers = async (params?: {

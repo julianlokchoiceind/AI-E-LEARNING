@@ -12,7 +12,9 @@ from app.schemas.admin import (
     CourseApprovalRequest,
     CourseApprovalResponse,
     AdminDashboardStats,
-    PendingReviewResponse
+    PendingReviewResponse,
+    AdminCoursesQuery,
+    CourseStatistics
 )
 from app.schemas.base import StandardResponse
 from app.services.course_service import CourseService
@@ -120,6 +122,32 @@ async def list_all_courses(
     except Exception as e:
         logger.error(f"Error fetching admin courses: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch courses")
+
+
+@router.get("/course-statistics", response_model=StandardResponse[CourseStatistics])
+async def get_course_statistics(
+    current_admin: User = Depends(get_current_admin)
+):
+    """
+    Get course statistics for dashboard Quick Stats.
+    
+    Returns total counts from database (independent from pagination):
+    - Total courses
+    - Pending review count  
+    - Published count
+    - Rejected count
+    - Free courses count
+    """
+    try:
+        stats = await AdminService.get_course_statistics()
+        return StandardResponse(
+            success=True,
+            data=stats,
+            message="Course statistics retrieved successfully"
+        )
+    except Exception as e:
+        logger.error(f"Error fetching course statistics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch course statistics")
 
 
 @router.post("/courses/{course_id}/approve", response_model=StandardResponse[CourseApprovalResponse])

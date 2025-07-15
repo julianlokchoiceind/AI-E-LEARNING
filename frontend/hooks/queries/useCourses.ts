@@ -17,7 +17,8 @@ import {
   getAdminCourses, 
   approveCourse, 
   rejectCourse, 
-  toggleCourseFree 
+  toggleCourseFree,
+  getAdminStatistics
 } from '@/lib/api/admin';
 import { getCourseAnalytics } from '@/lib/api/analytics';
 import { 
@@ -579,6 +580,8 @@ interface AdminCoursesFilters {
   search?: string;
   status?: string;
   category?: string;
+  page?: number;
+  per_page?: number;
 }
 
 /**
@@ -586,18 +589,18 @@ interface AdminCoursesFilters {
  * Drop-in replacement for manual fetchCourses pattern
  */
 export function useAdminCoursesQuery(filters: AdminCoursesFilters = {}) {
-  const { search = '', status = '', category = '' } = filters;
+  const { search = '', status = '', category = '', page = 1, per_page = 20 } = filters;
   
-  // Use stable query key when no filters to ensure invalidation works
-  const hasFilters = search || status || category;
-  const queryKey = hasFilters 
-    ? ['admin-courses', { search, status, category }]
-    : ['admin-courses'];
+  // Always include pagination in query key for proper caching
+  const queryKey = ['admin-courses', { search, status, category, page, per_page }];
   
   return useApiQuery(
     queryKey,
-    () => getAdminCourses({ search, status, category }),
-    CACHE_CONFIGS.ADMIN // Always refetch for admin data (real-time updates)
+    () => getAdminCourses({ search, status, category, page, per_page }),
+    {
+      ...CACHE_CONFIGS.ADMIN, // Always refetch for admin data (real-time updates)
+      keepPreviousData: true, // Smooth pagination transitions
+    }
   );
 }
 
@@ -613,9 +616,10 @@ export function useApproveCourse() {
     {
       operationName: 'approve-course',
       invalidateQueries: [
-        ['admin-courses'],    // Refresh admin view
-        ['courses'],          // Update public catalog
-        ['course'],           // Update course details
+        ['admin-courses'],        // Refresh all admin course queries (with pagination)
+        ['admin-course-statistics'], // Refresh statistics for Quick Stats
+        ['courses'],              // Update public catalog
+        ['course'],               // Update course details
       ],
       optimistic: {
         // Optimistic update: Update UI immediately before API call
@@ -697,9 +701,10 @@ export function useRejectCourse() {
     {
       operationName: 'reject-course',
       invalidateQueries: [
-        ['admin-courses'],    // Refresh admin view
-        ['courses'],          // Update public catalog
-        ['course'],           // Update course details
+        ['admin-courses'],        // Refresh all admin course queries (with pagination)
+        ['admin-course-statistics'], // Refresh statistics for Quick Stats
+        ['courses'],              // Update public catalog
+        ['course'],               // Update course details
       ],
       optimistic: {
         // Optimistic update: Update UI immediately before API call
@@ -780,60 +785,73 @@ export function useToggleCourseFree() {
     mutationFn: ({ courseId, isFree }: { courseId: string; isFree: boolean }) => 
       toggleCourseFree(courseId, isFree),
     
-    // Optimistic update - Update UI immediately
+    // Optimistic update - Update UI immediately for ALL paginated admin-courses queries
     onMutate: async ({ courseId, isFree }) => {
-      // Cancel any outgoing refetches
+      // Cancel any outgoing refetches for all admin-courses queries
       await queryClient.cancelQueries({ 
         predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-courses'
       });
       
-      // Snapshot previous value
-      const previousCourses = queryClient.getQueryData(['admin-courses']);
+      // Get all admin-courses cache keys
+      const cacheKeys = queryClient.getQueryCache().findAll({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-courses'
+      });
+
+      // Store snapshots for all admin-courses caches
+      const previousData = cacheKeys.map(cache => ({
+        queryKey: cache.queryKey,
+        data: cache.state.data
+      }));
       
-      // Optimistically update course free status
-      queryClient.setQueryData(['admin-courses'], (old: any) => {
-        if (!old) return old;
-        
-        // Handle different data structures
-        const courses = old?.data?.courses || old?.courses || [];
-        const updatedCourses = courses.map((course: any) => {
-          const id = course.id;
-          if (id === courseId) {
+      // Optimistically update all admin-courses queries
+      cacheKeys.forEach(cache => {
+        queryClient.setQueryData(cache.queryKey, (old: any) => {
+          if (!old) return old;
+          
+          // Handle different data structures
+          const courses = old?.data?.courses || old?.courses || [];
+          const updatedCourses = courses.map((course: any) => {
+            const id = course.id;
+            if (id === courseId) {
+              return {
+                ...course,
+                pricing: {
+                  ...course.pricing,
+                  is_free: isFree
+                }
+              };
+            }
+            return course;
+          });
+          
+          // Maintain same structure
+          if (old?.data?.courses) {
             return {
-              ...course,
-              pricing: {
-                ...course.pricing,
-                is_free: isFree
+              ...old,
+              data: {
+                ...old.data,
+                courses: updatedCourses
               }
             };
           }
-          return course;
-        });
-        
-        // Maintain same structure
-        if (old?.data?.courses) {
+          
           return {
             ...old,
-            data: {
-              ...old.data,
-              courses: updatedCourses
-            }
+            courses: updatedCourses
           };
-        }
-        
-        return {
-          ...old,
-          courses: updatedCourses
-        };
+        });
       });
       
-      return { previousCourses, courseId, isFree };
+      return { previousData, courseId, isFree };
     },
     
-    // Rollback on error
+    // Rollback on error - restore all admin-courses cache snapshots
     onError: (error: any, variables, context: any) => {
-      if (context?.previousCourses) {
-        queryClient.setQueryData(['admin-courses'], context.previousCourses);
+      if (context?.previousData) {
+        // Restore all admin-courses cache snapshots
+        context.previousData.forEach(({ queryKey, data }: { queryKey: any; data: any }) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
     },
     
@@ -886,19 +904,28 @@ export function useDeleteCourseOptimistic() {
   const mutation = useMutation({
     mutationFn: (courseId: string) => deleteCourse(courseId),
     
-    // Optimistic update: Update UI immediately before API call
+    // Optimistic update: Update UI immediately before API call for ALL paginated queries
     onMutate: async (courseId: string) => {
         
-        // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+        // Cancel any outgoing refetches for all admin-courses queries
         await queryClient.cancelQueries({ 
           predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-courses'
         });
         
-        // Snapshot the previous value
-        const previousAdminCourses = queryClient.getQueryData(['admin-courses']);
+        // Get all admin-courses cache keys
+        const cacheKeys = queryClient.getQueryCache().findAll({
+          predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-courses'
+        });
         
-        // Optimistically update the admin courses list
-        queryClient.setQueryData(['admin-courses'], (old: any) => {
+        // Store snapshots for all admin-courses caches
+        const previousData = cacheKeys.map(cache => ({
+          queryKey: cache.queryKey,
+          data: cache.state.data
+        }));
+        
+        // Optimistically update all admin-courses queries
+        cacheKeys.forEach(cache => {
+          queryClient.setQueryData(cache.queryKey, (old: any) => {
           
           // The cache data is wrapped by useApiQuery
           if (!old) {
@@ -974,18 +1001,21 @@ export function useDeleteCourseOptimistic() {
           }
           
           return updatedData;
+          });
         });
         
         // Return context with previous data for potential rollback
-        return { previousAdminCourses, courseId };
+        return { previousData, courseId };
       },
       
-      // On error: rollback optimistic update
+      // On error: rollback optimistic update for all admin-courses queries
       onError: (error: any, courseId: string, context: any) => {
         
-        // Restore previous data
-        if (context?.previousAdminCourses) {
-          queryClient.setQueryData(['admin-courses'], context.previousAdminCourses);
+        // Restore all admin-courses cache snapshots
+        if (context?.previousData) {
+          context.previousData.forEach(({ queryKey, data }: { queryKey: any; data: any }) => {
+            queryClient.setQueryData(queryKey, data);
+          });
         }
       },
       
@@ -1769,6 +1799,25 @@ export function useCourseAnalyticsQuery(courseId: string, timeRange: string = '3
     {
       enabled: enabled && !!courseId,
       ...CACHE_CONFIGS.CONTENT_DETAILS, // 5 minutes - analytics can be slightly stale
+    }
+  );
+}
+
+// =============================================================================
+// ADMIN STATISTICS FUNCTIONS - Dashboard Quick Stats  
+// =============================================================================
+
+/**
+ * ADMIN STATISTICS - Course counts for dashboard Quick Stats
+ * Critical: Provides real database totals, independent from pagination
+ */
+export function useAdminStatistics() {
+  return useApiQuery(
+    ['admin-course-statistics'],
+    () => getAdminStatistics(),
+    {
+      ...CACHE_CONFIGS.ADMIN, // Always refetch for admin data (real-time updates)
+      staleTime: 30 * 1000, // 30 seconds - Statistics can be slightly stale for performance
     }
   );
 }

@@ -14,8 +14,10 @@ import {
   useRejectCourse, 
   useToggleCourseFree, 
   useDeleteCourseOptimistic as useDeleteCourse,
-  useCreateCourse 
+  useCreateCourse,
+  useAdminStatistics
 } from '@/hooks/queries/useCourses';
+import { Pagination } from '@/components/ui/Pagination';
 import { 
   Search, 
   Filter, 
@@ -69,6 +71,8 @@ export default function CourseApproval() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -77,14 +81,24 @@ export default function CourseApproval() {
   const [rejectionReason, setRejectionReason] = useState('');
   const router = useRouter();
   
-  // React Query hooks for data fetching and mutations
-  // Use stable query key (no filters) to ensure invalidation works
+  // React Query hooks for data fetching and mutations with server-side pagination
   const { 
     data: coursesData, 
     loading: isInitialLoading, 
     query: { isFetching, isRefetching },
-    execute: fetchCourses 
-  } = useAdminCoursesQuery({});
+  } = useAdminCoursesQuery({
+    search: searchTerm,
+    status: statusFilter,
+    category: categoryFilter,
+    page: currentPage,
+    per_page: itemsPerPage
+  });
+
+  // Separate statistics hook for Dashboard Quick Stats (real database totals)
+  const { 
+    data: statisticsData,
+    loading: statisticsLoading 
+  } = useAdminStatistics();
   
   // Smart loading states: Only show spinner on initial load, not background refetch
   const showLoadingSpinner = isInitialLoading && !coursesData;
@@ -99,12 +113,13 @@ export default function CourseApproval() {
   // Combined loading state for actions
   const actionLoading = approveLoading || rejectLoading || toggleLoading || deleteLoading || createLoading;
   
-  // Extract courses from response data
-  // API returns paginated response: { courses: [], total: 0, page: 1, ... }
+  // Extract courses and pagination data from response
   const courses = coursesData?.data?.courses || [];
+  const totalItems = coursesData?.data?.pagination?.total_count || 0;
+  const totalPages = coursesData?.data?.pagination?.total_pages || 1;
 
-  // No need for manual useEffect - React Query handles data fetching automatically
-  // fetchCourses is available from useAdminCoursesQuery for manual refresh if needed
+  // Extract statistics for Dashboard Quick Stats
+  const statistics = statisticsData?.data || null;
 
   const handleApproveCourse = (course: Course) => {
     const courseId = course.id;
@@ -167,6 +182,27 @@ export default function CourseApproval() {
     });
   };
 
+  // Filter change handlers - reset to page 1 when filters change
+  const handleFilterChange = (newValue: string, filterType: 'search' | 'status' | 'category') => {
+    setCurrentPage(1); // Reset to first page when filters change
+    
+    switch (filterType) {
+      case 'search':
+        setSearchTerm(newValue);
+        break;
+      case 'status':
+        setStatusFilter(newValue);
+        break;
+      case 'category':
+        setCategoryFilter(newValue);
+        break;
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'published':
@@ -195,16 +231,8 @@ export default function CourseApproval() {
     }
   };
 
-  const filteredCourses = courses.filter((course: Course) => {
-    const matchesSearch = searchTerm === '' || 
-      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.creator_name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === '' || course.status === statusFilter;
-    const matchesCategory = categoryFilter === '' || course.category === categoryFilter;
-    
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
+  // No client-side filtering needed - all filtering is done server-side
+  const filteredCourses = courses;
 
   return (
     <div className="space-y-6">
@@ -222,21 +250,21 @@ export default function CourseApproval() {
             <BookOpen className="w-4 h-4 mr-2" />
             Create New Course
           </Button>
-          <Button onClick={() => fetchCourses()}>
+          <Button onClick={() => window.location.reload()}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Quick Stats - Using real database totals, not current page data */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="p-4">
           <div className="flex items-center">
             <Clock className="h-8 w-8 text-yellow-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {courses.filter((c: Course) => c.status === 'review').length}
+                {statisticsLoading ? '...' : (statistics?.pending_review || 0)}
               </p>
               <p className="text-sm text-gray-600">Pending Review</p>
             </div>
@@ -248,7 +276,7 @@ export default function CourseApproval() {
             <CheckCircle className="h-8 w-8 text-green-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {courses.filter((c: Course) => c.status === 'published').length}
+                {statisticsLoading ? '...' : (statistics?.published || 0)}
               </p>
               <p className="text-sm text-gray-600">Published</p>
             </div>
@@ -260,7 +288,7 @@ export default function CourseApproval() {
             <AlertTriangle className="h-8 w-8 text-red-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {courses.filter((c: Course) => c.status === 'rejected').length}
+                {statisticsLoading ? '...' : (statistics?.rejected || 0)}
               </p>
               <p className="text-sm text-gray-600">Rejected</p>
             </div>
@@ -272,7 +300,7 @@ export default function CourseApproval() {
             <Gift className="h-8 w-8 text-blue-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {courses.filter((c: Course) => c.pricing.is_free).length}
+                {statisticsLoading ? '...' : (statistics?.free_courses || 0)}
               </p>
               <p className="text-sm text-gray-600">Free Courses</p>
             </div>
@@ -290,8 +318,7 @@ export default function CourseApproval() {
               type="text"
               placeholder="Search courses..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && fetchCourses()}
+              onChange={(e) => handleFilterChange(e.target.value, 'search')}
               className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
             />
           </div>
@@ -299,7 +326,7 @@ export default function CourseApproval() {
           {/* Status Filter */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => handleFilterChange(e.target.value, 'status')}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">All Status</option>
@@ -312,7 +339,7 @@ export default function CourseApproval() {
           {/* Category Filter */}
           <select
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={(e) => handleFilterChange(e.target.value, 'category')}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">All Categories</option>
@@ -323,10 +350,19 @@ export default function CourseApproval() {
             <option value="production-ai">Production AI</option>
           </select>
 
-          {/* Search Button */}
-          <Button onClick={() => fetchCourses()} className="w-full">
+          {/* Clear Filters Button */}
+          <Button 
+            onClick={() => {
+              setSearchTerm('');
+              setStatusFilter('');
+              setCategoryFilter('');
+              setCurrentPage(1);
+            }} 
+            variant="outline"
+            className="w-full"
+          >
             <Filter className="w-4 h-4 mr-2" />
-            Apply Filters
+            Clear Filters
           </Button>
         </div>
       </Card>
@@ -336,7 +372,7 @@ export default function CourseApproval() {
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
-              Courses ({filteredCourses.length})
+              Courses ({totalItems})
             </h2>
             {showBackgroundUpdate && (
               <div className="flex items-center text-sm text-blue-600">
@@ -520,6 +556,22 @@ export default function CourseApproval() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Table Footer with Pagination */}
+        {totalPages > 1 && (
+          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              loading={isFetching}
+              showInfo={true}
+              className="flex justify-center"
+            />
           </div>
         )}
       </Card>
