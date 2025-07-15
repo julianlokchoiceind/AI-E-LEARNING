@@ -409,3 +409,32 @@ class CourseService:
         logger.info(f"✅ DELETE COURSE: Successfully deleted course {course_id} from database")
         
         return {"message": "Course deleted successfully"}
+    
+    @staticmethod
+    async def update_course_timestamp(course_id: str) -> None:
+        """
+        🔧 AUTO-CASCADE: Update course.updated_at timestamp.
+        Used when nested resources (chapters/lessons) are modified.
+        
+        This ensures course timestamps reflect any content changes,
+        making SaveStatusIndicator show accurate "last modified" time.
+        """
+        logger.info(f"⏰ AUTO-CASCADE: Updating course {course_id} timestamp")
+        
+        try:
+            # Get course
+            course = await Course.get(PydanticObjectId(course_id))
+            if not course:
+                logger.warning(f"⚠️ AUTO-CASCADE: Course {course_id} not found for timestamp update")
+                return
+            
+            # Update timestamp
+            course.updated_at = datetime.utcnow()
+            await course.save()
+            
+            logger.info(f"✅ AUTO-CASCADE: Successfully updated course {course_id} timestamp")
+            
+        except Exception as e:
+            logger.error(f"❌ AUTO-CASCADE: Failed to update course {course_id} timestamp: {e}")
+            # Don't raise exception - timestamp update is non-critical
+            pass

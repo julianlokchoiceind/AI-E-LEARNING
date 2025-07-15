@@ -17,6 +17,7 @@ from app.schemas.lesson import (
 )
 from app.schemas.base import StandardResponse
 from app.services.lesson_service import lesson_service
+from app.services.course_service import CourseService
 from app.api.deps import get_current_user, get_current_optional_user
 
 router = APIRouter()
@@ -189,6 +190,15 @@ async def update_lesson(
         lesson_update=lesson_update,
         user_id=str(current_user.id)
     )
+    
+    # 🔧 AUTO-CASCADE: Update parent course timestamp when lesson is updated
+    try:
+        await CourseService.update_course_timestamp(str(lesson.course_id))
+    except Exception as e:
+        # Log error but don't fail the lesson update
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to update course timestamp for course {lesson.course_id}: {e}")
     
     # Convert Lesson object to dict for lesson_to_response (same pattern as CREATE)
     lesson_dict = {

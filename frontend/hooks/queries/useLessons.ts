@@ -134,8 +134,9 @@ export function useUpdateLesson(silent: boolean = false) {
         ['lessons'], // Refresh lesson lists
         ['course-chapters'], // Refresh course editor chapter lists
         ['chapters-with-lessons'], // Refresh course structure
-        ['course'], // Refresh course details
+        ['course'], // Refresh course details (🔧 CRITICAL: includes timestamp)
         ['creator-courses'], // Refresh creator dashboard
+        ['admin-courses'], // 🔧 NEW: Refresh admin course list with updated timestamps
       ],
       operationName: 'update-lesson', // Unique operation ID for toast deduplication
       showToast: !silent, // 🔧 FIX: Disable toast when silent=true (for autosave)

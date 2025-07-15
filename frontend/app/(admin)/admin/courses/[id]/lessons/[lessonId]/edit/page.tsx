@@ -28,6 +28,7 @@ import {
   useLessonQuery,
   useUpdateLesson 
 } from '@/hooks/queries/useLessons';
+import { useQueryClient } from '@tanstack/react-query';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Lesson, LessonResource } from '@/lib/types/course';
@@ -39,6 +40,7 @@ const LessonEditPage = () => {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const courseId = params.id as string;
   const lessonId = params.lessonId as string;
 
@@ -52,7 +54,8 @@ const LessonEditPage = () => {
   // React Query hooks  
   const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId);
   const typedLessonResponse = lessonResponse as StandardResponse<Lesson> | null;
-  const { mutateAsync: updateLessonAction } = useUpdateLesson();
+  const { mutateAsync: updateLessonAction } = useUpdateLesson(true); // silent autosave
+  const { mutateAsync: manualSaveLessonAction } = useUpdateLesson(false); // manual save with toast
 
   // Initialize lesson data
   useEffect(() => {
@@ -79,6 +82,56 @@ const LessonEditPage = () => {
       setResources(lesson.resources || []);
     }
   }, [typedLessonResponse]);
+
+  // 🔧 Manual save handler with course timestamp update (like Course Edit Page)
+  const handleManualSave = async () => {
+    if (!lessonData) {
+      ToastService.error('No lesson data to save');
+      return;
+    }
+
+    const lessonIdToUse = lessonData.id || lessonId;
+    if (!lessonIdToUse) {
+      ToastService.error('Lesson ID missing');
+      return;
+    }
+
+    // Filter out system fields (same logic as autosave)
+    const updateData: any = {};
+    
+    if (lessonData.title !== undefined) updateData.title = lessonData.title;
+    if (lessonData.description !== undefined) updateData.description = lessonData.description;
+    if (lessonData.content !== undefined) updateData.content = lessonData.content;
+    if (lessonData.status !== undefined) updateData.status = lessonData.status;
+    if (lessonData.resources !== undefined) updateData.resources = lessonData.resources;
+    
+    // Only include video if it has actual content
+    if (lessonData.video && (lessonData.video.url || lessonData.video.youtube_id || lessonData.video.duration)) {
+      updateData.video = lessonData.video;
+    }
+
+    try {
+      await manualSaveLessonAction({ lessonId: lessonIdToUse, data: updateData });
+      
+      // 🔧 OPTIMISTIC UPDATE: Update course timestamp immediately for UI feedback
+      // (Backend already auto-cascades, this is just for immediate visual feedback)
+      queryClient.setQueryData(['course', courseId], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            updated_at: new Date().toISOString()
+          }
+        };
+      });
+      
+      // Toast will be shown automatically by useApiMutation (showToast=true)
+    } catch (error: any) {
+      // Error toast will be shown automatically by useApiMutation
+      console.error('Manual save failed:', error);
+    }
+  };
 
   // Auto-save hook
   const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges } = useAutosave(
@@ -279,8 +332,8 @@ const LessonEditPage = () => {
 
                 <Button
                   variant="primary"
-                  onClick={forceSave}
-                  disabled={saveStatus === 'saving' || !hasUnsavedChanges}
+                  onClick={handleManualSave}
+                  disabled={saveStatus === 'saving'}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Save
