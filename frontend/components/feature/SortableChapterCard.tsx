@@ -144,14 +144,12 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                     <Badge variant="outline" className="text-xs">
                       Chapter {chapter.order}
                     </Badge>
-                    {chapter.status && (
-                      <Badge 
-                        variant={chapter.status === 'published' ? 'default' : 'secondary'}
-                        className="text-xs"
-                      >
-                        {chapter.status}
-                      </Badge>
-                    )}
+                    <Badge 
+                      variant={(chapter.status || 'draft') === 'published' ? 'default' : 'secondary'}
+                      className="text-xs"
+                    >
+                      {chapter.status || 'draft'}
+                    </Badge>
                   </div>
                   
                   <h3 className="text-lg font-semibold text-gray-900 mb-2 break-words">

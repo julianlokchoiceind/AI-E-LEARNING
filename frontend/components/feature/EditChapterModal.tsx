@@ -12,6 +12,7 @@ export interface ChapterEditData {
   description?: string;
   order: number;
   course_id: string;
+  status?: string;
 }
 
 interface EditChapterModalProps {
@@ -24,6 +25,7 @@ interface EditChapterModalProps {
 interface ChapterFormData {
   title: string;
   description: string;
+  status: string;
 }
 
 export const EditChapterModal: React.FC<EditChapterModalProps> = ({
@@ -34,7 +36,8 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<ChapterFormData>({
     title: '',
-    description: ''
+    description: '',
+    status: 'draft'
   });
 
   const [errors, setErrors] = useState<Partial<ChapterFormData>>({});
@@ -60,7 +63,8 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
         chapterId: chapter.id,
         chapterData: {
           title: formData.title.trim(),
-          description: formData.description.trim()
+          description: formData.description.trim(),
+          status: formData.status
         }
       });
 
@@ -81,7 +85,8 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
     if (chapter && isOpen) {
       setFormData({
         title: chapter.title || '',
-        description: chapter.description || ''
+        description: chapter.description || '',
+        status: chapter.status || 'draft'
       });
       setErrors({});
     }
@@ -134,7 +139,8 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
       if (chapter) {
         setFormData({
           title: chapter.title || '',
-          description: chapter.description || ''
+          description: chapter.description || '',
+          status: chapter.status || 'draft'
         });
       }
       setErrors({});
@@ -202,6 +208,28 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
               />
               <p className="text-xs text-gray-500 mt-1">
                 {formData.description.length}/500 characters
+              </p>
+            </div>
+
+            {/* Chapter Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Chapter Status
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) => handleInputChange('status', e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.status === 'draft' 
+                  ? 'Chapter is visible only to creators and admins' 
+                  : 'Chapter is visible to enrolled students'
+                }
               </p>
             </div>
 

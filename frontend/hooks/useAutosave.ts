@@ -100,6 +100,7 @@ export const useAutosave = <T = any>(
     dataRef.current = data;
     // Initialize lastSavedDataRef when we first get data AND it's currently null
     if (data && !lastSavedDataRef.current) {
+      console.log('🔧 [AUTOSAVE DEBUG] Initializing lastSavedDataRef with:', data);
       lastSavedDataRef.current = data;
     }
   }, [data]);
@@ -124,6 +125,13 @@ export const useAutosave = <T = any>(
       // 🔧 FIX: Always update lastSavedAt when initialLastSavedAt changes
       // This ensures SaveStatusIndicator reflects latest timestamp changes
       setLastSavedAt(parsedDate);
+      
+      // 🔧 CRITICAL FIX: Reset lastSavedDataRef when new data loads from server
+      // This ensures change detection works properly after data reload
+      if (dataRef.current) {
+        console.log('🔧 [AUTOSAVE DEBUG] Resetting lastSavedDataRef due to new server data');
+        lastSavedDataRef.current = dataRef.current;
+      }
     }
   }, [initialLastSavedAt]);
 
@@ -349,6 +357,11 @@ export const useAutosave = <T = any>(
   const hasUnsavedChanges = useCallback((): boolean => {
     // Always return false during first render or if no data
     if (isFirstRender.current || !dataRef.current || !lastSavedDataRef.current) {
+      console.log('🔧 [UNSAVED CHANGES] Returning false:', {
+        isFirstRender: isFirstRender.current,
+        hasCurrentData: !!dataRef.current,
+        hasLastSavedData: !!lastSavedDataRef.current
+      });
       return false;
     }
     
@@ -357,7 +370,14 @@ export const useAutosave = <T = any>(
       return false;
     }
     
-    return dataChangeChecker(dataRef.current, lastSavedDataRef.current);
+    const hasChanges = dataChangeChecker(dataRef.current, lastSavedDataRef.current);
+    console.log('🔧 [UNSAVED CHANGES] Final result:', {
+      hasChanges,
+      currentData: dataRef.current,
+      lastSavedData: lastSavedDataRef.current
+    });
+    
+    return hasChanges;
   }, [saveStatus, dataChangeChecker]);
 
   // Save on page unload (if enabled)

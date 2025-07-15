@@ -79,15 +79,23 @@ const LessonEditPage = () => {
         if (!data || !data.id) return;
         
         try {
+          // Clean the data before sending - only include non-null/undefined values
+          const updateData: any = {};
+          
+          if (data.title !== undefined) updateData.title = data.title;
+          if (data.description !== undefined) updateData.description = data.description;
+          if (data.content !== undefined) updateData.content = data.content;
+          if (data.status !== undefined) updateData.status = data.status;
+          if (data.resources !== undefined) updateData.resources = data.resources;
+          
+          // Only include video if it has actual content
+          if (data.video && (data.video.url || data.video.youtube_id || data.video.duration)) {
+            updateData.video = data.video;
+          }
+          
           await updateLessonAction({ 
             lessonId: data.id, 
-            data: {
-              title: data.title,
-              description: data.description,
-              video: data.video,
-              content: data.content,
-              resources: data.resources
-            }
+            data: updateData
           });
         } catch (error) {
           throw error;
@@ -332,12 +340,22 @@ const LessonEditPage = () => {
                   <h3 className="font-semibold mb-4">Lesson Status</h3>
                   <select
                     value={lessonData.status}
-                    onChange={(e) => setLessonData((prev: Lesson | null) => ({ ...prev, status: e.target.value }))}
+                    onChange={(e) => {
+                      const newStatus = e.target.value as 'draft' | 'published';
+                      console.log('🔧 [STATUS CHANGE]', { from: lessonData.status, to: newStatus });
+                      setLessonData((prev: Lesson | null) => ({ 
+                        ...prev!, 
+                        status: newStatus 
+                      }));
+                    }}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
                   </select>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Current: {lessonData.status} | Has changes: {hasUnsavedChanges ? 'Yes' : 'No'}
+                  </p>
                 </Card>
 
                 <Card className="p-6">

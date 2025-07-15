@@ -203,7 +203,8 @@ const CourseBuilderPage = () => {
         title: chapterToEdit.title,
         description: chapterToEdit.description || '',
         order: chapterToEdit.order,
-        course_id: chapterToEdit.course_id
+        course_id: chapterToEdit.course_id,
+        status: chapterToEdit.status || 'draft'
       });
       setIsEditChapterModalOpen(true);
     }
@@ -214,6 +215,9 @@ const CourseBuilderPage = () => {
   };
 
   const handleChapterUpdated = (updatedChapter: ChapterEditData) => {
+    // Update the local state so modal reflects current data when reopened
+    setSelectedChapterForEdit(updatedChapter);
+    
     // React Query cache invalidation handles updates automatically
     // No manual refetch needed - this prevents loading states
     

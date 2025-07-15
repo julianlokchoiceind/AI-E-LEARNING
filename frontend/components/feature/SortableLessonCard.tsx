@@ -166,12 +166,12 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
                   Lesson {lesson.order}
                 </Badge>
                 
-                {lesson.status && isEditable && (
+                {isEditable && (
                   <Badge 
-                    variant={lesson.status === 'published' ? 'default' : 'secondary'}
+                    variant={(lesson.status || 'draft') === 'published' ? 'default' : 'secondary'}
                     className="text-xs"
                   >
-                    {lesson.status}
+                    {lesson.status || 'draft'}
                   </Badge>
                 )}
 
