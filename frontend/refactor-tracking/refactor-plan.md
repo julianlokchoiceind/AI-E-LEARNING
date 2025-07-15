@@ -32,6 +32,8 @@ npm run test
 
 # 3. Create baseline metrics
 npm run refactor:baseline
+
+# 4. Current status: 55 "as any" to remove
 ```
 
 ### PHASE 1: TYPE INFRASTRUCTURE (1 hour)
@@ -130,7 +132,7 @@ Each phase must pass:
 ## 📝 FINAL CHECKLIST
 
 Before marking complete:
-- [ ] All 82 `as any` removed
+- [ ] All 55 `as any` removed
 - [ ] Zero TypeScript errors
 - [ ] All tests passing
 - [ ] Production build successful

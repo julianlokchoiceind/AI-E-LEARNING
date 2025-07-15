@@ -24,10 +24,12 @@ import {
   useReorderChapters,
   useReorderLessons 
 } from '@/hooks/queries/useCourses';
+import { CourseDetailData } from '@/lib/api/courses';
 import { useDeleteChapter } from '@/hooks/queries/useChapters';
 import { useDeleteLesson } from '@/hooks/queries/useLessons';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
+import { StandardResponse } from '@/lib/types/api';
 
 const CourseBuilderPage = () => {
   const params = useParams();
@@ -48,7 +50,9 @@ const CourseBuilderPage = () => {
   
   // React Query hooks - automatic caching and state management
   const { data: courseResponse, loading: courseLoading, refetch: refetchCourse } = useCourseQuery(courseId);
+  const typedCourseResponse = courseResponse as StandardResponse<CourseDetailData> | null;
   const { data: chaptersResponse, loading: chaptersLoading, refetch: refetchChapters } = useCourseChaptersQuery(courseId);
+  const typedChaptersResponse = chaptersResponse as StandardResponse<{ chapters: any[] }> | null;
   const { mutateAsync: updateCourseAction } = useUpdateCourse(true); // 🔧 FIX: silent=true for autosave (no toast spam)
   const { mutateAsync: manualSaveCourseAction } = useUpdateCourse(false); // 🔧 Manual save with toast feedback
 
@@ -169,16 +173,15 @@ const CourseBuilderPage = () => {
           throw error;
         }
       },
-      enabled: !!courseData,
     }
   );
 
   // Initialize data from React Query responses
   useEffect(() => {
-    if (courseResponse?.data) {
+    if (typedCourseResponse?.data) {
       // Backend returns { success: true, data: { id, title, ... } }
       // So courseResponse.data is the actual course data
-      const courseData = courseResponse.data;
+      const courseData = typedCourseResponse.data;
       console.log('🔍 [DEBUG] Course response data:', {
         hasId: !!courseData?.id,
         hasUnderscore_id: !!(courseData as any)?._id,
@@ -189,16 +192,16 @@ const CourseBuilderPage = () => {
       setCourseData(courseData);
       setTitleInput(courseData?.title || '');
     }
-  }, [courseResponse, setCourseData]);
+  }, [typedCourseResponse, setCourseData]);
   
   useEffect(() => {
-    if (chaptersResponse?.data) {
+    if (typedChaptersResponse?.data) {
       // Backend returns { success: true, data: { chapters: [...] } }
       // So chaptersResponse.data.chapters is the chapters array
-      const chapters = (chaptersResponse.data as any)?.chapters || [];
+      const chapters = typedChaptersResponse.data.chapters || [];
       setChapters(chapters);
     }
-  }, [chaptersResponse]);
+  }, [typedChaptersResponse]);
   
   useEffect(() => {
     return () => {
@@ -330,7 +333,7 @@ const CourseBuilderPage = () => {
     }
   };
 
-  const handleConfirmChapterDelete = (chapterId: string) => {
+  const handleConfirmChapterDelete = async (chapterId: string) => {
     // Simply call the delete action - optimistic updates and toasts are handled in the hook
     deleteChapterMutation(chapterId);
   };
@@ -406,6 +409,11 @@ const CourseBuilderPage = () => {
       updated_at: new Date().toISOString() 
     };
     updateCourseData(updatedCourseData);
+    
+    // 🔧 FIX: Force refetch to ensure lesson card sync
+    setTimeout(() => {
+      refetchChapters();
+    }, 100);
   };
 
   const handleLessonDelete = (lessonId: string) => {
@@ -456,7 +464,7 @@ const CourseBuilderPage = () => {
       }));
 
       // Use React Query mutation instead of direct API call
-      const response = await reorderChaptersMutation({ courseId, chapterOrders });
+      const response = await reorderChaptersMutation({ courseId, reorderData: chapterOrders });
       
       if (response?.success && response?.data) {
         // Update with response data to ensure consistency

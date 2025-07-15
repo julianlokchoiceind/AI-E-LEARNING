@@ -228,15 +228,18 @@ const CreatorCoursesPage = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; className: string }> = {
-      draft: { label: 'Draft', className: 'bg-gray-100 text-gray-700' },
-      review: { label: 'In Review', className: 'bg-yellow-100 text-yellow-700' },
-      published: { label: 'Published', className: 'bg-green-100 text-green-700' },
-      archived: { label: 'Archived', className: 'bg-red-100 text-red-700' },
-    };
-
-    const config = statusConfig[status] || statusConfig.draft;
-    return <Badge className={config.className}>{config.label}</Badge>;
+    switch (status) {
+      case 'published':
+        return <Badge status="published" />;
+      case 'review':
+        return <Badge variant="warning">In Review</Badge>;
+      case 'archived':
+        return <Badge variant="destructive">Archived</Badge>;
+      case 'draft':
+        return <Badge status="draft" />;
+      default:
+        return <Badge status="draft" />;
+    }
   };
 
   if (loading) {

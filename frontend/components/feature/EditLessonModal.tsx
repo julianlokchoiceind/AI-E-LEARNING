@@ -381,6 +381,16 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
               <p className="text-xs text-gray-500 mt-1">
                 Only published lessons are visible to students
               </p>
+              
+              {/* Status validation info */}
+              {formData.status === 'published' && (
+                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-xs text-yellow-700">
+                    <strong>Note:</strong> Publishing a lesson requires the parent chapter to be published first. 
+                    The system will validate this when you save.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Helper Text */}

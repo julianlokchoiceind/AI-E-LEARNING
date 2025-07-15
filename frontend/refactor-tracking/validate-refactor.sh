@@ -63,7 +63,7 @@ echo -n "Error casts: "
 grep -r "catch.*any" ../.. --include="*.ts" --include="*.tsx" --exclude-dir="node_modules" --exclude-dir=".next" 2>/dev/null | wc -l
 
 # Progress calculation
-ORIGINAL=82
+ORIGINAL=55
 if [ $TOTAL -eq 0 ]; then
     echo -e "\n${GREEN}🎉 COMPLETE! All 'as any' removed!${NC}"
 else

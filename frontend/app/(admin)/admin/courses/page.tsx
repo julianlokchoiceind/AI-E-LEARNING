@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import DeleteCourseModal, { CourseDeleteData } from '@/components/feature/DeleteCourseModal';
 import { LoadingSpinner, EmptyState, CourseListSkeleton } from '@/components/ui/LoadingStates';
+import { StandardResponse } from '@/lib/types/api';
 import { 
   useAdminCoursesQuery, 
   useApproveCourse, 
@@ -114,16 +115,20 @@ export default function CourseApproval() {
   const actionLoading = approveLoading || rejectLoading || toggleLoading || deleteLoading || createLoading;
   
   // Extract courses and pagination data from response
-  const courses = coursesData?.data?.courses || [];
-  const totalItems = coursesData?.data?.pagination?.total_count || 0;
-  const totalPages = coursesData?.data?.pagination?.total_pages || 1;
+  const typedCoursesData = coursesData as StandardResponse<{ courses: any[], pagination: any }> | null;
+  const courses = typedCoursesData?.data?.courses || [];
+  const totalItems = typedCoursesData?.data?.pagination?.total_count || 0;
+  const totalPages = typedCoursesData?.data?.pagination?.total_pages || 1;
 
   // Extract statistics for Dashboard Quick Stats
-  const statistics = statisticsData?.data || null;
+  const typedStatisticsData = statisticsData as StandardResponse<any> | null;
+  const statistics = typedStatisticsData?.data || null;
 
   const handleApproveCourse = (course: Course) => {
     const courseId = course.id;
-    approveCourse(courseId);
+    if (courseId) {
+      approveCourse(courseId);
+    }
   };
 
   const handleRejectCourse = () => {
@@ -151,15 +156,17 @@ export default function CourseApproval() {
     // Use course.id (API consistently returns id field)
     const courseId = course.id;
     
-    setSelectedCourseForDelete({
-      id: courseId,  // Fix: Use 'id' to match DeleteCourseModal interface
-      title: course.title,
-      description: course.description,
-      total_lessons: course.total_lessons,
-      total_chapters: course.total_chapters,
-      creator_name: course.creator_name,
-      status: course.status
-    });
+    if (courseId) {
+      setSelectedCourseForDelete({
+        id: courseId,  // Fix: Use 'id' to match DeleteCourseModal interface
+        title: course.title,
+        description: course.description,
+        total_lessons: course.total_lessons,
+        total_chapters: course.total_chapters,
+        creator_name: course.creator_name,
+        status: course.status
+      });
+    }
     setShowDeleteModal(true);
   };
 
@@ -206,15 +213,15 @@ export default function CourseApproval() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'published':
-        return <Badge className="bg-green-100 text-green-800">Published</Badge>;
+        return <Badge status="published" />;
       case 'review':
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending Review</Badge>;
+        return <Badge variant="warning">Pending Review</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+        return <Badge variant="destructive">Rejected</Badge>;
       case 'draft':
-        return <Badge className="bg-gray-100 text-gray-800">Draft</Badge>;
+        return <Badge status="draft" />;
       default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+        return <Badge variant="secondary">{status}</Badge>;
     }
   };
 

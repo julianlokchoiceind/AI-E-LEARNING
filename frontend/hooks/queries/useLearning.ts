@@ -88,7 +88,7 @@ export function useCourseChaptersQuery(courseId: string) {
   return useApiQuery(
     ['course-chapters', courseId],
     async (): Promise<any> => {
-      const data: any = await api.get(`/chapters/courses/${courseId}/chapters-with-lessons`, { requireAuth: true });
+      const data: any = await api.get(`/courses/${courseId}/chapters-with-lessons`, { requireAuth: true });
       if (!data.success) {
         throw new Error(data.message || 'Something went wrong');
       }

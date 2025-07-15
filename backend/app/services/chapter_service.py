@@ -103,7 +103,7 @@ class ChapterService:
         chapter_update: ChapterUpdate,
         user_id: str
     ) -> Chapter:
-        """Update a chapter."""
+        """Update a chapter with status validation and cascade logic."""
         # Get chapter with course info
         chapter = await Chapter.get(PydanticObjectId(chapter_id))
         if not chapter:
@@ -120,8 +120,26 @@ class ChapterService:
                 detail="Only course creator can update chapters"
             )
         
-        # Update fields
+        # Handle status updates with validation and cascade logic
         update_data = chapter_update.dict(exclude_unset=True)
+        
+        # Check if status is being updated
+        if 'status' in update_data:
+            new_status = update_data['status']
+            old_status = chapter.status
+            
+            # Validate status transition
+            await ChapterService._validate_status_transition(
+                chapter, old_status, new_status
+            )
+            
+            # Handle cascade logic when status changes
+            if old_status != new_status:
+                await ChapterService._handle_status_cascade(
+                    chapter_id, old_status, new_status
+                )
+        
+        # Update fields
         for field, value in update_data.items():
             setattr(chapter, field, value)
         
@@ -276,7 +294,7 @@ class ChapterService:
                     "title": lesson.title,
                     "description": lesson.description or "",
                     "order": lesson.order,
-                    "video_duration": lesson.video.get("duration", 0) if lesson.video else 0,
+                    "video_duration": lesson.video.duration if lesson.video and lesson.video.duration else 0,
                     "has_quiz": False,  # Default - will be updated when quiz system is implemented
                     "status": lesson.status
                 }
@@ -285,6 +303,73 @@ class ChapterService:
             result.append(chapter_dict)
         
         return result
+
+    @staticmethod
+    async def _validate_status_transition(
+        chapter: Chapter, 
+        old_status: str, 
+        new_status: str
+    ) -> None:
+        """Validate chapter status transition."""
+        # Chapter can always be published or drafted without validation
+        # Only lessons need strict validation
+        pass
+    
+    @staticmethod
+    async def _handle_status_cascade(
+        chapter_id: str,
+        old_status: str, 
+        new_status: str
+    ) -> None:
+        """Handle cascade logic when chapter status changes."""
+        # When chapter goes from published to draft, all lessons must go to draft
+        if old_status == 'published' and new_status == 'draft':
+            # Get all lessons in this chapter
+            lessons = await Lesson.find(
+                Lesson.chapter_id == PydanticObjectId(chapter_id)
+            ).to_list()
+            
+            # Update all lessons to draft
+            for lesson in lessons:
+                if lesson.status == 'published':
+                    lesson.status = 'draft'
+                    await lesson.save()
+    
+    @staticmethod
+    async def validate_lesson_status_change(
+        lesson_id: str,
+        new_status: str
+    ) -> dict:
+        """Validate if lesson status can be changed and return validation info."""
+        lesson = await Lesson.get(PydanticObjectId(lesson_id))
+        if not lesson:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lesson not found"
+            )
+        
+        # If trying to publish lesson
+        if new_status == 'published' and lesson.status == 'draft':
+            # Check if parent chapter is published
+            chapter = await Chapter.get(lesson.chapter_id)
+            if not chapter:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Chapter not found"
+                )
+            
+            if chapter.status != 'published':
+                return {
+                    "can_change": False,
+                    "warning": "Cannot publish lesson: Parent chapter must be published first",
+                    "suggested_action": "Publish the chapter first, then publish this lesson"
+                }
+        
+        return {
+            "can_change": True,
+            "warning": None,
+            "suggested_action": None
+        }
 
 
 # Create service instance

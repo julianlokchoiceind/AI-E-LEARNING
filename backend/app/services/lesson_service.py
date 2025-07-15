@@ -33,10 +33,15 @@ class LessonService:
                 detail="Course not found"
             )
         
-        if str(course.creator_id) != user_id:
+        # Get user to check role
+        from app.models.user import User
+        user = await User.get(PydanticObjectId(user_id))
+        
+        # Allow admin or course creator to add lessons
+        if user.role != "admin" and str(course.creator_id) != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only course creator can add lessons"
+                detail="Only course creator or admin can add lessons"
             )
         
         # Verify chapter exists and belongs to course
@@ -275,7 +280,7 @@ class LessonService:
         lesson_update: LessonUpdate,
         user_id: str
     ) -> Lesson:
-        """Update a lesson."""
+        """Update a lesson with status validation."""
         # Get lesson
         lesson = await Lesson.get(PydanticObjectId(lesson_id))
         if not lesson:
@@ -286,17 +291,44 @@ class LessonService:
         
         # Verify permissions
         course = await Course.get(lesson.course_id)
-        if str(course.creator_id) != user_id:
+        
+        # Get user to check role
+        from app.models.user import User
+        user = await User.get(PydanticObjectId(user_id))
+        
+        # Allow admin or course creator to update lessons
+        if user.role != "admin" and str(course.creator_id) != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only course creator can update lessons"
+                detail="Only course creator or admin can update lessons"
             )
+        
+        # Handle status validation
+        update_data = lesson_update.dict(exclude_unset=True)
+        
+        # Check if status is being updated
+        if 'status' in update_data:
+            new_status = update_data['status']
+            old_status = lesson.status
+            
+            # Validate status transition
+            if new_status == 'published' and old_status == 'draft':
+                # Check if parent chapter is published
+                chapter = await Chapter.get(lesson.chapter_id)
+                if not chapter:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Chapter not found"
+                    )
+                
+                if chapter.status != 'published':
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Cannot publish lesson: Parent chapter must be published first"
+                    )
         
         # Track duration change for course stats
         old_duration = (lesson.video.duration or 0) if lesson.video else 0
-        
-        # Update fields
-        update_data = lesson_update.dict(exclude_unset=True)
         
         # Handle nested objects
         if "video" in update_data and update_data["video"]:
@@ -345,10 +377,16 @@ class LessonService:
         
         # Verify permissions
         course = await Course.get(lesson.course_id)
-        if str(course.creator_id) != user_id:
+        
+        # Get user to check role
+        from app.models.user import User
+        user = await User.get(PydanticObjectId(user_id))
+        
+        # Allow admin or course creator to delete lessons
+        if user.role != "admin" and str(course.creator_id) != user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only course creator can delete lessons"
+                detail="Only course creator or admin can delete lessons"
             )
         
         # Delete lesson
@@ -502,6 +540,42 @@ class LessonService:
         # Update the lesson's order
         lesson.order = new_order
         await lesson.save()
+
+    @staticmethod
+    async def validate_lesson_status_change(
+        lesson_id: str,
+        new_status: str
+    ) -> dict:
+        """Validate if lesson status can be changed and return validation info."""
+        lesson = await Lesson.get(PydanticObjectId(lesson_id))
+        if not lesson:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lesson not found"
+            )
+        
+        # If trying to publish lesson
+        if new_status == 'published' and lesson.status == 'draft':
+            # Check if parent chapter is published
+            chapter = await Chapter.get(lesson.chapter_id)
+            if not chapter:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Chapter not found"
+                )
+            
+            if chapter.status != 'published':
+                return {
+                    "can_change": False,
+                    "warning": "Cannot publish lesson: Parent chapter must be published first",
+                    "suggested_action": "Publish the chapter first, then publish this lesson"
+                }
+        
+        return {
+            "can_change": True,
+            "warning": None,
+            "suggested_action": None
+        }
 
 
 # Create service instance

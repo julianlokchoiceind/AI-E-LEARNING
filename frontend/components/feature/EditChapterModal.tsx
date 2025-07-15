@@ -213,7 +213,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
 
             {/* Chapter Status */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Chapter Status
               </label>
               <select

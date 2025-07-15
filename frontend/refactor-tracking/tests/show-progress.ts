@@ -18,7 +18,7 @@ function main() {
   
   // Load baseline
   const baselinePath = path.join(projectRoot, 'frontend/refactor-tracking/baseline.json');
-  let baseline: any = { totalAsAny: 82 };
+  let baseline: any = { totalAsAny: 55 };
   
   if (fs.existsSync(baselinePath)) {
     baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf-8'));

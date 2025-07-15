@@ -101,14 +101,14 @@ Each phase is complete when:
 ## 📈 Expected Timeline
 
 - Phase 1: 1 hour (Type infrastructure)
-- Phase 2: 3 hours (Browser APIs)
-- Phase 3: 2.5 hours (Response types)
-- Phase 4: 1 hour (Form/Events)
-- Phase 5: 1 hour (Error handling)
-- Phase 6: 2 hours (Mutations)
-- Phase 7: 0.5 hour (Misc)
+- Phase 2: 2 hours (Browser APIs - 12 items)
+- Phase 3: 2 hours (Response types - 15 items)
+- Phase 4: 1.5 hours (Form/Events - 15 items)
+- Phase 5: 1 hour (Error handling - 10 items)
+- Phase 6: 0.5 hour (Badge variants - 4 items)
+- Phase 7: 0.5 hour (Misc - 2 items)
 
-**Total: ~11 hours**
+**Total: ~8.5 hours** (reduced from 11 hours)
 
 ## 🎯 Current Status
 

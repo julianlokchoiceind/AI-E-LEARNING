@@ -358,3 +358,32 @@ async def reorder_lessons(
         data={"lesson_id": lesson_id, "new_order": new_order},
         message="Lesson order updated successfully"
     )
+
+
+@router.post("/lessons/{lesson_id}/validate-status", response_model=StandardResponse[dict])
+async def validate_lesson_status_change(
+    lesson_id: str,
+    new_status: str = Body(..., embed=True),
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """
+    Validate if lesson status can be changed.
+    
+    Returns validation information including warnings and suggested actions.
+    """
+    if current_user.role not in ["creator", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only content creators can validate lesson status"
+        )
+    
+    validation_result = await lesson_service.validate_lesson_status_change(
+        lesson_id=lesson_id,
+        new_status=new_status
+    )
+    
+    return StandardResponse(
+        success=True,
+        data=validation_result,
+        message="Lesson status validation completed"
+    )

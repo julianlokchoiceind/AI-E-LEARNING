@@ -310,9 +310,10 @@ const LessonEditPage = () => {
                   </h1>
                 )}
 
-                <Badge className={lessonData.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                  {lessonData.status}
-                </Badge>
+                <Badge 
+                  status={lessonData.status as 'draft' | 'published'} 
+                  size="md"
+                />
               </div>
 
               <div className="flex items-center gap-4">
@@ -420,24 +421,32 @@ const LessonEditPage = () => {
 
               <div className="space-y-6">
                 <Card className="p-6">
-                  <h3 className="font-semibold mb-4">Lesson Status</h3>
-                  <select
-                    value={lessonData.status}
-                    onChange={(e) => {
-                      const newStatus = e.target.value as 'draft' | 'published';
-                      setLessonData((prev: Lesson | null) => {
-                        if (!prev) return null;
-                        return { ...prev, status: newStatus };
-                      });
-                    }}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                  </select>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Current: {lessonData.status} | Has changes: {hasUnsavedChanges ? 'Yes' : 'No'}
-                  </p>
+                  <h3 className="font-semibold mb-4">Status</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Lesson Status
+                      </label>
+                      <select
+                        value={lessonData.status}
+                        onChange={(e) => {
+                          const newStatus = e.target.value as 'draft' | 'published';
+                          setLessonData((prev: Lesson | null) => {
+                            if (!prev) return null;
+                            return { ...prev, status: newStatus };
+                          });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
+                      </select>
+                      <p className="text-sm text-gray-500 mt-2">
+                        Published lessons require parent chapter to be published
+                      </p>
+                    </div>
+                    
+                  </div>
                 </Card>
 
                 <Card className="p-6">
