@@ -4,6 +4,7 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ToastService } from '@/lib/toast/ToastService';
+import { Lesson } from '@/lib/types/course';
 import { 
   getLessonsByChapter, 
   getLesson, 
@@ -70,7 +71,7 @@ export function useLessonsQuery(chapterId: string, enabled: boolean = true) {
  * High-impact: Used in lesson editing and learning interface
  */
 export function useLessonQuery(lessonId: string, enabled: boolean = true) {
-  return useApiQuery(
+  return useApiQuery<Lesson>(
     ['lesson', lessonId],
     () => getLesson(lessonId),
     {

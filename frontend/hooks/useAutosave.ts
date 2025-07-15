@@ -100,7 +100,6 @@ export const useAutosave = <T = any>(
     dataRef.current = data;
     // Initialize lastSavedDataRef when we first get data AND it's currently null
     if (data && !lastSavedDataRef.current) {
-      console.log('🔧 [AUTOSAVE DEBUG] Initializing lastSavedDataRef with:', data);
       lastSavedDataRef.current = data;
     }
   }, [data]);
@@ -129,7 +128,6 @@ export const useAutosave = <T = any>(
       // 🔧 CRITICAL FIX: Reset lastSavedDataRef when new data loads from server
       // This ensures change detection works properly after data reload
       if (dataRef.current) {
-        console.log('🔧 [AUTOSAVE DEBUG] Resetting lastSavedDataRef due to new server data');
         lastSavedDataRef.current = dataRef.current;
       }
     }
@@ -163,12 +161,6 @@ export const useAutosave = <T = any>(
       const previousStr = JSON.stringify(previousCopy);
       
       const hasChanges = currentStr !== previousStr;
-      
-      if (!hasChanges) {
-        console.log('🔧 [CHANGE DETECTION] Only timestamps changed, ignoring');
-      } else {
-        console.log('🔧 [CHANGE DETECTION] Content changes detected');
-      }
       
       return hasChanges;
     } catch (error) {
@@ -357,11 +349,6 @@ export const useAutosave = <T = any>(
   const hasUnsavedChanges = useCallback((): boolean => {
     // Always return false during first render or if no data
     if (isFirstRender.current || !dataRef.current || !lastSavedDataRef.current) {
-      console.log('🔧 [UNSAVED CHANGES] Returning false:', {
-        isFirstRender: isFirstRender.current,
-        hasCurrentData: !!dataRef.current,
-        hasLastSavedData: !!lastSavedDataRef.current
-      });
       return false;
     }
     
@@ -371,11 +358,6 @@ export const useAutosave = <T = any>(
     }
     
     const hasChanges = dataChangeChecker(dataRef.current, lastSavedDataRef.current);
-    console.log('🔧 [UNSAVED CHANGES] Final result:', {
-      hasChanges,
-      currentData: dataRef.current,
-      lastSavedData: lastSavedDataRef.current
-    });
     
     return hasChanges;
   }, [saveStatus, dataChangeChecker]);

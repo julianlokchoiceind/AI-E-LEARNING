@@ -76,12 +76,12 @@ export interface Lesson {
   title: string
   description?: string
   order: number
-  video: LessonVideo
+  video?: LessonVideo | null
   content?: string
   resources?: LessonResource[]
-  has_quiz: boolean
-  quiz_required: boolean
-  unlock_conditions: LessonUnlockConditions
+  has_quiz?: boolean
+  quiz_required?: boolean
+  unlock_conditions?: LessonUnlockConditions | null
   status: 'draft' | 'published'
   is_completed?: boolean
   is_locked?: boolean
@@ -93,7 +93,7 @@ export interface Lesson {
 export interface LessonVideo {
   url?: string
   youtube_id?: string
-  duration: number
+  duration?: number
   transcript?: string
   captions?: string
   thumbnail?: string
@@ -107,9 +107,9 @@ export interface LessonResource {
 }
 
 export interface LessonUnlockConditions {
-  previous_lesson_required: boolean
-  quiz_pass_required: boolean
-  minimum_watch_percentage: number
+  previous_lesson_required?: boolean
+  quiz_pass_required?: boolean
+  minimum_watch_percentage?: number
 }
 
 export interface CourseProgress {

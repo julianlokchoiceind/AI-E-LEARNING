@@ -50,25 +50,35 @@ const LessonEditPage = () => {
   const [resources, setResources] = useState<LessonResource[]>([]);
 
   // React Query hooks  
-  const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId) as {
-    data: StandardResponse<Lesson> | undefined;
-    loading: boolean;
-  };
+  const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId);
+  const typedLessonResponse = lessonResponse as StandardResponse<Lesson> | null;
   const { mutateAsync: updateLessonAction } = useUpdateLesson();
 
   // Initialize lesson data
   useEffect(() => {
-    if (lessonResponse?.success && lessonResponse.data) {
-      const lesson = lessonResponse.data;
+    if (typedLessonResponse?.success && typedLessonResponse.data) {
+      const lesson = typedLessonResponse.data;
       // Ensure video object is properly initialized to prevent input field reset
       setLessonData({
         ...lesson,
-        video: lesson.video || { url: '', youtube_id: '', duration: 0 }
+        video: lesson.video || { 
+          url: '', 
+          youtube_id: '', 
+          duration: 0,
+          transcript: '',
+          captions: '',
+          thumbnail: ''
+        },
+        unlock_conditions: lesson.unlock_conditions || {
+          previous_lesson_required: true,
+          quiz_pass_required: false,
+          minimum_watch_percentage: 80
+        }
       });
       setTitleInput(lesson.title);
       setResources(lesson.resources || []);
     }
-  }, [lessonResponse]);
+  }, [typedLessonResponse]);
 
   // Auto-save hook
   const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges } = useAutosave(
@@ -115,7 +125,10 @@ const LessonEditPage = () => {
 
   const handleTitleSave = () => {
     if (titleInput.trim() !== lessonData?.title) {
-      setLessonData((prev: Lesson | null) => ({ ...prev, title: titleInput.trim() }));
+      setLessonData((prev: Lesson | null) => {
+        if (!prev) return null;
+        return { ...prev, title: titleInput.trim() };
+      });
     }
     setIsEditingTitle(false);
   };
@@ -128,17 +141,19 @@ const LessonEditPage = () => {
       youtubeId = youtubeMatch[1];
     }
 
-    setLessonData((prev: Lesson | null) => ({
-      ...prev!,
-      video: {
-        // Default structure and spread existing properties
-        duration: 0,
-        ...prev?.video,
-        // Override with new values
-        url,
-        youtube_id: youtubeId
-      }
-    }));
+    setLessonData((prev: Lesson | null) => {
+      if (!prev) return null;
+      
+      return {
+        ...prev,
+        video: {
+          ...prev.video || {},
+          // Override with new values
+          url: url,
+          youtube_id: youtubeId
+        }
+      };
+    });
   };
 
   const handleAddResource = () => {
@@ -150,7 +165,10 @@ const LessonEditPage = () => {
     };
     const updatedResources = [...resources, newResource];
     setResources(updatedResources);
-    setLessonData((prev: Lesson | null) => ({ ...prev, resources: updatedResources }));
+    setLessonData((prev: Lesson | null) => {
+      if (!prev) return null;
+      return { ...prev, resources: updatedResources };
+    });
   };
 
   const handleResourceChange = (index: number, field: keyof LessonResource, value: string) => {
@@ -158,13 +176,19 @@ const LessonEditPage = () => {
       i === index ? { ...resource, [field]: value } : resource
     );
     setResources(updatedResources);
-    setLessonData((prev: Lesson | null) => ({ ...prev, resources: updatedResources }));
+    setLessonData((prev: Lesson | null) => {
+      if (!prev) return null;
+      return { ...prev, resources: updatedResources };
+    });
   };
 
   const handleRemoveResource = (index: number) => {
     const updatedResources = resources.filter((_, i) => i !== index);
     setResources(updatedResources);
-    setLessonData((prev: Lesson | null) => ({ ...prev, resources: updatedResources }));
+    setLessonData((prev: Lesson | null) => {
+      if (!prev) return null;
+      return { ...prev, resources: updatedResources };
+    });
   };
 
   if (lessonLoading) {
@@ -312,7 +336,10 @@ const LessonEditPage = () => {
                       </label>
                       <textarea
                         value={lessonData.description || ''}
-                        onChange={(e) => setLessonData((prev: Lesson | null) => ({ ...prev, description: e.target.value }))}
+                        onChange={(e) => setLessonData((prev: Lesson | null) => {
+                          if (!prev) return null;
+                          return { ...prev, description: e.target.value };
+                        })}
                         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         rows={3}
                         placeholder="Brief description of what students will learn..."
@@ -325,7 +352,10 @@ const LessonEditPage = () => {
                       </label>
                       <textarea
                         value={lessonData.content || ''}
-                        onChange={(e) => setLessonData((prev: Lesson | null) => ({ ...prev, content: e.target.value }))}
+                        onChange={(e) => setLessonData((prev: Lesson | null) => {
+                          if (!prev) return null;
+                          return { ...prev, content: e.target.value };
+                        })}
                         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                         rows={15}
                         placeholder="Detailed lesson content in markdown format..."
@@ -342,11 +372,10 @@ const LessonEditPage = () => {
                     value={lessonData.status}
                     onChange={(e) => {
                       const newStatus = e.target.value as 'draft' | 'published';
-                      console.log('🔧 [STATUS CHANGE]', { from: lessonData.status, to: newStatus });
-                      setLessonData((prev: Lesson | null) => ({ 
-                        ...prev!, 
-                        status: newStatus 
-                      }));
+                      setLessonData((prev: Lesson | null) => {
+                        if (!prev) return null;
+                        return { ...prev, status: newStatus };
+                      });
                     }}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
@@ -409,10 +438,16 @@ const LessonEditPage = () => {
                     <Input
                       type="number"
                       value={lessonData.video?.duration || ''}
-                      onChange={(e) => setLessonData((prev: Lesson | null) => ({
-                        ...prev,
-                        video: { ...prev?.video, duration: parseInt(e.target.value) }
-                      }))}
+                      onChange={(e) => setLessonData((prev: Lesson | null) => {
+                        if (!prev) return null;
+                        return {
+                          ...prev,
+                          video: { 
+                            ...prev.video || {}, 
+                            duration: parseInt(e.target.value) || 0
+                          }
+                        };
+                      })}
                       placeholder="15"
                       className="w-32"
                     />
@@ -425,10 +460,16 @@ const LessonEditPage = () => {
                   </label>
                   <textarea
                     value={lessonData.video?.transcript || ''}
-                    onChange={(e) => setLessonData((prev: Lesson | null) => ({
-                      ...prev,
-                      video: { ...prev?.video, transcript: e.target.value }
-                    }))}
+                    onChange={(e) => setLessonData((prev: Lesson | null) => {
+                      if (!prev) return null;
+                      return {
+                        ...prev,
+                        video: { 
+                          ...prev.video || {}, 
+                          transcript: e.target.value 
+                        }
+                      };
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={10}
                     placeholder="Video transcript for accessibility and AI features..."
@@ -566,13 +607,16 @@ const LessonEditPage = () => {
                       <input
                         type="checkbox"
                         checked={lessonData.unlock_conditions?.previous_lesson_required ?? true}
-                        onChange={(e) => setLessonData((prev: Lesson | null) => ({
-                          ...prev,
-                          unlock_conditions: {
-                            ...prev?.unlock_conditions,
-                            previous_lesson_required: e.target.checked
-                          }
-                        }))}
+                        onChange={(e) => setLessonData((prev: Lesson | null) => {
+                          if (!prev) return null;
+                          return {
+                            ...prev,
+                            unlock_conditions: {
+                              ...prev.unlock_conditions || {},
+                              previous_lesson_required: e.target.checked
+                            }
+                          };
+                        })}
                         className="rounded"
                       />
                       <span className="text-sm">Previous lesson must be completed</span>
@@ -582,13 +626,16 @@ const LessonEditPage = () => {
                       <input
                         type="checkbox"
                         checked={lessonData.unlock_conditions?.quiz_pass_required ?? false}
-                        onChange={(e) => setLessonData((prev: Lesson | null) => ({
-                          ...prev,
-                          unlock_conditions: {
-                            ...prev?.unlock_conditions,
-                            quiz_pass_required: e.target.checked
-                          }
-                        }))}
+                        onChange={(e) => setLessonData((prev: Lesson | null) => {
+                          if (!prev) return null;
+                          return {
+                            ...prev,
+                            unlock_conditions: {
+                              ...prev.unlock_conditions || {},
+                              quiz_pass_required: e.target.checked
+                            }
+                          };
+                        })}
                         className="rounded"
                       />
                       <span className="text-sm">Previous quiz must be passed</span>
@@ -604,13 +651,16 @@ const LessonEditPage = () => {
                     <Input
                       type="number"
                       value={lessonData.unlock_conditions?.minimum_watch_percentage ?? 80}
-                      onChange={(e) => setLessonData((prev: Lesson | null) => ({
-                        ...prev,
-                        unlock_conditions: {
-                          ...prev?.unlock_conditions,
-                          minimum_watch_percentage: parseInt(e.target.value)
-                        }
-                      }))}
+                      onChange={(e) => setLessonData((prev: Lesson | null) => {
+                        if (!prev) return null;
+                        return {
+                          ...prev,
+                          unlock_conditions: {
+                            ...prev.unlock_conditions || {},
+                            minimum_watch_percentage: parseInt(e.target.value) || 80
+                          }
+                        };
+                      })}
                       className="w-24"
                       min="0"
                       max="100"
@@ -624,10 +674,10 @@ const LessonEditPage = () => {
                     <input
                       type="checkbox"
                       checked={lessonData.is_free_preview ?? false}
-                      onChange={(e) => setLessonData((prev: Lesson | null) => ({
-                        ...prev,
-                        is_free_preview: e.target.checked
-                      }))}
+                      onChange={(e) => setLessonData((prev: Lesson | null) => {
+                        if (!prev) return null;
+                        return { ...prev, is_free_preview: e.target.checked };
+                      })}
                       className="rounded"
                     />
                     <span className="text-sm font-medium">Free Preview</span>
