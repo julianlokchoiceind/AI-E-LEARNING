@@ -138,6 +138,7 @@ const LessonEditPage = () => {
     lessonData,
     {
       delay: 2000,
+      initialLastSavedAt: lessonData?.updated_at || lessonData?.created_at, // Initialize from server data
       onSave: async (data) => {
         if (!data || !data.id) return;
         
