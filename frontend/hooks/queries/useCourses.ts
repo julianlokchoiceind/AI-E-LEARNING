@@ -12,6 +12,7 @@ import {
   deleteCourse,
   type CourseDetailData
 } from '@/lib/api/courses';
+import { StandardResponse } from '@/lib/types/api';
 import { enrollInCourse } from '@/lib/api/enrollments';
 import { 
   getAdminCourses, 
@@ -51,6 +52,10 @@ interface CourseEnrollment {
   courseId: string;
   paymentMethod?: string;
 }
+
+// Cache data type definitions
+type CachedCourseData = StandardResponse<CourseDetailData> | CourseDetailData | null;
+type CachedCoursesData = StandardResponse<any> | any | null;
 
 // =============================================================================
 // PUBLIC COURSE FUNCTIONS - Original useCourses.ts functions
@@ -384,7 +389,7 @@ export function useEnrollInCourse() {
         if (!old) return old;
         
         // Get course data from course cache to populate my-courses entry
-        const courseData = queryClient.getQueryData(['course', courseId]);
+        const courseData = queryClient.getQueryData<CachedCourseData>(['course', courseId]);
         const course = courseData?.data || courseData || {};
         
         const optimisticCourseEntry = {
@@ -490,7 +495,7 @@ export function useEnrollInCourse() {
       queryClient.setQueryData(['recent-courses'], (old: any) => {
         if (!old) return old;
         
-        const courseData = queryClient.getQueryData(['course', courseId]);
+        const courseData = queryClient.getQueryData<CachedCourseData>(['course', courseId]);
         const course = courseData?.data || courseData || {};
         
         const recentCourseEntry = {

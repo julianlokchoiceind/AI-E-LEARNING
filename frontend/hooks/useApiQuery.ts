@@ -12,6 +12,7 @@ interface UseApiQueryOptions<T> {
   staleTime?: number;
   gcTime?: number;
   showToast?: boolean;
+  keepPreviousData?: boolean;
 }
 
 /**
@@ -30,6 +31,7 @@ export function useApiQuery<T>(
     staleTime, // No default - force explicit cache tier selection
     gcTime, // No default - force explicit cache tier selection
     showToast = true,
+    keepPreviousData = false,
   } = options;
 
   const query = useQuery({
@@ -61,6 +63,7 @@ export function useApiQuery<T>(
     retry: 1,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    keepPreviousData,
   } as UseQueryOptions);
 
   // Manual execute function (same as useApiCall)
