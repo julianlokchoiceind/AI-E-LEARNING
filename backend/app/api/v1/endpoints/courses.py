@@ -64,7 +64,7 @@ async def create_course(
 
 @router.get("", response_model=StandardResponse[CourseListResponse])
 @measure_performance("api.courses.list")
-@cache_response(ttl_seconds=300)  # Cache for 5 minutes
+@cache_response(ttl_seconds=30)   # Cache for 30 seconds - sync với frontend
 async def list_courses(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -85,7 +85,10 @@ async def list_courses(
     - search: Search in title and description
     - is_free: Filter free/paid courses
     
-    Only published courses are shown by default.
+    Access control:
+    - Students/Unauthenticated: Only published courses
+    - Content Creators: Only their own courses (all statuses)
+    - Admins: All courses (all statuses)
     """
     try:
         # Only show unpublished courses to their creators or admins
@@ -97,9 +100,9 @@ async def list_courses(
                 # Admin can see all courses, pass status as None to see all
                 status = None
             elif current_user.role == "creator":
-                # Creators can see their own unpublished courses
+                # PRD: Content Creators should only see their own courses
                 creator_id = str(current_user.id)
-                status = None
+                status = None  # See all statuses of own courses
         
         result = await CourseService.list_courses(
             page=page,
@@ -148,7 +151,7 @@ async def list_courses(
 
 @router.get("/{course_id}", response_model=StandardResponse[CourseResponse])
 @measure_performance("api.courses.get")
-@cache_response(ttl_seconds=60)  # 60 seconds cache with automatic invalidation on update
+@cache_response(ttl_seconds=30)  # 30 seconds cache - sync với frontend
 async def get_course(
     course_id: str,
     current_user: Optional[User] = Depends(get_current_user_optional)

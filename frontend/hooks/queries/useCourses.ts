@@ -63,10 +63,34 @@ interface CourseEnrollment {
 export function useCoursesQuery(filters: CoursesFilters = {}) {
   const { search = '', category = '', level = '', pricing = 'all', sort = 'newest', page = 1, limit = 12 } = filters;
   
+  // Build query string from filters
+  const buildQueryString = () => {
+    const params = new URLSearchParams();
+    
+    if (search) params.append('search', search);
+    if (category) params.append('category', category);
+    if (level) params.append('level', level);
+    if (pricing !== 'all') params.append('is_free', pricing === 'free' ? 'true' : 'false');
+    if (sort) params.append('sort', sort);
+    if (page > 1) params.append('page', page.toString());
+    if (limit !== 12) params.append('per_page', limit.toString());
+    
+    return params.toString();
+  };
+  
   return useApiQuery(
     ['courses', { search, category, level, pricing, sort, page, limit }],
-    () => getCourses(),
-    CACHE_CONFIGS.PUBLIC_BROWSING // 3 minutes - catalog data
+    () => {
+      const queryString = buildQueryString();
+      console.log('🔧 [CACHE DEBUG] useCoursesQuery fetching:', {
+        filters: { search, category, level, pricing, sort, page, limit },
+        queryString,
+        url: `/courses?${queryString}`,
+        timestamp: new Date().toISOString()
+      });
+      return getCourses(queryString);
+    },
+    CACHE_CONFIGS.PUBLIC_BROWSING // 1 minute - catalog data for faster admin→public sync
   );
 }
 
@@ -224,17 +248,38 @@ export function useCreateCourse() {
  */
 export function useUpdateCourse(silent: boolean = false) {
   return useApiMutation(
-    ({ courseId, data }: { courseId: string; data: any }) => updateCourse(courseId, data),
+    ({ courseId, data }: { courseId: string; data: any }) => {
+      console.log('🔧 [CACHE DEBUG] useUpdateCourse called:', {
+        courseId,
+        hasStatusChange: data?.status ? true : false,
+        newStatus: data?.status,
+        silent,
+        timestamp: new Date().toISOString()
+      });
+      return updateCourse(courseId, data);
+    },
     {
       invalidateQueries: [
         ['course'], // Refresh course details
-        ['courses'], // Refresh course catalog
+        ['courses'], // Refresh course catalog - PUBLIC ✅
         ['admin-courses'], // Refresh admin view
         ['creator-courses'], // Refresh creator dashboard
         ['course-editor'], // Refresh course editor data
+        ['course-chapters'], // Refresh course chapters (missing!)
+        ['featured-courses'], // Update featured content - PUBLIC ✅
+        ['course-search'], // Update search results - PUBLIC ✅
       ],
       operationName: 'update-course', // Unique operation ID for toast deduplication
       showToast: !silent, // 🔧 FIX: Disable toast when silent=true (for autosave)
+      onSuccess: (response, variables) => {
+        console.log('🔧 [CACHE DEBUG] useUpdateCourse success - cache invalidated:', {
+          courseId: variables.courseId,
+          hasStatusChange: variables.data?.status ? true : false,
+          newStatus: variables.data?.status,
+          invalidatedCaches: ['course', 'courses', 'admin-courses', 'creator-courses', 'course-editor', 'course-chapters', 'featured-courses', 'course-search'],
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   );
 }
@@ -620,6 +665,8 @@ export function useApproveCourse() {
         ['admin-course-statistics'], // Refresh statistics for Quick Stats
         ['courses'],              // Update public catalog
         ['course'],               // Update course details
+        ['featured-courses'],     // Update featured content
+        ['course-search'],        // Update search results
       ],
       optimistic: {
         // Optimistic update: Update UI immediately before API call
@@ -705,6 +752,8 @@ export function useRejectCourse() {
         ['admin-course-statistics'], // Refresh statistics for Quick Stats
         ['courses'],              // Update public catalog
         ['course'],               // Update course details
+        ['featured-courses'],     // Update featured content
+        ['course-search'],        // Update search results
       ],
       optimistic: {
         // Optimistic update: Update UI immediately before API call
@@ -861,6 +910,10 @@ export function useToggleCourseFree() {
         queryKey: ['admin-courses'],
         refetchType: 'active'
       });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['course'] });
+      queryClient.invalidateQueries({ queryKey: ['featured-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['course-search'] });
     }
   });
   
@@ -1036,6 +1089,12 @@ export function useDeleteCourseOptimistic() {
           refetchType: 'active' // Only refetch currently active queries
         });
         
+        // Also invalidate public caches so deleted course disappears from public view
+        await queryClient.invalidateQueries({ queryKey: ['courses'] });
+        await queryClient.invalidateQueries({ queryKey: ['course'] });
+        await queryClient.invalidateQueries({ queryKey: ['featured-courses'] });
+        await queryClient.invalidateQueries({ queryKey: ['course-search'] });
+        
       }
   });
   
@@ -1185,6 +1244,9 @@ export function useCreateChapter() {
       queryClient.invalidateQueries({ queryKey: ['course-editor', variables.courseId] });
       // Also invalidate general lists
       queryClient.invalidateQueries({ queryKey: ['chapters', variables.courseId] });
+      // Invalidate course and search cache since chapter count/structure changed
+      queryClient.invalidateQueries({ queryKey: ['course', variables.courseId] });
+      queryClient.invalidateQueries({ queryKey: ['course-search'] });
     }
   });
   
@@ -1300,6 +1362,8 @@ export function useUpdateChapter() {
       if (data?.data?.course_id) {
         queryClient.invalidateQueries({ queryKey: ['course-chapters', data.data.course_id] });
         queryClient.invalidateQueries({ queryKey: ['chapters', data.data.course_id] });
+        queryClient.invalidateQueries({ queryKey: ['course', data.data.course_id] });
+        queryClient.invalidateQueries({ queryKey: ['course-search'] });
       }
       // Also invalidate the specific chapter
       queryClient.invalidateQueries({ queryKey: ['chapter', variables.chapterId] });
@@ -1460,6 +1524,8 @@ export function useCreateLesson() {
     // Always refetch to ensure consistency
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
+      queryClient.invalidateQueries({ queryKey: ['course'] }); // Update lesson count
+      queryClient.invalidateQueries({ queryKey: ['course-search'] }); // Update search results
     }
   });
   
@@ -1585,6 +1651,8 @@ export function useUpdateLesson() {
     // Always refetch to ensure consistency
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['course-chapters'] });
+      queryClient.invalidateQueries({ queryKey: ['course'] }); // Update lesson data
+      queryClient.invalidateQueries({ queryKey: ['course-search'] }); // Update search results
     }
   });
   

@@ -37,8 +37,9 @@ export const STALE_TIMES = {
   /**
    * Search results and real-time filtering
    * Use case: Course search, user search, content filtering
+   * OPTIMIZED: Sync với public browsing cho consistency
    */
-  SEARCH_RESULTS: 1 * 60 * 1000, // 1 minute
+  SEARCH_RESULTS: 30 * 1000, // 30 seconds (sync với PUBLIC_BROWSING)
 
   // =============================================================================
   // MODERATE UPDATES (3-5 minutes)
@@ -46,14 +47,16 @@ export const STALE_TIMES = {
   /**
    * Public content browsing and catalog data
    * Use case: Course catalog, user profiles, category browsing
+   * OPTIMIZED: Sync với NextJS max-age=30s cho admin→public sync nhanh
    */
-  PUBLIC_BROWSING: 3 * 60 * 1000, // 3 minutes
+  PUBLIC_BROWSING: 30 * 1000, // 30 seconds (sync với NextJS headers)
 
   /**
    * Individual content details
    * Use case: Course details, lesson content, user profiles
+   * OPTIMIZED: Sync với NextJS max-age=30s cho admin→public sync nhanh
    */
-  CONTENT_DETAILS: 5 * 60 * 1000, // 5 minutes
+  CONTENT_DETAILS: 30 * 1000, // 30 seconds (sync với NextJS headers)
 
   /**
    * User progress and learning data
@@ -67,8 +70,9 @@ export const STALE_TIMES = {
   /**
    * Featured content and marketing data
    * Use case: Homepage content, promoted courses, banners
+   * OPTIMIZED: Giảm xuống 2 phút cho consistency với admin updates
    */
-  FEATURED_CONTENT: 10 * 60 * 1000, // 10 minutes
+  FEATURED_CONTENT: 2 * 60 * 1000, // 2 minutes (stable content nhưng vẫn responsive)
 
   /**
    * Personalized recommendations

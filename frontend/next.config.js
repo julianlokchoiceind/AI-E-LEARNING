@@ -80,7 +80,7 @@ const nextConfig = {
       headers: [
         {
           key: 'Cache-Control',
-          value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+          value: 'public, max-age=1800, s-maxage=86400, stale-while-revalidate=604800',
         },
         {
           key: 'X-Frame-Options',
@@ -88,23 +88,23 @@ const nextConfig = {
         },
       ],
     },
-    // Course catalog - Moderate cache with background revalidation
+    // Course catalog - OPTIMIZED: 30s fresh + background revalidation cho admin→public sync nhanh
     {
       source: '/courses',
       headers: [
         {
           key: 'Cache-Control',
-          value: 'public, max-age=300, must-revalidate, s-maxage=600, stale-while-revalidate=86400',
+          value: 'public, max-age=30, stale-while-revalidate=300, must-revalidate, s-maxage=300',
         },
       ],
     },
-    // Individual course pages - Short cache for fresh content
+    // Individual course pages - OPTIMIZED: 30s fresh + background revalidation
     {
       source: '/courses/:path*',
       headers: [
         {
           key: 'Cache-Control',
-          value: 'public, max-age=300, must-revalidate, s-maxage=600, stale-while-revalidate=3600',
+          value: 'public, max-age=30, stale-while-revalidate=300, must-revalidate, s-maxage=300',
         },
       ],
     },

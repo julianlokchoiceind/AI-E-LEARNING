@@ -207,18 +207,20 @@ class CourseService:
         # Build query
         query_conditions = []
         
-        # Only show published courses to non-admins
-        if status is not None:
-            query_conditions.append(Course.status == status)
+        # Handle creator special case: ONLY show own courses (PRD compliance)
+        if creator_id:
+            # PRD: Content Creators should only see their own courses regardless of status
+            query_conditions.append({"creator_id": PydanticObjectId(creator_id)})
+        else:
+            # Regular status filtering for non-creators (students, non-authenticated users)
+            if status is not None:
+                query_conditions.append(Course.status == status)
         
         if category:
             query_conditions.append(Course.category == category)
         
         if level:
             query_conditions.append(Course.level == level)
-        
-        if creator_id:
-            query_conditions.append(Course.creator_id == PydanticObjectId(creator_id))
         
         if is_free is not None:
             query_conditions.append(Course.pricing.is_free == is_free)
