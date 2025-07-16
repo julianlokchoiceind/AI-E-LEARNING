@@ -80,6 +80,12 @@ const LessonEditPage = () => {
         if (!data || !data.id) return;
         
         try {
+          // Filter out invalid resources before sending to API
+          const validResources = data.resources?.filter(resource => 
+            resource.title.trim().length > 0 && 
+            resource.url.trim().length > 0
+          ) || [];
+
           await updateLessonAction({ 
             lessonId: data.id, 
             data: {
@@ -87,7 +93,7 @@ const LessonEditPage = () => {
               description: data.description,
               video: data.video,
               content: data.content,
-              resources: data.resources,
+              resources: validResources,
               status: data.status
             }
           });

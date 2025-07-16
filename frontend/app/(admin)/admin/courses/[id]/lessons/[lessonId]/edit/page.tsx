@@ -103,7 +103,13 @@ const LessonEditPage = () => {
     if (lessonData.description !== undefined) updateData.description = lessonData.description;
     if (lessonData.content !== undefined) updateData.content = lessonData.content;
     if (lessonData.status !== undefined) updateData.status = lessonData.status;
-    if (lessonData.resources !== undefined) updateData.resources = lessonData.resources;
+    if (lessonData.resources !== undefined) {
+      // Filter out invalid resources before sending to API
+      updateData.resources = lessonData.resources.filter(resource => 
+        resource.title.trim().length > 0 && 
+        resource.url.trim().length > 0
+      );
+    }
     
     // Only include video if it has actual content
     if (lessonData.video && (lessonData.video.url || lessonData.video.youtube_id || lessonData.video.duration)) {
@@ -150,7 +156,13 @@ const LessonEditPage = () => {
           if (data.description !== undefined) updateData.description = data.description;
           if (data.content !== undefined) updateData.content = data.content;
           if (data.status !== undefined) updateData.status = data.status;
-          if (data.resources !== undefined) updateData.resources = data.resources;
+          if (data.resources !== undefined) {
+            // Filter out invalid resources before sending to API
+            updateData.resources = data.resources.filter(resource => 
+              resource.title.trim().length > 0 && 
+              resource.url.trim().length > 0
+            );
+          }
           
           // Only include video if it has actual content
           if (data.video && (data.video.url || data.video.youtube_id || data.video.duration)) {
