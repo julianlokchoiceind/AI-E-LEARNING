@@ -2,6 +2,7 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { api } from '@/lib/api/api-client';
 import { StandardResponse } from '@/lib/types/api';
 
@@ -36,8 +37,7 @@ export function useAISuggestionsQuery(params: AISuggestionsParams, enabled: bool
     },
     {
       enabled: enabled && (!!params.course_id || !!params.lesson_id),
-      staleTime: 5 * 60 * 1000, // 5 minutes - suggestions are context-dependent
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
+      ...getCacheConfig('AI_SUGGESTIONS') // AI suggestions - moderate freshness
     }
   );
 }
@@ -77,8 +77,7 @@ export function useLearningPathRecommendationsQuery(userId?: string) {
     },
     {
       enabled: !!userId,
-      staleTime: 30 * 60 * 1000, // 30 minutes - recommendations don't change frequently
-      gcTime: 60 * 60 * 1000, // 1 hour cache
+      ...getCacheConfig('AI_LEARNING_PATH') // AI learning path - stable content
     }
   );
 }
@@ -176,8 +175,7 @@ export function useGetConversationHistory(courseId?: string, lessonId?: string, 
     },
     {
       enabled, // Only run when explicitly enabled
-      staleTime: 5 * 60 * 1000, // 5 minutes - conversation history changes frequently
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
+      ...getCacheConfig('AI_CONVERSATION') // AI conversation - moderate freshness
     }
   );
 }

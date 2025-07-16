@@ -3,6 +3,7 @@
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { ToastService } from '@/lib/toast/ToastService';
 import { 
   getChaptersByCourse, 
@@ -42,8 +43,7 @@ export function useChaptersQuery(courseId: string, enabled: boolean = true) {
     () => getChaptersByCourse(courseId),
     {
       enabled: enabled && !!courseId,
-      staleTime: 3 * 60 * 1000, // 3 minutes - chapter structure
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('COURSE_CHAPTERS') // Course chapters - fresh data
     }
   );
 }
@@ -58,8 +58,7 @@ export function useChapterQuery(chapterId: string, enabled: boolean = true) {
     () => getChapterById(chapterId),
     {
       enabled: enabled && !!chapterId,
-      staleTime: 5 * 60 * 1000, // 5 minutes - chapter details
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
+      ...getCacheConfig('CHAPTER_DETAILS') // Chapter details - moderate freshness
     }
   );
 }
@@ -382,8 +381,7 @@ export function useChaptersWithLessonsQuery(courseId: string, enabled: boolean =
     () => getChaptersWithLessons(courseId),
     {
       enabled: enabled && !!courseId,
-      staleTime: 2 * 60 * 1000, // 2 minutes - more dynamic content
-      gcTime: 8 * 60 * 1000, // 8 minutes cache
+      ...getCacheConfig('CHAPTERS_WITH_LESSONS') // Chapters with lessons - fresh data
     }
   );
 }

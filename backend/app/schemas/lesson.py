@@ -21,8 +21,9 @@ class VideoContentSchema(BaseModel):
 class ResourceSchema(BaseModel):
     """Schema for lesson resources."""
     title: str = Field(..., min_length=1, max_length=200)
-    type: str = Field(..., pattern="^(pdf|doc|zip|link|other)$")
-    url: HttpUrl
+    type: str = Field(..., pattern="^(pdf|doc|zip|link|code|exercise|other)$")
+    url: str = Field(..., min_length=1, description="Resource URL - will be auto-prefixed with https:// if needed")
+    description: Optional[str] = Field(None, max_length=1000, description="Optional resource description")
     size: Optional[int] = Field(None, ge=0)
 
 

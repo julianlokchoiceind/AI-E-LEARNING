@@ -27,8 +27,8 @@ export function useApiQuery<T>(
     onSuccess,
     onError,
     enabled = true,
-    staleTime = 30 * 1000, // 30 seconds - sync với CACHE_CONFIGS & NextJS headers
-    gcTime = 5 * 60 * 1000, // 5 minutes - reasonable memory cache
+    staleTime, // No default - force explicit cache tier selection
+    gcTime, // No default - force explicit cache tier selection
     showToast = true,
   } = options;
 

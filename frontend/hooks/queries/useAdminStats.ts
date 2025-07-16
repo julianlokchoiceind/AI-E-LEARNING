@@ -4,6 +4,7 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { api } from '@/lib/api/api-client';
 import { StandardResponse } from '@/lib/types/api';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { 
   getAdminDashboardStats,
   getPlatformAnalytics,
@@ -39,10 +40,7 @@ export function useAdminDashboardStatsQuery(filters: AdminStatsFilters = {}) {
   return useApiQuery(
     ['admin-dashboard-stats', { period }],
     () => getAdminDashboardStats(),
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes - dashboard data
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
-    }
+    getCacheConfig('ADMIN_OPERATIONS') // Realtime - admin dashboard critical data
   );
 }
 
@@ -56,10 +54,7 @@ export function usePlatformAnalyticsQuery(filters: AdminStatsFilters = {}) {
   return useApiQuery(
     ['platform-analytics', { period, startDate, endDate }],
     () => getPlatformAnalytics({ period, startDate, endDate }),
-    {
-      staleTime: 10 * 60 * 1000, // 10 minutes - analytics data
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
-    }
+    getCacheConfig('USER_DASHBOARD') // 2min moderate - analytics can be slightly stale
   );
 }
 
@@ -73,10 +68,7 @@ export function useUserGrowthStatsQuery(filters: AdminStatsFilters = {}) {
   return useApiQuery(
     ['user-growth-stats', { period }],
     () => getUserGrowthStats({ period }),
-    {
-      staleTime: 15 * 60 * 1000, // 15 minutes - growth data
-      gcTime: 45 * 60 * 1000, // 45 minutes cache
-    }
+    getCacheConfig('USER_DASHBOARD') // 2min moderate - growth tracking data
   );
 }
 
@@ -90,10 +82,7 @@ export function useRevenueStatsQuery(filters: AdminStatsFilters = {}) {
   return useApiQuery(
     ['revenue-stats', { period, startDate, endDate }],
     () => getRevenueStats({ period, startDate, endDate }),
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes - revenue data is critical
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
-    }
+    getCacheConfig('ADMIN_OPERATIONS') // Realtime - revenue data is critical
   );
 }
 
@@ -107,10 +96,7 @@ export function useCourseStatsQuery(filters: AdminStatsFilters = {}) {
   return useApiQuery(
     ['course-stats', { period }],
     () => getCourseStats({ period }),
-    {
-      staleTime: 10 * 60 * 1000, // 10 minutes - course performance data
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
-    }
+    getCacheConfig('USER_DASHBOARD') // 2min moderate - course performance data
   );
 }
 
@@ -122,10 +108,7 @@ export function useSystemHealthQuery() {
   return useApiQuery(
     ['system-health'],
     () => getSystemHealth(),
-    {
-      staleTime: 1 * 60 * 1000, // 1 minute - system health is real-time
-      gcTime: 5 * 60 * 1000, // 5 minutes cache
-    }
+    getCacheConfig('ADMIN_OPERATIONS') // Realtime - system health monitoring
   );
 }
 
@@ -196,10 +179,7 @@ export function useRealTimeMetricsQuery() {
         return { success: true, data: metrics, message: 'Real-time metrics retrieved successfully' };
       });
     },
-    {
-      staleTime: 30 * 1000, // 30 seconds - real-time data
-      gcTime: 2 * 60 * 1000, // 2 minutes cache
-    }
+    getCacheConfig('ADMIN_OPERATIONS') // Realtime - real-time monitoring
   );
 }
 
@@ -253,10 +233,7 @@ export function usePlatformSettingsQuery() {
       };
       return { success: true, data: settings, message: 'Platform settings retrieved successfully' };
     },
-    {
-      staleTime: 30 * 60 * 1000, // 30 minutes - settings rarely change
-      gcTime: 60 * 60 * 1000, // 1 hour cache
-    }
+    getCacheConfig('APP_CONFIGURATION') // 10min stable - settings rarely change
   );
 }
 

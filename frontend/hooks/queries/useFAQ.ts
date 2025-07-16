@@ -4,6 +4,7 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ToastService } from '@/lib/toast/ToastService';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { 
   getFAQs,
   createFAQ,
@@ -34,10 +35,7 @@ export function useFAQsQuery(filters: FAQFilters = {}) {
   return useApiQuery(
     ['faqs', { search, category, published, page, limit }],
     () => getFAQs({ q: search, category, page, per_page: limit }),
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes - FAQ content changes moderately
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
-    }
+    getCacheConfig('FAQ_CONTENT') // 30s fresh - FAQ content for public browsing
   );
 }
 
@@ -183,8 +181,7 @@ export function useFAQSearchQuery(query: string, filters: Omit<FAQFilters, 'sear
     () => searchFAQs({ q: query, category, page, per_page: limit }),
     {
       enabled: query.length > 2, // Only search after 3 characters
-      staleTime: 2 * 60 * 1000, // 2 minutes - search results
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('FAQ_CONTENT') // 30s fresh - FAQ search results
     }
   );
 }
@@ -201,10 +198,7 @@ export function useFAQCategoriesQuery() {
       const categories = Array.from(new Set(response.data?.items?.map(faq => faq.category) || []));
       return { success: true, data: { categories }, message: 'FAQ categories retrieved successfully' };
     }),
-    {
-      staleTime: 10 * 60 * 1000, // 10 minutes - categories don't change often
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
-    }
+    getCacheConfig('APP_CONFIGURATION') // 10min stable - FAQ categories rarely change
   );
 }
 

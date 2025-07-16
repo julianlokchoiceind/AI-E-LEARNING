@@ -2,6 +2,7 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { 
   getCourseEnrollment,
   getMyEnrollments
@@ -28,8 +29,7 @@ export function useEnrollmentQuery(courseId: string, enabled: boolean = true) {
     },
     {
       enabled: enabled && !!courseId,
-      staleTime: 5 * 60 * 1000, // 5 minutes - enrollment status
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
+      ...getCacheConfig('ENROLLMENT_STATUS') // Enrollment status - moderate freshness
     }
   );
 }
@@ -44,8 +44,7 @@ export function useEnrollmentsQuery(enabled: boolean = true) {
     () => getMyEnrollments(),
     {
       enabled,
-      staleTime: 3 * 60 * 1000, // 3 minutes - user data
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('USER_ENROLLMENTS') // User enrollments - fresh data
     }
   );
 }

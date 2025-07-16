@@ -4,6 +4,7 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ToastService } from '@/lib/toast/ToastService';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { 
   getAdminUsers,
   updateUserRole,
@@ -42,10 +43,7 @@ export function useAdminUsersQuery(filters: AdminUsersFilters = {}) {
   return useApiQuery(
     ['admin-users', { search, role, premiumOnly, page, per_page }],
     () => getAdminUsers({ search, role, premiumOnly, page, per_page }),
-    {
-      staleTime: 2 * 60 * 1000, // 2 minutes - user data changes frequently
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
-    }
+    getCacheConfig('ADMIN_OPERATIONS') // Realtime - admin user management
   );
 }
 
@@ -351,10 +349,7 @@ export function useAdminDashboardQuery() {
   return useApiQuery(
     ['admin-dashboard'],
     () => getAdminDashboardStats(),
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes - dashboard data
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
-    }
+    getCacheConfig('ADMIN_OPERATIONS') // Realtime - admin dashboard data
   );
 }
 
@@ -366,10 +361,7 @@ export function useUserAnalyticsQuery() {
   return useApiQuery(
     ['user-analytics'],
     () => getUserAnalytics(),
-    {
-      staleTime: 10 * 60 * 1000, // 10 minutes - analytics data
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
-    }
+    getCacheConfig('USER_DASHBOARD') // 2min moderate - analytics data
   );
 }
 
@@ -383,8 +375,7 @@ export function useUserSearchQuery(query: string, filters: Omit<AdminUsersFilter
     () => getAdminUsers({ search: query, ...filters }),
     {
       enabled: query.length > 2, // Only search after 3 characters
-      staleTime: 1 * 60 * 1000, // 1 minute - search results
-      gcTime: 5 * 60 * 1000, // 5 minutes cache
+      ...getCacheConfig('ADMIN_OPERATIONS') // Realtime - admin search results
     }
   );
 }
@@ -399,8 +390,7 @@ export function useUsersByRoleQuery(role: string) {
     () => getAdminUsers({ role, per_page: 100 }), // Larger page for role filtering
     {
       enabled: !!role,
-      staleTime: 5 * 60 * 1000, // 5 minutes - role-based data
-      gcTime: 20 * 60 * 1000, // 20 minutes cache
+      ...getCacheConfig('ADMIN_OPERATIONS') // Realtime - admin role-based data
     }
   );
 }
@@ -413,9 +403,6 @@ export function usePremiumUsersQuery() {
   return useApiQuery(
     ['premium-users'],
     () => getAdminUsers({ premiumOnly: true, per_page: 100 }),
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes - premium user data
-      gcTime: 20 * 60 * 1000, // 20 minutes cache
-    }
+    getCacheConfig('ADMIN_OPERATIONS') // Realtime - admin premium user data
   );
 }

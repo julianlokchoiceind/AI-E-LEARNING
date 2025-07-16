@@ -3,6 +3,7 @@
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { supportAPI } from '@/lib/api/support';
 import { ToastService } from '@/lib/toast/ToastService';
 import type { TicketCategory, TicketStatus, TicketPriority } from '@/lib/types/support';
@@ -60,10 +61,7 @@ export function useSupportTicketsQuery(filters: SupportTicketFilters = {}) {
       page, 
       per_page: limit 
     }),
-    {
-      staleTime: 1 * 60 * 1000, // 1 minute - support tickets change frequently
-      gcTime: 5 * 60 * 1000, // 5 minutes cache
-    }
+    getCacheConfig('SUPPORT_TICKETS') // Support tickets - fresh data
   );
 }
 
@@ -484,10 +482,7 @@ export function useSupportStatsQuery() {
   return useApiQuery(
     ['support-stats'],
     () => supportAPI.getTicketStats(),
-    {
-      staleTime: 2 * 60 * 1000, // 2 minutes - stats change with tickets
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
-    }
+    getCacheConfig('SUPPORT_STATS') // Support statistics - moderate freshness
   );
 }
 
@@ -501,8 +496,7 @@ export function useSupportTicketQuery(ticketId: string, enabled: boolean = true)
     () => supportAPI.getTicket(ticketId),
     {
       enabled: enabled && !!ticketId,
-      staleTime: 30 * 1000, // 30 seconds - ticket details change frequently
-      gcTime: 5 * 60 * 1000, // 5 minutes cache
+      ...getCacheConfig('SUPPORT_TICKET_DETAILS') // Ticket details - fresh data
     }
   );
 }
@@ -527,10 +521,7 @@ export function useSupportCategoriesQuery() {
       ];
       return { success: true, data: { categories }, message: 'Support categories retrieved successfully' };
     },
-    {
-      staleTime: 15 * 60 * 1000, // 15 minutes - categories rarely change
-      gcTime: 60 * 60 * 1000, // 1 hour cache
-    }
+    getCacheConfig('SUPPORT_CATEGORIES') // Support categories - stable content
   );
 }
 
@@ -544,8 +535,7 @@ export function useUserSupportTicketsQuery(userId: string, enabled: boolean = tr
     () => supportAPI.getTickets({ user_id: userId, per_page: 100 }),
     {
       enabled: enabled && !!userId,
-      staleTime: 2 * 60 * 1000, // 2 minutes - user tickets
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('USER_SUPPORT_TICKETS') // User tickets - moderate freshness
     }
   );
 }

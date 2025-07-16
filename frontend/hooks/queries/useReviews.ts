@@ -2,6 +2,7 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { reviewAPI } from '@/lib/api/reviews';
 import { ReviewCreateData, ReviewUpdateData } from '@/lib/types/review';
 
@@ -35,8 +36,7 @@ export function useCourseReviewsQuery(courseId: string, filters: ReviewFilters =
     },
     {
       enabled: !!courseId,
-      staleTime: 2 * 60 * 1000, // 2 minutes - reviews don't change frequently
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('COURSE_REVIEWS') // Course reviews - moderate freshness
     }
   );
 }

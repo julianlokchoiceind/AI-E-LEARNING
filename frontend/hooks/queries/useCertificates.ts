@@ -2,6 +2,7 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { certificateAPI } from '@/lib/api/certificates';
 import { StandardResponse } from '@/lib/types/api';
 
@@ -28,10 +29,7 @@ export function useCertificatesQuery(filters: CertificateFilters = {}) {
     async () => {
       return certificateAPI.getMyCertificates();
     },
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes - certificates don't change frequently
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
-    }
+    getCacheConfig('USER_CERTIFICATES') // User certificates - stable content
   );
 }
 
@@ -44,10 +42,7 @@ export function useCertificateStatsQuery() {
     async () => {
       return certificateAPI.getMyCertificateStats();
     },
-    {
-      staleTime: 10 * 60 * 1000, // 10 minutes - stats change infrequently
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
-    }
+    getCacheConfig('USER_CERTIFICATES') // Certificate statistics - stable content
   );
 }
 
@@ -62,8 +57,7 @@ export function useCertificateQuery(certificateId: string, enabled: boolean = tr
     },
     {
       enabled: enabled && !!certificateId,
-      staleTime: 15 * 60 * 1000, // 15 minutes - certificate details are static
-      gcTime: 60 * 60 * 1000, // 1 hour cache
+      ...getCacheConfig('CERTIFICATE_DETAILS') // Certificate details - very stable
     }
   );
 }
@@ -133,8 +127,7 @@ export function useVerifyCertificateQuery(certificateNumber: string, enabled: bo
     },
     {
       enabled: enabled && !!certificateNumber,
-      staleTime: 60 * 60 * 1000, // 1 hour - verification results are static
-      gcTime: 2 * 60 * 60 * 1000, // 2 hours cache
+      ...getCacheConfig('CERTIFICATE_VERIFICATION') // Certificate verification - very stable
     }
   );
 }
@@ -150,10 +143,7 @@ export function useAllCertificatesQuery(filters: CertificateFilters & { status?:
     async () => {
       return certificateAPI.getAllCertificates();
     },
-    {
-      staleTime: 2 * 60 * 1000, // 2 minutes - admin data changes more frequently
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
-    }
+    getCacheConfig('ADMIN_OPERATIONS') // Admin certificate management - realtime
   );
 }
 

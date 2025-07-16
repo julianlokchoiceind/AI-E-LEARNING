@@ -22,8 +22,9 @@ class VideoContent(BaseModel):
 class Resource(BaseModel):
     """Additional resource for a lesson."""
     title: str = Field(..., min_length=1, max_length=200)
-    type: str = Field(..., pattern="^(pdf|doc|zip|link|other)$")
-    url: HttpUrl
+    type: str = Field(..., pattern="^(pdf|doc|zip|link|code|exercise|other)$")
+    url: str = Field(..., min_length=1, description="Resource URL")
+    description: Optional[str] = Field(None, max_length=1000, description="Optional resource description")
     size: Optional[int] = Field(None, ge=0, description="File size in bytes")
 
 

@@ -2,6 +2,7 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { api } from '@/lib/api/api-client';
 import { StandardResponse } from '@/lib/types/api';
 import { 
@@ -42,8 +43,7 @@ export function useLessonQuery(lessonId: string, enabled: boolean = true) {
     },
     {
       enabled: enabled && !!lessonId,
-      staleTime: 10 * 60 * 1000, // 10 minutes - lesson content stable
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
+      ...getCacheConfig('LESSON_CONTENT') // Lesson content - moderate freshness
     }
   );
 }
@@ -71,8 +71,7 @@ export function useLessonProgressQuery(lessonId: string) {
     },
     {
       enabled: !!lessonId,
-      staleTime: 30 * 1000, // 30 seconds - progress updates frequently
-      gcTime: 5 * 60 * 1000, // 5 minutes cache
+      ...getCacheConfig('LESSON_PROGRESS') // Lesson progress - fresh data
     }
   );
 }
@@ -97,8 +96,7 @@ export function useCourseChaptersQuery(courseId: string) {
     },
     {
       enabled: !!courseId,
-      staleTime: 5 * 60 * 1000, // 5 minutes - course structure stable
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
+      ...getCacheConfig('COURSE_STRUCTURE') // Course structure - moderate freshness
     }
   );
 }
@@ -202,8 +200,7 @@ export function useBatchLessonProgressQuery(lessonIds: string[], enabled: boolea
     },
     {
       enabled: enabled && lessonIds.length > 0,
-      staleTime: 2 * 60 * 1000, // 2 minutes - progress data should be relatively fresh
-      gcTime: 5 * 60 * 1000, // 5 minutes cache
+      ...getCacheConfig('LESSON_PROGRESS_BATCH') // Batch progress - fresh data
     }
   );
 }
@@ -220,8 +217,7 @@ export function useCourseProgressQuery(courseId: string, enabled: boolean = true
     },
     {
       enabled: enabled && !!courseId,
-      staleTime: 2 * 60 * 1000, // 2 minutes - progress updates frequently
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('COURSE_PROGRESS_OVERVIEW') // Course progress overview - fresh data
     }
   );
 }
@@ -241,8 +237,7 @@ export function useChapterByIdQuery(chapterId: string, enabled: boolean = true) 
     },
     {
       enabled: enabled && !!chapterId,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      ...getCacheConfig('CHAPTER_DETAILS') // Chapter details - moderate freshness
     }
   );
 }
@@ -258,8 +253,7 @@ export function useChapterLessonsQuery(chapterId: string, enabled: boolean = tru
     },
     {
       enabled: enabled && !!chapterId,
-      staleTime: 3 * 60 * 1000, // 3 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
+      ...getCacheConfig('CHAPTER_LESSONS') // Chapter lessons - fresh data
     }
   );
 }
@@ -321,8 +315,7 @@ export function useLessonQuizQuery(lessonId: string, enabled: boolean = true) {
     },
     {
       enabled: enabled && !!lessonId,
-      staleTime: 10 * 60 * 1000, // 10 minutes - quiz content doesn't change often
-      gcTime: 30 * 60 * 1000, // 30 minutes
+      ...getCacheConfig('LESSON_QUIZ') // Lesson quiz - stable content
     }
   );
 }
@@ -410,8 +403,7 @@ export function useQuizProgressQuery(lessonId: string, enabled: boolean = true) 
     },
     {
       enabled: enabled && !!lessonId,
-      staleTime: 1 * 60 * 1000, // 1 minute - progress should be fresh
-      gcTime: 5 * 60 * 1000, // 5 minutes
+      ...getCacheConfig('QUIZ_PROGRESS') // Quiz progress - fresh data
     }
   );
 }

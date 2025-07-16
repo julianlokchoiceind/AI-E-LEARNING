@@ -1,5 +1,6 @@
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { 
   getCreatorOverview, 
   getCourseAnalytics, 
@@ -23,8 +24,7 @@ export function useCreatorOverviewQuery(timeRange: string = '30days', enabled: b
     () => getCreatorOverview(timeRange),
     {
       enabled,
-      staleTime: 5 * 60 * 1000, // 5 minutes - analytics can be slightly stale
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
+      ...getCacheConfig('ANALYTICS_OVERVIEW') // Analytics overview - moderate freshness
     }
   );
 }
@@ -38,8 +38,7 @@ export function useRevenueAnalyticsQuery(timeRange: string = '30days', enabled: 
     () => getRevenueAnalytics(timeRange),
     {
       enabled,
-      staleTime: 5 * 60 * 1000, // 5 minutes - revenue analytics can be slightly stale
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
+      ...getCacheConfig('REVENUE_ANALYTICS') // Revenue analytics - moderate freshness
     }
   );
 }
@@ -57,8 +56,7 @@ export function useStudentAnalyticsQuery(
     () => getStudentAnalytics(limit, offset),
     {
       enabled,
-      staleTime: 10 * 60 * 1000, // 10 minutes - student data changes less frequently
-      gcTime: 20 * 60 * 1000, // 20 minutes cache
+      ...getCacheConfig('STUDENT_ANALYTICS') // Student analytics - stable content
     }
   );
 }
@@ -76,8 +74,7 @@ export function useCourseAnalyticsQuery(
     () => getCourseAnalytics(courseId, timeRange),
     {
       enabled: enabled && !!courseId,
-      staleTime: 5 * 60 * 1000, // 5 minutes - course analytics can be slightly stale
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
+      ...getCacheConfig('COURSE_ANALYTICS') // Course analytics - moderate freshness
     }
   );
 }

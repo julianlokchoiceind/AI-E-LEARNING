@@ -2,6 +2,7 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { quizAPI } from '@/lib/api/quizzes';
 
 /**
@@ -26,8 +27,7 @@ export function useLessonQuizQuery(lessonId: string, enabled: boolean = true) {
     },
     {
       enabled: enabled && !!lessonId,
-      staleTime: 10 * 60 * 1000, // 10 minutes - quiz content is stable
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
+      ...getCacheConfig('QUIZ_CONTENT') // Quiz content - stable content
     }
   );
 }
@@ -43,8 +43,7 @@ export function useQuizProgressQuery(quizId: string, enabled: boolean = true) {
     },
     {
       enabled: enabled && !!quizId,
-      staleTime: 1 * 60 * 1000, // 1 minute - progress changes frequently
-      gcTime: 5 * 60 * 1000, // 5 minutes cache
+      ...getCacheConfig('QUIZ_PROGRESS') // Quiz progress - fresh data
     }
   );
 }
@@ -81,8 +80,7 @@ export function useQuizAttemptsQuery(quizId: string, enabled: boolean = true) {
     },
     {
       enabled: enabled && !!quizId,
-      staleTime: 2 * 60 * 1000, // 2 minutes - attempts history is relatively stable
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('QUIZ_ATTEMPTS') // Quiz attempts - moderate freshness
     }
   );
 }
@@ -98,8 +96,7 @@ export function useQuizQuery(quizId: string, enabled: boolean = true) {
     },
     {
       enabled: enabled && !!quizId,
-      staleTime: 15 * 60 * 1000, // 15 minutes - quiz details are stable
-      gcTime: 60 * 60 * 1000, // 1 hour cache
+      ...getCacheConfig('QUIZ_DETAILS') // Quiz details - stable content
     }
   );
 }

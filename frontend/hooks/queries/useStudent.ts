@@ -2,6 +2,7 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { usersApi } from '@/lib/api/users';
 import { api } from '@/lib/api/api-client';
 import { 
@@ -39,8 +40,7 @@ export function useStudentDashboardQuery(enabled: boolean = true) {
     () => usersApi.getDashboard(),
     {
       enabled,
-      staleTime: 2 * 60 * 1000, // 2 minutes - recent activity
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('STUDENT_DASHBOARD') // Student dashboard - fresh data
     }
   );
 }
@@ -55,10 +55,7 @@ export function useMyCoursesQuery() {
     async () => {
       return api.get<any>('/users/my-courses', { requireAuth: true });
     },
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes - course list
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
-    }
+    getCacheConfig('USER_COURSES') // User courses - moderate freshness
   );
 }
 
@@ -74,8 +71,7 @@ export function useCourseProgressQuery(courseId: string, enabled: boolean = true
     },
     {
       enabled: enabled && !!courseId,
-      staleTime: 1 * 60 * 1000, // 1 minute - progress updates frequently
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('COURSE_PROGRESS') // Course progress - fresh data
     }
   );
 }
@@ -134,10 +130,7 @@ export function useMyCertificatesQuery() {
     async () => {
       return api.get<any>('/users/certificates', { requireAuth: true });
     },
-    {
-      staleTime: 10 * 60 * 1000, // 10 minutes - certificates don't change often
-      gcTime: 60 * 60 * 1000, // 1 hour cache
-    }
+    getCacheConfig('USER_CERTIFICATES') // User certificates - stable content
   );
 }
 
@@ -151,10 +144,7 @@ export function useProgressStatisticsQuery() {
     async () => {
       return api.get<any>('/users/progress-statistics', { requireAuth: true });
     },
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes - stats update periodically
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
-    }
+    getCacheConfig('PROGRESS_STATISTICS') // Progress statistics - moderate freshness
   );
 }
 
@@ -168,10 +158,7 @@ export function useRecentCoursesQuery() {
     async () => {
       return api.get<any>('/users/recent-courses?limit=5', { requireAuth: true });
     },
-    {
-      staleTime: 3 * 60 * 1000, // 3 minutes - recent activity
-      gcTime: 15 * 60 * 1000, // 15 minutes cache
-    }
+    getCacheConfig('RECENT_COURSES') // Recent courses - fresh data
   );
 }
 
@@ -202,8 +189,7 @@ export function useCourseCompletionQuery(courseId: string) {
     },
     {
       enabled: !!courseId,
-      staleTime: 2 * 60 * 1000, // 2 minutes - completion status
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('COURSE_COMPLETION') // Course completion - moderate freshness
     }
   );
 }
@@ -220,8 +206,7 @@ export function useOnboardingStatusQuery(enabled: boolean = true) {
     },
     {
       enabled,
-      staleTime: 10 * 60 * 1000, // 10 minutes - onboarding status rarely changes
-      gcTime: 30 * 60 * 1000, // 30 minutes cache
+      ...getCacheConfig('ONBOARDING_STATUS') // Onboarding status - stable content
     }
   );
 }
@@ -320,8 +305,7 @@ export function useCourseRecommendationsQuery(enabled: boolean = true) {
     () => getCourseRecommendations(),
     {
       enabled,
-      staleTime: 15 * 60 * 1000, // 15 minutes - recommendations don't change often
-      gcTime: 60 * 60 * 1000, // 1 hour cache
+      ...getCacheConfig('COURSE_RECOMMENDATIONS') // Course recommendations - stable content
     }
   );
 }

@@ -3,7 +3,7 @@
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
-import { CACHE_CONFIGS } from '@/lib/constants/cache-config';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { 
   getCourses, 
   getCourseById, 
@@ -90,7 +90,7 @@ export function useCoursesQuery(filters: CoursesFilters = {}) {
       });
       return getCourses(queryString);
     },
-    CACHE_CONFIGS.PUBLIC_BROWSING // 1 minute - catalog data for faster admin→public sync
+    getCacheConfig('COURSE_CATALOG') // 30s fresh - public browsing with admin→public sync
   );
 }
 
@@ -104,7 +104,7 @@ export function useCourseQuery(courseId: string, enabled: boolean = true) {
     () => getCourseById(courseId),
     {
       enabled: enabled && !!courseId,
-      ...CACHE_CONFIGS.CONTENT_DETAILS // 5 minutes - standard content details
+      ...getCacheConfig('COURSE_DETAILS') // 30s fresh - course detail pages
     }
   );
 }
@@ -119,7 +119,7 @@ export function useCourseSearchQuery(query: string, filters: Omit<CoursesFilters
     () => getCourses(),
     {
       enabled: query.length > 2, // Only search after 3 characters
-      ...CACHE_CONFIGS.SEARCH, // 1 minute - search results
+      ...getCacheConfig('COURSE_CATALOG'), // 30s fresh - search results same as catalog
     }
   );
 }
@@ -598,7 +598,7 @@ export function useFeaturedCoursesQuery() {
   return useApiQuery(
     ['featured-courses'],
     () => getCourses(),
-    CACHE_CONFIGS.FEATURED // 10 minutes - featured content
+    getCacheConfig('RECOMMENDATIONS') // 10min stable - featured content
   );
 }
 
@@ -612,7 +612,7 @@ export function useCourseRecommendationsQuery(userId?: string) {
     () => getCourses(),
     {
       enabled: !!userId,
-      ...CACHE_CONFIGS.RECOMMENDATIONS, // 15 minutes - recommendations
+      ...getCacheConfig('RECOMMENDATIONS'), // 10min stable - personalized recommendations
     }
   );
 }
@@ -643,7 +643,7 @@ export function useAdminCoursesQuery(filters: AdminCoursesFilters = {}) {
     queryKey,
     () => getAdminCourses({ search, status, category, page, per_page }),
     {
-      ...CACHE_CONFIGS.ADMIN, // Always refetch for admin data (real-time updates)
+      ...getCacheConfig('ADMIN_OPERATIONS'), // Realtime - admin data needs immediate updates
       keepPreviousData: true, // Smooth pagination transitions
     }
   );
@@ -1143,7 +1143,7 @@ export function useCourseEditorQuery(courseId: string, enabled: boolean = true) 
     () => getCourseById(courseId),
     {
       enabled: enabled && !!courseId,
-      ...CACHE_CONFIGS.CREATOR_EDITING // 1 minute - frequent updates for creator editing
+      ...getCacheConfig('CONTENT_CREATION') // Realtime - creator editing needs immediate updates
     }
   );
 }
@@ -1158,7 +1158,7 @@ export function useCourseChaptersQuery(courseId: string, enabled: boolean = true
     () => getChaptersWithLessons(courseId),
     {
       enabled: enabled && !!courseId,
-      ...CACHE_CONFIGS.CREATOR_EDITING // 1 minute - frequent updates for creator editing
+      ...getCacheConfig('CONTENT_CREATION') // Realtime - creator editing needs immediate updates
     }
   );
 }
@@ -1838,7 +1838,7 @@ export function useCreatorDashboardQuery(creatorId: string, enabled: boolean = t
     () => getCourses(`creator_id=${creatorId}`),
     {
       enabled: enabled && !!creatorId,
-      ...CACHE_CONFIGS.CREATOR_DASHBOARD, // 2 minutes - dashboard data changes frequently
+      ...getCacheConfig('USER_DASHBOARD'), // 2min moderate - creator dashboard data
     }
   );
 }
@@ -1852,7 +1852,7 @@ export function useCreatorCoursesQuery(creatorId: string, enabled: boolean = tru
     () => getCourses(`creator_id=${creatorId}`),
     {
       enabled: enabled && !!creatorId,
-      ...CACHE_CONFIGS.CREATOR_DASHBOARD, // 2 minutes - consistent with dashboard
+      ...getCacheConfig('USER_DASHBOARD'), // 2min moderate - consistent with dashboard
     }
   );
 }
@@ -1866,7 +1866,7 @@ export function useCourseAnalyticsQuery(courseId: string, timeRange: string = '3
     () => getCourseAnalytics(courseId, timeRange),
     {
       enabled: enabled && !!courseId,
-      ...CACHE_CONFIGS.CONTENT_DETAILS, // 5 minutes - analytics can be slightly stale
+      ...getCacheConfig('USER_DASHBOARD'), // 2min moderate - analytics for creator dashboard
     }
   );
 }
@@ -1884,7 +1884,7 @@ export function useAdminStatistics() {
     ['admin-course-statistics'],
     () => getAdminStatistics(),
     {
-      ...CACHE_CONFIGS.ADMIN, // Always refetch for admin data (real-time updates)
+      ...getCacheConfig('ADMIN_OPERATIONS'), // Realtime - admin data needs immediate updates
       staleTime: 30 * 1000, // 30 seconds - Statistics can be slightly stale for performance
     }
   );

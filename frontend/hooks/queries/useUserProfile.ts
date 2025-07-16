@@ -2,6 +2,7 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { usersApi } from '@/lib/api/users';
 
 interface ProfileUpdateData {
@@ -25,8 +26,7 @@ export function useUserProfileQuery(enabled: boolean = true) {
     () => usersApi.getProfile(),
     {
       enabled,
-      staleTime: 5 * 60 * 1000, // 5 minutes - profile data doesn't change frequently
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('USER_PROFILE') // User profile data - moderate freshness
     }
   );
 }

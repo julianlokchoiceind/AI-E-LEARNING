@@ -2,6 +2,7 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { 
   getSubscriptionStatus, 
   getPaymentHistory, 
@@ -20,8 +21,7 @@ export function useSubscriptionStatusQuery(enabled: boolean = true) {
     () => getSubscriptionStatus(),
     {
       enabled,
-      staleTime: 60 * 1000, // 1 minute - subscription status changes less frequently
-      gcTime: 5 * 60 * 1000, // 5 minutes cache
+      ...getCacheConfig('SUBSCRIPTION_STATUS') // Subscription status - fresh data
     }
   );
 }
@@ -36,8 +36,7 @@ export function usePaymentHistoryQuery(limit: number = 10, offset: number = 0, e
     () => getPaymentHistory(limit, offset),
     {
       enabled,
-      staleTime: 2 * 60 * 1000, // 2 minutes - payment history changes infrequently
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('PAYMENT_HISTORY') // Payment history - moderate freshness
     }
   );
 }

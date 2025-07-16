@@ -3,6 +3,7 @@
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getCacheConfig } from '@/lib/constants/cache-config';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Lesson } from '@/lib/types/course';
 import { 
@@ -60,8 +61,7 @@ export function useLessonsQuery(chapterId: string, enabled: boolean = true) {
     () => getLessonsByChapter(chapterId),
     {
       enabled: enabled && !!chapterId,
-      staleTime: 3 * 60 * 1000, // 3 minutes - lesson structure
-      gcTime: 10 * 60 * 1000, // 10 minutes cache
+      ...getCacheConfig('CHAPTER_LESSONS') // Chapter lessons - fresh data
     }
   );
 }
@@ -76,8 +76,7 @@ export function useLessonQuery(lessonId: string, enabled: boolean = true) {
     () => getLesson(lessonId),
     {
       enabled: enabled && !!lessonId,
-      staleTime: 2 * 60 * 1000, // 2 minutes - lesson content changes more frequently
-      gcTime: 8 * 60 * 1000, // 8 minutes cache
+      ...getCacheConfig('LESSON_DETAILS') // Lesson details - moderate freshness
     }
   );
 }
@@ -92,8 +91,7 @@ export function usePreviewLessonQuery(courseId: string, lessonId: string, enable
     () => getPreviewLesson(courseId, lessonId),
     {
       enabled: enabled && !!courseId && !!lessonId,
-      staleTime: 5 * 60 * 1000, // 5 minutes - preview content is more stable
-      gcTime: 15 * 60 * 1000, // 15 minutes cache - keep longer for marketing
+      ...getCacheConfig('LESSON_PREVIEW') // Lesson preview - stable content
     }
   );
 }

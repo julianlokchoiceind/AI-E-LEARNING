@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState } from 'react';
+import { CACHE_TIERS } from '@/lib/constants/cache-config';
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   // Create QueryClient inside component to avoid SSR mismatches
@@ -10,10 +11,10 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
     () => new QueryClient({
       defaultOptions: {
         queries: {
-          // Stale time: Data considered fresh for 5 minutes
-          staleTime: 5 * 60 * 1000,
-          // Cache time: Data kept in cache for 10 minutes
-          gcTime: 10 * 60 * 1000,
+          // FRESH TIER defaults - aligns with 4-tier cache architecture
+          // Public content browsing, course catalog - 30s fresh window
+          staleTime: CACHE_TIERS.FRESH.staleTime,
+          gcTime: CACHE_TIERS.FRESH.gcTime,
           // Retry failed requests 1 time (FastAPI errors should be handled properly)
           retry: 1,
           // Refetch on window focus (good UX for course data)
