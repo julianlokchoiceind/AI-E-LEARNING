@@ -1328,117 +1328,180 @@ className="text-gray-500" // Secondary text
     </div>
   </aside>
 
-  {/* Main Content - Video Player */}
-  <main className="flex-1 flex flex-col">
-    {/* Lesson Header */}
-    <div className="p-6 border-b border-gray-200 bg-white">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">{currentLesson.title}</h1>
-          <span className="text-gray-600">
-            Lesson {currentLessonIndex} of {totalLessons}
-          </span>
-        </div>
-        <div className="flex items-center space-x-4">
-          <button className="text-gray-600 hover:text-gray-900">
-            <BookmarkIcon className="w-5 h-5" />
-          </button>
-          <button className="text-gray-600 hover:text-gray-900">
-            <ShareIcon className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-    </div>
-
-    {/* Video Player Section - PRD: YouTube controls=0 */}
-    <div className="flex-1 bg-black flex items-center justify-center">
-      <VideoPlayer 
-        videoUrl={currentLesson.videoUrl}
-        onProgress={handleVideoProgress}
-        onComplete={handleVideoComplete}
-        controls={false} // PRD requirement: controls=0
-        onWatchedPercentage={handleWatchedPercentage} // PRD: 80% completion
-      />
-    </div>
-
-    {/* Lesson Content & Navigation */}
-    <div className="p-6 bg-white">
-      <div className="flex items-center justify-between">
-        <button 
-          className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900"
-          disabled={!hasPreviousLesson}
-        >
-          <ChevronLeftIcon className="w-4 h-4 mr-2" />
-          Previous Lesson
-        </button>
+  {/* Main Content - PRODUCTION IMPLEMENTATION */}
+  <main className="flex-1 overflow-y-auto min-w-0">
+    <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+      
+      {/* Video Section - Enhanced with Info Bar */}
+      <section className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <VideoPlayer
+          videoUrl={lesson.video.url}
+          lessonId={lessonId}
+          courseId={courseId}
+          onProgress={handleVideoProgress}
+          onComplete={handleVideoComplete}
+          initialProgress={progress?.video_progress.watch_percentage || 0}
+          nextLessonId={nextLesson?.id}
+        />
         
-        <div className="flex items-center space-x-4">
-          {/* Quiz Button - PRD: Per-lesson quiz */}
-          {currentLesson.quiz && (
-            <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg">
-              Take Quiz (Required)
-            </button>
-          )}
-          <button 
-            className="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg flex items-center"
-            disabled={!canProceed} // PRD: Must complete 80% + quiz
-          >
-            Next Lesson
-            <ChevronRightIcon className="w-4 h-4 ml-2" />
-          </button>
+        {/* Enhanced Video Info Bar - 4-Column Grid */}
+        <div className="px-4 md:px-6 py-3 md:py-4 border-t border-gray-200 bg-gray-50">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-sm">
+            {/* Duration */}
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 text-gray-500 mr-2" />
+              <div>
+                <div className="text-gray-500 text-xs">Duration</div>
+                <div className="font-medium text-gray-900">{formatDuration(lesson.video.duration)}</div>
+              </div>
+            </div>
+            
+            {/* Progress */}
+            <div className="flex items-center">
+              <div className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
+                (progress?.video_progress.watch_percentage || 0) >= 80 ? 'bg-green-500' : 'bg-blue-500'
+              }`}>
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+              <div>
+                <div className="text-gray-500 text-xs">Progress</div>
+                <div className="font-medium text-gray-900">{Math.round(progress?.video_progress.watch_percentage || 0)}%</div>
+              </div>
+            </div>
+            
+            {/* Current Position */}
+            <div className="flex items-center">
+              <BookOpen className="w-4 h-4 text-gray-500 mr-2" />
+              <div>
+                <div className="text-gray-500 text-xs">Current Time</div>
+                <div className="font-medium text-gray-900">
+                  {progress?.video_progress.current_position ? formatDuration(progress.video_progress.current_position) : '0:00'}
+                </div>
+              </div>
+            </div>
+            
+            {/* Status */}
+            <div className="flex items-center">
+              <CheckCircle className={`w-4 h-4 mr-2 ${
+                progress?.is_completed ? 'text-green-500' : (progress?.video_progress.watch_percentage || 0) >= 80 ? 'text-yellow-500' : 'text-gray-400'
+              }`} />
+              <div>
+                <div className="text-gray-500 text-xs">Status</div>
+                <div className={`font-medium text-sm ${
+                  progress?.is_completed ? 'text-green-600' : (progress?.video_progress.watch_percentage || 0) >= 80 ? 'text-yellow-600' : 'text-gray-600'
+                }`}>
+                  {progress?.is_completed ? 'Completed' : (progress?.video_progress.watch_percentage || 0) >= 80 ? 'Ready to complete' : 'In progress'}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="mt-3">
+            <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <span>Watch Progress</span>
+              <span>{Math.round(progress?.video_progress.watch_percentage || 0)}% watched</span>
+            </div>
+            <ProgressBar value={progress?.video_progress.watch_percentage || 0} className="h-2" />
+            {(progress?.video_progress.watch_percentage || 0) >= 80 && !progress?.is_completed && (
+              <div className="mt-2 text-xs text-yellow-600 flex items-center">
+                <Info className="w-3 h-3 mr-1" />
+                Complete the quiz below to finish this lesson
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Lesson Information - Unified Design */}
+      <section className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-gray-50">
+          <h2 className="text-base md:text-lg font-semibold text-gray-900 flex items-center">
+            <Info className="w-4 md:w-5 h-4 md:h-5 mr-2 text-blue-600" />
+            About this lesson
+          </h2>
+        </div>
+        <div className="p-4 md:p-6">
+          <div className="prose max-w-none text-gray-700 leading-relaxed">
+            {lesson.description || 'No description available.'}
+          </div>
+        </div>
+      </section>
+
+      {/* Learning Resources - Color Coded */}
+      {lesson.resources && lesson.resources.length > 0 && (
+        <section className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-gray-50">
+            <h2 className="text-base md:text-lg font-semibold text-gray-900 flex items-center">
+              <BookOpen className="w-4 md:w-5 h-4 md:h-5 mr-2 text-green-600" />
+              Learning Resources
+            </h2>
+          </div>
+          <div className="p-4 md:p-6">
+            <ResourceDisplay resources={lesson.resources} />
+          </div>
+        </section>
+      )}
+
+      {/* Quiz Section - Yellow Theme */}
+      {hasQuiz && (showQuiz || ((progress?.video_progress?.watch_percentage ?? 0) >= 80 && !quizPassed)) && (
+        <section className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-yellow-50">
+            <h2 className="text-base md:text-lg font-semibold text-gray-900 flex items-center">
+              <CheckCircle className="w-4 md:w-5 h-4 md:h-5 mr-2 text-yellow-600" />
+              Quiz - Test Your Knowledge
+            </h2>
+            <p className="text-xs md:text-sm text-gray-600 mt-1">
+              Complete this quiz to finish the lesson and unlock the next one.
+            </p>
+          </div>
+          <div className="p-4 md:p-6">
+            <QuizComponent lessonId={lessonId} onComplete={handleQuizComplete} />
+          </div>
+        </section>
+      )}
+
+      {/* Completion Status - Success State */}
+      {progress?.is_completed && (
+        <section className="bg-green-50 border border-green-200 rounded-lg shadow-sm">
+          <div className="p-4 md:p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-semibold text-green-800">Lesson Completed!</h3>
+                <p className="text-green-700 text-sm">Great job! You have successfully completed this lesson.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Next Lesson Navigation - Gradient Design */}
+      {nextLesson && (progress?.video_progress?.watch_percentage ?? 0) >= 80 && (!hasQuiz || quizPassed) && (
+        <section className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm">
+          <div className="p-4 md:p-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex-1">
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2">Ready for the next lesson?</h3>
+                <p className="text-gray-600 text-sm">
+                  Continue your learning journey with: <span className="font-medium">{nextLesson.title}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => navigateToLesson(nextLesson.id)}
+                className="w-full md:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center font-medium shadow-sm hover:shadow-md"
+              >
+                Continue Learning
+                <ChevronRight className="w-5 h-5 ml-2" />
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   </main>
-
-  {/* Right Sidebar - AI Study Buddy & Progress */}
-  <aside className="w-80 bg-gray-50 border-l border-gray-200 flex flex-col">
-    {/* Progress Summary */}
-    <div className="p-6 border-b border-gray-200 bg-white">
-      <h3 className="font-medium text-gray-900 mb-4">Your Progress</h3>
-      <div className="space-y-3">
-        <div className="flex justify-between text-sm">
-          <span>Lessons Completed</span>
-          <span className="font-medium">{completedLessons}/{totalLessons}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span>Time Spent</span>
-          <span className="font-medium">{timeSpent}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span>Quiz Average</span>
-          <span className="font-medium">{averageQuizScore}%</span>
-        </div>
-      </div>
-    </div>
-
-    {/* AI Study Buddy - PRD CRITICAL */}
-    <div className="p-6 border-b border-gray-200">
-      <h3 className="font-medium text-gray-900 mb-4">AI Study Buddy</h3>
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg">
-        <p className="text-sm mb-3">Need help with this lesson?</p>
-        <button className="bg-white text-blue-600 px-3 py-1 rounded text-sm font-medium">
-          Ask AI Assistant
-        </button>
-      </div>
-    </div>
-
-    {/* Lesson Resources */}
-    <div className="flex-1 p-6">
-      <h3 className="font-medium text-gray-900 mb-4">Lesson Resources</h3>
-      <div className="space-y-3">
-        {currentLesson.resources?.map(resource => (
-          <div key={resource.id} className="flex items-center justify-between p-3 bg-white rounded border">
-            <div className="flex items-center">
-              <DocumentIcon className="w-4 h-4 text-gray-400 mr-3" />
-              <span className="text-sm">{resource.title}</span>
-            </div>
-            <button className="text-blue-600 text-sm">Download</button>
-          </div>
-        ))}
-      </div>
-    </div>
-  </aside>
 </div>
 ```
 
@@ -3384,6 +3447,167 @@ className="sr-only"
     </div>
   </div>
 </div>
+
+---
+
+## 📱 **MOBILE LEARNING COMPONENTS - PRODUCTION READY**
+
+### **🎯 Mobile-First Learning Experience**
+
+**IMPLEMENTATION STATUS: ✅ FULLY IMPLEMENTED**
+- **File:** `MobileNavigationDrawer.tsx`
+- **Integration:** Learning page with responsive design
+- **Best Practices:** Touch-friendly, accessible, performant
+
+### **📲 MobileNavigationDrawer Component**
+
+```jsx
+{/* Mobile Navigation - Slide-out Drawer */}
+<MobileNavigationDrawer
+  isOpen={mobileDrawerOpen}
+  onClose={() => setMobileDrawerOpen(false)}
+  chapters={chapters}
+  currentLessonId={lessonId}
+  courseProgress={courseProgress}
+  lessonsProgress={lessonsProgress}
+  onNavigateToLesson={navigateToLesson}
+/>
+
+{/* Mobile Menu Button in Header */}
+<button
+  onClick={() => setMobileDrawerOpen(true)}
+  className="lg:hidden flex items-center text-gray-600 hover:text-gray-900 mr-4"
+>
+  <Menu className="w-5 h-5" />
+  <span className="sr-only">Open navigation</span>
+</button>
+```
+
+### **🎨 Mobile Layout Architecture**
+
+```
+Mobile Learning Layout (<1024px):
+┌─────────────────────────────────┐
+│ Header + Mobile Menu Button     │ ← Sticky header with hamburger
+├─────────────────────────────────┤
+│ Video Player                    │ ← Full-width video player
+│ Enhanced Info Bar (2-col grid)  │ ← Responsive info grid
+├─────────────────────────────────┤
+│ Content Sections                │ ← Stacked content sections
+│ ├── Lesson Information          │ ← Responsive padding/typography
+│ ├── Learning Resources          │ ← Mobile-optimized spacing
+│ ├── Quiz Component              │ ← Touch-friendly interaction
+│ ├── Completion Status           │ ← Clear visual feedback
+│ └── Next Lesson (full-width)    │ ← Prominent CTA button
+└─────────────────────────────────┘
+
+Slide-out Navigation Drawer:
+┌─────────────────────────────────┐
+│ Course Progress Section         │ ← Progress bar + stats
+├─────────────────────────────────┤
+│ Expandable Chapter List         │ ← Auto-expand current chapter
+│ ├── Chapter 1: Introduction     │ ← Touch-friendly headers
+│ │   ├── ✓ Lesson 1 (5:30)      │ ← Duration + completion state
+│ │   ├── ○ Lesson 2 (8:15)      │ ← Current lesson indicator
+│ │   └── 🔒 Lesson 3 (6:45)     │ ← Locked lessons
+│ └── Chapter 2: Advanced        │ ← Collapsible sections
+└─────────────────────────────────┘
+```
+
+### **✅ Mobile UX Features Implemented**
+
+**🎯 Touch-Friendly Design:**
+- **Button sizes:** Minimum 44x44px touch targets
+- **Spacing:** Generous padding for easy interaction
+- **Visual feedback:** Clear hover/active states
+- **Swipe gestures:** Drawer supports touch gestures
+
+**📱 Responsive Typography & Spacing:**
+- **Headings:** `text-base md:text-lg` scaling
+- **Padding:** `p-4 md:p-6` responsive spacing  
+- **Icons:** `w-4 md:w-5 h-4 md:h-5` size scaling
+- **Buttons:** Full-width on mobile, auto-width on desktop
+
+**🧭 Navigation Patterns:**
+- **Drawer auto-expansion:** Current chapter opens automatically
+- **Visual lesson states:** Completed ✓, Current ○, Locked 🔒
+- **Progress indication:** Real-time percentage and time remaining
+- **Backdrop overlay:** Proper modal behavior with backdrop
+
+### **🔧 Technical Implementation Details**
+
+**State Management:**
+```typescript
+const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
+
+// Auto-expand current chapter
+useEffect(() => {
+  if (isOpen && currentLessonId) {
+    const currentChapter = chapters.find(chapter => 
+      chapter.lessons.some(lesson => lesson.id === currentLessonId)
+    );
+    if (currentChapter) {
+      setExpandedChapters(prev => new Set([...prev, currentChapter.id]));
+    }
+  }
+}, [isOpen, currentLessonId, chapters]);
+```
+
+**Responsive CSS Classes:**
+```css
+/* Drawer Animation */
+transform transition-transform duration-300 lg:hidden
+${isOpen ? 'translate-x-0' : '-translate-x-full'}
+
+/* Grid Responsive Layouts */
+grid-cols-2 md:grid-cols-4 gap-3 md:gap-4  /* Video info bar */
+flex flex-col md:flex-row items-start md:items-center  /* Next lesson */
+w-full md:w-auto  /* Buttons */
+p-4 md:p-6  /* Padding */
+text-base md:text-lg  /* Typography */
+```
+
+**Performance Optimizations:**
+- **Lazy rendering:** Drawer content only renders when open
+- **Event delegation:** Efficient touch/click handling
+- **Memory cleanup:** Proper state cleanup on unmount
+- **Smooth animations:** Hardware-accelerated transforms
+
+### **🎨 Mobile Color System**
+
+**Touch States:**
+```css
+/* Primary Touch States */
+.mobile-button-primary {
+  @apply bg-blue-600 text-white px-6 py-3 rounded-lg;
+  @apply active:bg-blue-700 touch-manipulation;
+  @apply shadow-sm active:shadow-md transition-all;
+}
+
+/* Navigation Touch States */
+.mobile-nav-item {
+  @apply px-4 py-3 transition-all border-l-4 border-transparent;
+  @apply active:bg-blue-50 touch-manipulation;
+}
+
+.mobile-nav-item.current {
+  @apply bg-blue-50 text-blue-700 border-blue-600;
+}
+
+.mobile-nav-item.completed {
+  @apply hover:bg-green-50 active:bg-green-50;
+}
+```
+
+**Accessibility Features:**
+- **Screen reader support:** Proper ARIA labels and landmarks
+- **Keyboard navigation:** Full keyboard accessibility
+- **Focus management:** Proper focus trapping in drawer
+- **Touch targets:** WCAG-compliant minimum sizes
+- **Color contrast:** AA compliance for all text/background combinations
+
+This mobile implementation provides a **world-class learning experience** optimized for touch devices, following modern UX patterns used by leading educational platforms like Coursera, Udemy, and Khan Academy.
 ```
 
 ---
