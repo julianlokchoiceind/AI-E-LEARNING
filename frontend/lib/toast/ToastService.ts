@@ -89,6 +89,45 @@ export class ToastService {
   }
   
   /**
+   * Info toast with automatic deduplication
+   * @param message - Info message
+   * @param operationId - Unique ID to prevent duplicates
+   */
+  static info(message: string | null | undefined, operationId?: string): string {
+    const finalMessage = this.getFinalMessage(message) || 'Info';
+    const toastId = operationId || 'default-info';
+    
+    // Dismiss existing toast with same ID
+    if (this.activeToasts.has(toastId)) {
+      toast.dismiss(this.activeToasts.get(toastId));
+    }
+    
+    const newToastId = toast(finalMessage, {
+      id: toastId,
+      duration: 5000,
+      icon: 'ℹ️',
+      style: {
+        background: 'rgba(59, 130, 246, 0.1)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)', // Safari support
+        color: '#3b82f6',
+        border: '2px solid #3b82f6',
+        padding: '16px',
+        borderRadius: '8px',
+      },
+    });
+    
+    this.activeToasts.set(toastId, newToastId);
+    
+    // Clean up after duration
+    setTimeout(() => {
+      this.activeToasts.delete(toastId);
+    }, 5000);
+    
+    return newToastId;
+  }
+  
+  /**
    * Loading toast with automatic deduplication
    * @param message - Loading message
    * @param operationId - Unique ID to prevent duplicates
@@ -265,6 +304,7 @@ export class ToastService {
 // Export convenience functions for easier migration
 export const showSuccess = ToastService.success;
 export const showError = ToastService.error;
+export const showInfo = ToastService.info;
 export const showLoading = ToastService.loading;
 export const dismissToast = ToastService.dismiss;
 export const clearToasts = ToastService.clear;

@@ -29,10 +29,15 @@ import {
   useLessonQuery,
   useUpdateLesson 
 } from '@/hooks/queries/useLessons';
+import { useDeleteLessonResource } from '@/hooks/queries/useLessonResources';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Lesson, LessonResource } from '@/lib/types/course';
 import { StandardResponse } from '@/lib/types/api';
+import { EmptyResourceState } from '@/components/feature/EmptyResourceState';
+import { ResourceTypeModal } from '@/components/feature/ResourceTypeModal';
+import { ResourceForm } from '@/components/feature/ResourceForm';
+import { Modal } from '@/components/ui/Modal';
 
 // Use LessonResource from types instead of duplicate interface
 
@@ -49,6 +54,15 @@ const LessonEditPage = () => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
   const [resources, setResources] = useState<LessonResource[]>([]);
+  
+  // Resource workflow state
+  const [showResourceTypeModal, setShowResourceTypeModal] = useState(false);
+  const [showResourceForm, setShowResourceForm] = useState(false);
+  const [resourceFormMode, setResourceFormMode] = useState<'upload' | 'url'>('upload');
+  
+  // Delete confirmation state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedResourceIndex, setSelectedResourceIndex] = useState<number | null>(null);
 
   // React Query hooks  
   const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId) as {
@@ -56,18 +70,30 @@ const LessonEditPage = () => {
     loading: boolean;
   };
   const { mutateAsync: updateLessonAction } = useUpdateLesson();
+  const { mutate: deleteResource } = useDeleteLessonResource();
 
   // Initialize lesson data
   useEffect(() => {
+    console.log('👀 Lesson data useEffect triggered:', { 
+      hasResponse: !!lessonResponse, 
+      success: lessonResponse?.success,
+      resourceCount: lessonResponse?.data?.resources?.length || 0
+    });
     if (lessonResponse?.success && lessonResponse.data) {
       const lesson = lessonResponse.data;
+      const resources = lesson.resources || [];
+      
       // Ensure video object is properly initialized to prevent input field reset
-      setLessonData({
+      const lessonDataWithResources = {
         ...lesson,
-        video: lesson.video || { url: '', youtube_id: '', duration: 0 }
-      });
+        video: lesson.video || { url: '', youtube_id: '', duration: 0 },
+        resources: resources // 🔧 CRITICAL FIX: Ensure resources are included in lessonData
+      };
+      
+      setLessonData(lessonDataWithResources);
       setTitleInput(lesson.title);
-      setResources(lesson.resources || []);
+      console.log('📦 Setting resources state:', resources);
+      setResources(resources); // Keep separate state for UI, but ensure sync with lessonData
     }
   }, [lessonResponse]);
 
@@ -141,30 +167,60 @@ const LessonEditPage = () => {
     }));
   };
 
-  const handleAddResource = () => {
-    const newResource: LessonResource = {
-      title: '',
-      type: 'link',
-      url: '',
-      description: ''
-    };
-    const updatedResources = [...resources, newResource];
-    setResources(updatedResources);
-    setLessonData((prev: Lesson | null) => ({ ...prev!, resources: updatedResources }));
+  // Resource workflow handlers
+  const handleAddResourceClick = () => {
+    setShowResourceTypeModal(true);
   };
 
-  const handleResourceChange = (index: number, field: keyof LessonResource, value: string) => {
-    const updatedResources = resources.map((resource, i) => 
-      i === index ? { ...resource, [field]: value } : resource
+  const handleResourceTypeSelect = (type: 'upload' | 'url') => {
+    setResourceFormMode(type);
+    setShowResourceTypeModal(false);
+    setShowResourceForm(true);
+  };
+
+  const handleResourceSuccess = () => {
+    // Close modal and let the query invalidation + useEffect handle the resource update
+    // The invalidateQueries in useLessonResources will trigger a refetch of lesson data
+    // which will then update resources through the useEffect that watches lessonResponse
+    setShowResourceForm(false);
+  };
+
+  const handleCloseModals = () => {
+    setShowResourceTypeModal(false);
+    setShowResourceForm(false);
+  };
+
+  const handleDeleteResource = (resourceIndex: number) => {
+    // Show confirmation modal
+    setSelectedResourceIndex(resourceIndex);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteResource = () => {
+    if (selectedResourceIndex === null) return;
+    
+    // Call delete mutation
+    deleteResource(
+      { lessonId, resourceIndex: selectedResourceIndex },
+      {
+        onSuccess: () => {
+          // Resource list will auto-refresh due to invalidation
+          // Update local state to remove the resource immediately for better UX
+          setResources(prev => prev.filter((_, index) => index !== selectedResourceIndex));
+          setLessonData(prev => {
+            if (!prev || !prev.resources) return prev;
+            return {
+              ...prev,
+              resources: prev.resources.filter((_, index) => index !== selectedResourceIndex)
+            };
+          });
+          
+          // Close modal and reset state
+          setShowDeleteModal(false);
+          setSelectedResourceIndex(null);
+        }
+      }
     );
-    setResources(updatedResources);
-    setLessonData((prev: Lesson | null) => ({ ...prev!, resources: updatedResources }));
-  };
-
-  const handleRemoveResource = (index: number) => {
-    const updatedResources = resources.filter((_, i) => i !== index);
-    setResources(updatedResources);
-    setLessonData((prev: Lesson | null) => ({ ...prev!, resources: updatedResources }));
   };
 
   if (lessonLoading) {
@@ -460,79 +516,55 @@ const LessonEditPage = () => {
             <Card className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Learning Resources</h2>
-                <Button variant="outline" onClick={handleAddResource}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Resource
-                </Button>
+                {resources.length > 0 && (
+                  <Button variant="outline" onClick={handleAddResourceClick}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Resource
+                  </Button>
+                )}
               </div>
               
               {resources.length === 0 ? (
-                <p className="text-gray-600 text-center py-8">
-                  No resources added yet. Click "Add Resource" to get started.
-                </p>
+                <EmptyResourceState 
+                  onAddResource={handleAddResourceClick}
+                  className="my-8"
+                />
               ) : (
                 <div className="space-y-4">
                   {resources.map((resource, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Title
-                          </label>
-                          <Input
-                            value={resource.title}
-                            onChange={(e) => handleResourceChange(index, 'title', e.target.value)}
-                            placeholder="Resource title"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Type
-                          </label>
-                          <select
-                            value={resource.type}
-                            onChange={(e) => handleResourceChange(index, 'type', e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    <div key={index} className="border rounded-lg p-4 hover:border-gray-300 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-medium text-gray-900">{resource.title}</h3>
+                            <Badge 
+                              variant={resource.type === 'link' ? 'secondary' : 'default'}
+                              className="text-xs"
+                            >
+                              {resource.type.toUpperCase()}
+                            </Badge>
+                          </div>
+                          
+                          {resource.description && (
+                            <p className="text-sm text-gray-600 mb-2">{resource.description}</p>
+                          )}
+                          
+                          <a
+                            href={resource.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
                           >
-                            <option value="pdf">PDF</option>
-                            <option value="code">Code</option>
-                            <option value="link">Link</option>
-                            <option value="exercise">Exercise</option>
-                          </select>
+                            <ExternalLink className="w-3 h-3" />
+                            {resource.url}
+                          </a>
                         </div>
                         
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            URL
-                          </label>
-                          <Input
-                            value={resource.url}
-                            onChange={(e) => handleResourceChange(index, 'url', e.target.value)}
-                            placeholder="https://..."
-                          />
-                        </div>
-                        
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Description (optional)
-                          </label>
-                          <textarea
-                            value={resource.description || ''}
-                            onChange={(e) => handleResourceChange(index, 'description', e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            rows={2}
-                            placeholder="Brief description of the resource..."
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="mt-4 flex justify-end">
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => handleRemoveResource(index)}
-                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleDeleteResource(index)}
+                          className="text-red-600 hover:text-red-700 ml-4"
                         >
                           Remove
                         </Button>
@@ -644,6 +676,69 @@ const LessonEditPage = () => {
           )}
         </div>
       </div>
+
+      {/* Resource Management Modals */}
+      <ResourceTypeModal
+        isOpen={showResourceTypeModal}
+        onClose={handleCloseModals}
+        onSelectFileUpload={() => handleResourceTypeSelect('upload')}
+        onSelectUrlResource={() => handleResourceTypeSelect('url')}
+      />
+
+      <ResourceForm
+        isOpen={showResourceForm}
+        onClose={handleCloseModals}
+        onSuccess={handleResourceSuccess}
+        lessonId={lessonId}
+        mode={resourceFormMode}
+      />
+
+      {/* Delete Resource Confirmation Modal */}
+      {showDeleteModal && selectedResourceIndex !== null && (
+        <Modal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setSelectedResourceIndex(null);
+          }}
+          title="Delete Resource"
+        >
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Are you sure you want to delete this resource? This action cannot be undone.
+            </p>
+            
+            {resources[selectedResourceIndex] && (
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="font-medium text-sm">{resources[selectedResourceIndex].title}</p>
+                {resources[selectedResourceIndex].description && (
+                  <p className="text-sm text-gray-600 mt-1">{resources[selectedResourceIndex].description}</p>
+                )}
+              </div>
+            )}
+            
+            <div className="flex space-x-3">
+              <Button
+                onClick={confirmDeleteResource}
+                variant="outline"
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                Delete Resource
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedResourceIndex(null);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </NavigationGuard>
   );
 };

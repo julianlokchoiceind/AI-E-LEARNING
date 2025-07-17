@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 import sentry_sdk
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -187,6 +188,18 @@ async def root():
         "docs": f"{settings.API_V1_STR}/docs"
     }
 
+
+# Mount static files for uploaded content
+import os
+if settings.USE_LOCAL_STORAGE and os.path.exists(settings.LOCAL_UPLOAD_DIR):
+    app.mount(
+        settings.LOCAL_UPLOAD_URL_PREFIX,
+        StaticFiles(directory=settings.LOCAL_UPLOAD_DIR),
+        name="uploads"
+    )
+    logger.info(f"Mounted static files at {settings.LOCAL_UPLOAD_URL_PREFIX} from {settings.LOCAL_UPLOAD_DIR}")
+else:
+    logger.warning(f"Upload directory {settings.LOCAL_UPLOAD_DIR} does not exist. File uploads may fail.")
 
 # Import and include routers
 from app.api.v1.api import api_router

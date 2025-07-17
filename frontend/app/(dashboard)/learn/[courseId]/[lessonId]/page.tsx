@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { VideoPlayer } from '@/components/feature/VideoPlayer';
 import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
 import { QuizComponent } from '@/components/feature/QuizComponent';
+import { ResourceDisplay } from '@/components/feature/ResourceDisplay';
 import { ToastService } from '@/lib/toast/ToastService';
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +22,7 @@ import {
   useLessonQuizQuery,
   useQuizProgressQuery
 } from '@/hooks/queries/useQuizzes';
+import { LessonResource } from '@/lib/types/course';
 
 interface Lesson {
   id: string;
@@ -31,6 +33,7 @@ interface Lesson {
     youtube_id: string;
     duration: number;
   };
+  resources?: LessonResource[];
   order: number;
   chapter_id: string;
 }
@@ -377,12 +380,20 @@ export default function LessonPlayerPage() {
             </div>
 
             {/* Lesson Description */}
-            <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="bg-white rounded-lg p-6 shadow-sm mb-8">
               <h2 className="text-xl font-semibold mb-4">About this lesson</h2>
               <div className="prose max-w-none text-gray-700">
                 {lesson.description || 'No description available.'}
               </div>
             </div>
+
+            {/* Learning Resources */}
+            {lesson.resources && lesson.resources.length > 0 && (
+              <ResourceDisplay 
+                resources={lesson.resources}
+                className="mb-8"
+              />
+            )}
 
             {/* Quiz Section */}
             {hasQuiz && (showQuiz || ((progress?.video_progress?.watch_percentage ?? 0) >= 80 && !quizPassed)) && (

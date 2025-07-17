@@ -14,7 +14,7 @@ interface OptimisticConfig<TVariables> {
 interface UseApiMutationOptions<TData, TVariables> {
   onSuccess?: (response: StandardResponse<TData>, variables: TVariables) => void;
   onError?: (error: AppError, variables: TVariables) => void;
-  invalidateQueries?: string[][];
+  invalidateQueries?: string[][] | ((variables: TVariables) => string[][]);
   showToast?: boolean;
   operationName?: string; // For toast deduplication
   optimistic?: OptimisticConfig<TVariables>; // NEW: Optional optimistic updates
@@ -122,9 +122,16 @@ export function useApiMutation<TData = any, TVariables = any>(
     
     onSuccess: (response, variables, context) => {
       // Invalidate specified queries FIRST
-      invalidateQueries.forEach(queryKey => {
-        queryClient.invalidateQueries({ queryKey });
-      });
+      if (invalidateQueries) {
+        // Handle both array and function forms
+        const queriesToInvalidate = typeof invalidateQueries === 'function' 
+          ? invalidateQueries(variables) 
+          : invalidateQueries;
+          
+        queriesToInvalidate.forEach(queryKey => {
+          queryClient.invalidateQueries({ queryKey });
+        });
+      }
       
       // Then call custom success handler (which may do additional invalidations)
       if (onSuccess) {
@@ -197,13 +204,39 @@ export function useApiMutation<TData = any, TVariables = any>(
     }
   };
 
+  // Create a wrapper for mutate that preserves our hook's onSuccess/onError handlers
+  const wrappedMutate = (
+    variables: TVariables,
+    options?: {
+      onSuccess?: (data: StandardResponse<TData>, variables: TVariables) => void;
+      onError?: (error: AppError, variables: TVariables) => void;
+      onSettled?: (data: StandardResponse<TData> | undefined, error: AppError | null, variables: TVariables) => void;
+    }
+  ) => {
+    mutation.mutate(variables, {
+      onSuccess: (data, vars) => {
+        // First call the caller's onSuccess if provided
+        if (options?.onSuccess) {
+          options.onSuccess(data, vars);
+        }
+      },
+      onError: (error, vars) => {
+        // First call the caller's onError if provided
+        if (options?.onError) {
+          options.onError(error as AppError, vars);
+        }
+      },
+      onSettled: options?.onSettled,
+    });
+  };
+
   return {
     // Same interface as useApiCall
     loading: mutation.isPending,
     execute,
     
     // Additional React Query mutation features
-    mutate: mutation.mutate,
+    mutate: wrappedMutate,
     mutateAsync: mutation.mutateAsync,
     isSuccess: mutation.isSuccess,
     isError: mutation.isError,

@@ -576,6 +576,204 @@ class LessonService:
             "warning": None,
             "suggested_action": None
         }
+    
+    @staticmethod
+    async def get_lesson_by_id(lesson_id: str) -> Optional[Lesson]:
+        """Get lesson by ID. Used for resource management."""
+        try:
+            return await Lesson.get(PydanticObjectId(lesson_id))
+        except Exception:
+            return None
+    
+    @staticmethod
+    async def add_resource_to_lesson(
+        lesson_id: str,
+        resource: dict,
+        user_id: str
+    ) -> Lesson:
+        """Add a resource to a lesson."""
+        # Get lesson
+        lesson = await Lesson.get(PydanticObjectId(lesson_id))
+        if not lesson:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lesson not found"
+            )
+        
+        # Verify user permissions
+        course = await Course.get(lesson.course_id)
+        if not course:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Course not found"
+            )
+        
+        # Get user to check role
+        from app.models.user import User
+        user = await User.get(PydanticObjectId(user_id))
+        
+        # Allow admin or course creator to add resources
+        if user.role != "admin" and str(course.creator_id) != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only course creator or admin can add resources"
+            )
+        
+        # Initialize resources list if None
+        if lesson.resources is None:
+            lesson.resources = []
+        
+        # Add resource to lesson
+        lesson.resources.append(resource)
+        
+        # Save lesson
+        await lesson.save()
+        
+        return lesson
+    
+    @staticmethod
+    async def remove_resource_from_lesson(
+        lesson_id: str,
+        resource_index: int,
+        user_id: str
+    ) -> Lesson:
+        """Remove a resource from a lesson by index."""
+        # Get lesson
+        lesson = await Lesson.get(PydanticObjectId(lesson_id))
+        if not lesson:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lesson not found"
+            )
+        
+        # Verify user permissions
+        course = await Course.get(lesson.course_id)
+        if not course:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Course not found"
+            )
+        
+        # Get user to check role
+        from app.models.user import User
+        user = await User.get(PydanticObjectId(user_id))
+        
+        # Allow admin or course creator to remove resources
+        if user.role != "admin" and str(course.creator_id) != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only course creator or admin can remove resources"
+            )
+        
+        # Check if resources exist
+        if not lesson.resources or len(lesson.resources) == 0:
+            raise ValueError("No resources found in lesson")
+        
+        # Check if index is valid
+        if resource_index < 0 or resource_index >= len(lesson.resources):
+            raise ValueError(f"Invalid resource index: {resource_index}")
+        
+        # Get resource to be deleted
+        resource_to_delete = lesson.resources[resource_index]
+        
+        # Check if it's an uploaded file (not external URL)
+        # Handle both object and dict formats
+        url = None
+        if isinstance(resource_to_delete, dict):
+            url = resource_to_delete.get('url')
+        elif hasattr(resource_to_delete, 'url'):
+            url = resource_to_delete.url
+            
+        if url:
+            # Check if it's a local upload (contains /uploads/ path)
+            if '/uploads/' in url:
+                try:
+                    # Extract file path from URL
+                    # URL format: http://localhost:8000/uploads/lesson-resources/filename.ext
+                    # or just: /uploads/lesson-resources/filename.ext
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    
+                    # Find the /uploads/ part and extract everything after it
+                    uploads_index = url.find('/uploads/')
+                    if uploads_index != -1:
+                        # Get path after /uploads/ (e.g., lesson-resources/filename.ext)
+                        file_path = url[uploads_index + len('/uploads/'):]
+                        
+                        # Get storage backend and delete file
+                        from app.core.config import get_storage_backend
+                        storage = get_storage_backend()
+                        
+                        # Try to delete the actual file
+                        deleted = await storage.delete_file(file_path)
+                        if deleted:
+                            logger.info(f"Deleted file: {file_path}")
+                        else:
+                            logger.warning(f"Could not delete file (may not exist): {file_path}")
+                except Exception as e:
+                    # Log error but don't fail the resource removal
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Error deleting file for resource: {e}")
+        
+        # Remove resource from list
+        del lesson.resources[resource_index]
+        
+        # Save lesson
+        await lesson.save()
+        
+        return lesson
+    
+    @staticmethod
+    async def update_resource_in_lesson(
+        lesson_id: str,
+        resource_index: int,
+        updated_resource: dict,
+        user_id: str
+    ) -> Lesson:
+        """Update a resource in a lesson by index."""
+        # Get lesson
+        lesson = await Lesson.get(PydanticObjectId(lesson_id))
+        if not lesson:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lesson not found"
+            )
+        
+        # Verify user permissions
+        course = await Course.get(lesson.course_id)
+        if not course:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Course not found"
+            )
+        
+        # Get user to check role
+        from app.models.user import User
+        user = await User.get(PydanticObjectId(user_id))
+        
+        # Allow admin or course creator to update resources
+        if user.role != "admin" and str(course.creator_id) != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only course creator or admin can update resources"
+            )
+        
+        # Check if resources exist
+        if not lesson.resources or len(lesson.resources) == 0:
+            raise ValueError("No resources found in lesson")
+        
+        # Check if index is valid
+        if resource_index < 0 or resource_index >= len(lesson.resources):
+            raise ValueError(f"Invalid resource index: {resource_index}")
+        
+        # Update resource
+        lesson.resources[resource_index] = updated_resource
+        
+        # Save lesson
+        await lesson.save()
+        
+        return lesson
 
 
 # Create service instance

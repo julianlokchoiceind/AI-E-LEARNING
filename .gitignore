@@ -67,3 +67,7 @@ out/
 
 # Railway
 railway.json
+
+# Uploads - User generated content
+uploads/
+/uploads/
