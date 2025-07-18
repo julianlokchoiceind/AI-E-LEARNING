@@ -175,7 +175,7 @@ class LessonService:
     async def get_lessons_by_course(
         course_id: str,
         user_id: Optional[str] = None
-    ) -> List[Lesson]:
+    ) -> List[dict]:
         """Get all lessons for a course."""
         # Verify course exists
         course = await Course.get(PydanticObjectId(course_id))
@@ -190,7 +190,41 @@ class LessonService:
             Lesson.course_id == PydanticObjectId(course_id)
         ).sort([("chapter_id", 1), ("order", 1)]).to_list()
         
-        return lessons
+        # Convert to dict and add progress for authenticated users
+        result = []
+        progress_map = {}
+        
+        if user_id:
+            # Get progress data for all lessons
+            progress_data = await Progress.find({
+                "user_id": PydanticObjectId(user_id),
+                "lesson_id": {"$in": [lesson.id for lesson in lessons]}
+            }).to_list()
+            
+            # Create progress map for quick lookup
+            progress_map = {str(p.lesson_id): p for p in progress_data}
+        
+        for lesson in lessons:
+            # Convert lesson to dict
+            lesson_dict = lesson.dict()
+            lesson_dict["id"] = str(lesson.id)
+            lesson_dict["course_id"] = str(lesson.course_id)
+            lesson_dict["chapter_id"] = str(lesson.chapter_id)
+            
+            # Add progress data if available
+            progress = progress_map.get(str(lesson.id))
+            if progress:
+                lesson_dict["is_unlocked"] = progress.is_unlocked
+                lesson_dict["is_completed"] = progress.is_completed
+                lesson_dict["progress_percentage"] = progress.progress_percentage
+            else:
+                lesson_dict["is_unlocked"] = None
+                lesson_dict["is_completed"] = None
+                lesson_dict["progress_percentage"] = None
+            
+            result.append(lesson_dict)
+        
+        return result
     
     @staticmethod
     async def get_lesson_detail(

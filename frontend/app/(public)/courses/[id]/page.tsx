@@ -23,6 +23,7 @@ const CourseDetailPage = () => {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const courseId = params.id as string;
+  const isCreatorOrAdmin = user?.role === 'creator' || user?.role === 'admin';
 
   // React Query hooks - automatic caching and state management
   const { data: courseResponse, loading: courseLoading } = useCourseQuery(courseId);
@@ -33,7 +34,7 @@ const CourseDetailPage = () => {
   // Extract data from React Query responses
   const course = courseResponse?.data || null;
   const isEnrolled = !!enrollmentResponse?.data;
-  const chapters = chaptersResponse?.data?.chapters || [];
+  const chapters = chaptersResponse?.chapters || [];
 
   // Combined loading state
   const loading = authLoading || courseLoading || chaptersLoading;
@@ -248,7 +249,28 @@ const CourseDetailPage = () => {
                   </Button>
                 ) : (
                   <Button
-                    onClick={() => router.push(`/learn/${courseId}`)}
+                    onClick={() => {
+                      // Safety check - ensure chapters have data
+                      if (!chapters || chapters.length === 0) {
+                        ToastService.error('Course has no chapters yet');
+                        return;
+                      }
+                      
+                      const firstLesson = chapters[0]?.lessons?.[0];
+                      if (!firstLesson) {
+                        ToastService.error('No lessons available');
+                        return;
+                      }
+                      
+                      // Navigate with or without preview param
+                      if (isCreatorOrAdmin) {
+                        router.push(`/learn/${courseId}/${firstLesson.id}?preview=true`);
+                      } else {
+                        // For students - currently navigate to first lesson
+                        // TODO: Get last accessed lesson from enrollment data
+                        router.push(`/learn/${courseId}/${firstLesson.id}`);
+                      }
+                    }}
                     className="w-full mb-4"
                     size="lg"
                   >

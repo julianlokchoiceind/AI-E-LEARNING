@@ -111,28 +111,3 @@ async def get_creator_or_admin_user(current_user: User = Depends(get_current_use
 
 # Alias for backward compatibility
 get_current_admin = get_admin_user
-
-
-async def get_current_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))
-) -> Optional[User]:
-    """
-    ALIAS for get_current_user_optional() - for backward compatibility with api/deps.py
-    This ensures all imports work with the consolidated deps file.
-    """
-    return await get_current_user_optional(credentials)
-
-
-async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
-    """
-    Get current active user (verified).
-    Copied from api/deps.py for compatibility.
-    """
-    if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
-        )
-    return current_user

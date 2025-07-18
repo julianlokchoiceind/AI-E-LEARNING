@@ -1,14 +1,14 @@
 """
 Quiz endpoints for managing lesson assessments.
 """
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from beanie import PydanticObjectId
 
 from app.models.user import User
 from app.schemas.quiz import QuizCreate, QuizUpdate, QuizAnswerSubmit
 from app.schemas.base import StandardResponse
-from app.api.deps import get_current_user
+from app.core.deps import get_current_user, get_current_optional_user
 from app.services.quiz_service import QuizService
 from app.core.exceptions import NotFoundError, ForbiddenError, BadRequestError
 
@@ -54,12 +54,14 @@ async def create_quiz(
 @router.get("/lesson/{lesson_id}", response_model=StandardResponse[dict])
 async def get_lesson_quiz(
     lesson_id: PydanticObjectId,
-    current_user: User = Depends(get_current_user)
+    preview: bool = Query(False, description="Preview mode flag"),
+    current_user: Optional[User] = Depends(get_current_optional_user)
 ) -> StandardResponse[dict]:
     """
     Get quiz for a specific lesson.
     
     Returns quiz questions without correct answers for students.
+    For preview mode, returns quiz structure without requiring authentication.
     """
     from app.models.quiz import Quiz
     
@@ -69,6 +71,36 @@ async def get_lesson_quiz(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No quiz found for this lesson"
+        )
+    
+    # Preview mode: return basic quiz structure without progress
+    if preview:
+        return StandardResponse(
+            success=True,
+            data={
+                "id": str(quiz.id),
+                "title": quiz.title,
+                "description": quiz.description,
+                "questions": [
+                    {
+                        "question": q.question,
+                        "options": q.options,
+                        "type": q.type,
+                        "points": q.points
+                    } for q in quiz.questions
+                ],
+                "config": quiz.config,
+                "total_points": quiz.total_points,
+                "preview_mode": True
+            },
+            message="Quiz retrieved successfully (preview mode)"
+        )
+    
+    # Normal mode: require authentication
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
         )
     
     try:

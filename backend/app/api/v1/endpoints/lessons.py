@@ -19,7 +19,7 @@ from app.schemas.lesson import (
 from app.schemas.base import StandardResponse
 from app.services.lesson_service import lesson_service
 from app.services.course_service import CourseService
-from app.api.deps import get_current_user, get_current_optional_user
+from app.core.deps import get_current_user, get_current_optional_user
 from app.core.config import get_file_upload_service
 from app.utils.file_upload import validate_url_format, get_display_title_from_filename, sanitize_resource_title
 

@@ -87,12 +87,14 @@ export function useCourseChaptersQuery(courseId: string) {
   return useApiQuery(
     ['course-chapters', courseId],
     async (): Promise<any> => {
-      const data: any = await api.get(`/courses/${courseId}/chapters-with-lessons`, { requireAuth: true });
-      if (!data.success) {
-        throw new Error(data.message || 'Something went wrong');
+      // Use public endpoint that works without authentication (for preview mode)
+      const response: StandardResponse<any> = await api.get(`/courses/${courseId}/chapters-with-lessons-public`, { requireAuth: false });
+      if (!response.success) {
+        throw new Error(response.message || 'Something went wrong');
       }
       
-      return data.data; // Return the chapters array directly
+      // Return the full data object which includes chapters array
+      return response.data; // This contains { chapters: [], total: number }
     },
     {
       enabled: !!courseId,
@@ -179,18 +181,19 @@ export function useMarkLessonComplete() {
  * Critical: Replaces manual fetchAllLessonsProgress in lesson page
  * This eliminates multiple individual API calls with a single batch request
  */
-export function useBatchLessonProgressQuery(lessonIds: string[], enabled: boolean = true) {
+export function useBatchLessonProgressQuery(lessonIds: string[], enabled: boolean = true, preview: boolean = false) {
   return useApiQuery(
-    ['lesson-progress-batch', lessonIds.sort().join(',')],
+    ['lesson-progress-batch', lessonIds.sort().join(','), preview],
     async (): Promise<StandardResponse<any[]>> => {
       if (lessonIds.length === 0) {
         return { success: true, data: [], message: 'No lessons to fetch progress for' };
       }
 
       // Batch fetch all lesson progress in a single request
-      const data: any = await api.post(`/progress/lessons/batch`, {
+      const params = preview ? '?preview=true' : '';
+      const data: any = await api.post(`/progress/lessons/batch${params}`, {
         lesson_ids: lessonIds
-      }, { requireAuth: true });
+      }, { requireAuth: !preview });
 
       if (!data.success) {
         throw new Error(data.message || 'Something went wrong');

@@ -303,7 +303,7 @@ const LessonEditPage = () => {
                 
                 <Button
                   variant="outline"
-                  onClick={() => router.push(`/learn/${courseId}/${lessonId}`)}
+                  onClick={() => router.push(`/learn/${courseId}/${lessonId}?preview=true`)}
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Preview

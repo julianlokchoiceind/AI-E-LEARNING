@@ -605,7 +605,16 @@ const CourseBuilderPage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push(`/courses/${courseId}`)}
+                  onClick={() => {
+                    // Find the first lesson of the first chapter
+                    const firstChapter = chapters.find(ch => ch.lessons && ch.lessons.length > 0);
+                    if (firstChapter && firstChapter.lessons && firstChapter.lessons.length > 0) {
+                      const firstLesson = firstChapter.lessons[0];
+                      router.push(`/learn/${courseId}/${firstLesson.id}?preview=true`);
+                    } else {
+                      ToastService.info('No lessons available yet. Please add chapters and lessons first.');
+                    }
+                  }}
                 >
                   Preview
                 </Button>

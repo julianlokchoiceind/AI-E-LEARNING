@@ -35,7 +35,7 @@ from app.schemas.auth import (
     UserPreferencesUpdate,
     UserPreferencesResponse
 )
-from app.api.deps import get_current_user
+from app.core.deps import get_current_user
 from app.schemas.base import StandardResponse, ErrorResponse
 
 logger = logging.getLogger(__name__)

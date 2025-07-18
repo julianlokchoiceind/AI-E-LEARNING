@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, CheckCircle, Clock, BookOpen, Info, VideoOff, Menu } from 'lucide-react';
 import { VideoPlayer } from '@/components/feature/VideoPlayer';
 import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
@@ -72,11 +72,13 @@ export default function LessonPlayerPage() {
   const { user } = useAuth();
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
+  const searchParams = useSearchParams();
+  const isPreviewMode = searchParams.get('preview') === 'true';
 
   // React Query hooks - automatic caching and state management
-  const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId);
+  const { data: lessonResponse, loading: lessonLoading, error: lessonError } = useLessonQuery(lessonId);
   const { data: progressResponse, loading: progressLoading, execute: refetchProgress } = useLessonProgressQuery(lessonId);
-  const { data: chaptersResponse, loading: chaptersLoading } = useCourseChaptersQuery(courseId);
+  const { data: chaptersResponse, loading: chaptersLoading, error: chaptersError } = useCourseChaptersQuery(courseId);
   const { mutate: startLesson } = useStartLesson();
   const { mutate: updateProgress } = useUpdateLessonProgress();
   const { mutate: markComplete } = useMarkLessonComplete();
@@ -84,7 +86,30 @@ export default function LessonPlayerPage() {
   // Extract data from React Query responses
   const lesson = lessonResponse?.data || null;
   const progress = progressResponse?.data || null;
-  const chapters = chaptersResponse?.data || [];
+  const chapters = chaptersResponse?.chapters || [];
+  
+  // Debug logging
+  console.log('Learning Page Debug:', {
+    courseId,
+    lessonId,
+    isPreviewMode,
+    chaptersResponse,
+    chaptersResponseStructure: {
+      hasData: !!chaptersResponse,
+      hasChapters: !!chaptersResponse?.chapters,
+      chaptersArray: chaptersResponse?.chapters,
+      totalCount: chaptersResponse?.total,
+      firstChapter: chaptersResponse?.chapters?.[0],
+      firstLesson: chaptersResponse?.chapters?.[0]?.lessons?.[0]
+    },
+    chaptersCount: chapters.length,
+    chaptersLoading,
+    chaptersError: chaptersError?.message || null,
+    lessonLoading,
+    lessonError: lessonError?.message || null,
+    user: !!user,
+    extractedChapters: chapters
+  });
   
   // Calculate all lesson IDs for batch progress fetching
   const allLessonIds = chapters.flatMap((chapter: Chapter) => 
@@ -94,7 +119,8 @@ export default function LessonPlayerPage() {
   // Batch fetch lesson progress using React Query - replaces manual fetchAllLessonsProgress
   const { data: batchProgressData, loading: batchProgressLoading } = useBatchLessonProgressQuery(
     allLessonIds,
-    chapters.length > 0 // Only fetch when chapters are loaded
+    chapters.length > 0, // Only fetch when chapters are loaded
+    isPreviewMode // Pass preview mode to skip authentication
   );
   
   // Convert batch progress data to Map for efficient lookup
@@ -110,7 +136,7 @@ export default function LessonPlayerPage() {
   }
   
   // React Query hooks for quiz data - replaces manual quiz API calls
-  const { data: quizResponse, loading: quizLoading } = useLessonQuizQuery(lessonId, !!lessonId);
+  const { data: quizResponse, loading: quizLoading } = useLessonQuizQuery(lessonId, !!lessonId, isPreviewMode);
   const { data: quizProgressResponse, loading: quizProgressLoading } = useQuizProgressQuery(
     quizResponse?.data?.id, 
     !!quizResponse?.data?.id
@@ -154,7 +180,7 @@ export default function LessonPlayerPage() {
 
   useEffect(() => {
     // Start lesson when lesson data is available - React Query handles data fetching automatically
-    if (lesson && !progress) {
+    if (lesson && !progress && !isPreviewMode) {
       startLesson({ lessonId }, {
         onSuccess: () => {
           // Progress will be refetched automatically by React Query
@@ -179,7 +205,7 @@ export default function LessonPlayerPage() {
   // React Query data processing - automatic lesson navigation setup
   useEffect(() => {
     // Extract chapters from React Query response for optimal dependency tracking
-    const chaptersData = chaptersResponse?.data || [];
+    const chaptersData = chaptersResponse?.chapters || [];
     if (chaptersData.length > 0) {
       // Process chapters data to find current chapter and next lesson
       for (const chapter of chaptersData) {
@@ -214,6 +240,12 @@ export default function LessonPlayerPage() {
   // This provides automatic caching, error handling, and loading states
 
   const handleVideoProgress = (percentage: number) => {
+    // Skip saving in preview mode
+    if (isPreviewMode) {
+      console.log('Preview mode: Progress not saved');
+      return;
+    }
+    
     // React Query mutation handles API call with automatic error handling
     updateProgress({ 
       lessonId, 
@@ -233,6 +265,13 @@ export default function LessonPlayerPage() {
   };
 
   const handleVideoComplete = () => {
+    // Skip saving in preview mode
+    if (isPreviewMode) {
+      console.log('Preview mode: Video completion not saved');
+      ToastService.info('Preview Mode - Progress is not being tracked');
+      return;
+    }
+    
     // If there's a quiz and it hasn't been passed yet, show it
     if (hasQuiz && !quizPassed) {
       setShowQuiz(true);
@@ -259,6 +298,13 @@ export default function LessonPlayerPage() {
   };
 
   const handleQuizComplete = (passed: boolean) => {
+    // Skip saving in preview mode
+    if (isPreviewMode) {
+      console.log('Preview mode: Quiz completion not saved');
+      ToastService.info('Preview Mode - Quiz results are not being saved');
+      return;
+    }
+    
     if (passed) {
       // Quiz passed - complete the lesson using React Query mutation
       markComplete({ 
@@ -352,6 +398,18 @@ export default function LessonPlayerPage() {
         </div>
       </header>
 
+      {/* Preview Mode Banner */}
+      {isPreviewMode && (
+        <div className="bg-yellow-100 border-b border-yellow-300 px-4 py-2">
+          <div className="max-w-7xl mx-auto flex items-center">
+            <Info className="w-5 h-5 text-yellow-700 mr-2" />
+            <span className="text-yellow-800 font-medium">
+              Preview Mode - Progress will not be saved
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Main Layout */}
       <div className="flex h-[calc(100vh-64px)]">
         {/* Enhanced Sidebar - Desktop Only */}
@@ -413,7 +471,29 @@ export default function LessonPlayerPage() {
 
               {/* Chapters & Lessons Navigation */}
               <div className="overflow-y-auto h-[calc(100%-200px)]">
-                {chapters.map((chapter) => (
+                {chaptersLoading ? (
+                  <div className="p-4 text-center text-gray-500">
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                      <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
+                    </div>
+                  </div>
+                ) : chaptersError ? (
+                  <div className="p-4 text-center text-red-500">
+                    <BookOpen className="w-8 h-8 mx-auto mb-2 text-red-300" />
+                    <p className="text-sm">Error loading chapters</p>
+                    <p className="text-xs mt-1">{chaptersError.message || 'Please try refreshing the page'}</p>
+                  </div>
+                ) : chapters.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    <BookOpen className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No chapters available</p>
+                    {isPreviewMode && (
+                      <p className="text-xs mt-1">Course content may be limited in preview mode</p>
+                    )}
+                  </div>
+                ) : chapters.map((chapter) => (
                   <div key={chapter.id} className="border-b border-gray-100">
                     <div className="px-4 py-3 bg-gray-50">
                       <h4 className="font-medium text-gray-900 flex items-center">

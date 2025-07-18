@@ -17,7 +17,7 @@ from app.schemas.review import (
 )
 from app.schemas.base import StandardResponse
 from app.services.review_service import ReviewService
-from app.core.deps import get_current_user, get_admin_user, get_current_user_optional
+from app.core.deps import get_current_user, get_admin_user, get_current_optional_user
 
 router = APIRouter()
 review_service = ReviewService()
@@ -58,7 +58,7 @@ async def get_course_reviews(
     sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    current_user: Optional[User] = Depends(get_current_user_optional)
+    current_user: Optional[User] = Depends(get_current_optional_user)
 ):
     """Get reviews for a course"""
     try:
@@ -109,7 +109,7 @@ async def get_user_reviews(
     sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    current_user: Optional[User] = Depends(get_current_user_optional)
+    current_user: Optional[User] = Depends(get_current_optional_user)
 ):
     """Get reviews by a specific user"""
     try:
@@ -137,7 +137,7 @@ async def get_user_reviews(
 @router.get("/reviews/{review_id}", response_model=StandardResponse[dict])
 async def get_review(
     review_id: str,
-    current_user: Optional[User] = Depends(get_current_user_optional)
+    current_user: Optional[User] = Depends(get_current_optional_user)
 ):
     """Get a specific review"""
     try:

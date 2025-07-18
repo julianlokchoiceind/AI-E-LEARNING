@@ -249,11 +249,9 @@ class ChapterService:
             chapter.total_duration = total_duration
             await chapter.save()
 
-    async def get_chapters_with_lessons(self, course_id: str) -> List[dict]:
+    @staticmethod
+    async def get_chapters_with_lessons(course_id: str) -> List[dict]:
         """Get all chapters for a course with lessons included."""
-        from app.models.lesson import Lesson
-        from beanie import PydanticObjectId
-        
         # Convert to MongoDB ObjectId if needed
         if isinstance(course_id, str):
             course_id = PydanticObjectId(course_id)
@@ -295,6 +293,8 @@ class ChapterService:
                     "description": lesson.description or "",
                     "order": lesson.order,
                     "video_duration": lesson.video.duration if lesson.video and lesson.video.duration else 0,
+                    "video_url": lesson.video.url if lesson.video and lesson.video.url else "",
+                    "youtube_id": lesson.video.youtube_id if lesson.video and lesson.video.youtube_id else "",
                     "has_quiz": False,  # Default - will be updated when quiz system is implemented
                     "status": lesson.status
                 }

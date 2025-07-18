@@ -1,9 +1,9 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, Query
 from app.models.user import User
 from app.models.progress import Progress
 from app.models.enrollment import Enrollment
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_current_optional_user
 from app.services.progress_service import progress_service
 from app.services.certificate_service import CertificateService
 from app.schemas.progress import VideoProgressUpdate
@@ -14,9 +14,17 @@ router = APIRouter()
 @router.post("/lessons/{lesson_id}/start", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
 async def start_lesson(
     lesson_id: str,
+    preview: bool = Query(False, description="Preview mode flag"),
     current_user: User = Depends(get_current_user)
 ):
     """Start a lesson and create initial progress record."""
+    # Skip enrollment check for preview mode
+    if preview and current_user.role in ["creator", "admin"]:
+        return StandardResponse(
+            success=True,
+            data={"preview_mode": True, "lesson_id": lesson_id},
+            message="Preview mode - Progress not tracked"
+        )
     try:
         progress = await progress_service.start_lesson(lesson_id, str(current_user.id))
         return StandardResponse(
@@ -34,9 +42,17 @@ async def start_lesson(
 async def update_video_progress(
     lesson_id: str,
     update_data: VideoProgressUpdate,
+    preview: bool = Query(False, description="Preview mode flag"),
     current_user: User = Depends(get_current_user)
 ):
     """Update video watching progress for a lesson."""
+    # Skip saving in preview mode
+    if preview and current_user.role in ["creator", "admin"]:
+        return StandardResponse(
+            success=True,
+            data={"preview_mode": True, "lesson_id": lesson_id},
+            message="Preview mode - Progress not saved"
+        )
     try:
         progress = await progress_service.update_video_progress(
             lesson_id,
@@ -63,9 +79,17 @@ async def update_video_progress(
 @router.post("/lessons/{lesson_id}/complete", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
 async def complete_lesson(
     lesson_id: str,
+    preview: bool = Query(False, description="Preview mode flag"),
     current_user: User = Depends(get_current_user)
 ):
     """Mark a lesson as completed."""
+    # Skip saving in preview mode
+    if preview and current_user.role in ["creator", "admin"]:
+        return StandardResponse(
+            success=True,
+            data={"preview_mode": True, "lesson_id": lesson_id},
+            message="Preview mode - Completion not saved"
+        )
     try:
         progress = await progress_service.complete_lesson(lesson_id, str(current_user.id))
         return StandardResponse(
@@ -166,4 +190,56 @@ async def check_course_completion(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to check course completion: {str(e)}"
+        )
+
+
+@router.post("/lessons/batch", response_model=StandardResponse[list])
+async def get_batch_lesson_progress(
+    request: dict = Body(...),
+    preview: bool = Query(False, description="Preview mode flag"),
+    current_user: Optional[User] = Depends(get_current_optional_user)
+):
+    """
+    Get progress for multiple lessons at once.
+    
+    For preview mode, returns empty progress data.
+    For normal mode, requires authentication and returns actual progress.
+    """
+    lesson_ids = request.get("lesson_ids", [])
+    
+    if not lesson_ids:
+        return StandardResponse(
+            success=True,
+            data=[],
+            message="No lesson IDs provided"
+        )
+    
+    # Preview mode: return empty progress
+    if preview:
+        return StandardResponse(
+            success=True,
+            data=[],
+            message="Preview mode - No progress data"
+        )
+    
+    # Normal mode: require authentication
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    try:
+        progress_list = await progress_service.get_batch_lesson_progress(
+            lesson_ids, str(current_user.id)
+        )
+        return StandardResponse(
+            success=True,
+            data=progress_list,
+            message="Batch progress retrieved successfully"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
         )

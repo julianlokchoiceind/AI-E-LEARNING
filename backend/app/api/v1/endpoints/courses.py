@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 # Local application imports
 from app.core.database import db
-from app.core.deps import get_current_user, get_current_user_optional
+from app.core.deps import get_current_user, get_current_optional_user
 from app.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
 from app.core.performance import cache_response, measure_performance
 from app.models.course import CourseCategory, CourseLevel, CourseStatus
@@ -72,7 +72,7 @@ async def list_courses(
     level: Optional[CourseLevel] = None,
     search: Optional[str] = None,
     is_free: Optional[bool] = None,
-    current_user: Optional[User] = Depends(get_current_user_optional)
+    current_user: Optional[User] = Depends(get_current_optional_user)
 ) -> StandardResponse[CourseListResponse]:
     """
     List courses with filters and pagination.
@@ -154,7 +154,7 @@ async def list_courses(
 @cache_response(ttl_seconds=30)  # 30 seconds cache - sync với frontend
 async def get_course(
     course_id: str,
-    current_user: Optional[User] = Depends(get_current_user_optional)
+    current_user: Optional[User] = Depends(get_current_optional_user)
 ) -> StandardResponse[CourseResponse]:
     """
     Get course details by ID.
@@ -464,7 +464,7 @@ async def get_course_analytics(
 async def get_preview_lesson(
     course_id: str,
     lesson_id: str,
-    current_user: Optional[User] = Depends(get_current_user_optional)
+    current_user: Optional[User] = Depends(get_current_optional_user)
 ) -> StandardResponse[dict]:
     """
     Get a lesson for preview (no authentication required).

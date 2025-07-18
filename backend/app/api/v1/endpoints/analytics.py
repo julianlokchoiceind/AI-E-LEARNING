@@ -6,7 +6,7 @@ Provides insights on course performance, student engagement, and revenue
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from app.api.deps import get_current_user
+from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.course import Course
 from app.models.enrollment import Enrollment

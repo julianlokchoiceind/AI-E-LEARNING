@@ -69,8 +69,9 @@ export interface QuizProgress {
 
 export const quizAPI = {
   // Get quiz for a lesson
-  getLessonQuiz: async (lessonId: string): Promise<StandardResponse<Quiz>> => {
-    return apiClient.get<StandardResponse<Quiz>>(`/quizzes/lesson/${lessonId}`);
+  getLessonQuiz: async (lessonId: string, preview: boolean = false): Promise<StandardResponse<Quiz>> => {
+    const params = preview ? '?preview=true' : '';
+    return apiClient.get<StandardResponse<Quiz>>(`/quizzes/lesson/${lessonId}${params}`);
   },
 
   // Get quiz by ID

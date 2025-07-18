@@ -19,11 +19,11 @@ interface QuizSubmission {
 /**
  * Get quiz for a specific lesson
  */
-export function useLessonQuizQuery(lessonId: string, enabled: boolean = true) {
+export function useLessonQuizQuery(lessonId: string, enabled: boolean = true, preview: boolean = false) {
   return useApiQuery(
-    ['lesson-quiz', lessonId],
+    ['lesson-quiz', lessonId, preview],
     async () => {
-      return quizAPI.getLessonQuiz(lessonId);
+      return quizAPI.getLessonQuiz(lessonId, preview);
     },
     {
       enabled: enabled && !!lessonId,

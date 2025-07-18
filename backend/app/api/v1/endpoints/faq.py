@@ -8,7 +8,7 @@ from typing import List
 from fastapi import APIRouter, Depends, Query
 
 # Local imports
-from app.api.deps import get_admin_user, get_current_user
+from app.core.deps import get_admin_user, get_current_user
 from app.models.user import User
 from app.schemas.faq import (
     FAQBulkAction,
