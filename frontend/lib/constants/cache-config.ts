@@ -78,6 +78,24 @@ export const CACHE_CONTEXTS = {
   USER_PROFILE: CACHE_TIERS.MODERATE,          // Profile data, preferences
   LEARNING_PROGRESS: CACHE_TIERS.MODERATE,     // Video progress, quiz results
   
+  // Learning Interface
+  LESSON_CONTENT: CACHE_TIERS.MODERATE,        // Individual lesson data
+  LESSON_PROGRESS: CACHE_TIERS.FRESH,          // Individual lesson progress
+  LESSON_PROGRESS_BATCH: CACHE_TIERS.FRESH,    // Batch lesson progress
+  COURSE_PROGRESS_OVERVIEW: CACHE_TIERS.MODERATE, // Course overview stats
+  
+  // Course Structure
+  COURSE_STRUCTURE: CACHE_TIERS.STABLE,        // Course chapters/lessons structure
+  CHAPTER_DETAILS: CACHE_TIERS.STABLE,         // Chapter information
+  CHAPTER_LESSONS: CACHE_TIERS.STABLE,         // Lessons within chapter
+  
+  // Quiz Content
+  LESSON_QUIZ: CACHE_TIERS.STABLE,             // Quiz questions - rarely change
+  QUIZ_PROGRESS: CACHE_TIERS.FRESH,            // Quiz attempts and scores
+  QUIZ_CONTENT: CACHE_TIERS.STABLE,            // Quiz questions and config
+  QUIZ_ATTEMPTS: CACHE_TIERS.MODERATE,         // Quiz attempt history
+  QUIZ_DETAILS: CACHE_TIERS.STABLE,            // Quiz admin details
+  
   // Static Content
   APP_CONFIGURATION: CACHE_TIERS.STABLE,       // Categories, settings, metadata
   RECOMMENDATIONS: CACHE_TIERS.STABLE,         // Course recommendations
@@ -109,9 +127,9 @@ export type CacheContext = keyof typeof CACHE_CONTEXTS;
  * Cache Configuration Summary
  * 
  * REALTIME (0s):     Admin operations, content creation
- * FRESH (30s):       Public browsing, course catalog, FAQ
+ * FRESH (30s):       Public browsing, course catalog, FAQ, quiz progress
  * MODERATE (2min):   User dashboards, progress tracking  
- * STABLE (10min):    Static config, recommendations
+ * STABLE (10min):    Static config, recommendations, quiz questions
  * 
  * Memory Retention: 1min → 5min → 10min → 30min
  * Backend Sync: All tiers align with 30s backend cache TTL

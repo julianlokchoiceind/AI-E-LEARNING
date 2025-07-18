@@ -35,11 +35,13 @@ interface LessonNavigation {
  * LESSON CONTENT - Core learning interface (LEARNING INTERFACE)
  * Critical: Primary learning experience for learning page
  */
-export function useLessonQuery(lessonId: string, enabled: boolean = true) {
+export function useLessonQuery(lessonId: string, enabled: boolean = true, preview: boolean = false) {
   return useApiQuery(
-    ['lesson', lessonId],
+    ['lesson', lessonId, preview],
     async (): Promise<StandardResponse<any>> => {
-      return api.get(`/lessons/${lessonId}`, { requireAuth: true });
+      // Add preview parameter to URL if in preview mode
+      const url = preview ? `/lessons/${lessonId}?preview=true` : `/lessons/${lessonId}`;
+      return api.get(url, { requireAuth: !preview });
     },
     {
       enabled: enabled && !!lessonId,
@@ -55,7 +57,7 @@ export function useLessonQuery(lessonId: string, enabled: boolean = true) {
  * LESSON PROGRESS - Individual lesson progress tracking (LEARNING INTERFACE)
  * Critical: Progress tracking for learning interface
  */
-export function useLessonProgressQuery(lessonId: string) {
+export function useLessonProgressQuery(lessonId: string, enabled: boolean = true) {
   return useApiQuery(
     ['lesson-progress', lessonId],
     async (): Promise<StandardResponse<any>> => {
@@ -70,7 +72,7 @@ export function useLessonProgressQuery(lessonId: string) {
       }
     },
     {
-      enabled: !!lessonId,
+      enabled: enabled && !!lessonId,
       ...getCacheConfig('LESSON_PROGRESS') // Lesson progress - fresh data
     }
   );
@@ -83,18 +85,23 @@ export function useLessonProgressQuery(lessonId: string) {
  * COURSE CHAPTERS WITH LESSONS - Course structure for navigation
  * Critical: Learning navigation and progress tracking
  */
+interface ChaptersResponse {
+  chapters: any[];
+  total: number;
+}
+
 export function useCourseChaptersQuery(courseId: string) {
-  return useApiQuery(
+  return useApiQuery<ChaptersResponse>(
     ['course-chapters', courseId],
-    async (): Promise<any> => {
+    async (): Promise<StandardResponse<ChaptersResponse>> => {
       // Use public endpoint that works without authentication (for preview mode)
-      const response: StandardResponse<any> = await api.get(`/courses/${courseId}/chapters-with-lessons-public`, { requireAuth: false });
+      const response: StandardResponse<ChaptersResponse> = await api.get(`/courses/${courseId}/chapters-with-lessons-public`, { requireAuth: false });
       if (!response.success) {
         throw new Error(response.message || 'Something went wrong');
       }
       
-      // Return the full data object which includes chapters array
-      return response.data; // This contains { chapters: [], total: number }
+      // Return the full StandardResponse
+      return response;
     },
     {
       enabled: !!courseId,
@@ -155,7 +162,7 @@ export function useUpdateLessonProgress() {
  */
 export function useMarkLessonComplete() {
   return useApiMutation(
-    async ({ lessonId, courseId, quizScore }: { lessonId: string; courseId: string; quizScore?: number }): Promise<StandardResponse<any>> => {
+    async ({ lessonId, quizScore }: { lessonId: string; quizScore?: number }): Promise<StandardResponse<any>> => {
       return await api.post(`/progress/lessons/${lessonId}/complete`, {
         quiz_score: quizScore
       }, { requireAuth: true });
@@ -190,16 +197,52 @@ export function useBatchLessonProgressQuery(lessonIds: string[], enabled: boolea
       }
 
       // Batch fetch all lesson progress in a single request
-      const params = preview ? '?preview=true' : '';
-      const data: any = await api.post(`/progress/lessons/batch${params}`, {
-        lesson_ids: lessonIds
-      }, { requireAuth: !preview });
+      try {
+        const params = preview ? '?preview=true' : '';
+        const response: StandardResponse<any[]> = await api.post(`/progress/lessons/batch${params}`, {
+          lesson_ids: lessonIds
+        }, { requireAuth: !preview });
 
-      if (!data.success) {
-        throw new Error(data.message || 'Something went wrong');
+        if (!response.success) {
+          throw new Error(response.message || 'Something went wrong');
+        }
+
+        return response;
+      } catch (error: any) {
+        // If batch endpoint doesn't exist or user is in preview mode, return empty progress
+        if (preview) {
+          return { success: true, data: [], message: 'No progress in preview mode' };
+        }
+        
+        // If batch endpoint doesn't exist (400/404), fall back to individual queries
+        if (error.statusCode === 400 || error.statusCode === 404) {
+          console.warn('Batch progress endpoint not available, falling back to individual queries');
+          
+          // Fetch progress for each lesson individually
+          const progressPromises = lessonIds.map(async (lessonId) => {
+            try {
+              const response = await api.get<StandardResponse<any>>(`/progress/lessons/${lessonId}/progress`, { requireAuth: true });
+              if (response.success && response.data) {
+                return response.data;
+              }
+              return null;
+            } catch (err: any) {
+              // If no progress exists for this lesson, that's okay
+              if (err.statusCode === 404) {
+                return null;
+              }
+              throw err;
+            }
+          });
+          
+          const results = await Promise.all(progressPromises);
+          const validProgress = results.filter((p: any) => p !== null);
+          
+          return { success: true, data: validProgress, message: 'Fetched individual progress' };
+        }
+        
+        throw error;
       }
-
-      return data.data || [];
     },
     {
       enabled: enabled && lessonIds.length > 0,
@@ -307,21 +350,6 @@ export function useCreateLesson() {
  */
 export const useLessonByIdQuery = useLessonQuery;
 
-/**
- * Get quiz for specific lesson
- */
-export function useLessonQuizQuery(lessonId: string, enabled: boolean = true) {
-  return useApiQuery(
-    ['lesson-quiz', lessonId],
-    async () => {
-      return api.get<StandardResponse<any>>(`/lessons/${lessonId}/quiz`);
-    },
-    {
-      enabled: enabled && !!lessonId,
-      ...getCacheConfig('LESSON_QUIZ') // Lesson quiz - stable content
-    }
-  );
-}
 
 /**
  * Update lesson information
@@ -395,18 +423,3 @@ export function useSubmitQuiz() {
   );
 }
 
-/**
- * Get quiz progress for lesson
- */
-export function useQuizProgressQuery(lessonId: string, enabled: boolean = true) {
-  return useApiQuery(
-    ['quiz-progress', lessonId],
-    async () => {
-      return api.get<StandardResponse<any>>(`/lessons/${lessonId}/quiz/progress`);
-    },
-    {
-      enabled: enabled && !!lessonId,
-      ...getCacheConfig('QUIZ_PROGRESS') // Quiz progress - fresh data
-    }
-  );
-}

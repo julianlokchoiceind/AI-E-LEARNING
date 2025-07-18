@@ -10,10 +10,12 @@ import { Label } from '@/components/ui/Label';
 import { ProgressBar as Progress } from '@/components/ui/ProgressBar';
 import { QuizAnswerSubmit, QuizAttemptResult } from '@/lib/api/quizzes';
 import { 
-  useLessonQuizQuery,
-  useQuizProgressQuery,
   useSubmitQuiz
 } from '@/hooks/queries/useLearning';
+import {
+  useLessonQuizQuery,
+  useQuizProgressQuery
+} from '@/hooks/queries/useQuizzes';
 
 interface QuizComponentProps {
   lessonId: string;
@@ -23,9 +25,13 @@ interface QuizComponentProps {
 export function QuizComponent({ lessonId, onComplete }: QuizComponentProps) {
   // React Query hooks for data fetching
   const { data: quizResponse, loading: quizLoading } = useLessonQuizQuery(lessonId, !!lessonId);
+  
+  // Get quiz ID with proper type safety
+  const quizId = quizResponse?.data?.id || '';
+  
   const { data: progressResponse, loading: progressLoading } = useQuizProgressQuery(
-    quizResponse?.data?.id, 
-    !!quizResponse?.data?.id
+    quizId, 
+    !!quizId
   );
   const { mutate: submitQuizMutation, loading: isSubmitting } = useSubmitQuiz();
 

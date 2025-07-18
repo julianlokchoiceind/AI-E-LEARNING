@@ -170,7 +170,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (intervalRef.current) return;
 
     intervalRef.current = setInterval(() => {
-      if (!player || !player.getCurrentTime) return;
+      if (!player || !isReady || !player.getCurrentTime) return;
 
       const current = player.getCurrentTime();
       const total = player.getDuration();
@@ -232,44 +232,54 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   // Custom controls
   const handlePlayPause = () => {
-    if (!player) return;
+    if (!player || !isReady) return;
 
-    if (player.getPlayerState() === window.YT.PlayerState.PLAYING) {
-      player.pauseVideo();
+    // Check if getPlayerState method exists
+    if (typeof player.getPlayerState === 'function') {
+      if (player.getPlayerState() === window.YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+      } else {
+        player.playVideo();
+      }
     } else {
-      player.playVideo();
+      // Fallback: use the state we're already tracking
+      if (isPlaying) {
+        player.pauseVideo();
+      } else {
+        player.playVideo();
+      }
     }
   };
 
   const handleRewind = () => {
-    if (!player) return;
+    if (!player || !isReady) return;
     const currentTime = player.getCurrentTime();
     player.seekTo(Math.max(0, currentTime - 10), true);
   };
 
   const handleForward = () => {
-    if (!player) return;
+    if (!player || !isReady) return;
     const currentTime = player.getCurrentTime();
     const duration = player.getDuration();
     player.seekTo(Math.min(duration, currentTime + 10), true);
   };
 
   const handleSpeedChange = (speed: number) => {
-    if (!player) return;
+    if (!player || !isReady) return;
     player.setPlaybackRate(speed);
     setPlaybackRate(speed);
     setShowSettings(false);
   };
   
   const handleVolumeChange = (newVolume: number) => {
-    if (!player) return;
+    if (!player || !isReady) return;
     player.setVolume(newVolume * 100);
     setVolume(newVolume);
     setIsMuted(newVolume === 0);
   };
   
   const handleMute = () => {
-    if (!player) return;
+    if (!player || !isReady) return;
     
     if (isMuted) {
       player.unMute();

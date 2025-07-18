@@ -23,11 +23,25 @@ export function useLessonQuizQuery(lessonId: string, enabled: boolean = true, pr
   return useApiQuery(
     ['lesson-quiz', lessonId, preview],
     async () => {
-      return quizAPI.getLessonQuiz(lessonId, preview);
+      // In preview mode, return empty quiz data
+      if (preview) {
+        return { success: true, data: null, message: 'No quiz in preview mode' };
+      }
+      
+      try {
+        return await quizAPI.getLessonQuiz(lessonId, preview);
+      } catch (error: any) {
+        // If quiz doesn't exist (404), that's okay - not all lessons have quizzes
+        if (error.statusCode === 404) {
+          return { success: true, data: null, message: 'No quiz for this lesson' };
+        }
+        throw error;
+      }
     },
     {
       enabled: enabled && !!lessonId,
-      ...getCacheConfig('QUIZ_CONTENT') // Quiz content - stable content
+      ...getCacheConfig('QUIZ_CONTENT'), // Quiz content - stable content
+      showToast: false // Don't show toast for 404 errors
     }
   );
 }

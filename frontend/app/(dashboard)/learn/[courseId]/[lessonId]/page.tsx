@@ -69,15 +69,18 @@ interface LessonProgress {
 export default function LessonPlayerPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { } = useAuth(); // User auth check handled by middleware
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
   const searchParams = useSearchParams();
   const isPreviewMode = searchParams.get('preview') === 'true';
 
   // React Query hooks - automatic caching and state management
-  const { data: lessonResponse, loading: lessonLoading, error: lessonError } = useLessonQuery(lessonId);
-  const { data: progressResponse, loading: progressLoading, execute: refetchProgress } = useLessonProgressQuery(lessonId);
+  const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId, true, isPreviewMode);
+  const { data: progressResponse, loading: progressLoading, execute: refetchProgress } = useLessonProgressQuery(
+    lessonId,
+    !isPreviewMode // Only fetch progress if not in preview mode
+  );
   const { data: chaptersResponse, loading: chaptersLoading, error: chaptersError } = useCourseChaptersQuery(courseId);
   const { mutate: startLesson } = useStartLesson();
   const { mutate: updateProgress } = useUpdateLessonProgress();
@@ -85,31 +88,10 @@ export default function LessonPlayerPage() {
 
   // Extract data from React Query responses
   const lesson = lessonResponse?.data || null;
-  const progress = progressResponse?.data || null;
-  const chapters = chaptersResponse?.chapters || [];
+  // In preview mode, set progress to a dummy object to prevent startLesson from being called
+  const progress = isPreviewMode ? { is_completed: false, video_progress: { watch_percentage: 0 } } : (progressResponse?.data || null);
+  const chapters = chaptersResponse?.data?.chapters || [];
   
-  // Debug logging
-  console.log('Learning Page Debug:', {
-    courseId,
-    lessonId,
-    isPreviewMode,
-    chaptersResponse,
-    chaptersResponseStructure: {
-      hasData: !!chaptersResponse,
-      hasChapters: !!chaptersResponse?.chapters,
-      chaptersArray: chaptersResponse?.chapters,
-      totalCount: chaptersResponse?.total,
-      firstChapter: chaptersResponse?.chapters?.[0],
-      firstLesson: chaptersResponse?.chapters?.[0]?.lessons?.[0]
-    },
-    chaptersCount: chapters.length,
-    chaptersLoading,
-    chaptersError: chaptersError?.message || null,
-    lessonLoading,
-    lessonError: lessonError?.message || null,
-    user: !!user,
-    extractedChapters: chapters
-  });
   
   // Calculate all lesson IDs for batch progress fetching
   const allLessonIds = chapters.flatMap((chapter: Chapter) => 
@@ -119,14 +101,15 @@ export default function LessonPlayerPage() {
   // Batch fetch lesson progress using React Query - replaces manual fetchAllLessonsProgress
   const { data: batchProgressData, loading: batchProgressLoading } = useBatchLessonProgressQuery(
     allLessonIds,
-    chapters.length > 0, // Only fetch when chapters are loaded
+    chapters.length > 0 && !isPreviewMode, // Only fetch when chapters are loaded AND not in preview mode
     isPreviewMode // Pass preview mode to skip authentication
   );
   
   // Convert batch progress data to Map for efficient lookup
   const lessonsProgress = new Map<string, LessonProgress>();
-  if (batchProgressData && Array.isArray(batchProgressData)) {
-    batchProgressData.forEach((progressItem: any) => {
+  const progressArray = batchProgressData?.data || [];
+  if (Array.isArray(progressArray)) {
+    progressArray.forEach((progressItem: any) => {
       lessonsProgress.set(progressItem.lesson_id, {
         lesson_id: progressItem.lesson_id,
         is_completed: progressItem.is_completed,
@@ -137,9 +120,13 @@ export default function LessonPlayerPage() {
   
   // React Query hooks for quiz data - replaces manual quiz API calls
   const { data: quizResponse, loading: quizLoading } = useLessonQuizQuery(lessonId, !!lessonId, isPreviewMode);
+  
+  // Get quiz ID with proper type safety
+  const quizId = quizResponse?.data?.id || '';
+  
   const { data: quizProgressResponse, loading: quizProgressLoading } = useQuizProgressQuery(
-    quizResponse?.data?.id, 
-    !!quizResponse?.data?.id
+    quizId, 
+    !!quizId && !isPreviewMode // Don't fetch quiz progress in preview mode
   );
 
   // Extract quiz data from React Query responses
@@ -147,7 +134,6 @@ export default function LessonPlayerPage() {
   const quizPassed = !!(quizProgressResponse?.success && quizProgressResponse?.data?.is_passed);
 
   // UI state only
-  const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [nextLesson, setNextLesson] = useState<Lesson | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -166,15 +152,15 @@ export default function LessonPlayerPage() {
       totalTime: '0m'
     };
     
-    const allLessons = chapters.flatMap(ch => ch.lessons);
-    const completed = allLessons.filter(l => lessonsProgress.get(l.id)?.is_completed).length;
+    const allLessons = chapters.flatMap((ch: Chapter) => ch.lessons);
+    const completed = allLessons.filter((l: Lesson) => lessonsProgress.get(l.id)?.is_completed).length;
     
     return {
       percentage: Math.round((completed / allLessons.length) * 100),
       completedLessons: completed,
       totalLessons: allLessons.length,
       remainingTime: calculateRemainingTime(allLessons, lessonsProgress),
-      totalTime: formatDurationHuman(allLessons.reduce((sum, l) => sum + (l.video?.duration || 0), 0))
+      totalTime: formatDurationHuman(allLessons.reduce((sum: number, l: Lesson) => sum + (l.video?.duration || 0), 0))
     };
   }, [chapters, lessonsProgress]);
 
@@ -200,18 +186,17 @@ export default function LessonPlayerPage() {
     // Quiz data is now automatically fetched via React Query hooks
     // No need for manual checkForQuiz() calls
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lesson, lessonId]);
+  }, [lesson, lessonId, progress, isPreviewMode, startLesson, refetchProgress, router]);
 
   // React Query data processing - automatic lesson navigation setup
   useEffect(() => {
     // Extract chapters from React Query response for optimal dependency tracking
-    const chaptersData = chaptersResponse?.chapters || [];
+    const chaptersData = chaptersResponse?.data?.chapters || [];
     if (chaptersData.length > 0) {
       // Process chapters data to find current chapter and next lesson
       for (const chapter of chaptersData) {
         const lessonIndex = chapter.lessons.findIndex((l: Lesson) => l.id === lessonId);
         if (lessonIndex !== -1) {
-          setCurrentChapter(chapter);
           
           // Check for next lesson in same chapter
           if (lessonIndex < chapter.lessons.length - 1) {
@@ -242,7 +227,6 @@ export default function LessonPlayerPage() {
   const handleVideoProgress = (percentage: number) => {
     // Skip saving in preview mode
     if (isPreviewMode) {
-      console.log('Preview mode: Progress not saved');
       return;
     }
     
@@ -267,7 +251,6 @@ export default function LessonPlayerPage() {
   const handleVideoComplete = () => {
     // Skip saving in preview mode
     if (isPreviewMode) {
-      console.log('Preview mode: Video completion not saved');
       ToastService.info('Preview Mode - Progress is not being tracked');
       return;
     }
@@ -282,7 +265,6 @@ export default function LessonPlayerPage() {
     // Otherwise, complete the lesson using React Query mutation
     markComplete({ 
       lessonId, 
-      courseId, 
       quizScore: undefined 
     }, {
       onSuccess: (response: any) => {
@@ -300,7 +282,6 @@ export default function LessonPlayerPage() {
   const handleQuizComplete = (passed: boolean) => {
     // Skip saving in preview mode
     if (isPreviewMode) {
-      console.log('Preview mode: Quiz completion not saved');
       ToastService.info('Preview Mode - Quiz results are not being saved');
       return;
     }
@@ -309,7 +290,6 @@ export default function LessonPlayerPage() {
       // Quiz passed - complete the lesson using React Query mutation
       markComplete({ 
         lessonId, 
-        courseId, 
         quizScore: 100 // Assuming passed = 100% score
       }, {
         onSuccess: (response: any) => {
@@ -493,7 +473,7 @@ export default function LessonPlayerPage() {
                       <p className="text-xs mt-1">Course content may be limited in preview mode</p>
                     )}
                   </div>
-                ) : chapters.map((chapter) => (
+                ) : chapters.map((chapter: Chapter) => (
                   <div key={chapter.id} className="border-b border-gray-100">
                     <div className="px-4 py-3 bg-gray-50">
                       <h4 className="font-medium text-gray-900 flex items-center">
@@ -503,7 +483,7 @@ export default function LessonPlayerPage() {
                     </div>
                     
                     <div className="py-1">
-                      {chapter.lessons.map((chapterLesson) => {
+                      {chapter.lessons.map((chapterLesson: Lesson) => {
                         const isCurrentLesson = chapterLesson.id === lessonId;
                         const lessonProgress = lessonsProgress.get(chapterLesson.id);
                         const isCompleted = lessonProgress?.is_completed || false;

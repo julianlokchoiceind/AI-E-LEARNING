@@ -15,6 +15,17 @@ interface UseApiQueryOptions<T> {
   keepPreviousData?: boolean;
 }
 
+interface UseApiQueryResult<T> {
+  data: StandardResponse<T> | null;
+  loading: boolean;
+  error: AppError | null;
+  execute: () => Promise<StandardResponse<T> | undefined>;
+  isStale: boolean;
+  isSuccess: boolean;
+  refetch: any;
+  query: any;
+}
+
 /**
  * Drop-in replacement for useApiCall with React Query
  * Maintains the same interface while adding caching benefits
@@ -23,7 +34,7 @@ export function useApiQuery<T>(
   queryKey: any[],
   queryFn: () => Promise<StandardResponse<T>>,
   options: UseApiQueryOptions<T> = {}
-) {
+): UseApiQueryResult<T> {
   const {
     onSuccess,
     onError,
@@ -67,10 +78,10 @@ export function useApiQuery<T>(
   } as UseQueryOptions);
 
   // Manual execute function (same as useApiCall)
-  const execute = useCallback(async () => {
+  const execute = useCallback(async (): Promise<StandardResponse<T> | undefined> => {
     try {
       const result = await query.refetch();
-      return result.data;
+      return result.data as StandardResponse<T> | undefined;
     } catch (error: any) {
       const appError = handleError(error, showToast);
       if (onError) {
@@ -82,7 +93,7 @@ export function useApiQuery<T>(
 
   return {
     // Same interface as useApiCall
-    data: query.data || null,
+    data: query.data as StandardResponse<T> | null,
     loading: query.isLoading || query.isFetching,
     error: query.error as AppError | null,
     execute,
