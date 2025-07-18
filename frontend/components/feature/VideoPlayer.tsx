@@ -11,6 +11,7 @@ interface VideoPlayerProps {
   courseId: string;
   onProgress?: (percentage: number) => void;
   onComplete?: () => void;
+  onDurationChange?: (duration: number) => void;
   initialProgress?: number;
   nextLessonId?: string;
 }
@@ -28,6 +29,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   courseId,
   onProgress,
   onComplete,
+  onDurationChange,
   initialProgress = 0,
   nextLessonId
 }) => {
@@ -135,6 +137,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     const videoDuration = event.target.getDuration();
     setDuration(videoDuration);
 
+    // Call onDurationChange callback if provided
+    if (onDurationChange && videoDuration > 0) {
+      onDurationChange(videoDuration);
+    }
+
     // Resume from last position if available
     if (initialProgress > 0 && videoDuration > 0) {
       const resumeTime = (initialProgress / 100) * videoDuration;
@@ -178,6 +185,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       if (current && total) {
         setCurrentTime(current);
         setDuration(total);
+        
+        // Call onDurationChange callback if duration changed
+        if (onDurationChange && total > 0) {
+          onDurationChange(total);
+        }
         
         const percentage = (current / total) * 100;
         setWatchPercentage(percentage);

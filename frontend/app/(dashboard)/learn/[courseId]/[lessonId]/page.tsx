@@ -138,6 +138,7 @@ export default function LessonPlayerPage() {
   const [showQuiz, setShowQuiz] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [currentVideoDuration, setCurrentVideoDuration] = useState<number | null>(null);
 
   // Combined loading state - includes batch progress and quiz loading
   const loading = lessonLoading || progressLoading || chaptersLoading || batchProgressLoading || quizLoading || quizProgressLoading;
@@ -223,6 +224,11 @@ export default function LessonPlayerPage() {
   // ✅ MIGRATED: Quiz data is now automatically fetched via React Query hooks
   // useLessonQuizQuery and useQuizProgressQuery replace manual API calls
   // This provides automatic caching, error handling, and loading states
+
+  const handleVideoDurationChange = (duration: number) => {
+    // Update local state with actual YouTube duration
+    setCurrentVideoDuration(duration);
+  };
 
   const handleVideoProgress = (percentage: number) => {
     // Skip saving in preview mode
@@ -540,7 +546,9 @@ export default function LessonPlayerPage() {
                                 <div className="flex items-center text-xs text-gray-500 mt-1">
                                   <Clock className="w-3 h-3 mr-1" />
                                   <span>
-                                    {chapterLesson.video?.duration 
+                                    {chapterLesson.id === lessonId && currentVideoDuration 
+                                      ? formatDuration(currentVideoDuration)
+                                      : chapterLesson.video?.duration 
                                       ? formatDuration(chapterLesson.video.duration)
                                       : 'No video'
                                     }
@@ -586,6 +594,7 @@ export default function LessonPlayerPage() {
                     courseId={courseId}
                     onProgress={handleVideoProgress}
                     onComplete={handleVideoComplete}
+                    onDurationChange={handleVideoDurationChange}
                     initialProgress={progress?.video_progress.watch_percentage || 0}
                     nextLessonId={nextLesson?.id}
                   />
@@ -820,6 +829,7 @@ export default function LessonPlayerPage() {
         courseProgress={courseProgress}
         lessonsProgress={lessonsProgress}
         onNavigateToLesson={navigateToLesson}
+        currentVideoDuration={currentVideoDuration}
       />
 
       {/* AI Assistant - Keep existing floating widget */}

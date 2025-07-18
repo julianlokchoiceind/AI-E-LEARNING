@@ -44,6 +44,7 @@ interface MobileNavigationDrawerProps {
   courseProgress: CourseProgressData;
   lessonsProgress: Map<string, LessonProgress>;
   onNavigateToLesson: (lessonId: string) => void;
+  currentVideoDuration?: number | null;
 }
 
 export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
@@ -53,7 +54,8 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
   currentLessonId,
   courseProgress,
   lessonsProgress,
-  onNavigateToLesson
+  onNavigateToLesson,
+  currentVideoDuration
 }) => {
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
 
@@ -233,7 +235,9 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
                             <div className="flex items-center text-xs text-gray-500 mt-1">
                               <Clock className="w-3 h-3 mr-1" />
                               <span>
-                                {lesson.video?.duration 
+                                {lesson.id === currentLessonId && currentVideoDuration 
+                                  ? formatDuration(currentVideoDuration)
+                                  : lesson.video?.duration 
                                   ? formatDuration(lesson.video.duration)
                                   : 'No video'
                                 }
