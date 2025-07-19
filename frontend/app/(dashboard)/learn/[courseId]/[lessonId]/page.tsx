@@ -23,6 +23,7 @@ import {
   useMarkLessonComplete,
   useBatchLessonProgressQuery
 } from '@/hooks/queries/useLearning';
+import { useCourseQuery } from '@/hooks/queries/useCourses';
 import {
   useLessonQuizQuery,
   useQuizProgressQuery
@@ -82,6 +83,7 @@ export default function LessonPlayerPage() {
     !isPreviewMode // Only fetch progress if not in preview mode
   );
   const { data: chaptersResponse, loading: chaptersLoading, error: chaptersError } = useCourseChaptersQuery(courseId);
+  const { data: courseResponse, loading: courseLoading } = useCourseQuery(courseId);
   const { mutate: startLesson } = useStartLesson();
   const { mutate: updateProgress } = useUpdateLessonProgress();
   const { mutate: markComplete } = useMarkLessonComplete();
@@ -91,6 +93,7 @@ export default function LessonPlayerPage() {
   // In preview mode, set progress to a dummy object to prevent startLesson from being called
   const progress = isPreviewMode ? { is_completed: false, video_progress: { watch_percentage: 0 } } : (progressResponse?.data || null);
   const chapters = chaptersResponse?.data?.chapters || [];
+  const courseData = courseResponse?.data || null;
   
   
   // Calculate all lesson IDs for batch progress fetching
@@ -139,9 +142,35 @@ export default function LessonPlayerPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [currentVideoDuration, setCurrentVideoDuration] = useState<number | null>(null);
+  const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
 
   // Combined loading state - includes batch progress and quiz loading
-  const loading = lessonLoading || progressLoading || chaptersLoading || batchProgressLoading || quizLoading || quizProgressLoading;
+  const loading = lessonLoading || progressLoading || chaptersLoading || batchProgressLoading || quizLoading || quizProgressLoading || courseLoading;
+
+  // Accordion functions for desktop sidebar
+  const toggleChapter = (chapterId: string) => {
+    setExpandedChapters(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(chapterId)) {
+        newSet.delete(chapterId);
+      } else {
+        newSet.add(chapterId);
+      }
+      return newSet;
+    });
+  };
+
+  // Auto-expand chapter containing current lesson
+  useEffect(() => {
+    if (lessonId && chapters.length > 0) {
+      const currentChapter = chapters.find((chapter: Chapter) => 
+        chapter.lessons.some((lesson: Lesson) => lesson.id === lessonId)
+      );
+      if (currentChapter) {
+        setExpandedChapters(prev => new Set([...prev, currentChapter.id]));
+      }
+    }
+  }, [lessonId, chapters]);
 
   // Calculate course progress
   const courseProgress = useMemo(() => {
@@ -358,29 +387,22 @@ export default function LessonPlayerPage() {
             <span className="sr-only">Open navigation</span>
           </button>
 
-          <button
-            onClick={() => router.push(`/courses/${courseId}`)}
-            className="flex items-center text-gray-600 hover:text-gray-900 mr-4"
-          >
-            <ChevronLeft className="w-5 h-5 mr-1" />
-            <span className="hidden sm:inline">Back to Course</span>
-          </button>
           
-          <div className="border-l border-gray-300 h-6 mx-4" />
-          
-          {/* Breadcrumb - Use existing component */}
-          <LessonBreadcrumbs
-            course={{
-              id: courseId,
-              title: 'Course Title', // TODO: Get from course data
-              category: 'Programming' // TODO: Get from course data
-            }}
-            lesson={{
-              id: lessonId,
-              title: lesson?.title || ''
-            }}
-            className="flex-1"
-          />
+          {/* Breadcrumb - Only show with accurate course data */}
+          {!courseLoading && courseData && courseData.title && courseData.category && (
+            <LessonBreadcrumbs
+              course={{
+                id: courseId,
+                title: courseData.title,
+                category: courseData.category
+              }}
+              lesson={{
+                id: lessonId,
+                title: lesson?.title || ''
+              }}
+              className="flex-1"
+            />
+          )}
         </div>
       </header>
 
@@ -481,15 +503,28 @@ export default function LessonPlayerPage() {
                   </div>
                 ) : chapters.map((chapter: Chapter) => (
                   <div key={chapter.id} className="border-b border-gray-100">
-                    <div className="px-4 py-3 bg-gray-50">
-                      <h4 className="font-medium text-gray-900 flex items-center">
-                        <BookOpen className="w-4 h-4 mr-2" />
-                        Chapter {chapter.order}: {chapter.title}
-                      </h4>
-                    </div>
+                    {/* Clickable Chapter Header with Accordion */}
+                    <button
+                      onClick={() => toggleChapter(chapter.id)}
+                      className="w-full px-4 py-3 bg-gray-50 text-left hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-gray-900 flex items-center">
+                          <BookOpen className="w-4 h-4 mr-2" />
+                          Chapter {chapter.order}: {chapter.title}
+                        </h4>
+                        <ChevronRight 
+                          className={`w-4 h-4 text-gray-500 transition-transform ${
+                            expandedChapters.has(chapter.id) ? 'rotate-90' : ''
+                          }`} 
+                        />
+                      </div>
+                    </button>
                     
-                    <div className="py-1">
-                      {chapter.lessons.map((chapterLesson: Lesson) => {
+                    {/* Conditionally render lessons only if chapter is expanded */}
+                    {expandedChapters.has(chapter.id) && (
+                      <div className="py-1">
+                        {chapter.lessons.map((chapterLesson: Lesson) => {
                         const isCurrentLesson = chapterLesson.id === lessonId;
                         const lessonProgress = lessonsProgress.get(chapterLesson.id);
                         const isCompleted = lessonProgress?.is_completed || false;
@@ -573,7 +608,8 @@ export default function LessonPlayerPage() {
                           </button>
                         );
                       })}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

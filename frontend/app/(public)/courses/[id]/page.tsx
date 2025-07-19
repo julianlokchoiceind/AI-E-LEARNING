@@ -12,6 +12,7 @@ import { CourseReviews } from '@/components/feature/CourseReviews';
 import { CourseRating } from '@/components/feature/CourseRating';
 import { useCourseQuery, useEnrollInCourse } from '@/hooks/queries/useCourses';
 import { useEnrollmentQuery } from '@/hooks/queries/useEnrollments';
+import { getCourseEnrollment } from '@/lib/api/enrollments';
 import { useChaptersWithLessonsQuery } from '@/hooks/queries/useChapters';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -25,22 +26,50 @@ const CourseDetailPage = () => {
   const courseId = params.id as string;
   const isCreatorOrAdmin = user?.role === 'creator' || user?.role === 'admin';
 
+  // UI state first
+  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'instructor' | 'reviews'>('overview');
+  const [userEnrollmentStatus, setUserEnrollmentStatus] = useState<boolean | null>(null);
+  const [checkingEnrollment, setCheckingEnrollment] = useState(false);
+
   // React Query hooks - automatic caching and state management
   const { data: courseResponse, loading: courseLoading } = useCourseQuery(courseId);
-  const { data: enrollmentResponse, loading: enrollmentLoading } = useEnrollmentQuery(courseId, !!user);
+  const { data: enrollmentResponse, loading: enrollmentLoading } = useEnrollmentQuery(courseId, false);
   const { data: chaptersResponse, loading: chaptersLoading } = useChaptersWithLessonsQuery(courseId);
   const { mutate: enrollMutation, loading: enrolling } = useEnrollInCourse();
 
   // Extract data from React Query responses
   const course = courseResponse?.data || null;
-  const isEnrolled = !!enrollmentResponse?.data;
+  const isEnrolled = userEnrollmentStatus ?? false; // Use dynamic enrollment status
   const chapters = chaptersResponse?.chapters || [];
 
   // Combined loading state
   const loading = authLoading || courseLoading || chaptersLoading;
 
-  // UI state only
-  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'instructor' | 'reviews'>('overview');
+  // Check enrollment status when user is logged in
+  useEffect(() => {
+    if (user && courseId) {
+      setCheckingEnrollment(true);
+      getCourseEnrollment(courseId)
+        .then(response => {
+          if (response.success && response.data) {
+            setUserEnrollmentStatus(true);
+          } else {
+            setUserEnrollmentStatus(false);
+          }
+        })
+        .catch(error => {
+          // Not enrolled is expected - set to false
+          setUserEnrollmentStatus(false);
+        })
+        .finally(() => {
+          setCheckingEnrollment(false);
+        });
+    } else {
+      // Not logged in - reset status
+      setUserEnrollmentStatus(null);
+      setCheckingEnrollment(false);
+    }
+  }, [user, courseId]);
 
   // Calculate access based on PRD pricing logic
   const hasAccess = React.useMemo(() => {
@@ -59,10 +88,22 @@ const CourseDetailPage = () => {
   }, [course, user, isEnrolled]);
 
 
-  const handleEnroll = () => {
+  const handleEnroll = async () => {
     if (!user) {
       router.push('/login?redirect=' + encodeURIComponent(`/courses/${courseId}`));
       return;
+    }
+
+    // Check if already enrolled first
+    try {
+      const enrollmentCheck = await getCourseEnrollment(courseId);
+      if (enrollmentCheck.success && enrollmentCheck.data) {
+        // Already enrolled - redirect to learning
+        router.push(`/learn/${courseId}`);
+        return;
+      }
+    } catch (error) {
+      // Not enrolled - proceed with enrollment
     }
 
     // Check if it's a free course or user has access
@@ -241,11 +282,12 @@ const CourseDetailPage = () => {
                 {!isEnrolled ? (
                   <Button
                     onClick={handleEnroll}
-                    loading={enrolling}
+                    loading={enrolling || checkingEnrollment}
                     className="w-full mb-4"
                     size="lg"
                   >
-                    {course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now'}
+                    {checkingEnrollment ? 'Checking...' : 
+                     course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now'}
                   </Button>
                 ) : (
                   <Button
