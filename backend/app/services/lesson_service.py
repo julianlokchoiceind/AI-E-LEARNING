@@ -364,13 +364,33 @@ class LessonService:
         # Track duration change for course stats
         old_duration = (lesson.video.duration or 0) if lesson.video else 0
         
-        # Handle nested objects
-        if "video" in update_data and update_data["video"]:
+        # Handle nested objects - SMART VIDEO HANDLING
+        if "video" in update_data:
             video_data = update_data["video"]
-            # Map frontend 'url' field to 'youtube_url' if needed
-            if "url" in video_data and not video_data.get("youtube_url"):
-                video_data["youtube_url"] = video_data["url"]
-            lesson.video = VideoContent(**video_data)
+            
+            # Case 1: video is None or empty dict - DELETE video
+            if not video_data or (isinstance(video_data, dict) and not any(video_data.values())):
+                lesson.video = None
+            
+            # Case 2: video has data - UPDATE/CREATE video
+            else:
+                # Clean HTML entities from URLs before processing
+                if isinstance(video_data, dict):
+                    if "url" in video_data and video_data["url"]:
+                        # Fix HTML entities (&amp; -> &, etc.)
+                        import html
+                        video_data["url"] = html.unescape(video_data["url"])
+                    
+                    if "youtube_url" in video_data and video_data["youtube_url"]:
+                        import html
+                        video_data["youtube_url"] = html.unescape(video_data["youtube_url"])
+                    
+                    # Map frontend 'url' field to 'youtube_url' if needed
+                    if "url" in video_data and not video_data.get("youtube_url"):
+                        video_data["youtube_url"] = video_data["url"]
+                
+                # Create VideoContent object
+                lesson.video = VideoContent(**video_data)
         if "resources" in update_data:
             lesson.resources = update_data["resources"]
         if "unlock_conditions" in update_data:

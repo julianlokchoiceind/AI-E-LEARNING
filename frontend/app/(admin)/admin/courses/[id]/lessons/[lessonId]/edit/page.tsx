@@ -137,8 +137,8 @@ const LessonEditPage = () => {
       );
     }
     
-    // Only include video if it has actual content
-    if (lessonData.video && (lessonData.video.url || lessonData.video.youtube_id || lessonData.video.duration)) {
+    // Always include video field - send null/empty for deletion
+    if (lessonData.video !== undefined) {
       updateData.video = lessonData.video;
     }
 
@@ -190,8 +190,8 @@ const LessonEditPage = () => {
             );
           }
           
-          // Only include video if it has actual content
-          if (data.video && (data.video.url || data.video.youtube_id || data.video.duration)) {
+          // Always include video field - send null/empty for deletion
+          if (data.video !== undefined) {
             updateData.video = data.video;
           }
           

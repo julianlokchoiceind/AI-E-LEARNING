@@ -409,9 +409,9 @@ export default function LessonPlayerPage() {
       {/* Preview Mode Banner */}
       {isPreviewMode && (
         <div className="bg-yellow-100 border-b border-yellow-300 px-4 py-2">
-          <div className="max-w-7xl mx-auto flex items-center">
-            <Info className="w-5 h-5 text-yellow-700 mr-2" />
-            <span className="text-yellow-800 font-medium">
+          <div className="flex items-center justify-center text-center">
+            <Info className="w-5 h-5 text-yellow-700 mr-2 flex-shrink-0" />
+            <span className="text-yellow-800 font-medium text-sm md:text-base">
               Preview Mode - Progress will not be saved
             </span>
           </div>
@@ -424,21 +424,23 @@ export default function LessonPlayerPage() {
         <aside className={`
           bg-white border-r border-gray-200 transition-all duration-300
           ${sidebarCollapsed ? 'w-16' : 'w-80'}
-          hidden lg:block flex-shrink-0
+          hidden lg:block flex-shrink-0 relative
         `}>
-          {/* Collapse Toggle */}
-          <div className="p-4 border-b border-gray-200">
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {sidebarCollapsed ? 
-                <ChevronRight className="w-5 h-5" /> : 
-                <ChevronLeft className="w-5 h-5" />
-              }
-            </button>
-          </div>
+          {/* Collapse Toggle - Following best practices: positioned at top-right of sidebar */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className={`
+              absolute -right-3 top-6 z-10
+              w-6 h-6 bg-white border border-gray-200 rounded-full
+              hover:bg-gray-50 transition-all duration-200
+              flex items-center justify-center shadow-sm hover:shadow-md
+              ${sidebarCollapsed ? 'rotate-180' : ''}
+            `}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <ChevronLeft className="w-3 h-3 text-gray-600" />
+          </button>
 
           {!sidebarCollapsed && (
             <>
@@ -583,8 +585,8 @@ export default function LessonPlayerPage() {
                                   <span>
                                     {chapterLesson.id === lessonId && currentVideoDuration 
                                       ? formatDuration(currentVideoDuration)
-                                      : chapterLesson.video?.duration 
-                                      ? formatDuration(chapterLesson.video.duration)
+                                      : (chapterLesson.video?.url || chapterLesson.video?.youtube_id)
+                                      ? formatDuration(chapterLesson.video?.duration || 0)
                                       : 'No video'
                                     }
                                   </span>
@@ -614,6 +616,45 @@ export default function LessonPlayerPage() {
                 ))}
               </div>
             </>
+          )}
+
+          {/* Collapsed Sidebar Content */}
+          {sidebarCollapsed && (
+            <div className="h-full flex flex-col items-center py-4">
+              {/* Progress Indicator */}
+              <div className="mb-4">
+                <div 
+                  className="w-10 h-10 rounded-full border-4 border-gray-200 relative"
+                  title={`${courseProgress.percentage}% Complete`}
+                >
+                  <div 
+                    className="absolute inset-0 rounded-full border-4 border-blue-600 transition-all duration-300"
+                    style={{
+                      clipPath: `polygon(0 0, 100% 0, 100% ${100 - courseProgress.percentage}%, 0 ${100 - courseProgress.percentage}%)`
+                    }}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                    {courseProgress.percentage}%
+                  </span>
+                </div>
+              </div>
+              
+              {/* Vertical Icons */}
+              <div className="flex flex-col gap-3 items-center">
+                <div title={`${courseProgress.completedLessons}/${courseProgress.totalLessons} Lessons`}>
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-xs text-gray-600 mt-1">
+                    {courseProgress.completedLessons}/{courseProgress.totalLessons}
+                  </span>
+                </div>
+                <div title={`${courseProgress.remainingTime} remaining`}>
+                  <Clock className="w-5 h-5 text-gray-600" />
+                  <span className="text-xs text-gray-600 mt-1">
+                    {courseProgress.remainingTime}
+                  </span>
+                </div>
+              </div>
+            </div>
           )}
         </aside>
 
