@@ -42,12 +42,13 @@ const CreatorCoursesPage = () => {
   const [sortBy, setSortBy] = useState('updated');
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
 
+  
   // React Query hooks
   const { 
     data: coursesResponse, 
     loading, 
     execute: refetchCourses 
-  } = useCreatorCoursesQuery(user?.id || '', !!user?.id);
+  } = useCreatorCoursesQuery(!!user);
   
   const { mutate: deleteCourse, loading: deleteLoading } = useDeleteCourse();
   const { mutate: createCourse, loading: createLoading } = useCreateCourse();
@@ -55,7 +56,7 @@ const CreatorCoursesPage = () => {
   // Filter and sort courses with memoized course extraction
   const filteredCourses = React.useMemo(() => {
     // Extract courses from React Query response inside useMemo for optimal performance
-    const courses = coursesResponse?.data?.data?.courses || [];
+    const courses = coursesResponse?.data?.courses || [];
     let filtered = [...courses];
 
     // Search filter

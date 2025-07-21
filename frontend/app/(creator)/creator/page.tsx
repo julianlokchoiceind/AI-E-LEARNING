@@ -163,32 +163,6 @@ const CreatorDashboard = () => {
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Link href="/creator/courses">
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <BookOpen className="w-8 h-8 text-blue-500 mb-3" />
-              <h3 className="font-semibold mb-2">Manage Courses</h3>
-              <p className="text-sm text-gray-600">View and edit your courses</p>
-            </Card>
-          </Link>
-
-          <Link href="/creator/analytics">
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <TrendingUp className="w-8 h-8 text-green-500 mb-3" />
-              <h3 className="font-semibold mb-2">View Analytics</h3>
-              <p className="text-sm text-gray-600">Track your course performance</p>
-            </Card>
-          </Link>
-
-          <div onClick={handleCreateCourse}>
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <Plus className="w-8 h-8 text-indigo-500 mb-3" />
-              <h3 className="font-semibold mb-2">Create Course</h3>
-              <p className="text-sm text-gray-600">Start a new course</p>
-            </Card>
-          </div>
-        </div>
 
         {/* Recent Courses */}
         <Card className="p-6">

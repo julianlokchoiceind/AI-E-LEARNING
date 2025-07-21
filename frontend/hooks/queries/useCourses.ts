@@ -14,6 +14,7 @@ import {
 } from '@/lib/api/courses';
 import { StandardResponse } from '@/lib/types/api';
 import { enrollInCourse } from '@/lib/api/enrollments';
+import { api } from '@/lib/api/api-client';
 import { 
   getAdminCourses, 
   approveCourse, 
@@ -1837,13 +1838,13 @@ export function useReorderLessons() {
  * Hook for creator's dashboard data
  * Fetches creator's courses and calculates statistics
  */
-export function useCreatorDashboardQuery(creatorId: string, enabled: boolean = true) {
+export function useCreatorDashboardQuery(enabled: boolean = true) {
   return useApiQuery(
-    ['creator-dashboard', creatorId],
-    () => getCourses(`creator_id=${creatorId}`),
+    ['creator-dashboard'],
+    () => api.get('/courses', { requireAuth: true }),
     {
-      enabled: enabled && !!creatorId,
-      ...getCacheConfig('USER_DASHBOARD'), // 2min moderate - creator dashboard data
+      enabled: enabled,
+      ...getCacheConfig('USER_DASHBOARD') // 2min moderate - dashboard can have slight delay
     }
   );
 }
@@ -1851,13 +1852,13 @@ export function useCreatorDashboardQuery(creatorId: string, enabled: boolean = t
 /**
  * Hook for creator's course list
  */
-export function useCreatorCoursesQuery(creatorId: string, enabled: boolean = true) {
+export function useCreatorCoursesQuery(enabled: boolean = true) {
   return useApiQuery(
-    ['creator-courses', creatorId],
-    () => getCourses(`creator_id=${creatorId}`),
+    ['creator-courses'],
+    () => api.get('/courses', { requireAuth: true }),
     {
-      enabled: enabled && !!creatorId,
-      ...getCacheConfig('USER_DASHBOARD'), // 2min moderate - consistent with dashboard
+      enabled: enabled,
+      ...getCacheConfig('CONTENT_CREATION') // Realtime - CRUD operations need immediate updates
     }
   );
 }
