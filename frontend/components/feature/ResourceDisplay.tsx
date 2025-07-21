@@ -51,13 +51,23 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
                               resource.type !== 'link';
 
     if (isDownloadableFile) {
+      // Extract filename from URL or use title
+      const urlParts = resource.url.split('/');
+      const filename = urlParts[urlParts.length - 1] || resource.title;
+      
+      // Add download query parameter to force download
+      const downloadUrl = resource.url.includes('?') 
+        ? `${resource.url}&download=true`
+        : `${resource.url}?download=true`;
+      
       return (
         <a
-          href={resource.url}
-          download
-          className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+          href={downloadUrl}
+          download={filename}
+          className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
           title="Download file"
         >
+          <Download className="w-4 h-4" />
           Download
         </a>
       );
@@ -67,9 +77,10 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
           href={resource.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+          className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
           title="Open in new tab"
         >
+          <ExternalLink className="w-4 h-4" />
           Open
         </a>
       );

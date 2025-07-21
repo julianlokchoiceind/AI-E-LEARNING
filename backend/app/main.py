@@ -200,6 +200,12 @@ class StaticFilesCORSMiddleware(BaseHTTPMiddleware):
             response.headers["Access-Control-Allow-Origin"] = "*"
             response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
             response.headers["Access-Control-Allow-Headers"] = "*"
+            
+            # Add Content-Disposition header to force download
+            # Check if download is requested via query parameter
+            if "download=true" in str(request.url):
+                filename = request.url.path.split("/")[-1]
+                response.headers["Content-Disposition"] = f"attachment; filename={filename}"
         return response
 
 # Add CORS middleware for static files
