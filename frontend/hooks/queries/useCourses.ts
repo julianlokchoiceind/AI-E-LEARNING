@@ -1844,6 +1844,7 @@ export function useCreatorDashboardQuery(enabled: boolean = true) {
     () => api.get('/analytics/creator/overview?time_range=30days', { requireAuth: true }),
     {
       enabled: enabled,
+      showToast: false, // Disable automatic error toasts - handled manually in component
       ...getCacheConfig('USER_DASHBOARD') // 2min moderate - dashboard can have slight delay
     }
   );
@@ -1858,6 +1859,7 @@ export function useCreatorCoursesQuery(enabled: boolean = true) {
     () => api.get('/courses', { requireAuth: true }),
     {
       enabled: enabled,
+      showToast: false, // Disable automatic error toasts - handled manually in component
       ...getCacheConfig('CONTENT_CREATION') // Realtime - CRUD operations need immediate updates
     }
   );

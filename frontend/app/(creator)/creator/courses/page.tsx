@@ -103,8 +103,14 @@ const CreatorCoursesPage = () => {
 
   // Handle courses loading errors
   useEffect(() => {
-    if (coursesResponse?.data && !coursesResponse.data.success) {
-      ToastService.error(coursesResponse.data.message || 'Something went wrong');
+    console.log('[CREATOR_COURSES_DEBUG] coursesResponse:', coursesResponse);
+    console.log('[CREATOR_COURSES_DEBUG] coursesResponse?.success:', coursesResponse?.success);
+    console.log('[CREATOR_COURSES_DEBUG] coursesResponse?.data:', coursesResponse?.data);
+    
+    // Check for wrong response handling
+    if (coursesResponse && !coursesResponse.success) {
+      console.error('[CREATOR_COURSES_ERROR] API returned error:', coursesResponse);
+      ToastService.error(coursesResponse.message || 'Something went wrong');
     }
   }, [coursesResponse]);
 
