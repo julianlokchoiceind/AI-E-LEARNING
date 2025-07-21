@@ -131,7 +131,7 @@ interface CourseProps {
     name: string;
     url: string;
   };
-  instructor?: {
+  creator?: {
     name: string;
     url?: string;
   };
@@ -159,7 +159,7 @@ export function CourseStructuredData({
   name,
   description,
   provider,
-  instructor,
+  creator,
   category,
   level,
   duration,
@@ -180,11 +180,11 @@ export function CourseStructuredData({
       name: provider.name,
       url: provider.url
     },
-    ...(instructor && {
+    ...(creator && {
       instructor: {
         '@type': 'Person',
-        name: instructor.name,
-        ...(instructor.url && { url: instructor.url })
+        name: creator.name,
+        ...(creator.url && { url: creator.url })
       }
     }),
     ...(category && { courseCode: category }),

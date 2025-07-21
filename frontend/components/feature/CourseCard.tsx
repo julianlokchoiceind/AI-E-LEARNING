@@ -139,7 +139,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
           {course.short_description || course.description}
         </p>
 
-        {/* Instructor */}
+        {/* Creator */}
         <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">by {course.creator_name}</p>
 
         {/* Course Stats - Mobile: Stack vertically, Desktop: Horizontal */}

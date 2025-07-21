@@ -64,7 +64,7 @@ class CertificateWithDetails(CertificateInDB):
     course_description: str
     course_level: str
     course_category: str
-    course_instructor: str
+    course_creator: str
     user_name: str
     user_email: str
 

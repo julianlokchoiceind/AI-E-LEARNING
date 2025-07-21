@@ -158,7 +158,7 @@ class CertificateService:
             course_description=course.description,
             course_level=course.level,
             course_category=course.category,
-            course_instructor=course.creator_name,
+            course_creator=course.creator_name,
             user_name=user.name,
             user_email=user.email
         )

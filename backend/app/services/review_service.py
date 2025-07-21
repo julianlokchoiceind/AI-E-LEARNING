@@ -14,7 +14,7 @@ from app.schemas.review import (
     ReviewUpdateRequest,
     ReviewVoteRequest,
     ReviewReportRequest,
-    InstructorResponseRequest,
+    CreatorResponseRequest,
     ReviewModerationRequest,
     ReviewSearchQuery
 )
@@ -62,7 +62,7 @@ class ReviewService:
             title=review_data.title,
             comment=review_data.comment,
             content_quality=review_data.content_quality,
-            instructor_quality=review_data.instructor_quality,
+            creator_quality=review_data.creator_quality,
             value_for_money=review_data.value_for_money,
             course_structure=review_data.course_structure,
             status=ReviewStatus.APPROVED  # Auto-approve for now
@@ -295,9 +295,9 @@ class ReviewService:
         self,
         review_id: str,
         user: User,
-        response_data: InstructorResponseRequest
+        response_data: CreatorResponseRequest
     ) -> Review:
-        """Add instructor response to review"""
+        """Add creator response to review"""
         review = await Review.get(review_id)
         if not review:
             raise ValueError("Review not found")
@@ -307,8 +307,8 @@ class ReviewService:
         if not course or str(course.creator_id) != str(user.id):
             raise ValueError("Only course creator can respond to reviews")
         
-        review.instructor_response = response_data.response
-        review.instructor_response_at = datetime.utcnow()
+        review.creator_response = response_data.response
+        review.creator_response_at = datetime.utcnow()
         review.update_timestamps()
         
         await review.save()
@@ -358,7 +358,7 @@ class ReviewService:
                     "$push": "$rating"
                 },
                 "avg_content_quality": {"$avg": "$content_quality"},
-                "avg_instructor_quality": {"$avg": "$instructor_quality"},
+                "avg_creator_quality": {"$avg": "$creator_quality"},
                 "avg_value_for_money": {"$avg": "$value_for_money"},
                 "avg_course_structure": {"$avg": "$course_structure"}
             }}
@@ -394,7 +394,7 @@ class ReviewService:
             "rating_distribution": rating_distribution,
             "verified_purchase_count": stats["verified_purchase_count"],
             "avg_content_quality": stats.get("avg_content_quality"),
-            "avg_instructor_quality": stats.get("avg_instructor_quality"),
+            "avg_creator_quality": stats.get("avg_creator_quality"),
             "avg_value_for_money": stats.get("avg_value_for_money"),
             "avg_course_structure": stats.get("avg_course_structure"),
             "recent_reviews": [self._format_review(r) for r in recent_reviews]
@@ -426,14 +426,14 @@ class ReviewService:
             "title": review.title,
             "comment": review.comment,
             "content_quality": review.content_quality,
-            "instructor_quality": review.instructor_quality,
+            "creator_quality": review.creator_quality,
             "value_for_money": review.value_for_money,
             "course_structure": review.course_structure,
             "status": review.status,
             "helpful_count": review.helpful_count,
             "unhelpful_count": review.unhelpful_count,
-            "instructor_response": review.instructor_response,
-            "instructor_response_at": review.instructor_response_at,
+            "creator_response": review.creator_response,
+            "creator_response_at": review.creator_response_at,
             "is_edited": review.is_edited,
             "edited_at": review.edited_at,
             "created_at": review.created_at,

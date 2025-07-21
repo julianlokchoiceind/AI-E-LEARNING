@@ -19,14 +19,14 @@ export interface Review {
   title?: string;
   comment: string;
   content_quality?: number;
-  instructor_quality?: number;
+  creator_quality?: number;
   value_for_money?: number;
   course_structure?: number;
   status: ReviewStatus;
   helpful_count: number;
   unhelpful_count: number;
-  instructor_response?: string;
-  instructor_response_at?: string;
+  creator_response?: string;
+  creator_response_at?: string;
   is_edited: boolean;
   edited_at?: string;
   created_at: string;
@@ -40,7 +40,7 @@ export interface ReviewStats {
   rating_distribution: Record<string, number>;
   verified_purchase_count: number;
   avg_content_quality?: number;
-  avg_instructor_quality?: number;
+  avg_creator_quality?: number;
   avg_value_for_money?: number;
   avg_course_structure?: number;
   recent_reviews: Review[];
@@ -57,7 +57,7 @@ export interface ReviewCreateData {
   title?: string;
   comment: string;
   content_quality?: number;
-  instructor_quality?: number;
+  creator_quality?: number;
   value_for_money?: number;
   course_structure?: number;
 }
@@ -67,7 +67,7 @@ export interface ReviewUpdateData {
   title?: string;
   comment?: string;
   content_quality?: number;
-  instructor_quality?: number;
+  creator_quality?: number;
   value_for_money?: number;
   course_structure?: number;
   edit_reason?: string;
@@ -82,7 +82,7 @@ export interface ReviewReportData {
   details?: string;
 }
 
-export interface InstructorResponseData {
+export interface CreatorResponseData {
   response: string;
 }
 
@@ -108,7 +108,7 @@ export interface ReviewListResponse {
 
 export const REVIEW_SUB_RATINGS = [
   { key: 'content_quality', label: 'Content Quality', icon: '📚' },
-  { key: 'instructor_quality', label: 'Instructor Quality', icon: '👨‍🏫' },
+  { key: 'creator_quality', label: 'Creator Quality', icon: '👨‍🏫' },
   { key: 'value_for_money', label: 'Value for Money', icon: '💰' },
   { key: 'course_structure', label: 'Course Structure', icon: '🏗️' },
 ] as const;

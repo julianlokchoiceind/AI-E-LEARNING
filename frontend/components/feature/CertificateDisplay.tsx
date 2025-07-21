@@ -151,7 +151,7 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
             <div className="text-center">
               <div className="border-t-2 border-white/50 pt-2">
                 <p className="font-semibold">{certificate.course_instructor}</p>
-                <p className="text-sm opacity-80">Course Instructor</p>
+                <p className="text-sm opacity-80">Course Creator</p>
               </div>
             </div>
             <div className="text-center">

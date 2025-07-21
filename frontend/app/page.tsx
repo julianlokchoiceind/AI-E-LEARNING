@@ -34,7 +34,7 @@ export default function HomePage() {
           <div className="card-hover p-6 border rounded-lg">
             <h3 className="text-xl font-semibold mb-2">🎓 Quality Courses</h3>
             <p className="text-muted-foreground">
-              Learn from expert instructors with structured video content
+              Learn from expert creators with structured video content
             </p>
           </div>
           <div className="card-hover p-6 border rounded-lg">

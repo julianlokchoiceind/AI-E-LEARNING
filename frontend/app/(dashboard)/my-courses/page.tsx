@@ -35,7 +35,7 @@ interface EnrolledCourse {
     level: string;
     total_duration: number;
     total_lessons: number;
-    instructor: string;
+    creator: string;
   };
 }
 
@@ -189,7 +189,7 @@ export default function MyCoursesPage() {
                 {/* Course Meta */}
                 <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                   <span className="flex items-center gap-1">
-                    <span>👤</span> {enrollment.course.instructor}
+                    <span>👤</span> {enrollment.course.creator}
                   </span>
                   <span className="flex items-center gap-1">
                     <span>📝</span> {enrollment.course.total_lessons} lessons

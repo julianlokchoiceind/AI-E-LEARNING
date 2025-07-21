@@ -398,7 +398,7 @@ export function useEnrollInCourse() {
           title: course.title || 'Loading...',
           description: course.description || '',
           thumbnail: course.thumbnail || null,
-          instructor_name: course.creator_name || course.instructor_name || 'Unknown',
+          instructor_name: course.creator_name || 'Unknown',
           progress: {
             completion_percentage: 0,
             lessons_completed: 0,
@@ -1840,8 +1840,8 @@ export function useReorderLessons() {
  */
 export function useCreatorDashboardQuery(enabled: boolean = true) {
   return useApiQuery(
-    ['creator-dashboard'],
-    () => api.get('/courses', { requireAuth: true }),
+    ['creator-analytics-overview', '30days'],
+    () => api.get('/analytics/creator/overview?time_range=30days', { requireAuth: true }),
     {
       enabled: enabled,
       ...getCacheConfig('USER_DASHBOARD') // 2min moderate - dashboard can have slight delay

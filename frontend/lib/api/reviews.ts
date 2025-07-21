@@ -11,7 +11,7 @@ import type {
   ReviewUpdateData,
   ReviewVoteData,
   ReviewReportData,
-  InstructorResponseData,
+  CreatorResponseData,
   ReviewSearchParams,
   ReviewListResponse
 } from '@/lib/types/review';
@@ -120,9 +120,9 @@ export const reviewAPI = {
   },
 
   /**
-   * Instructor: Respond to a review
+   * Creator: Respond to a review
    */
-  async respondToReview(reviewId: string, data: InstructorResponseData): Promise<StandardResponse<Review>> {
+  async respondToReview(reviewId: string, data: CreatorResponseData): Promise<StandardResponse<Review>> {
     return apiClient.post<StandardResponse<Review>>(`/reviews/${reviewId}/respond`, data);
   },
 

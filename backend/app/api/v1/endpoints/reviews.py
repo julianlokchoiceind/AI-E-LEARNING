@@ -11,7 +11,7 @@ from app.schemas.review import (
     ReviewUpdateRequest,
     ReviewVoteRequest,
     ReviewReportRequest,
-    InstructorResponseRequest,
+    CreatorResponseRequest,
     ReviewModerationRequest,
     ReviewSearchQuery
 )
@@ -294,10 +294,10 @@ async def report_review(
 @router.post("/reviews/{review_id}/respond", response_model=StandardResponse[dict])
 async def respond_to_review(
     review_id: str,
-    response_data: InstructorResponseRequest,
+    response_data: CreatorResponseRequest,
     current_user: User = Depends(get_current_user)
 ):
-    """Add instructor response to review"""
+    """Add creator response to review"""
     try:
         review = await review_service.respond_to_review(review_id, current_user, response_data)
         return StandardResponse(

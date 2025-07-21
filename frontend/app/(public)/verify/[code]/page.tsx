@@ -172,8 +172,8 @@ const CertificateVerificationPage = () => {
                           <span className="ml-2">{verification.certificate.course_title}</span>
                         </div>
                         <div>
-                          <span className="text-gray-600">Instructor:</span>
-                          <span className="ml-2">{verification.certificate.course_instructor}</span>
+                          <span className="text-gray-600">Creator:</span>
+                          <span className="ml-2">{verification.certificate.course_creator}</span>
                         </div>
                         <div>
                           <span className="text-gray-600">Level:</span>

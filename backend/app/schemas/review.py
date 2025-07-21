@@ -16,7 +16,7 @@ class ReviewCreateRequest(BaseModel):
     title: Optional[str] = Field(None, max_length=200)
     comment: str = Field(..., min_length=10, max_length=2000)
     content_quality: Optional[int] = Field(None, ge=1, le=5)
-    instructor_quality: Optional[int] = Field(None, ge=1, le=5)
+    creator_quality: Optional[int] = Field(None, ge=1, le=5)
     value_for_money: Optional[int] = Field(None, ge=1, le=5)
     course_structure: Optional[int] = Field(None, ge=1, le=5)
 
@@ -33,7 +33,7 @@ class ReviewUpdateRequest(BaseModel):
     title: Optional[str] = Field(None, max_length=200)
     comment: Optional[str] = Field(None, min_length=10, max_length=2000)
     content_quality: Optional[int] = Field(None, ge=1, le=5)
-    instructor_quality: Optional[int] = Field(None, ge=1, le=5)
+    creator_quality: Optional[int] = Field(None, ge=1, le=5)
     value_for_money: Optional[int] = Field(None, ge=1, le=5)
     course_structure: Optional[int] = Field(None, ge=1, le=5)
     edit_reason: Optional[str] = Field(None, max_length=200)
@@ -50,8 +50,8 @@ class ReviewReportRequest(BaseModel):
     details: Optional[str] = Field(None, max_length=500)
 
 
-class InstructorResponseRequest(BaseModel):
-    """Request schema for instructor response to review"""
+class CreatorResponseRequest(BaseModel):
+    """Request schema for creator response to review"""
     response: str = Field(..., min_length=10, max_length=1000)
 
 
@@ -98,8 +98,8 @@ class Review(BaseModel):
     status: ReviewStatus
     helpful_count: int
     unhelpful_count: int
-    instructor_response: Optional[str]
-    instructor_response_at: Optional[datetime]
+    creator_response: Optional[str]
+    creator_response_at: Optional[datetime]
     is_edited: bool
     edited_at: Optional[datetime]
     created_at: datetime
@@ -119,7 +119,7 @@ class ReviewStats(BaseModel):
     
     # Average sub-ratings
     avg_content_quality: Optional[float]
-    avg_instructor_quality: Optional[float]
+    avg_creator_quality: Optional[float]
     avg_value_for_money: Optional[float]
     avg_course_structure: Optional[float]
     

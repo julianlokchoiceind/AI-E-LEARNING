@@ -96,7 +96,7 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
             </Badge>
           </div>
           <p className="text-sm text-gray-600">
-            Instructor: {certificate.course_instructor}
+            Creator: {certificate.course_creator}
           </p>
         </div>
 

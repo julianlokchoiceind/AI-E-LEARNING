@@ -27,7 +27,7 @@ const CourseDetailPage = () => {
   const isCreatorOrAdmin = user?.role === 'creator' || user?.role === 'admin';
 
   // UI state first
-  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'instructor' | 'reviews'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'creator' | 'reviews'>('overview');
   const [userEnrollmentStatus, setUserEnrollmentStatus] = useState<boolean | null>(null);
   const [checkingEnrollment, setCheckingEnrollment] = useState(false);
 
@@ -351,7 +351,7 @@ const CourseDetailPage = () => {
         {/* Tabs */}
         <div className="border-b mb-8">
           <nav className="flex gap-8">
-            {(['overview', 'curriculum', 'instructor', 'reviews'] as const).map((tab) => (
+            {(['overview', 'curriculum', 'creator', 'reviews'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -461,9 +461,9 @@ const CourseDetailPage = () => {
           </div>
         )}
 
-        {activeTab === 'instructor' && (
+        {activeTab === 'creator' && (
           <div className="max-w-4xl">
-            <h2 className="text-2xl font-bold mb-6">About the Instructor</h2>
+            <h2 className="text-2xl font-bold mb-6">About the Creator</h2>
             <Card className="p-6">
               <div className="flex items-start gap-4">
                 <div className="w-20 h-20 bg-gray-200 rounded-full flex-shrink-0"></div>
@@ -471,7 +471,7 @@ const CourseDetailPage = () => {
                   <h3 className="text-xl font-semibold mb-2">{course.creator_name}</h3>
                   <p className="text-gray-600 mb-4">AI/ML Expert & Educator</p>
                   <p className="text-gray-700">
-                    Experienced instructor with expertise in AI and machine learning.
+                    Experienced creator with expertise in AI and machine learning.
                     Passionate about teaching and helping students master complex concepts.
                   </p>
                 </div>

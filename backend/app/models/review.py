@@ -40,7 +40,7 @@ class Review(Document):
     
     # Sub-ratings (optional detailed ratings)
     content_quality: Optional[int] = Field(None, ge=1, le=5)
-    instructor_quality: Optional[int] = Field(None, ge=1, le=5)
+    creator_quality: Optional[int] = Field(None, ge=1, le=5)
     value_for_money: Optional[int] = Field(None, ge=1, le=5)
     course_structure: Optional[int] = Field(None, ge=1, le=5)
     
@@ -55,9 +55,9 @@ class Review(Document):
     unhelpful_count: int = Field(default=0, ge=0, description="Users who found unhelpful")
     report_count: int = Field(default=0, ge=0, description="Number of reports")
     
-    # Response from instructor
-    instructor_response: Optional[str] = Field(None, max_length=1000)
-    instructor_response_at: Optional[datetime] = None
+    # Response from creator
+    creator_response: Optional[str] = Field(None, max_length=1000)
+    creator_response_at: Optional[datetime] = None
     
     # Edit history
     is_edited: bool = Field(default=False)

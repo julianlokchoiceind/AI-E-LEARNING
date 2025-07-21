@@ -35,7 +35,7 @@ export interface CertificateWithDetails extends Certificate {
   course_description: string;
   course_level: string;
   course_category: string;
-  course_instructor: string;
+  course_creator: string;
   user_name: string;
   user_email: string;
 }
