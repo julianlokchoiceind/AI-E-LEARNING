@@ -14,7 +14,12 @@ import {
   Clock,
   Play,
   ExternalLink,
-  Plus
+  Plus,
+  File,
+  X,
+  Image,
+  FileCode,
+  FileArchive
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -108,6 +113,14 @@ const LessonEditPage = () => {
       setResources(resources); // Keep separate state for UI, but ensure sync with lessonData
     }
   }, [typedLessonResponse]);
+
+  // Sync resources with lessonData
+  useEffect(() => {
+    if (lessonData?.resources) {
+      console.log('📦 Syncing resources from lessonData:', lessonData.resources);
+      setResources(lessonData.resources);
+    }
+  }, [lessonData?.resources]);
 
   // 🔧 Manual save handler with course timestamp update (like Course Edit Page)
   const handleManualSave = async () => {
@@ -302,6 +315,28 @@ const LessonEditPage = () => {
         }
       }
     );
+  };
+
+  // Get icon for resource type - matching ResourceDisplay component
+  const getResourceIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'pdf':
+        return <FileText className="w-5 h-5 text-red-600" />;
+      case 'doc':
+        return <FileText className="w-5 h-5 text-blue-700" />;
+      case 'code':
+        return <FileCode className="w-5 h-5 text-green-600" />;
+      case 'zip':
+        return <FileArchive className="w-5 h-5 text-purple-600" />;
+      case 'exercise':
+        return <FileText className="w-5 h-5 text-orange-600" />;
+      case 'link':
+        return <Link className="w-5 h-5 text-blue-600" />;
+      case 'other':
+      default:
+        // For 'other' type (images, etc)
+        return <Image className="w-5 h-5 text-gray-600" />;
+    }
   };
 
   if (lessonLoading) {
@@ -638,16 +673,15 @@ const LessonEditPage = () => {
                   {resources.map((resource, index) => (
                     <div key={index} className="border rounded-lg p-4 hover:border-gray-300 transition-colors">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-medium text-gray-900">{resource.title}</h3>
-                            <Badge 
-                              variant={resource.type === 'link' ? 'secondary' : 'default'}
-                              className="text-xs"
-                            >
-                              {resource.type.toUpperCase()}
-                            </Badge>
-                          </div>
+                        <div className="flex items-start gap-3 flex-1">
+                          {getResourceIcon(resource.type)}
+                          
+                          <div className="flex-1">
+                            <div className="mb-2">
+                              <h3 className="font-medium text-gray-900">
+                                {resource.title}
+                              </h3>
+                            </div>
                           
                           {resource.description && (
                             <p className="text-sm text-gray-600 mb-2">{resource.description}</p>
@@ -657,20 +691,21 @@ const LessonEditPage = () => {
                             href={resource.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                            className="text-sm text-blue-600 hover:text-blue-800"
                           >
-                            <ExternalLink className="w-3 h-3" />
                             {resource.url}
                           </a>
+                          </div>
                         </div>
                         
                         <Button 
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleDeleteResource(index)}
-                          className="text-red-600 hover:text-red-700 ml-4"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 ml-4 p-1"
+                          title="Remove resource"
                         >
-                          Remove
+                          <X className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>

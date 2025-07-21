@@ -422,7 +422,8 @@ async def upload_lesson_resource(
             "type": "pdf" if upload_result["filename"].endswith(('.pdf',)) else
                    "doc" if upload_result["filename"].endswith(('.doc', '.docx')) else
                    "zip" if upload_result["filename"].endswith(('.zip', '.rar')) else
-                   "link",  # Default fallback
+                   "code" if upload_result["filename"].endswith(('.py', '.js', '.ts', '.java', '.cpp')) else
+                   "other",  # Default fallback for images and other files
             "url": upload_result["url"],
             "description": clean_description,
             "size": upload_result["size"]

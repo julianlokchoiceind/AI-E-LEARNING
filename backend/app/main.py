@@ -191,6 +191,20 @@ async def root():
 
 # Mount static files for uploaded content
 import os
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class StaticFilesCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith(settings.LOCAL_UPLOAD_URL_PREFIX):
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
+
+# Add CORS middleware for static files
+app.add_middleware(StaticFilesCORSMiddleware)
+
 if settings.USE_LOCAL_STORAGE and os.path.exists(settings.LOCAL_UPLOAD_DIR):
     app.mount(
         settings.LOCAL_UPLOAD_URL_PREFIX,

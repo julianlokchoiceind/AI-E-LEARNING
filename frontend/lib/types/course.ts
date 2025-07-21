@@ -101,9 +101,10 @@ export interface LessonVideo {
 
 export interface LessonResource {
   title: string
-  type: 'pdf' | 'code' | 'link' | 'exercise'
+  type: 'pdf' | 'doc' | 'zip' | 'link' | 'code' | 'exercise' | 'other'
   url: string
   description?: string
+  size?: number
 }
 
 export interface LessonUnlockConditions {

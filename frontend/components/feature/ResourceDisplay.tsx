@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FileText, ExternalLink, Download, Link } from 'lucide-react';
+import { FileText, ExternalLink, Download, Link, Image, FileCode, FileArchive } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { LessonResource } from '@/lib/types/course';
 
@@ -27,13 +27,20 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
     switch (type.toLowerCase()) {
       case 'pdf':
         return <FileText className="w-5 h-5 text-red-600" />;
+      case 'doc':
+        return <FileText className="w-5 h-5 text-blue-700" />;
       case 'code':
-        return <FileText className="w-5 h-5 text-green-600" />;
+        return <FileCode className="w-5 h-5 text-green-600" />;
+      case 'zip':
+        return <FileArchive className="w-5 h-5 text-purple-600" />;
       case 'exercise':
-        return <FileText className="w-5 h-5 text-purple-600" />;
+        return <FileText className="w-5 h-5 text-orange-600" />;
       case 'link':
-      default:
         return <Link className="w-5 h-5 text-blue-600" />;
+      case 'other':
+      default:
+        // For 'other' type (images, etc)
+        return <Image className="w-5 h-5 text-gray-600" />;
     }
   };
 
@@ -48,10 +55,9 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
         <a
           href={resource.url}
           download
-          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+          className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
           title="Download file"
         >
-          <Download className="w-4 h-4" />
           Download
         </a>
       );
@@ -61,10 +67,9 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
           href={resource.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+          className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
           title="Open in new tab"
         >
-          <ExternalLink className="w-4 h-4" />
           Open
         </a>
       );
@@ -72,19 +77,8 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm ${className}`}>
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-          <FileText className="w-5 h-5" />
-          Learning Resources
-        </h2>
-        <p className="text-sm text-gray-600 mt-1">
-          Download or access additional materials for this lesson
-        </p>
-      </div>
-
-      <div className="p-6 space-y-4">
-        {resources.map((resource, index) => (
+    <div className={`space-y-4 ${className}`}>
+      {resources.map((resource, index) => (
           <div 
             key={index}
             className="flex items-start justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors bg-gray-50"
@@ -93,17 +87,10 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
               {getResourceIcon(resource.type)}
               
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="mb-1">
                   <h3 className="font-medium text-gray-900 truncate">
                     {resource.title}
                   </h3>
-                  <Badge 
-                    variant={resource.type === 'link' ? 'secondary' : 'default'}
-                    size="sm"
-                    className="text-xs shrink-0"
-                  >
-                    {resource.type.toUpperCase()}
-                  </Badge>
                 </div>
                 
                 {resource.description && (
@@ -123,7 +110,6 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
             </div>
           </div>
         ))}
-      </div>
     </div>
   );
 };

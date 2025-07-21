@@ -379,11 +379,12 @@ class LessonService:
                     if "url" in video_data and video_data["url"]:
                         # Fix HTML entities (&amp; -> &, etc.)
                         import html
-                        video_data["url"] = html.unescape(video_data["url"])
+                        video_data["url"] = html.unescape(str(video_data["url"]))
                     
                     if "youtube_url" in video_data and video_data["youtube_url"]:
                         import html
-                        video_data["youtube_url"] = html.unescape(video_data["youtube_url"])
+                        # Convert to string first if it's HttpUrl
+                        video_data["youtube_url"] = html.unescape(str(video_data["youtube_url"]))
                     
                     # Map frontend 'url' field to 'youtube_url' if needed
                     if "url" in video_data and not video_data.get("youtube_url"):
@@ -392,7 +393,15 @@ class LessonService:
                 # Create VideoContent object
                 lesson.video = VideoContent(**video_data)
         if "resources" in update_data:
-            lesson.resources = update_data["resources"]
+            # Convert resources to Resource objects
+            from app.models.lesson import Resource
+            resources_list = []
+            for resource_data in update_data["resources"]:
+                if isinstance(resource_data, dict):
+                    resources_list.append(Resource(**resource_data))
+                else:
+                    resources_list.append(resource_data)
+            lesson.resources = resources_list
         if "unlock_conditions" in update_data:
             lesson.unlock_conditions = UnlockConditions(**update_data["unlock_conditions"])
         

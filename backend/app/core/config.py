@@ -88,7 +88,7 @@ class Settings(BaseSettings):
     
     # File Upload Configuration
     USE_LOCAL_STORAGE: bool = True
-    LOCAL_UPLOAD_DIR: str = "/app/uploads"
+    LOCAL_UPLOAD_DIR: str = "./uploads"
     LOCAL_UPLOAD_URL_PREFIX: str = "/uploads"
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
     ALLOWED_FILE_EXTENSIONS: List[str] = [
