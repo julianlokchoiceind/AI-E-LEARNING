@@ -153,9 +153,8 @@ export default withAuth(
     
     if (isCreatorRoute) {
       if (userRole !== 'creator' && userRole !== 'admin') {
-        const currentLocale = getLocaleFromPath(pathname)
-        const dashboardPath = getLocalizedPath('/dashboard', currentLocale)
-        return NextResponse.redirect(new URL(`${dashboardPath}?error=access_denied`, req.url))
+        // Redirect to 404 page for unauthorized creator access
+        return NextResponse.redirect(new URL('/not-found', req.url))
       }
     }
 
