@@ -90,6 +90,7 @@ export function useExportAnalytics() {
       format: string;
     }) => exportAnalytics(reportType, timeRange, format),
     {
+      operationName: 'export-analytics', // For toast deduplication
       showToast: true, // Show success/error toasts
     }
   );

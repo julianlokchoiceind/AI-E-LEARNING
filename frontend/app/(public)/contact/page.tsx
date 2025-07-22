@@ -19,12 +19,13 @@ export default function ContactPage() {
   const { mutate: submitContactForm, loading: isSubmitting } = useApiMutation(
     (contactData: typeof formData) => supportAPI.submitContact(contactData),
     {
+      operationName: 'submit-contact', // For toast deduplication
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Something went wrong');
         setFormData({ name: '', email: '', subject: '', message: '' });
       },
       onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
+        // Keep error handling logic only, toast is handled automatically
+        console.error('Contact form submission failed:', error);
       }
     }
   );

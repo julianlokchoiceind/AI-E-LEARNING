@@ -18,14 +18,16 @@ export default function ForgotPasswordPage() {
   const { mutate: sendResetEmail, loading } = useApiMutation(
     (email: string) => forgotPassword(email),
     {
+      operationName: 'forgot-password', // For toast deduplication
       onSuccess: (response) => {
         const message = response.message || 'Password reset email sent! Please check your inbox.';
         setSuccessMessage(message);
         setSuccess(true);
-        ToastService.success(message);
+        // Toast handled automatically by useApiMutation
       },
       onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
+        // Keep error handling logic only, toast is handled automatically
+        console.error('Forgot password failed:', error);
       }
     }
   )

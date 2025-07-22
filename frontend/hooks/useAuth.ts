@@ -13,6 +13,7 @@ export function useAuth() {
   const { mutate: logoutMutation } = useApiMutation(
     () => logoutUser(),
     {
+      operationName: 'logout-user', // For consistency and debugging
       showToast: false, // We handle logout feedback ourselves
     }
   )

@@ -22,8 +22,8 @@ export default function ResetPasswordPage() {
     (data: { token: string; password: string; confirmPassword: string }) => 
       resetPassword(data.token, data.password, data.confirmPassword),
     {
+      operationName: 'reset-password', // For toast deduplication
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Something went wrong');
         setSuccess(true);
         
         // Redirect to login after 3 seconds
@@ -32,7 +32,8 @@ export default function ResetPasswordPage() {
         }, 3000);
       },
       onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
+        // Keep error handling logic only, toast is handled automatically
+        console.error('Password reset failed:', error);
       }
     }
   )

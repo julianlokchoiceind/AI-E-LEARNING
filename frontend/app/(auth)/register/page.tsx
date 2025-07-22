@@ -25,9 +25,8 @@ export default function RegisterPage() {
       password: data.password
     }),
     {
+      operationName: 'register-user', // For toast deduplication
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Something went wrong');
-        
         // Clear form
         setFormData({
           name: '',
@@ -42,7 +41,8 @@ export default function RegisterPage() {
         }, 2000);
       },
       onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
+        // Keep error handling logic only, toast is handled automatically
+        console.error('Registration failed:', error);
       }
     }
   )

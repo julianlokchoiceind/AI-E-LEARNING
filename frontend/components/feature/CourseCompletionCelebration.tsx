@@ -52,12 +52,12 @@ export function CourseCompletionCelebration({
           if (response.success && response.data) {
             setCertificate(response.data);
             setCertificateGenerated(true);
-            ToastService.success(response.message || 'Something went wrong');
+            // Toast handled automatically by useCourseCompletionCheck
           }
         },
         onError: (error: any) => {
           console.error('Failed to check course completion:', error);
-          ToastService.error(error.message || 'Something went wrong');
+          // Toast handled automatically by useCourseCompletionCheck
         }
       }
     );
@@ -77,14 +77,15 @@ export function CourseCompletionCelebration({
           if (response.success && response.data) {
             setCertificate(response.data);
             setCertificateGenerated(true);
-            ToastService.success(response.message || 'Something went wrong');
+            // Toast handled automatically by useCourseCompletionCheck
           } else {
-            ToastService.error(response.message || 'Something went wrong');
+            // Keep specific error for non-success responses  
+            console.error('Certificate generation failed:', response.message);
           }
         },
         onError: (error: any) => {
           console.error('Failed to generate certificate:', error);
-          ToastService.error(error.message || 'Something went wrong');
+          // Toast handled automatically by useCourseCompletionCheck
         }
       }
     );

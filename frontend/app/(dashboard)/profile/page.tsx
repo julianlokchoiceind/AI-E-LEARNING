@@ -79,11 +79,12 @@ export default function ProfilePage() {
       }
     }, {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Something went wrong');
         // React Query will automatically invalidate and refetch profile data
+        // Toast handled automatically by useUserProfileManagement
       },
       onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
+        // Keep error handling logic only, toast is handled automatically
+        console.error('Profile update failed:', error);
       }
     });
   };

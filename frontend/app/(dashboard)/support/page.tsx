@@ -68,13 +68,14 @@ export default function SupportPage() {
       priority: formData.priority || 'medium' // Default to medium priority
     }, {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Something went wrong');
         setShowCreateModal(false);
         resetForm();
         // React Query automatically invalidates and refetches tickets list
+        // Toast handled automatically by useCreateSupportTicket
       },
       onError: (error: any) => {
-        ToastService.error(error.message || 'Something went wrong');
+        // Keep error handling logic only, toast is handled automatically
+        console.error('Support ticket creation failed:', error);
       }
     });
   };

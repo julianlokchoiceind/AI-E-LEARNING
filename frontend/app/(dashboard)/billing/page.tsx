@@ -53,12 +53,12 @@ export default function BillingPage() {
 
     cancelSubscriptionMutation(true, {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Something went wrong');
         // React Query will automatically invalidate and refetch billing data
+        // Toast handled automatically by useCancelSubscription
       },
       onError: (error: any) => {
         console.error('Cancellation failed:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Toast handled automatically by useCancelSubscription
       }
     });
   };
