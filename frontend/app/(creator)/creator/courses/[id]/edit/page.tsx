@@ -239,7 +239,7 @@ const CourseBuilderPage = () => {
   };
 
   const handleConfirmChapterDelete = async (chapterId: string) => {
-    // Simply call the delete action - optimistic updates and toasts are handled in the hook
+    // Simply call the delete action - cache invalidation and toasts are handled in the hook
     deleteChapterAction(chapterId);
   };
 
@@ -319,7 +319,7 @@ const CourseBuilderPage = () => {
   };
 
   const handleConfirmLessonDelete = (lessonId: string) => {
-    // Simply call the delete action - optimistic updates and toasts are handled in the hook
+    // Simply call the delete action - cache invalidation and toasts are handled in the hook
     deleteLessonAction(lessonId);
   };
 

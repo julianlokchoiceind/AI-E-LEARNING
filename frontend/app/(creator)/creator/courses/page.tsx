@@ -30,7 +30,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { 
   useCreatorCoursesQuery,
-  useDeleteCourseOptimistic,
+  useDeleteCourse,
   useCreateCourse 
 } from '@/hooks/queries/useCourses';
 import { formatDate, formatCurrency } from '@/lib/utils/formatters';
@@ -100,7 +100,7 @@ const CreatorCoursesPage = () => {
     per_page: itemsPerPage
   }, !!user);
   
-  const { mutate: deleteCourse, loading: deleteLoading } = useDeleteCourseOptimistic();
+  const { mutate: deleteCourse, loading: deleteLoading } = useDeleteCourse();
   const { mutate: createCourse, loading: createLoading } = useCreateCourse();
 
   // Smart loading states: Only show spinner on initial load, not background refetch

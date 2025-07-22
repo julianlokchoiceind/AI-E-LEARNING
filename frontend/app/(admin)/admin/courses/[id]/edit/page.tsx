@@ -291,20 +291,7 @@ const CourseBuilderPage = () => {
     // Update the local state so modal reflects current data when reopened
     setSelectedChapterForEdit(updatedChapter);
     
-    // Update local state
-    setChapters(prevChapters => {
-      return prevChapters.map(chapter => {
-        if (chapter.id === updatedChapter.id) {
-          return {
-            ...chapter,
-            title: updatedChapter.title,
-            description: updatedChapter.description,
-            status: updatedChapter.status || 'draft'
-          };
-        }
-        return chapter;
-      });
-    });
+    // React Query will automatically refetch chapters data
     
     // 🔧 FIX: Update SaveStatusIndicator manually since backend doesn't update course.updated_at
     // When chapter updates, we know content changed, so update the UI timestamp
@@ -334,7 +321,7 @@ const CourseBuilderPage = () => {
   };
 
   const handleConfirmChapterDelete = async (chapterId: string) => {
-    // Simply call the delete action - optimistic updates and toasts are handled in the hook
+    // Simply call the delete action - cache invalidation and toasts are handled in the hook
     deleteChapterMutation(chapterId);
   };
 
@@ -376,31 +363,7 @@ const CourseBuilderPage = () => {
   };
 
   const handleLessonUpdated = (updatedLesson: LessonEditData) => {
-    // Update local state - find the chapter and update the lesson
-    setChapters(prevChapters => {
-      return prevChapters.map(chapter => {
-        if (chapter.id === updatedLesson.chapter_id) {
-          const updatedLessons = chapter.lessons.map((lesson: any) => {
-            if (lesson.id === updatedLesson.id) {
-              return {
-                ...lesson,
-                title: updatedLesson.title,
-                description: updatedLesson.description,
-                video: updatedLesson.video,
-                content: updatedLesson.content,
-                status: updatedLesson.status
-              };
-            }
-            return lesson;
-          });
-          return {
-            ...chapter,
-            lessons: updatedLessons
-          };
-        }
-        return chapter;
-      });
-    });
+    // React Query will automatically refetch lessons data
     
     // 🔧 FIX: Update SaveStatusIndicator manually since backend doesn't update course.updated_at
     // When lesson updates, we know content changed, so update the UI timestamp
@@ -448,83 +411,47 @@ const CourseBuilderPage = () => {
   };
 
   const handleConfirmLessonDelete = (lessonId: string) => {
-    // Simply call the delete action - optimistic updates and toasts are handled in the hook
+    // Simply call the delete action - cache invalidation and toasts are handled in the hook
     deleteLessonMutation(lessonId);
   };
 
   const handleChaptersReorder = async (reorderedChapters: any[]) => {
     try {
-      // Update local state optimistically
-      setChapters(reorderedChapters);
-
       // Prepare data for bulk reorder API
       const chapterOrders = reorderedChapters.map((chapter, index) => ({
         id: chapter.id,
         order: index + 1
       }));
 
-      // Use React Query mutation instead of direct API call
-      const response = await reorderChaptersMutation({ courseId, reorderData: chapterOrders });
+      // Use React Query mutation - it will handle cache invalidation and UI update
+      await reorderChaptersMutation({ courseId, reorderData: chapterOrders });
       
-      if (response?.success && response?.data) {
-        // Update with response data to ensure consistency
-        setChapters(response.data.chapters || reorderedChapters);
-      }
+      // React Query will automatically refetch chapters data
     } catch (error: any) {
       console.error('Failed to reorder chapters:', error);
-      ToastService.error(error.message || 'Something went wrong');
-      
-      // Error handled by optimistic update rollback in React Query
+      // Toast is already shown by useApiMutation
       throw error; // Re-throw so DroppableChapterList can handle it
     }
   };
 
   const handleLessonsReorder = async (chapterId: string, reorderedLessons: any[]) => {
     try {
-      // Update local state optimistically
-      setChapters(prevChapters => {
-        return prevChapters.map(chapter => {
-          if (chapter.id === chapterId) {
-            return {
-              ...chapter,
-              lessons: reorderedLessons
-            };
-          }
-          return chapter;
-        });
-      });
-
       // Prepare data for bulk reorder API
       const lessonOrders = reorderedLessons.map((lesson, index) => ({
         id: lesson.id,
         order: index + 1
       }));
 
-      // Use React Query mutation instead of direct API call
-      const response = await reorderLessonsMutation({ 
+      // Use React Query mutation - it will handle cache invalidation and UI update
+      await reorderLessonsMutation({ 
         chapterId, 
         reorderData: { lesson_orders: lessonOrders.map(order => ({ lesson_id: order.id, new_order: order.order })) }
       });
       
-      if (response.success && response.data) {
-        // Update with response data to ensure consistency
-        setChapters(prevChapters => {
-          return prevChapters.map(chapter => {
-            if (chapter.id === chapterId) {
-              return {
-                ...chapter,
-                lessons: response.data?.lessons || reorderedLessons
-              };
-            }
-            return chapter;
-          });
-        });
-      }
+      // React Query will automatically refetch lessons data
     } catch (error: any) {
       console.error('Failed to reorder lessons:', error);
-      ToastService.error(error.message || 'Something went wrong');
-      
-      // Revert to original order on error - React Query will handle refetch
+      // Toast is already shown by useApiMutation
       throw error; // Re-throw so DroppableLessonList can handle it
     }
   };

@@ -2,9 +2,7 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCacheConfig } from '@/lib/constants/cache-config';
-import { ToastService } from '@/lib/toast/ToastService';
 import { Lesson } from '@/lib/types/course';
 import { 
   getLessonsByChapter, 
@@ -143,198 +141,23 @@ export function useUpdateLesson(silent: boolean = false) {
 }
 
 /**
- * DELETE LESSON - Lesson deletion with optimistic update
+ * DELETE LESSON - Lesson deletion
  * Critical: Content management
  */
 export function useDeleteLesson() {
-  const queryClient = useQueryClient();
-  
-  // Using native React Query for optimistic updates
-  const mutation = useMutation({
-    mutationFn: (lessonId: string) => deleteLesson(lessonId),
-    
-    // Optimistic update - Update UI immediately
-    onMutate: async (lessonId: string) => {
-      // Cancel any outgoing refetches for lesson-related queries
-      await queryClient.cancelQueries({ 
-        predicate: (query) => Array.isArray(query.queryKey) && 
-          (query.queryKey[0] === 'lessons' || query.queryKey[0] === 'course-chapters')
-      });
-      
-      // Get all lesson-related cache keys (including course-chapters for nested lessons)
-      const cacheKeys = queryClient.getQueryCache().findAll({
-        predicate: (query) => Array.isArray(query.queryKey) && 
-          (query.queryKey[0] === 'lessons' || query.queryKey[0] === 'course-chapters')
-      });
-      
-      // Store snapshots for rollback
-      const snapshots: any[] = [];
-      
-      // Update all lesson caches
-      cacheKeys.forEach((cache) => {
-        const data = queryClient.getQueryData(cache.queryKey);
-        snapshots.push({ key: cache.queryKey, data });
-        
-        // Optimistically remove lesson from list
-        queryClient.setQueryData(cache.queryKey, (old: any) => {
-          if (!old) return old;
-          
-          // Handle course-chapters structure (lessons nested in chapters)
-          if (cache.queryKey[0] === 'course-chapters') {
-            const chapters = old?.data?.chapters || old?.chapters || [];
-            
-            const updatedChapters = chapters.map((chapter: any) => {
-              if (chapter.lessons && Array.isArray(chapter.lessons)) {
-                const filteredLessons = chapter.lessons.filter((lesson: any) => lesson.id !== lessonId);
-                
-                // Only update if lessons changed
-                if (filteredLessons.length !== chapter.lessons.length) {
-                  return {
-                    ...chapter,
-                    lessons: filteredLessons,
-                    total_lessons: filteredLessons.length
-                  };
-                }
-              }
-              return chapter;
-            });
-            
-            // Maintain same structure for course-chapters
-            if (old?.data?.chapters) {
-              return {
-                ...old,
-                data: {
-                  ...old.data,
-                  chapters: updatedChapters
-                }
-              };
-            }
-            
-            return {
-              ...old,
-              chapters: updatedChapters
-            };
-          }
-          
-          // Handle direct lessons structure
-          const lessons = old?.data?.lessons || old?.lessons || [];
-          const filteredLessons = lessons.filter((lesson: any) => {
-            const id = lesson.id;
-            return id !== lessonId;
-          });
-          
-          // Maintain same structure
-          if (old?.data?.lessons) {
-            return {
-              ...old,
-              data: {
-                ...old.data,
-                lessons: filteredLessons,
-                total: filteredLessons.length
-              }
-            };
-          }
-          
-          return {
-            ...old,
-            lessons: filteredLessons,
-            total: filteredLessons.length
-          };
-        });
-      });
-      
-      // Also update chapters-with-lessons cache
-      const chaptersWithLessonsCaches = queryClient.getQueryCache().findAll({
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'chapters-with-lessons'
-      });
-      
-      chaptersWithLessonsCaches.forEach((cache) => {
-        const data = queryClient.getQueryData(cache.queryKey);
-        snapshots.push({ key: cache.queryKey, data });
-        
-        queryClient.setQueryData(cache.queryKey, (old: any) => {
-          if (!old) return old;
-          
-          const chapters = old?.data?.chapters || old?.chapters || [];
-          const updatedChapters = chapters.map((chapter: any) => {
-            if (chapter.lessons) {
-              return {
-                ...chapter,
-                lessons: chapter.lessons.filter((lesson: any) => {
-                  const id = lesson.id;
-                  return id !== lessonId;
-                })
-              };
-            }
-            return chapter;
-          });
-          
-          if (old?.data?.chapters) {
-            return {
-              ...old,
-              data: {
-                ...old.data,
-                chapters: updatedChapters
-              }
-            };
-          }
-          
-          return {
-            ...old,
-            chapters: updatedChapters
-          };
-        });
-      });
-      
-      return { snapshots, lessonId };
-    },
-    
-    // Rollback on error
-    onError: (error: any, lessonId: string, context: any) => {
-      if (context?.snapshots) {
-        context.snapshots.forEach((snapshot: any) => {
-          queryClient.setQueryData(snapshot.key, snapshot.data);
-        });
-      }
-    },
-    
-    // Always refetch to ensure consistency
-    onSettled: () => {
-      // Minimal invalidation - only refresh queries that need server sync
-      queryClient.invalidateQueries({ 
-        predicate: (query) => Array.isArray(query.queryKey) && 
-          (query.queryKey[0] === 'lessons' || query.queryKey[0] === 'course-chapters'),
-        refetchType: 'active' // Only refetch if query is actively used
-      });
+  return useApiMutation(
+    (lessonId: string) => deleteLesson(lessonId),
+    {
+      operationName: 'delete-lesson',
+      invalidateQueries: [
+        ['lessons'],            // Refresh lesson lists
+        ['course-chapters'],    // Refresh course-specific chapters
+        ['chapters-with-lessons'], // Refresh chapters with lessons
+        ['course'],             // Refresh course details
+        ['creator-courses'],    // Update creator course list
+        ['admin-courses'],      // Update admin course list
+      ],
     }
-  });
-  
-  // Return wrapper to maintain useApiMutation interface
-  return {
-    mutate: (lessonId: string, options?: { onSuccess?: () => void; onError?: (error: any) => void }) => {
-      mutation.mutate(lessonId, {
-        onSuccess: (response) => {
-          // Toast handled manually since using useMutation (not useApiMutation)
-          ToastService.success(response?.message || 'Something went wrong', 'delete-lesson');
-          if (options?.onSuccess) {
-            options.onSuccess();
-          }
-        },
-        onError: (error: any) => {
-          // Toast handled manually since using useMutation (not useApiMutation)
-          ToastService.error(error?.message || 'Something went wrong', 'delete-lesson-error');
-          if (options?.onError) {
-            options.onError(error);
-          }
-        }
-      });
-    },
-    mutateAsync: mutation.mutateAsync,
-    loading: mutation.isPending,
-    isSuccess: mutation.isSuccess,
-    isError: mutation.isError,
-    error: mutation.error,
-    data: mutation.data,
-  };
+  );
 }
 

@@ -14,7 +14,7 @@ import {
   useApproveCourse, 
   useRejectCourse, 
   useToggleCourseFree, 
-  useDeleteCourseOptimistic as useDeleteCourse,
+  useDeleteCourseAdmin as useDeleteCourse,
   useCreateCourse,
   useAdminStatistics
 } from '@/hooks/queries/useCourses';

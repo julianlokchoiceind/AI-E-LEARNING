@@ -2,10 +2,8 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCacheConfig } from '@/lib/constants/cache-config';
 import { supportAPI } from '@/lib/api/support';
-import { ToastService } from '@/lib/toast/ToastService';
 import type { TicketCategory, TicketStatus, TicketPriority } from '@/lib/types/support';
 
 // Types for support ticket queries
@@ -82,396 +80,75 @@ export function useCreateSupportTicket() {
 }
 
 /**
- * UPDATE SUPPORT TICKET - Edit ticket details with optimistic update
+ * UPDATE SUPPORT TICKET - Edit ticket details
  * Critical: Support management
  */
 export function useUpdateSupportTicket() {
-  const queryClient = useQueryClient();
-  
-  // Using native React Query for optimistic updates
-  const mutation = useMutation({
-    mutationFn: ({ ticketId, data }: { ticketId: string; data: SupportTicketUpdateData }) => 
+  return useApiMutation(
+    ({ ticketId, data }: { ticketId: string; data: SupportTicketUpdateData }) => 
       supportAPI.updateTicket(ticketId, data),
-    
-    // Optimistic update - Update UI immediately
-    onMutate: async ({ ticketId, data }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['support-tickets'] });
-      await queryClient.cancelQueries({ queryKey: ['support-ticket', ticketId] });
-      
-      // Snapshot previous values
-      const previousTickets = queryClient.getQueryData(['support-tickets']);
-      const previousTicket = queryClient.getQueryData(['support-ticket', ticketId]);
-      
-      // Optimistically update ticket in list
-      queryClient.setQueryData(['support-tickets'], (old: any) => {
-        if (!old) return old;
-        
-        // Handle different data structures
-        const tickets = old?.data?.tickets || old?.tickets || [];
-        const updatedTickets = tickets.map((ticket: any) => {
-          if (ticket.id === ticketId) {
-            return {
-              ...ticket,
-              ...data,
-              updated_at: new Date().toISOString()
-            };
-          }
-          return ticket;
-        });
-        
-        // Maintain same structure
-        if (old?.data?.tickets) {
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              tickets: updatedTickets
-            }
-          };
-        }
-        
-        return {
-          ...old,
-          tickets: updatedTickets
-        };
-      });
-      
-      // Also update single ticket query if it exists
-      queryClient.setQueryData(['support-ticket', ticketId], (old: any) => {
-        if (!old) return old;
-        
-        const ticket = old?.data || old;
-        return {
-          ...old,
-          data: {
-            ...ticket,
-            ...data,
-            updated_at: new Date().toISOString()
-          }
-        };
-      });
-      
-      return { previousTickets, previousTicket, ticketId };
-    },
-    
-    // Rollback on error
-    onError: (error: any, variables, context: any) => {
-      if (context?.previousTickets) {
-        queryClient.setQueryData(['support-tickets'], context.previousTickets);
-      }
-      if (context?.previousTicket && context?.ticketId) {
-        queryClient.setQueryData(['support-ticket', context.ticketId], context.previousTicket);
-      }
-    },
-    
-    // Always refetch to ensure consistency
-    onSettled: (data: any, error: any, variables: any) => {
-      queryClient.invalidateQueries({ queryKey: ['support-tickets'] });
-      queryClient.invalidateQueries({ queryKey: ['support-ticket', variables.ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['support-stats'] });
+    {
+      operationName: 'update-ticket',
+      invalidateQueries: [
+        ['support-tickets'], // Refresh tickets list
+        ['support-ticket', 'ticketId'], // Refresh specific ticket
+        ['support-stats'], // Update support statistics
+      ],
     }
-  });
-  
-  // Return wrapper to maintain useApiMutation interface
-  return {
-    mutate: (data: { ticketId: string; data: SupportTicketUpdateData }, options?: any) => {
-      mutation.mutate(data, {
-        onSuccess: (response) => {
-          ToastService.success(response?.message || 'Ticket updated successfully', 'update-ticket');
-          options?.onSuccess?.(response);
-        },
-        onError: (error: any) => {
-          ToastService.error(error?.message || 'Failed to update ticket', 'update-ticket-error');
-          options?.onError?.(error);
-        }
-      });
-    },
-    mutateAsync: mutation.mutateAsync,
-    loading: mutation.isPending,
-    isSuccess: mutation.isSuccess,
-    isError: mutation.isError,
-    error: mutation.error,
-    data: mutation.data,
-  };
+  );
 }
 
 /**
- * ASSIGN SUPPORT TICKET - Assign ticket to admin with optimistic update
+ * ASSIGN SUPPORT TICKET - Assign ticket to admin
  * Critical: Support workflow management
  */
 export function useAssignSupportTicket() {
-  const queryClient = useQueryClient();
-  
-  // Using native React Query for optimistic updates
-  const mutation = useMutation({
-    mutationFn: ({ ticketId, assigneeId }: { ticketId: string; assigneeId: string }) => 
+  return useApiMutation(
+    ({ ticketId, assigneeId }: { ticketId: string; assigneeId: string }) => 
       supportAPI.assignTicket(ticketId, assigneeId),
-    
-    // Optimistic update - Update UI immediately
-    onMutate: async ({ ticketId, assigneeId }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['support-tickets'] });
-      
-      // Snapshot previous value
-      const previousTickets = queryClient.getQueryData(['support-tickets']);
-      
-      // Optimistically update ticket assignment
-      queryClient.setQueryData(['support-tickets'], (old: any) => {
-        if (!old) return old;
-        
-        // Handle different data structures
-        const tickets = old?.data?.tickets || old?.tickets || [];
-        const updatedTickets = tickets.map((ticket: any) => {
-          if (ticket.id === ticketId) {
-            return {
-              ...ticket,
-              assignee_id: assigneeId,
-              status: 'in_progress' // Usually assignment changes status
-            };
-          }
-          return ticket;
-        });
-        
-        // Maintain same structure
-        if (old?.data?.tickets) {
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              tickets: updatedTickets
-            }
-          };
-        }
-        
-        return {
-          ...old,
-          tickets: updatedTickets
-        };
-      });
-      
-      return { previousTickets, ticketId, assigneeId };
-    },
-    
-    // Rollback on error
-    onError: (error: any, variables, context: any) => {
-      if (context?.previousTickets) {
-        queryClient.setQueryData(['support-tickets'], context.previousTickets);
-      }
-    },
-    
-    // Always refetch to ensure consistency
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['support-tickets'] });
-      queryClient.invalidateQueries({ queryKey: ['support-stats'] });
+    {
+      operationName: 'assign-ticket',
+      invalidateQueries: [
+        ['support-tickets'], // Refresh tickets list
+        ['support-stats'], // Update support statistics
+      ],
     }
-  });
-  
-  // Return wrapper to maintain useApiMutation interface
-  return {
-    mutate: (data: { ticketId: string; assigneeId: string }, options?: any) => {
-      mutation.mutate(data, {
-        onSuccess: (response) => {
-          ToastService.success(response?.message || 'Ticket assigned successfully', 'assign-ticket');
-          options?.onSuccess?.(response);
-        },
-        onError: (error: any) => {
-          ToastService.error(error?.message || 'Failed to assign ticket', 'assign-ticket-error');
-          options?.onError?.(error);
-        }
-      });
-    },
-    mutateAsync: mutation.mutateAsync,
-    loading: mutation.isPending,
-    isSuccess: mutation.isSuccess,
-    isError: mutation.isError,
-    error: mutation.error,
-    data: mutation.data,
-  };
+  );
 }
 
 /**
- * RESOLVE SUPPORT TICKET - Mark ticket as resolved with optimistic update
+ * RESOLVE SUPPORT TICKET - Mark ticket as resolved
  * Critical: Support completion workflow
  */
 export function useResolveSupportTicket() {
-  const queryClient = useQueryClient();
-  
-  // Using native React Query for optimistic updates
-  const mutation = useMutation({
-    mutationFn: ({ ticketId, resolution }: { ticketId: string; resolution: string }) => 
+  return useApiMutation(
+    ({ ticketId, resolution }: { ticketId: string; resolution: string }) => 
       supportAPI.updateTicket(ticketId, { status: 'resolved', resolution_note: resolution }),
-    
-    // Optimistic update - Update UI immediately
-    onMutate: async ({ ticketId, resolution }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['support-tickets'] });
-      
-      // Snapshot previous value
-      const previousTickets = queryClient.getQueryData(['support-tickets']);
-      
-      // Optimistically update ticket status
-      queryClient.setQueryData(['support-tickets'], (old: any) => {
-        if (!old) return old;
-        
-        // Handle different data structures
-        const tickets = old?.data?.tickets || old?.tickets || [];
-        const updatedTickets = tickets.map((ticket: any) => {
-          if (ticket.id === ticketId) {
-            return {
-              ...ticket,
-              status: 'resolved',
-              resolution_note: resolution,
-              resolved_at: new Date().toISOString()
-            };
-          }
-          return ticket;
-        });
-        
-        // Maintain same structure
-        if (old?.data?.tickets) {
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              tickets: updatedTickets
-            }
-          };
-        }
-        
-        return {
-          ...old,
-          tickets: updatedTickets
-        };
-      });
-      
-      return { previousTickets, ticketId };
-    },
-    
-    // Rollback on error
-    onError: (error: any, variables, context: any) => {
-      if (context?.previousTickets) {
-        queryClient.setQueryData(['support-tickets'], context.previousTickets);
-      }
-    },
-    
-    // Always refetch to ensure consistency
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['support-tickets'] });
-      queryClient.invalidateQueries({ queryKey: ['support-stats'] });
+    {
+      operationName: 'resolve-ticket',
+      invalidateQueries: [
+        ['support-tickets'], // Refresh tickets list
+        ['support-stats'], // Update support statistics
+      ],
     }
-  });
-  
-  // Return wrapper to maintain useApiMutation interface
-  return {
-    mutate: (data: { ticketId: string; resolution: string }, options?: any) => {
-      mutation.mutate(data, {
-        onSuccess: (response) => {
-          ToastService.success(response?.message || 'Ticket resolved successfully', 'resolve-ticket');
-          options?.onSuccess?.(response);
-        },
-        onError: (error: any) => {
-          ToastService.error(error?.message || 'Failed to resolve ticket', 'resolve-ticket-error');
-          options?.onError?.(error);
-        }
-      });
-    },
-    mutateAsync: mutation.mutateAsync,
-    loading: mutation.isPending,
-    isSuccess: mutation.isSuccess,
-    isError: mutation.isError,
-    error: mutation.error,
-    data: mutation.data,
-  };
+  );
 }
 
 /**
- * DELETE SUPPORT TICKET - Remove ticket (admin only) with optimistic update
+ * DELETE SUPPORT TICKET - Remove ticket (admin only)
  * Medium-impact: Support management
  */
 export function useDeleteSupportTicket() {
-  const queryClient = useQueryClient();
-  
-  // Using native React Query for optimistic updates
-  const mutation = useMutation({
-    mutationFn: (ticketId: string) => supportAPI.updateTicket(ticketId, { status: 'closed' }),
-    
-    // Optimistic update - Update UI immediately
-    onMutate: async (ticketId: string) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['support-tickets'] });
-      
-      // Snapshot previous value
-      const previousTickets = queryClient.getQueryData(['support-tickets']);
-      
-      // Optimistically remove ticket from list
-      queryClient.setQueryData(['support-tickets'], (old: any) => {
-        if (!old) return old;
-        
-        // Handle different data structures
-        const tickets = old?.data?.tickets || old?.tickets || [];
-        const filteredTickets = tickets.filter((ticket: any) => {
-          const id = ticket.id;
-          return id !== ticketId;
-        });
-        
-        // Maintain same structure
-        if (old?.data?.tickets) {
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              tickets: filteredTickets,
-              total: filteredTickets.length
-            }
-          };
-        }
-        
-        return {
-          ...old,
-          tickets: filteredTickets,
-          total: filteredTickets.length
-        };
-      });
-      
-      return { previousTickets, ticketId };
-    },
-    
-    // Rollback on error
-    onError: (error: any, ticketId: string, context: any) => {
-      if (context?.previousTickets) {
-        queryClient.setQueryData(['support-tickets'], context.previousTickets);
-      }
-    },
-    
-    // Always refetch to ensure consistency
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['support-tickets'] });
-      queryClient.invalidateQueries({ queryKey: ['support-stats'] });
+  return useApiMutation(
+    (ticketId: string) => supportAPI.updateTicket(ticketId, { status: 'closed' }),
+    {
+      operationName: 'delete-ticket',
+      invalidateQueries: [
+        ['support-tickets'], // Refresh tickets list
+        ['support-stats'], // Update support statistics
+      ],
     }
-  });
-  
-  // Return wrapper to maintain useApiMutation interface
-  return {
-    mutate: (ticketId: string, options?: any) => {
-      mutation.mutate(ticketId, {
-        onSuccess: (response) => {
-          ToastService.success(response?.message || 'Ticket closed successfully', 'delete-ticket');
-          options?.onSuccess?.(response);
-        },
-        onError: (error: any) => {
-          ToastService.error(error?.message || 'Failed to close ticket', 'delete-ticket-error');
-          options?.onError?.(error);
-        }
-      });
-    },
-    mutateAsync: mutation.mutateAsync,
-    loading: mutation.isPending,
-    isSuccess: mutation.isSuccess,
-    isError: mutation.isError,
-    error: mutation.error,
-    data: mutation.data,
-  };
+  );
 }
 
 /**

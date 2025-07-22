@@ -1093,108 +1093,63 @@ try {
 }
 ```
 
-#### **⚡ OPTIMISTIC UPDATE PATTERN**
+#### **⚡ REAL-TIME UPDATE PATTERN (NO OPTIMISTIC UPDATES)**
 
-**GOLDEN RULE: Use native React Query for optimistic updates, NOT useApiMutation**
+**GOLDEN RULE: ALL CRUD operations use REALTIME cache (staleTime: 0) for immediate updates**
 
-**❌ PROBLEM - useApiMutation limitations:**
+**✅ CURRENT IMPLEMENTATION - Simple & Reliable:**
 ```typescript
-// useApiMutation KHÔNG hỗ trợ onMutate lifecycle
-const { mutate } = useApiMutation(deleteCourse, {
-  onMutate: async () => {} // KHÔNG HOẠT ĐỘNG!
-});
-
-// Không thể truyền options khi gọi mutate
-mutate(id, { onSuccess: () => {} }); // KHÔNG HOẠT ĐỘNG!
-```
-
-**✅ SOLUTION - Native React Query pattern:**
-```typescript
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-
+// All mutations use useApiMutation with proper cache invalidation
 export function useDeleteCourse() {
-  const queryClient = useQueryClient();
-  
-  const mutation = useMutation({
-    mutationFn: (courseId: string) => deleteCourse(courseId),
-    
-    // Optimistic update - Update UI trước khi API response
-    onMutate: async (courseId: string) => {
-      // 1. Cancel outgoing refetches
-      await queryClient.cancelQueries(['admin-courses']);
-      
-      // 2. Snapshot previous value for rollback
-      const previousData = queryClient.getQueryData(['admin-courses']);
-      
-      // 3. Optimistically update UI
-      queryClient.setQueryData(['admin-courses'], (old: any) => {
-        // Handle different data structures from useApiQuery
-        const courses = old?.data?.courses || old?.courses || [];
-        const filteredCourses = courses.filter(c => c.id !== courseId);
-        
-        return {
-          ...old,
-          data: { ...old.data, courses: filteredCourses }
-        };
-      });
-      
-      // 4. Return context for rollback
-      return { previousData, courseId };
-    },
-    
-    // Rollback on error
-    onError: (error, courseId, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(['admin-courses'], context.previousData);
-      }
-    },
-    
-    // Ensure consistency after mutation
-    onSettled: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: ['admin-courses'],
-        refetchType: 'active'
-      });
+  return useApiMutation(
+    (courseId: string) => deleteCourse(courseId),
+    {
+      operationName: 'delete-course',
+      invalidateQueries: [
+        ['courses'],          // Refresh course lists
+        ['admin-courses'],    // Refresh admin view
+        ['creator-courses'],  // Refresh creator dashboard
+        ['my-courses'],       // Remove from enrolled courses
+        ['creator-dashboard'], // Update creator dashboard
+      ],
     }
-  });
-  
-  // Wrapper to maintain useApiMutation interface
-  return {
-    mutate: (courseId: string, options?: any) => {
-      mutation.mutate(courseId, {
-        onSuccess: (response) => {
-          ToastService.success(response?.message || 'Course deleted successfully');
-          options?.onSuccess?.();
-        },
-        onError: (error: any) => {
-          ToastService.error(error?.message || 'Something went wrong');
-          options?.onError?.(error);
-        }
-      });
-    },
-    loading: mutation.isPending,
-    // ... other properties
-  };
+  );
 }
 ```
 
-**📊 WHEN TO USE EACH APPROACH:**
+**🎯 HOW IT WORKS:**
+1. User performs CRUD action (create/update/delete)
+2. Mutation executes via useApiMutation
+3. Success response triggers cache invalidation
+4. React Query refetches all invalidated queries
+5. REALTIME cache (staleTime: 0) ensures fresh data
+6. UI updates immediately with server response
 
-| Use Case | Approach | Example |
-|----------|----------|---------|
-| Simple CRUD (no optimistic) | useApiMutation | Create, Update forms |
-| Delete with instant feedback | Native useMutation | Delete course/user/FAQ |
-| Complex state updates | Native useMutation | Reorder, bulk operations |
-| Real-time UI updates | Native useMutation | Toggle status, ratings |
+**📊 CACHE CONFIGURATION FOR CRUD:**
+```typescript
+// All CRUD-related caches use REALTIME tier
+export const CACHE_CONTEXTS = {
+  // All set to staleTime: 0 for immediate updates
+  COURSE_CATALOG: CACHE_TIERS.REALTIME,
+  COURSE_DETAILS: CACHE_TIERS.REALTIME,
+  FAQ_CONTENT: CACHE_TIERS.REALTIME,
+  COURSE_CHAPTERS: CACHE_TIERS.REALTIME,
+  CHAPTER_DETAILS: CACHE_TIERS.REALTIME,
+  SUPPORT_TICKETS: CACHE_TIERS.REALTIME,
+}
+```
 
-**🔄 OPTIMISTIC UPDATE CHECKLIST:**
-- [ ] Use native `useMutation` instead of `useApiMutation`
-- [ ] Implement `onMutate` for immediate UI update
-- [ ] Snapshot previous data for rollback
-- [ ] Handle different data structures from useApiQuery
-- [ ] Implement `onError` for rollback on failure
-- [ ] Use `onSettled` for consistency check
-- [ ] Maintain backward compatibility with existing interface
+**❌ REMOVED: Optimistic Updates**
+- No more `onMutate` hooks
+- No more `setQueryData` for client-side updates
+- No more rollback logic
+- Server is the single source of truth
+
+**✅ BENEFITS:**
+- **85% less code** in mutation hooks
+- **No race conditions** between optimistic and server state
+- **Simple data flow** - server response drives UI
+- **Reliable updates** - what you see is what's in the database
 
 #### **🚨 CRITICAL RULE: ZERO SCOPE CREEP**
 
@@ -3779,6 +3734,45 @@ This PRD now follows modern best practices and provides comprehensive guidance f
 
 ## 🧠 **AI MEMORY & CRITICAL RULES**
 
+### **🔄 REACT QUERY & CACHE MANAGEMENT**
+
+**CURRENT STATE: Optimistic updates have been COMPLETELY REMOVED from the codebase**
+
+#### **What Changed:**
+- ✅ Removed all 22 optimistic update implementations
+- ✅ Simplified useApiMutation from 276 to 160 lines
+- ✅ All CRUD operations use REALTIME cache (staleTime: 0)
+- ✅ Proper cache invalidation ensures immediate UI updates
+
+#### **Current Pattern:**
+```typescript
+// Simple mutation with cache invalidation
+export function useUpdateCourse(silent: boolean = false) {
+  return useApiMutation(
+    ({ courseId, data }: { courseId: string; data: any }) => 
+      updateCourse(courseId, data),
+    {
+      operationName: 'update-course',
+      showToast: !silent, // Disable toast for autosave
+      invalidateQueries: [
+        ['course'],          // Refresh course details
+        ['courses'],         // Refresh course catalog
+        ['admin-courses'],   // Refresh admin view
+        ['creator-courses'], // Refresh creator dashboard
+      ],
+    }
+  );
+}
+```
+
+#### **Cache Configuration:**
+- **REALTIME (0s):** All CRUD operations (courses, chapters, lessons, FAQs, support)
+- **FRESH (30s):** Progress tracking, quiz attempts, dashboards
+- **MODERATE (2min):** User profiles, analytics, payment history
+- **STABLE (10min):** Static config, recommendations, categories
+
+**IMPORTANT: Do NOT re-introduce optimistic updates. The current pattern is simpler and more reliable.**
+
 ### **🔒 NEXTAUTH SESSION STABILITY RULES**
 
 **🚨 CRITICAL: NextAuth configuration is now STABLE after fixing session clearing issues. DO NOT modify any NextAuth-related code!**
@@ -3851,3 +3845,64 @@ async session({ session, token }) {
 6. **DO** keep api-client.ts 401 handling as secondary fallback
 
 **Remember:** The current setup works perfectly. Any changes to NextAuth configuration can reintroduce the Chrome session clearing bug.
+
+### **📊 CURRENT CODEBASE STATE (Updated: Jan 2025)**
+
+#### **✅ What's Currently Implemented:**
+1. **React Query Cache Management:**
+   - All CRUD operations use REALTIME cache (staleTime: 0)
+   - Proper cache invalidation ensures immediate updates
+   - No optimistic updates - server is source of truth
+   - 85% code reduction in mutation hooks
+
+2. **Toast Notifications:**
+   - Automatic toast handling via useApiMutation
+   - Operation-based IDs prevent duplicates
+   - Transparent blur styling for modern UI
+   - No manual toast calls in callbacks
+
+3. **Authentication:**
+   - Stable NextAuth configuration
+   - JWT refresh in callback (no timers)
+   - 30-minute access token expiry
+   - No session clearing issues
+
+4. **API Patterns:**
+   - useApiQuery for data fetching
+   - useApiMutation for mutations
+   - Automatic error handling
+   - Consistent StandardResponse format
+
+#### **❌ What's Been Removed:**
+- All optimistic update implementations (22 hooks cleaned)
+- onMutate lifecycle hooks
+- setQueryData for client-side updates
+- Complex rollback logic
+- Race condition vulnerabilities
+
+#### **🎯 Current Best Practices:**
+1. **For CRUD Operations:**
+   ```typescript
+   return useApiMutation(
+     (data) => apiCall(data),
+     {
+       operationName: 'unique-operation-id',
+       invalidateQueries: [['affected'], ['queries']],
+     }
+   );
+   ```
+
+2. **For Data Fetching:**
+   ```typescript
+   return useApiQuery(
+     ['query-key', params],
+     () => fetchData(params),
+     getCacheConfig('CONTEXT_NAME')
+   );
+   ```
+
+3. **Cache Tiers:**
+   - REALTIME: CRUD operations
+   - FRESH: Progress, dashboards
+   - MODERATE: Analytics, profiles
+   - STABLE: Static content

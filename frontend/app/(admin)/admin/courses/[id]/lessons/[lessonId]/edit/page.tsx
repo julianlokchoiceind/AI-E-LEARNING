@@ -158,18 +158,7 @@ const LessonEditPage = () => {
     try {
       await manualSaveLessonAction({ lessonId: lessonIdToUse, data: updateData });
       
-      // 🔧 OPTIMISTIC UPDATE: Update course timestamp immediately for UI feedback
-      // (Backend already auto-cascades, this is just for immediate visual feedback)
-      queryClient.setQueryData(['course', courseId], (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          data: {
-            ...old.data,
-            updated_at: new Date().toISOString()
-          }
-        };
-      });
+      // React Query will automatically refetch course data
       
       // Toast will be shown automatically by useApiMutation (showToast=true)
     } catch (error: any) {

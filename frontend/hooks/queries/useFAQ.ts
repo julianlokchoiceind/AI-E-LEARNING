@@ -2,8 +2,6 @@
 
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ToastService } from '@/lib/toast/ToastService';
 import { getCacheConfig } from '@/lib/constants/cache-config';
 import { 
   getFAQs,
@@ -74,99 +72,20 @@ export function useUpdateFAQ() {
 }
 
 /**
- * DELETE FAQ - Remove FAQ item with optimistic update
+ * DELETE FAQ - Remove FAQ item
  * Critical: Content management
  */
 export function useDeleteFAQ() {
-  const queryClient = useQueryClient();
-  
-  // Using native React Query for optimistic updates
-  const mutation = useMutation({
-    mutationFn: (faqId: string) => deleteFAQ(faqId),
-    
-    // Optimistic update - Update UI immediately
-    onMutate: async (faqId: string) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ 
-        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'faqs'
-      });
-      
-      // Snapshot previous value
-      const previousFAQs = queryClient.getQueryData(['faqs']);
-      
-      // Optimistically remove FAQ from list
-      queryClient.setQueryData(['faqs'], (old: any) => {
-        if (!old) return old;
-        
-        // Handle different data structures
-        const faqs = old?.data?.faqs || old?.faqs || [];
-        const filteredFAQs = faqs.filter((faq: any) => {
-          return faq.id !== faqId;
-        });
-        
-        // Maintain same structure
-        if (old?.data?.faqs) {
-          return {
-            ...old,
-            data: {
-              ...old.data,
-              faqs: filteredFAQs,
-              total: filteredFAQs.length
-            }
-          };
-        }
-        
-        return {
-          ...old,
-          faqs: filteredFAQs,
-          total: filteredFAQs.length
-        };
-      });
-      
-      return { previousFAQs, faqId };
-    },
-    
-    // Rollback on error
-    onError: (error: any, faqId: string, context: any) => {
-      if (context?.previousFAQs) {
-        queryClient.setQueryData(['faqs'], context.previousFAQs);
-      }
-    },
-    
-    // Always refetch to ensure consistency
-    onSettled: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: ['faqs'],
-        refetchType: 'active'
-      });
+  return useApiMutation(
+    (faqId: string) => deleteFAQ(faqId),
+    {
+      operationName: 'delete-faq',
+      invalidateQueries: [
+        ['faqs'], // Refresh FAQ list
+        ['faq-categories'], // Update categories count
+      ],
     }
-  });
-  
-  // Return wrapper to maintain useApiMutation interface
-  return {
-    mutate: (faqId: string, options?: { onSuccess?: () => void; onError?: (error: any) => void }) => {
-      mutation.mutate(faqId, {
-        onSuccess: (response) => {
-          ToastService.success(response?.message || 'Something went wrong', 'delete-faq');
-          if (options?.onSuccess) {
-            options.onSuccess();
-          }
-        },
-        onError: (error: any) => {
-          ToastService.error(error?.message || 'Something went wrong', 'delete-faq-error');
-          if (options?.onError) {
-            options.onError(error);
-          }
-        }
-      });
-    },
-    mutateAsync: mutation.mutateAsync,
-    loading: mutation.isPending,
-    isSuccess: mutation.isSuccess,
-    isError: mutation.isError,
-    error: mutation.error,
-    data: mutation.data,
-  };
+  );
 }
 
 /**
