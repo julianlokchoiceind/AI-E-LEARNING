@@ -15,7 +15,7 @@ from app.core.exceptions import (
     ForbiddenException,
     BadRequestException
 )
-from app.core.performance import measure_performance, timed_lru_cache, invalidate_cache_for_course
+from app.core.performance import measure_performance
 import logging
 
 logger = logging.getLogger(__name__)
@@ -180,9 +180,6 @@ class CourseService:
                 # Refresh the course object from database to ensure we have the latest data
                 course = await Course.get(course.id)
                 logger.info(f"Course refreshed from DB - title is now: {course.title}")
-                
-                # Invalidate cache for this course
-                invalidate_cache_for_course(str(course.id))
                 
                 logger.info("Course updated successfully!")
             return course

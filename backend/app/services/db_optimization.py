@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from beanie import Document
 import logging
 
-from app.core.performance import measure_performance, timed_lru_cache
+from app.core.performance import measure_performance
 from app.models.course import Course
 from app.models.user import User
 from app.models.enrollment import Enrollment
@@ -233,9 +233,9 @@ class DatabaseOptimizer:
             return courses[0] if courses else None
         return None
     
-    @timed_lru_cache(seconds=300, maxsize=100)
     def get_cached_course_stats(self, course_id: str) -> Dict[str, Any]:
         """Get cached course statistics"""
+        # TODO: Implement actual statistics from database
         # This would be populated by a background job
         return {
             "total_enrollments": 0,

@@ -100,13 +100,15 @@ async def clear_cache(
 ) -> StandardResponse[Dict[str, str]]:
     """
     Clear all cached data (admin only)
+    
+    Note: Currently no cache is implemented in the backend.
+    This endpoint is kept for future use if caching is added.
     """
-    from app.core.performance import response_cache
-    response_cache.clear()
+    # No cache to clear - backend is cache-free
     
     return StandardResponse(
         success=True,
-        message="Cache cleared successfully",
+        message="No cache to clear (backend is cache-free)",
         data={
             "status": "completed",
             "timestamp": datetime.utcnow().isoformat()

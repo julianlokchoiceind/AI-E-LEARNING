@@ -2,11 +2,10 @@
 Performance optimization utilities
 """
 
-from functools import lru_cache, wraps
-from typing import Callable, Any, Optional
+from functools import wraps
+from typing import Callable, Optional
 import time
 import asyncio
-from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
@@ -98,37 +97,6 @@ def measure_performance(name: Optional[str] = None):
     return decorator
 
 
-def timed_lru_cache(seconds: int = 300, maxsize: int = 128):
-    """LRU cache with time-based expiration"""
-    def decorator(func):
-        func = lru_cache(maxsize=maxsize)(func)
-        func.cache_time = {}
-        
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            # Create cache key
-            key = str(args) + str(kwargs)
-            
-            # Check if cache is expired
-            if key in func.cache_time:
-                if datetime.now() - func.cache_time[key] > timedelta(seconds=seconds):
-                    # Cache expired, clear it
-                    func.cache_clear()
-                    func.cache_time.clear()
-            
-            # Get result
-            result = func(*args, **kwargs)
-            func.cache_time[key] = datetime.now()
-            
-            return result
-        
-        wrapper.cache_clear = func.cache_clear
-        wrapper.cache_info = func.cache_info
-        
-        return wrapper
-    return decorator
-
-
 class QueryOptimizer:
     """Database query optimization utilities"""
     
@@ -212,78 +180,3 @@ class ConnectionPool:
         while not self.available.empty():
             conn = await self.available.get()
             await conn.close()
-
-
-# Response caching for frequently accessed data
-class ResponseCache:
-    """Cache API responses for performance"""
-    
-    def __init__(self):
-        self.cache = {}
-        self.ttl = {}
-    
-    def get(self, key: str) -> Optional[Any]:
-        """Get cached response"""
-        if key in self.cache:
-            if datetime.now() < self.ttl[key]:
-                return self.cache[key]
-            else:
-                # Expired
-                del self.cache[key]
-                del self.ttl[key]
-        return None
-    
-    def set(self, key: str, value: Any, ttl_seconds: int = 300):
-        """Set cached response with TTL"""
-        self.cache[key] = value
-        self.ttl[key] = datetime.now() + timedelta(seconds=ttl_seconds)
-    
-    def clear(self):
-        """Clear all cache"""
-        self.cache.clear()
-        self.ttl.clear()
-
-
-# Global response cache instance
-response_cache = ResponseCache()
-
-
-def invalidate_cache_for_course(course_id: str):
-    """Invalidate cache entries for a specific course"""
-    keys_to_remove = []
-    for key in list(response_cache.cache.keys()):
-        if course_id in key:
-            keys_to_remove.append(key)
-    
-    for key in keys_to_remove:
-        if key in response_cache.cache:
-            del response_cache.cache[key]
-        if key in response_cache.ttl:
-            del response_cache.ttl[key]
-    
-    logger.info(f"Invalidated {len(keys_to_remove)} cache entries for course {course_id}")
-
-
-def cache_response(ttl_seconds: int = 300, invalidate_on_update: bool = True):
-    """Decorator to cache API responses with automatic invalidation"""
-    def decorator(func: Callable) -> Callable:
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            # Create cache key from function name and arguments
-            cache_key = f"{func.__name__}:{str(args)}:{str(kwargs)}"
-            
-            # Check cache
-            cached = response_cache.get(cache_key)
-            if cached is not None:
-                return cached
-            
-            # Get fresh result
-            result = await func(*args, **kwargs)
-            
-            # Cache result
-            response_cache.set(cache_key, result, ttl_seconds)
-            
-            return result
-        
-        return wrapper
-    return decorator

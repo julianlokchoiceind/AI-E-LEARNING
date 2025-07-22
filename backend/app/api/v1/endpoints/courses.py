@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.core.database import db
 from app.core.deps import get_current_user, get_current_optional_user
 from app.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
-from app.core.performance import cache_response, measure_performance, response_cache
+from app.core.performance import measure_performance
 from app.models.course import CourseCategory, CourseLevel, CourseStatus
 from app.models.user import User
 from app.schemas.analytics import CourseAnalytics, CreatorAnalytics
@@ -52,10 +52,6 @@ async def create_course(
     try:
         result = await CourseService.create_course(current_user)
         
-        # Clear all course-related caches to ensure new course appears immediately
-        response_cache.clear()
-        logger.info(f"Cleared all caches after creating course")
-        
         return StandardResponse(
             success=True,
             data=result,  # Return Pydantic model directly, let FastAPI handle serialization
@@ -69,7 +65,6 @@ async def create_course(
 
 @router.get("", response_model=StandardResponse[CourseListResponse])
 @measure_performance("api.courses.list")
-@cache_response(ttl_seconds=30)   # Cache for 30 seconds - sync với frontend
 async def list_courses(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -156,7 +151,6 @@ async def list_courses(
 
 @router.get("/{course_id}", response_model=StandardResponse[CourseResponse])
 @measure_performance("api.courses.get")
-@cache_response(ttl_seconds=30)  # 30 seconds cache - sync với frontend
 async def get_course(
     course_id: str,
     current_user: Optional[User] = Depends(get_current_optional_user)
@@ -235,10 +229,6 @@ async def update_course(
         # TODO: Add progress percentage when Progress model is implemented
         course_dict["progress_percentage"] = 0
         
-        # Clear all course-related caches to ensure updates appear immediately
-        response_cache.clear()
-        logger.info(f"Cleared all caches after updating course {course_id}")
-        
         return StandardResponse(
             success=True,
             data=CourseResponse(**course_dict),
@@ -266,10 +256,6 @@ async def delete_course(
     """
     try:
         result = await CourseService.delete_course(course_id, current_user)
-        
-        # Clear all course-related caches to ensure deleted course disappears immediately
-        response_cache.clear()
-        logger.info(f"Cleared all caches after deleting course {course_id}")
         
         return StandardResponse(
             success=True,
