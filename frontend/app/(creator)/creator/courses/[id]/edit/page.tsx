@@ -740,12 +740,10 @@ const CourseBuilderPage = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="draft">Draft</option>
-                        <option value="review">Ready for Review</option>
-                        <option value="published">Published</option>
-                        <option value="archived">Archived</option>
+                        <option value="review">Submit for Admin Review</option>
                       </select>
                       <p className="mt-1 text-sm text-gray-500">
-                        Only published courses are visible to students
+                        Submit for review when ready. Admin approval required for publishing.
                       </p>
                     </div>
 

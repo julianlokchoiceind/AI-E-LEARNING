@@ -80,6 +80,8 @@ export default function CourseApproval() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedCourseForDelete, setSelectedCourseForDelete] = useState<CourseDeleteData | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [selectedCourses, setSelectedCourses] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const router = useRouter();
   
   // React Query hooks for data fetching and mutations with server-side pagination
@@ -114,11 +116,11 @@ export default function CourseApproval() {
   // Combined loading state for actions
   const actionLoading = approveLoading || rejectLoading || toggleLoading || deleteLoading || createLoading;
   
-  // Extract courses and pagination data from response
-  const typedCoursesData = coursesData as StandardResponse<{ courses: any[], pagination: any }> | null;
+  // Extract courses and pagination data from response (consistent with API structure)
+  const typedCoursesData = coursesData as StandardResponse<{ courses: any[], total: number, page: number, per_page: number, total_pages: number }> | null;
   const courses = typedCoursesData?.data?.courses || [];
-  const totalItems = typedCoursesData?.data?.pagination?.total_count || 0;
-  const totalPages = typedCoursesData?.data?.pagination?.total_pages || 1;
+  const totalItems = typedCoursesData?.data?.total || 0;
+  const totalPages = typedCoursesData?.data?.total_pages || 1;
 
   // Extract statistics for Dashboard Quick Stats
   const typedStatisticsData = statisticsData as StandardResponse<any> | null;
@@ -208,6 +210,59 @@ export default function CourseApproval() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedCourses.size === courses.length) {
+      setSelectedCourses(new Set());
+    } else {
+      setSelectedCourses(new Set(courses.map((c: Course) => c.id || '')));
+    }
+  };
+
+  const handleSelectCourse = (courseId: string) => {
+    const newSelected = new Set(selectedCourses);
+    if (newSelected.has(courseId)) {
+      newSelected.delete(courseId);
+    } else {
+      newSelected.add(courseId);
+    }
+    setSelectedCourses(newSelected);
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedCourses.size === 0) return;
+    setShowBulkDeleteModal(true);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    // Store the courses to delete
+    const coursesToDelete = Array.from(selectedCourses);
+    
+    // Delete all selected courses sequentially to avoid overwhelming the server
+    for (const courseId of coursesToDelete) {
+      await new Promise<void>((resolve) => {
+        deleteCourseAction(courseId, {
+          onSuccess: () => {
+            // Remove from selected set immediately after successful deletion
+            setSelectedCourses(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(courseId);
+              return newSet;
+            });
+            resolve();
+          },
+          onError: () => {
+            console.error(`Failed to delete course ${courseId}`);
+            resolve(); // Continue even if one fails
+          }
+        });
+      });
+    }
+    
+    // Close modal after all operations complete
+    setShowBulkDeleteModal(false);
+    // React Query will auto-refetch due to cache invalidation
   };
 
   const getStatusBadge = (status: string) => {
@@ -372,6 +427,33 @@ export default function CourseApproval() {
             Clear Filters
           </Button>
         </div>
+
+        {/* Bulk Actions */}
+        {selectedCourses.size > 0 && (
+          <div className="mt-4 flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+            <span className="text-blue-700">
+              {selectedCourses.size} course{selectedCourses.size > 1 ? 's' : ''} selected
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedCourses(new Set())}
+              >
+                Clear
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBulkDelete}
+                className="text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Selected
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Courses Table */}
@@ -412,6 +494,14 @@ export default function CourseApproval() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedCourses.size === courses.length && courses.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded"
+                    />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Course
                   </th>
@@ -435,6 +525,14 @@ export default function CourseApproval() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredCourses.map((course: Course) => (
                   <tr key={course.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedCourses.has(course.id || '')}
+                        onChange={() => handleSelectCourse(course.id || '')}
+                        className="rounded"
+                      />
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         {course.thumbnail ? (
@@ -743,6 +841,68 @@ export default function CourseApproval() {
         course={selectedCourseForDelete}
         onConfirmDelete={handleConfirmDeleteCourse}
       />
+
+      {/* Bulk Delete Modal */}
+      {showBulkDeleteModal && (
+        <Modal
+          isOpen={showBulkDeleteModal}
+          onClose={() => setShowBulkDeleteModal(false)}
+          title="Delete Multiple Courses"
+          size="md"
+        >
+          <div className="space-y-6">
+            {/* Warning Icon & Message */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Confirm Bulk Deletion
+                </h3>
+                <p className="text-gray-600">
+                  You are about to permanently delete {selectedCourses.size} course{selectedCourses.size > 1 ? 's' : ''}. 
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            {/* Warning Details */}
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                <h4 className="font-medium text-yellow-800">Warning</h4>
+              </div>
+              <p className="text-sm text-yellow-700">
+                All course content, chapters, lessons, and student progress for these courses will be permanently deleted.
+                This includes all enrollments, reviews, and associated data.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowBulkDeleteModal(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleConfirmBulkDelete}
+                loading={deleteLoading}
+                className="flex-1"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete {selectedCourses.size} Course{selectedCourses.size > 1 ? 's' : ''}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

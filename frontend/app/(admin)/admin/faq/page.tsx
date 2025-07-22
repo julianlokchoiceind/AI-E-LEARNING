@@ -25,6 +25,7 @@ import {
 } from '@/hooks/queries/useFAQ';
 import { FAQ, FAQCreateData, FAQUpdateData } from '@/lib/api/faq';
 import { FAQ_CATEGORIES } from '@/lib/types/faq';
+import DeleteFAQModal, { FAQDeleteData } from '@/components/feature/DeleteFAQModal';
 
 export default function AdminFAQPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +33,12 @@ export default function AdminFAQPage() {
   const [selectedFaqs, setSelectedFaqs] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
+  
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [faqToDelete, setFaqToDelete] = useState<FAQDeleteData | null>(null);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  
   const [formData, setFormData] = useState<FAQCreateData>({
     question: '',
     answer: '',
@@ -90,12 +97,23 @@ export default function AdminFAQPage() {
     }
   };
 
-  const handleDelete = async (faqId: string) => {
-    if (!confirm('Are you sure you want to delete this FAQ?')) return;
+  const handleDelete = (faq: any) => {
+    // Prepare FAQ data for the modal
+    setFaqToDelete({
+      id: faq.id,
+      question: faq.question,
+      answer: faq.answer,
+      category: faq.category
+    });
+    setIsDeleteModalOpen(true);
+  };
 
+  const handleConfirmDeleteFAQ = async (faqId: string) => {
     deleteFAQMutation(faqId, {
       onSuccess: (response) => {
         // React Query will automatically invalidate and refetch FAQs
+        setIsDeleteModalOpen(false);
+        setFaqToDelete(null);
       }
     });
   };
@@ -106,15 +124,25 @@ export default function AdminFAQPage() {
       return;
     }
 
-    const confirmMessage = action === 'delete' 
-      ? `Are you sure you want to delete ${selectedFaqs.size} FAQs?`
-      : `Are you sure you want to ${action} ${selectedFaqs.size} FAQs?`;
+    if (action === 'delete') {
+      // Open bulk delete modal for delete action
+      setIsBulkDeleteModalOpen(true);
+    } else {
+      // For publish/unpublish, execute directly
+      bulkActionMutation({ action, faqIds: Array.from(selectedFaqs) }, {
+        onSuccess: (response) => {
+          setSelectedFaqs(new Set());
+          // React Query will automatically invalidate and refetch FAQs
+        }
+      });
+    }
+  };
 
-    if (!confirm(confirmMessage)) return;
-
-    bulkActionMutation({ action, faqIds: Array.from(selectedFaqs) }, {
+  const handleConfirmBulkDelete = async () => {
+    bulkActionMutation({ action: 'delete', faqIds: Array.from(selectedFaqs) }, {
       onSuccess: (response) => {
         setSelectedFaqs(new Set());
+        setIsBulkDeleteModalOpen(false);
         // React Query will automatically invalidate and refetch FAQs
       }
     });
@@ -358,7 +386,7 @@ export default function AdminFAQPage() {
                               size="sm"
                               variant="ghost"
                               className="text-red-600 hover:bg-red-50"
-                              onClick={() => handleDelete(faq.id)}
+                              onClick={() => handleDelete(faq)}
                               loading={deleteLoading}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -492,6 +520,79 @@ export default function AdminFAQPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Delete FAQ Modal */}
+      <DeleteFAQModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setFaqToDelete(null);
+        }}
+        faq={faqToDelete}
+        onConfirmDelete={handleConfirmDeleteFAQ}
+      />
+
+      {/* Bulk Delete Modal */}
+      {isBulkDeleteModalOpen && (
+        <Modal
+          isOpen={isBulkDeleteModalOpen}
+          onClose={() => setIsBulkDeleteModalOpen(false)}
+          title="Delete Multiple FAQs"
+          size="md"
+        >
+          <div className="space-y-6">
+            {/* Warning Icon & Message */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Confirm Bulk Deletion
+                </h3>
+                <p className="text-gray-600">
+                  You are about to permanently delete {selectedFaqs.size} FAQ{selectedFaqs.size > 1 ? 's' : ''}. 
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            {/* Selected FAQs Info */}
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                <h4 className="font-medium text-yellow-800">Warning</h4>
+              </div>
+              <p className="text-sm text-yellow-700">
+                All selected FAQs and their associated data will be permanently deleted. 
+                This includes view counts, helpful votes, and any related links.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsBulkDeleteModalOpen(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleConfirmBulkDelete}
+                loading={bulkLoading}
+                className="flex-1"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete {selectedFaqs.size} FAQ{selectedFaqs.size > 1 ? 's' : ''}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

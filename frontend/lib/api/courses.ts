@@ -43,6 +43,14 @@ interface CoursesListData {
   total_pages: number;
 }
 
+export interface CreatorCoursesFilters {
+  search?: string;
+  status?: string;
+  category?: string;
+  page?: number;
+  per_page?: number;
+}
+
 export interface CourseDetailData extends CourseResponse {
   syllabus: string[];
   prerequisites: string[];
@@ -62,6 +70,24 @@ interface CreateCourseData {
 export const getCourses = async (queryParams?: string): Promise<StandardResponse<CoursesListData>> => {
   const url = queryParams ? `/courses?${queryParams}` : '/courses';
   return api.get<StandardResponse<CoursesListData>>(url);
+};
+
+// Get creator courses with pagination and filters
+export const getCreatorCourses = async (params?: CreatorCoursesFilters): Promise<StandardResponse<CoursesListData>> => {
+  const queryParams = new URLSearchParams();
+  
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, String(value));
+      }
+    });
+  }
+  
+  const queryString = queryParams.toString();
+  const url = queryString ? `/courses?${queryString}` : '/courses';
+  
+  return api.get<StandardResponse<CoursesListData>>(url, { requireAuth: true });
 };
 
 // Get course details

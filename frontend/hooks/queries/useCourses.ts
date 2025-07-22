@@ -5,7 +5,8 @@ import { useApiMutation } from '@/hooks/useApiMutation';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { getCacheConfig } from '@/lib/constants/cache-config';
 import { 
-  getCourses, 
+  getCourses,
+  getCreatorCourses, 
   getCourseById, 
   createCourse, 
   updateCourse, 
@@ -88,12 +89,6 @@ export function useCoursesQuery(filters: CoursesFilters = {}) {
     ['courses', { search, category, level, pricing, sort, page, limit }],
     () => {
       const queryString = buildQueryString();
-      console.log('🔧 [CACHE DEBUG] useCoursesQuery fetching:', {
-        filters: { search, category, level, pricing, sort, page, limit },
-        queryString,
-        url: `/courses?${queryString}`,
-        timestamp: new Date().toISOString()
-      });
       return getCourses(queryString);
     },
     getCacheConfig('COURSE_CATALOG') // 30s fresh - public browsing with admin→public sync
@@ -152,7 +147,11 @@ export function useCreateCourse() {
         onMutate: async () => {
           // Cancel any outgoing refetches
           await queryClient.cancelQueries({ 
-            predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-courses'
+            predicate: (query) => {
+              if (!Array.isArray(query.queryKey)) return false;
+              const key = query.queryKey[0];
+              return key === 'admin-courses' || key === 'creator-courses' || key === 'courses';
+            }
           });
           
           // Snapshot previous values
@@ -186,30 +185,77 @@ export function useCreateCourse() {
             thumbnail: null
           };
           
-          // Optimistically add new course to admin courses (at the top)
-          queryClient.setQueryData(['admin-courses'], (old: any) => {
-            if (!old) return old;
-            
-            const courses = old?.data?.courses || old?.courses || [];
-            const updatedCourses = [tempCourse, ...courses];
-            
-            // Maintain same structure
-            if (old?.data?.courses) {
+          // Optimistically update ALL admin-courses queries (including paginated ones)
+          const adminCacheKeys = queryClient.getQueryCache().findAll({
+            predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-courses'
+          });
+          
+          adminCacheKeys.forEach(cache => {
+            queryClient.setQueryData(cache.queryKey, (old: any) => {
+              if (!old) return old;
+              
+              const courses = old?.data?.courses || old?.courses || [];
+              const updatedCourses = [tempCourse, ...courses];
+              
+              // Maintain same structure
+              if (old?.data?.courses) {
+                return {
+                  ...old,
+                  data: {
+                    ...old.data,
+                    courses: updatedCourses,
+                    total: (old.data.total || 0) + 1,
+                    // Keep other pagination fields
+                    page: old.data.page,
+                    per_page: old.data.per_page,
+                    total_pages: old.data.total_pages
+                  }
+                };
+              }
+              
               return {
                 ...old,
-                data: {
-                  ...old.data,
-                  courses: updatedCourses,
-                  total: updatedCourses.length
-                }
+                courses: updatedCourses,
+                total: (old.total || 0) + 1
               };
-            }
-            
-            return {
-              ...old,
-              courses: updatedCourses,
-              total: updatedCourses.length
-            };
+            });
+          });
+          
+          // CRITICAL: Update ALL creator-courses queries (including paginated ones)
+          const creatorCacheKeys = queryClient.getQueryCache().findAll({
+            predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'creator-courses'
+          });
+          
+          creatorCacheKeys.forEach(cache => {
+            queryClient.setQueryData(cache.queryKey, (old: any) => {
+              if (!old) return old;
+              
+              
+              const courses = old?.data?.courses || old?.courses || [];
+              const updatedCourses = [tempCourse, ...courses];
+              
+              // Maintain same structure
+              if (old?.data?.courses) {
+                return {
+                  ...old,
+                  data: {
+                    ...old.data,
+                    courses: updatedCourses,
+                    total: (old.data.total || 0) + 1,
+                    // Keep other pagination fields
+                    page: old.data.page,
+                    per_page: old.data.per_page,
+                    total_pages: old.data.total_pages
+                  }
+                };
+              }
+              
+              return {
+                ...old,
+                courses: updatedCourses,
+                total: (old.total || 0) + 1
+              };
+            });
           });
           
           return { 
@@ -236,12 +282,28 @@ export function useCreateCourse() {
         
         // Always refetch to ensure consistency and get real course data
         onSettled: () => {
+          // AGGRESSIVE CACHE CLEAR - Remove all stale data and force refetch
+          
+          // Remove ALL creator-courses queries to prevent stale data
+          queryClient.removeQueries({ 
+            predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'creator-courses'
+          });
+          
+          // Remove ALL admin-courses queries
+          queryClient.removeQueries({ 
+            predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-courses'
+          });
+          
+          // Then invalidate to trigger refetch
           queryClient.invalidateQueries({ 
-            queryKey: ['admin-courses'],
+            predicate: (query) => {
+              if (!Array.isArray(query.queryKey)) return false;
+              const key = query.queryKey[0];
+              return key === 'admin-courses' || key === 'creator-courses' || key === 'courses';
+            },
             refetchType: 'active'
           });
-          queryClient.invalidateQueries({ queryKey: ['courses'] });
-          queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
+          
         }
       }
     }
@@ -314,12 +376,6 @@ export function useDeleteCourse() {
           queryKey: ['course', variables],
           exact: true 
         });
-        
-        // Invalidate list queries
-        await queryClient.invalidateQueries({ queryKey: ['courses'] });
-        await queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
-        await queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
-        await queryClient.invalidateQueries({ queryKey: ['creator-dashboard'] });
       }
     }
   );
@@ -1063,16 +1119,73 @@ export function useDeleteCourseOptimistic() {
           });
         });
         
+        // CRITICAL: Also update ALL creator-courses queries (for Creator Dashboard)
+        await queryClient.cancelQueries({ 
+          predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'creator-courses'
+        });
+        
+        // Get all creator-courses cache keys
+        const creatorCacheKeys = queryClient.getQueryCache().findAll({
+          predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'creator-courses'
+        });
+        
+        
+        // Store snapshots for all creator-courses caches
+        const previousCreatorData = creatorCacheKeys.map(cache => ({
+          queryKey: cache.queryKey,
+          data: cache.state.data
+        }));
+        
+        // Optimistically update all creator-courses queries
+        creatorCacheKeys.forEach(cache => {
+          queryClient.setQueryData(cache.queryKey, (old: any) => {
+            if (!old) return old;
+            
+            // Handle different data structures (same as admin)
+            const courses = old?.data?.courses || old?.courses || [];
+            const filteredCourses = courses.filter((course: any) => course.id !== courseId);
+            
+            // Maintain same structure
+            if (old?.data?.courses) {
+              return {
+                ...old,
+                data: {
+                  ...old.data,
+                  courses: filteredCourses,
+                  total: filteredCourses.length,
+                  // Keep other pagination fields
+                  page: old.data.page,
+                  per_page: old.data.per_page,
+                  total_pages: old.data.total_pages
+                }
+              };
+            }
+            
+            return {
+              ...old,
+              courses: filteredCourses,
+              total: filteredCourses.length
+            };
+          });
+        });
+        
         // Return context with previous data for potential rollback
-        return { previousData, courseId };
+        return { previousData, previousCreatorData, courseId };
       },
       
-      // On error: rollback optimistic update for all admin-courses queries
+      // On error: rollback optimistic update for all queries
       onError: (error: any, courseId: string, context: any) => {
         
         // Restore all admin-courses cache snapshots
         if (context?.previousData) {
           context.previousData.forEach(({ queryKey, data }: { queryKey: any; data: any }) => {
+            queryClient.setQueryData(queryKey, data);
+          });
+        }
+        
+        // Restore all creator-courses cache snapshots
+        if (context?.previousCreatorData) {
+          context.previousCreatorData.forEach(({ queryKey, data }: { queryKey: any; data: any }) => {
             queryClient.setQueryData(queryKey, data);
           });
         }
@@ -1088,14 +1201,29 @@ export function useDeleteCourseOptimistic() {
       // Always refetch to ensure data consistency after mutation settles
       onSettled: async (data: any, error: any, courseId: string) => {
         
-        // Invalidate admin courses to ensure fresh data
-        // Only invalidate active queries to avoid unnecessary network requests
-        await queryClient.invalidateQueries({ 
-          queryKey: ['admin-courses'],
-          refetchType: 'active' // Only refetch currently active queries
+        // AGGRESSIVE CACHE INVALIDATION - Force remove and refetch all related queries
+        
+        // Remove ALL admin-courses queries from cache completely
+        queryClient.removeQueries({ 
+          predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'admin-courses'
         });
         
-        // Also invalidate public caches so deleted course disappears from public view
+        // Remove ALL creator-courses queries from cache completely  
+        queryClient.removeQueries({ 
+          predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === 'creator-courses'
+        });
+        
+        // Then invalidate to trigger refetch for active queries
+        await queryClient.invalidateQueries({ 
+          predicate: (query) => {
+            if (!Array.isArray(query.queryKey)) return false;
+            const key = query.queryKey[0];
+            return key === 'admin-courses' || key === 'creator-courses';
+          },
+          refetchType: 'active'
+        });
+        
+        // Also invalidate public caches
         await queryClient.invalidateQueries({ queryKey: ['courses'] });
         await queryClient.invalidateQueries({ queryKey: ['course'] });
         await queryClient.invalidateQueries({ queryKey: ['featured-courses'] });
@@ -1853,14 +1981,29 @@ export function useCreatorDashboardQuery(enabled: boolean = true) {
 /**
  * Hook for creator's course list
  */
-export function useCreatorCoursesQuery(enabled: boolean = true) {
+export function useCreatorCoursesQuery(
+  filters: {
+    search?: string;
+    status?: string;
+    category?: string;
+    page?: number;
+    per_page?: number;
+  } = {},
+  enabled: boolean = true
+) {
+  const { search = '', status = '', category = '', page = 1, per_page = 20 } = filters;
+  
+  // Always include pagination in query key for proper caching
+  const queryKey = ['creator-courses', { search, status, category, page, per_page }];
+  
   return useApiQuery(
-    ['creator-courses'],
-    () => api.get('/courses', { requireAuth: true }),
+    queryKey,
+    () => getCreatorCourses({ search, status, category, page, per_page }),
     {
       enabled: enabled,
       showToast: false, // Disable automatic error toasts - handled manually in component
-      ...getCacheConfig('CONTENT_CREATION') // Realtime - CRUD operations need immediate updates
+      ...getCacheConfig('CONTENT_CREATION'), // Realtime - CRUD operations need immediate updates
+      keepPreviousData: true, // Smooth pagination transitions
     }
   );
 }

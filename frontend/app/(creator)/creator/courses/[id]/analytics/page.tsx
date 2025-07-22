@@ -260,46 +260,50 @@ const CourseAnalyticsPage = () => {
 
         {/* Analytics Visualizations */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          <Card>
-            <AnalyticsChart
-              title="Daily Enrollments (Last 7 Days)"
-              type="line"
-              data={[
-                { label: 'Mon', value: Math.floor(Math.random() * 10) + 1 },
-                { label: 'Tue', value: Math.floor(Math.random() * 10) + 1 },
-                { label: 'Wed', value: Math.floor(Math.random() * 10) + 1 },
-                { label: 'Thu', value: Math.floor(Math.random() * 10) + 1 },
-                { label: 'Fri', value: Math.floor(Math.random() * 10) + 1 },
-                { label: 'Sat', value: Math.floor(Math.random() * 10) + 1 },
-                { label: 'Sun', value: Math.floor(Math.random() * 10) + 1 }
-              ]}
-              height={250}
-            />
-          </Card>
+          {/* Enrollment Trends - Only show if real data exists */}
+          {analytics.enrollment_trends?.length > 0 && (
+            <Card>
+              <AnalyticsChart
+                title="Enrollment Trends"
+                type="line"
+                data={analytics.enrollment_trends.map((item: any) => ({
+                  name: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  value: item.enrollments
+                }))}
+                height={250}
+              />
+            </Card>
+          )}
 
-          <Card>
-            <AnalyticsChart
-              title="Student Progress Distribution"
-              type="pie"
-              data={[
-                {
-                  label: 'Completed',
-                  value: analytics.completed_students || 0,
-                  color: '#10B981'
-                },
-                {
-                  label: 'In Progress',
-                  value: (analytics.active_students || 0) - (analytics.completed_students || 0),
-                  color: '#F59E0B'
-                },
-                {
-                  label: 'Not Started',
-                  value: (analytics.total_enrollments || 0) - (analytics.active_students || 0),
-                  color: '#6B7280'
-                }
-              ]}
-            />
-          </Card>
+          {/* Student Progress Distribution - Only show if we have enrollments */}
+          {analytics.total_enrollments > 0 && (
+            <Card>
+              <AnalyticsChart
+                title="Student Progress Distribution"
+                type="pie"
+                data={[
+                  {
+                    name: 'Completed',
+                    label: 'Completed',
+                    value: analytics.completed_students || 0,
+                    color: '#10B981'
+                  },
+                  {
+                    name: 'In Progress',
+                    label: 'In Progress',
+                    value: (analytics.active_students || 0) - (analytics.completed_students || 0),
+                    color: '#F59E0B'
+                  },
+                  {
+                    name: 'Not Started',
+                    label: 'Not Started',
+                    value: (analytics.total_enrollments || 0) - (analytics.active_students || 0),
+                    color: '#6B7280'
+                  }
+                ]}
+              />
+            </Card>
+          )}
         </div>
       </div>
     </div>

@@ -129,7 +129,10 @@ export function useApiMutation<TData = any, TVariables = any>(
           : invalidateQueries;
           
         queriesToInvalidate.forEach(queryKey => {
-          queryClient.invalidateQueries({ queryKey });
+          queryClient.invalidateQueries({ 
+            queryKey,
+            refetchType: 'active' // Force immediate refetch for active queries
+          });
         });
       }
       
