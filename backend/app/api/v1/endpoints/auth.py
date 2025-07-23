@@ -372,24 +372,35 @@ async def oauth_login(request: Request, oauth_data: OAuthUserCreate) -> Standard
     user = await db.users.find_one({"email": oauth_data.email})
     
     if not user:
-        # Create new OAuth user
-        user_doc = {
-            "email": oauth_data.email,
-            "name": oauth_data.name,
-            "password": None,  # OAuth users don't have passwords
-            "role": "student",
-            "premium_status": False,
-            "is_verified": True,  # OAuth users are pre-verified
-            "oauth_provider": oauth_data.provider,
-            "oauth_provider_id": oauth_data.provider_id,
-            "profile_picture": oauth_data.picture,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
-        }
+        # Create new OAuth user using Beanie model
+        from app.models.user import User
         
-        # Save to MongoDB
-        result = await db.users.insert_one(user_doc)
-        user_doc["_id"] = result.inserted_id
+        new_user = User(
+            email=oauth_data.email,
+            name=oauth_data.name,
+            password="",  # Empty string instead of None
+            role="student",
+            premium_status=False,
+            is_verified=True  # OAuth users are pre-verified
+        )
+        
+        # Save using Beanie
+        await new_user.insert()
+        
+        # Update with OAuth-specific fields
+        await db.users.update_one(
+            {"_id": new_user.id},
+            {
+                "$set": {
+                    "oauth_provider": oauth_data.provider,
+                    "oauth_provider_id": oauth_data.provider_id,
+                    "profile_picture": oauth_data.picture
+                }
+            }
+        )
+        
+        # Get user doc for token creation
+        user_doc = await db.users.find_one({"_id": new_user.id})
         
         logger.info(f"New OAuth user created: {oauth_data.email} via {oauth_data.provider}")
         
@@ -430,14 +441,14 @@ async def oauth_login(request: Request, oauth_data: OAuthUserCreate) -> Standard
     # Create tokens
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        subject=str(user["_id"]), 
+        subject=str(user_doc["_id"]), 
         expires_delta=access_token_expires,
-        email=user.get("email", ""),
-        name=user.get("name", user.get("email", "").split("@")[0]),
-        role=user.get("role", "student"),
-        premium_status=user.get("premium_status", False)
+        email=user_doc.get("email", ""),
+        name=user_doc.get("name", user_doc.get("email", "").split("@")[0]),
+        role=user_doc.get("role", "student"),
+        premium_status=user_doc.get("premium_status", False)
     )
-    refresh_token = create_refresh_jwt(subject=str(user["_id"]))
+    refresh_token = create_refresh_jwt(subject=str(user_doc["_id"]))
     
     token_data = TokenWithRefresh(
         access_token=access_token,
