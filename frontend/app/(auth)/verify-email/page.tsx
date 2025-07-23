@@ -1,47 +1,46 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useVerifyEmail } from '@/hooks/useAuth'
+import { verifyEmail } from '@/lib/api/auth'
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const token = searchParams.get('token')
-  
-  // React Query hook for email verification
-  const { mutate: verifyEmailMutation, loading, error, data } = useVerifyEmail()
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
+  const [message, setMessage] = useState('')
   
   useEffect(() => {
+    const token = searchParams.get('token')
+    
     if (!token) {
+      setStatus('error')
+      setMessage('Invalid verification link. No token provided.')
       return
     }
     
-    // Verify email using React Query mutation
-    verifyEmailMutation(token, {
-      onSuccess: (response) => {
+    // Verify email with backend
+    verifyEmail(token)
+      .then((response) => {
+        setStatus('success')
+        setMessage(response.message || 'Email verified successfully!')
         // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push('/login?verified=true')
         }, 3000)
-      },
-      onError: (error: any) => {
+      })
+      .catch((error) => {
+        setStatus('error')
+        setMessage(error.message || 'Email verification failed. Please try again.')
         // If the link was already used, show login button
         if (error.message?.includes('already been used')) {
           setTimeout(() => {
             router.push('/login?message=already_verified')
           }, 5000)
         }
-      }
-    })
-  }, [token, verifyEmailMutation, router])
-  
-  // Determine status based on React Query states
-  const status = !token ? 'error' : loading ? 'loading' : error ? 'error' : data ? 'success' : 'loading'
-  const message = !token 
-    ? 'Invalid verification link. No token provided.'
-    : error?.message || data?.message || 'Email verified successfully!'
+      })
+  }, [searchParams, router])
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

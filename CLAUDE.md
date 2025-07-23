@@ -3789,6 +3789,13 @@ export function useUpdateCourse(silent: boolean = false) {
 - **Solution Applied:** Disabled all timer-based refresh, using JWT callback for proactive token refresh
 - **Current State:** STABLE - Session persists properly without cache clearing
 
+#### **VERIFY-EMAIL SPECIAL CASE (July 2025):**
+- **Issue:** Verify-email page stuck at "Verifying your email..." with 429 Too Many Requests
+- **Root Cause:** React Query mutation with `wrappedMutate` causing infinite loop
+- **Solution:** Removed React Query, using simple Promise-based approach
+- **Key Learning:** Verify-email is a ONE-TIME action, doesn't need React Query features (cache, refetch, invalidation)
+- **Current Implementation:** Direct call to `verifyEmail(token).then().catch()` - Same as initial working version
+
 #### **CURRENT WORKING CONFIGURATION:**
 ```typescript
 // SessionProvider.tsx - DO NOT CHANGE
@@ -3845,6 +3852,11 @@ async session({ session, token }) {
 6. **DO** keep api-client.ts 401 handling as secondary fallback
 
 **Remember:** The current setup works perfectly. Any changes to NextAuth configuration can reintroduce the Chrome session clearing bug.
+
+#### **AUTHENTICATION PAGES PATTERN:**
+- **Login/Register:** Use NextAuth `signIn()` - NO React Query needed
+- **Logout:** Use NextAuth `signOut()` - NO React Query needed  
+- **Verify-email:** Simple Promise `.then().catch()` - NO React Query needed (one-time action)
 
 ### **📊 CURRENT CODEBASE STATE (Updated: Jan 2025)**
 
