@@ -147,7 +147,7 @@ async def get_dashboard_data(
         # Get recent courses (last 5 accessed)
         recent_enrollments = sorted(
             enrollments,
-            key=lambda e: e.progress.last_accessed or e.enrolled_at,
+            key=lambda e: e.last_accessed or e.enrolled_at,
             reverse=True
         )[:5]
         
@@ -161,7 +161,7 @@ async def get_dashboard_data(
                     "title": course.title,
                     "thumbnail": course.thumbnail,
                     "progress": enrollment.progress.completion_percentage,
-                    "last_accessed": enrollment.progress.last_accessed
+                    "last_accessed": enrollment.last_accessed
                 })
         
         # Calculate learning streak (simplified version)
@@ -169,7 +169,7 @@ async def get_dashboard_data(
         current_streak = 0
         if enrollments:
             latest_activity = max(
-                (e.progress.last_accessed or e.enrolled_at for e in enrollments),
+                (e.last_accessed or e.enrolled_at for e in enrollments),
                 default=datetime.utcnow()
             )
             if latest_activity and (datetime.utcnow() - latest_activity) < timedelta(days=1):
@@ -563,7 +563,7 @@ async def get_recent_courses(
         # Sort by last accessed date
         recent_enrollments = sorted(
             enrollments,
-            key=lambda e: e.progress.last_accessed or e.enrolled_at,
+            key=lambda e: e.last_accessed or e.enrolled_at,
             reverse=True
         )[:limit]
         
@@ -577,7 +577,7 @@ async def get_recent_courses(
                     "title": course.title,
                     "thumbnail": course.thumbnail,
                     "progress": enrollment.progress.completion_percentage,
-                    "last_accessed": enrollment.progress.last_accessed,
+                    "last_accessed": enrollment.last_accessed,
                     "enrolled_at": enrollment.enrolled_at,
                     "is_completed": enrollment.progress.is_completed
                 })
@@ -639,9 +639,9 @@ async def get_progress_statistics(
         
         # Get progress records from last 7 days
         for enrollment in enrollments:
-            if enrollment.progress.last_accessed and enrollment.progress.last_accessed > week_ago:
+            if enrollment.last_accessed and enrollment.last_accessed > week_ago:
                 recent_activity.append({
-                    "date": enrollment.progress.last_accessed.date(),
+                    "date": enrollment.last_accessed.date(),
                     "minutes": enrollment.progress.total_watch_time / 60
                 })
         

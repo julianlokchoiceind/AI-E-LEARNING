@@ -709,13 +709,28 @@ class AdminService:
             
             # Hard delete all user-related data
             # Delete user progress records
-            await db.progress.delete_many({"user_id": ObjectId(user_id)})
+            # Note: user_id is stored as string in progress and enrollments collections
+            await db.progress.delete_many({"user_id": user_id})
             
-            # Delete user enrollments
-            await db.enrollments.delete_many({"user_id": ObjectId(user_id)})
+            # Delete user enrollments and update course stats
+            # First find all active enrollments to update course stats
+            user_enrollments = await db.enrollments.find({
+                "user_id": user_id,
+                "is_active": True
+            }).to_list(None)
+            
+            # Update course stats for each enrollment
+            for enrollment in user_enrollments:
+                await db.courses.update_one(
+                    {"_id": ObjectId(enrollment["course_id"])},
+                    {"$inc": {"stats.active_students": -1}}
+                )
+            
+            # Now delete all enrollments
+            await db.enrollments.delete_many({"user_id": user_id})
             
             # Delete user payment records (keep for audit - optional)
-            # await db.payments.delete_many({"user_id": ObjectId(user_id)})
+            # await db.payments.delete_many({"user_id": user_id})
             
             # Delete the user account itself
             result = await db.users.delete_one({"_id": ObjectId(user_id)})
