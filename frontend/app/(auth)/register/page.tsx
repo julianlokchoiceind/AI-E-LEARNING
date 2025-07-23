@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useApiMutation } from '@/hooks/useApiMutation'
 import { registerUser } from '@/lib/api/auth'
@@ -54,9 +53,6 @@ export default function RegisterPage() {
     register(formData)
   }
 
-  const handleSocialSignUp = (provider: string) => {
-    signIn(provider, { callbackUrl: '/dashboard' })
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -172,46 +168,6 @@ export default function RegisterPage() {
             >
               {isLoading ? 'Creating account...' : 'Create account'}
             </button>
-          </div>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">Or sign up with</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => handleSocialSignUp('google')}
-                disabled={isLoading}
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Google
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSocialSignUp('github')}
-                disabled={isLoading}
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                GitHub
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleSocialSignUp('azure-ad')}
-                disabled={isLoading}
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Microsoft
-              </button>
-            </div>
           </div>
         </form>
       </div>
