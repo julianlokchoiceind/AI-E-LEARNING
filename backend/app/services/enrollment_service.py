@@ -74,6 +74,14 @@ class EnrollmentService:
         course.stats.active_students += 1
         await course.save()
         
+        # Update user stats
+        user = await User.get(user_id)
+        if user:
+            if not user.stats:
+                user.stats = {}
+            user.stats["courses_enrolled"] = user.stats.get("courses_enrolled", 0) + 1
+            await user.save()
+        
         return enrollment
     
     async def get_user_enrollments(self, user_id: str) -> List[Enrollment]:

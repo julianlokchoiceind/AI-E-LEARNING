@@ -402,12 +402,42 @@ class CourseService:
                 "Please handle refunds and remove enrollments first."
             )
         
-        # Hard delete: Remove course from database completely
-        logger.info(f"🗑️ DELETE COURSE: Performing hard delete for course {course_id}")
-        await course.delete()
-        logger.info(f"✅ DELETE COURSE: Successfully deleted course {course_id} from database")
+        # Cascade delete: Remove all related data first
+        logger.info(f"🗑️ DELETE COURSE: Starting cascade deletion for course {course_id}")
         
-        return {"message": "Course deleted successfully"}
+        # 1. Delete all quizzes for this course
+        from app.models.quiz import Quiz
+        quiz_count = await Quiz.find({"course_id": str(course.id)}).count()
+        if quiz_count > 0:
+            await Quiz.find({"course_id": str(course.id)}).delete()
+            logger.info(f"🗑️ DELETE COURSE: Deleted {quiz_count} quizzes")
+        
+        # 2. Delete all progress records for this course
+        from app.models.progress import Progress
+        progress_count = await Progress.find({"course_id": str(course.id)}).count()
+        if progress_count > 0:
+            await Progress.find({"course_id": str(course.id)}).delete()
+            logger.info(f"🗑️ DELETE COURSE: Deleted {progress_count} progress records")
+        
+        # 3. Delete all lessons for this course
+        from app.models.lesson import Lesson
+        lesson_count = await Lesson.find({"course_id": str(course.id)}).count()
+        if lesson_count > 0:
+            await Lesson.find({"course_id": str(course.id)}).delete()
+            logger.info(f"🗑️ DELETE COURSE: Deleted {lesson_count} lessons")
+        
+        # 4. Delete all chapters for this course
+        from app.models.chapter import Chapter
+        chapter_count = await Chapter.find({"course_id": str(course.id)}).count()
+        if chapter_count > 0:
+            await Chapter.find({"course_id": str(course.id)}).delete()
+            logger.info(f"🗑️ DELETE COURSE: Deleted {chapter_count} chapters")
+        
+        # 5. Finally, delete the course itself
+        await course.delete()
+        logger.info(f"✅ DELETE COURSE: Successfully deleted course {course_id} and all related data")
+        
+        return {"message": "Course and all related content deleted successfully"}
     
     @staticmethod
     async def update_course_timestamp(course_id: str) -> None:

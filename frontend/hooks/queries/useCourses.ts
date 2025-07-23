@@ -14,7 +14,7 @@ import {
   type CourseDetailData
 } from '@/lib/api/courses';
 import { StandardResponse } from '@/lib/types/api';
-import { enrollInCourse } from '@/lib/api/enrollments';
+import { enrollInCourse, type Enrollment, type EnrollmentCreate } from '@/lib/api/enrollments';
 import { api } from '@/lib/api/api-client';
 import { 
   getAdminCourses, 
@@ -219,20 +219,36 @@ export function useDeleteCourse() {
  * Critical: Primary business action
  */
 export function useEnrollInCourse() {
-  return useApiMutation(
-    ({ courseId, enrollmentData }: { courseId: string; enrollmentData?: any }) => 
+  const queryClient = useQueryClient();
+  
+  return useApiMutation<
+    Enrollment,
+    { courseId: string; enrollmentData?: EnrollmentCreate }
+  >(
+    ({ courseId, enrollmentData }) => 
       enrollInCourse(courseId, enrollmentData),
     {
       operationName: 'enroll-course',
       invalidateQueries: [
         ['my-courses'],       // Refresh student's enrolled courses
         ['student-dashboard'], // Update dashboard stats
-        ['course'],           // Update course enrollment status
         ['enrollment'],       // Update enrollment records
         ['recent-courses'],   // Update recent courses list
         ['admin-courses'],    // Update admin view stats
         ['creator-courses'],  // Update creator dashboard stats
       ],
+      onSuccess: (response, variables) => {
+        // Only invalidate the specific course that was enrolled in
+        queryClient.invalidateQueries({ 
+          queryKey: ['course', variables.courseId],
+          exact: true 
+        });
+        // Also invalidate the specific enrollment query
+        queryClient.invalidateQueries({ 
+          queryKey: ['enrollment', variables.courseId],
+          exact: true 
+        });
+      }
     }
   );
 }
@@ -570,7 +586,7 @@ export function useReorderLessons() {
 export function useCreatorDashboardQuery(enabled: boolean = true) {
   return useApiQuery(
     ['creator-analytics-overview', '30days'],
-    () => api.get('/analytics/creator/overview?time_range=30days', { requireAuth: true }),
+    () => api.get<StandardResponse<any>>('/analytics/creator/overview?time_range=30days', { requireAuth: true }),
     {
       enabled: enabled,
       showToast: false, // Disable automatic error toasts - handled manually in component
