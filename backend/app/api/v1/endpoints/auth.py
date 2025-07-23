@@ -205,6 +205,13 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
                 detail="Please verify your email before logging in"
             )
         
+        # Update last login time
+        logger.info(f"📅 Updating last login time for: {form_data.username}")
+        await db.users.update_one(
+            {"_id": user["_id"]},
+            {"$set": {"last_login": datetime.utcnow()}}
+        )
+        
         # Create access token and refresh token
         logger.info("🔑 Creating tokens...")
         logger.info(f"User data: {user.keys()}")
@@ -412,6 +419,13 @@ async def oauth_login(request: Request, oauth_data: OAuthUserCreate) -> Standard
         )
         user = await db.users.find_one({"_id": user["_id"]})
         user_doc = user  # For consistency in token creation below
+    
+    # Update last login time for OAuth users
+    logger.info(f"📅 Updating last login time for OAuth user: {oauth_data.email}")
+    await db.users.update_one(
+        {"_id": user_doc["_id"]},
+        {"$set": {"last_login": datetime.utcnow()}}
+    )
     
     # Create tokens
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)

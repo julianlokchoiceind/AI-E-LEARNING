@@ -296,7 +296,7 @@ export default function UserManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {user.last_login ? 
-                        new Date(user.last_login).toLocaleDateString() : 
+                        new Date(user.last_login).toLocaleDateString('en-GB') : 
                         'Never'
                       }
                     </td>
