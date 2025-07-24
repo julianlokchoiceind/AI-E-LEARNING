@@ -21,7 +21,7 @@ const CreatorDashboard = () => {
     data: coursesResponse,
     loading: coursesLoading,
     execute: refetchCourses
-  } = useCreatorCoursesQuery(!!user);
+  } = useCreatorCoursesQuery();
   
   const { mutate: createCourse, loading: createLoading } = useCreateCourse();
 
@@ -68,15 +68,16 @@ const CreatorDashboard = () => {
       }));
   }, [courses]);
   
-  // Simplified for real data only
-  const overview = stats || {
-    total_courses: 0,
-    published_courses: 0,
-    draft_courses: 0,
-    total_revenue: 0,
-    total_students: 0,
-    average_rating: 0,
-    total_reviews: 0
+  // Simplified for real data only  
+  const overview = {
+    total_courses: stats?.total_courses || 0,
+    published_courses: stats?.published_courses || 0,
+    draft_courses: stats?.draft_courses || 0,
+    total_revenue: stats?.total_revenue || 0,
+    total_students: stats?.total_students || 0,
+    average_rating: stats?.average_rating || 0,
+    total_reviews: stats?.total_reviews || 0,
+    active_students: undefined as number | undefined
   };
   
   
@@ -177,11 +178,9 @@ const CreatorDashboard = () => {
               <div>
                 <p className="text-sm text-gray-600">Total Revenue</p>
                 <p className="text-2xl font-bold">{formatCurrency(overview.total_revenue || 0)}</p>
-                {overview.monthly_revenue && (
-                  <p className="text-sm text-green-600">
-                    +{formatCurrency(overview.monthly_revenue)} this month
-                  </p>
-                )}
+                <p className="text-sm text-green-600">
+                  All-time earnings
+                </p>
               </div>
               <DollarSign className="w-8 h-8 text-green-500" />
             </div>

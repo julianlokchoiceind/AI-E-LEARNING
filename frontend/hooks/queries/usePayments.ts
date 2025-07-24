@@ -8,7 +8,8 @@ import {
   getPaymentHistory, 
   cancelSubscription,
   createSubscription,
-  createCoursePayment 
+  createCoursePayment,
+  SubscriptionType
 } from '@/lib/api/payments';
 
 /**
@@ -88,7 +89,7 @@ export function useCancelSubscription() {
  */
 export function useCreateSubscription() {
   return useApiMutation(
-    ({ paymentMethodId, subscriptionType }: { paymentMethodId: string; subscriptionType: string }) => 
+    ({ paymentMethodId, subscriptionType }: { paymentMethodId: string; subscriptionType: SubscriptionType }) => 
       createSubscription(paymentMethodId, subscriptionType),
     {
       invalidateQueries: [

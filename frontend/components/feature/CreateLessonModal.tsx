@@ -24,7 +24,7 @@ export interface LessonResponse {
   content?: string;
   resources?: Array<{
     title: string;
-    type: 'pdf' | 'code' | 'link' | 'exercise';
+    type: 'pdf' | 'doc' | 'zip' | 'link' | 'code' | 'exercise' | 'other';
     url: string;
     description?: string;
   }>;
@@ -178,7 +178,19 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
         // Lesson created successfully
         
         if (response.success && response.data) {
-          onLessonCreated(response.data);
+          // Convert Lesson to LessonResponse format
+          const lessonResponse: LessonResponse = {
+            ...response.data,
+            video: response.data.video || undefined,
+            has_quiz: response.data.has_quiz || false,
+            quiz_required: response.data.quiz_required || false,
+            unlock_conditions: {
+              previous_lesson_required: response.data.unlock_conditions?.previous_lesson_required ?? true,
+              quiz_pass_required: response.data.unlock_conditions?.quiz_pass_required ?? false,
+              minimum_watch_percentage: response.data.unlock_conditions?.minimum_watch_percentage ?? 80
+            }
+          };
+          onLessonCreated(lessonResponse);
           // Toast is already shown by useApiMutation with operation ID 'create-lesson'
           
           // Reset form and close modal

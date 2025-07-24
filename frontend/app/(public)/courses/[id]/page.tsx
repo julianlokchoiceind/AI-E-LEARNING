@@ -40,7 +40,7 @@ const CourseDetailPage = () => {
   // Extract data from React Query responses
   const course = courseResponse?.data || null;
   const isEnrolled = userEnrollmentStatus ?? false; // Use dynamic enrollment status
-  const chapters = chaptersResponse?.chapters || [];
+  const chapters = (chaptersResponse?.data?.chapters || []) as (Chapter & { lessons?: Lesson[] })[];
 
   // Combined loading state
   const loading = authLoading || courseLoading || chaptersLoading;
@@ -94,18 +94,6 @@ const CourseDetailPage = () => {
       return;
     }
 
-    // Check if already enrolled first
-    try {
-      const enrollmentCheck = await getCourseEnrollment(courseId);
-      if (enrollmentCheck.success && enrollmentCheck.data) {
-        // Already enrolled - redirect to learning
-        router.push(`/learn/${courseId}`);
-        return;
-      }
-    } catch (error) {
-      // Not enrolled - proceed with enrollment
-    }
-
     // Check if it's a free course or user has access
     if (course?.pricing?.is_free || user.premiumStatus) {
       // Direct enrollment for free access using React Query mutation
@@ -116,6 +104,12 @@ const CourseDetailPage = () => {
           router.push(`/learn/${courseId}`);
         },
         onError: (error: any) => {
+          // If "already enrolled" error → treat as success and redirect
+          if (error.message?.includes('already enrolled')) {
+            ToastService.success('Already enrolled, redirecting...');
+            router.push(`/learn/${courseId}`);
+            return;
+          }
           console.error('Failed to enroll:', error);
           ToastService.error(error.message || 'Something went wrong');
         }

@@ -29,7 +29,8 @@ export interface FAQ {
 }
 
 export interface FAQListResponse {
-  items: FAQ[];
+  items?: FAQ[];
+  faqs?: FAQ[]; // Alternative property name from backend
   total: number;
   page: number;
   per_page: number;

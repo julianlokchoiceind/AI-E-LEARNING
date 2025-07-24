@@ -32,6 +32,7 @@ interface CourseCardProps {
       average_rating: number;
       total_reviews: number;
     };
+    is_enrolled?: boolean;
   };
   onEnroll?: (courseId: string) => void;
   isEnrolling?: boolean;
@@ -170,13 +171,15 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
         <Button
           onClick={handleEnroll}
           className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium touch-manipulation"
-          variant={course.pricing.is_free ? 'primary' : 'secondary'}
+          variant={course.is_enrolled ? 'outline' : (course.pricing.is_free ? 'primary' : 'secondary')}
           loading={isEnrolling}
           disabled={isEnrolling}
         >
           {isEnrolling 
             ? 'Enrolling...' 
-            : (course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now')
+            : course.is_enrolled
+              ? 'Continue Learning'
+              : (course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now')
           }
         </Button>
       </div>

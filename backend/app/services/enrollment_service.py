@@ -24,19 +24,36 @@ class EnrollmentService:
         if not course:
             raise NotFoundError(f"Course {course_id} not found")
         
+        # Get user to check premium status first
+        user = await User.get(user_id)
+        if not user:
+            raise NotFoundError(f"User {user_id} not found")
+        
         # Check if already enrolled
         existing_enrollment = await Enrollment.find_one({
             "user_id": user_id,
             "course_id": course_id
         })
         
-        if existing_enrollment and existing_enrollment.is_active:
-            raise BadRequestError("User is already enrolled in this course")
-        
-        # Get user to check premium status
-        user = await User.get(user_id)
-        if not user:
-            raise NotFoundError(f"User {user_id} not found")
+        if existing_enrollment:
+            if existing_enrollment.is_active:
+                # Already enrolled and active → return existing enrollment
+                return existing_enrollment
+            else:
+                # Inactive enrollment → reactivate
+                existing_enrollment.is_active = True
+                existing_enrollment.enrolled_at = datetime.utcnow()
+                await existing_enrollment.save()
+                
+                # Restore statistics
+                course.stats.active_students += 1
+                await course.save()
+                
+                if user and user.stats:
+                    user.stats.courses_enrolled += 1
+                    await user.save()
+                
+                return existing_enrollment
         
         # Determine enrollment type based on course pricing and user status
         if course.pricing.is_free:
@@ -77,9 +94,13 @@ class EnrollmentService:
         # Update user stats
         user = await User.get(user_id)
         if user:
+            # Ensure stats object exists
             if not user.stats:
-                user.stats = {}
-            user.stats["courses_enrolled"] = user.stats.get("courses_enrolled", 0) + 1
+                from app.models.user import Stats
+                user.stats = Stats()
+            
+            # Update courses_enrolled using proper object notation
+            user.stats.courses_enrolled = user.stats.courses_enrolled + 1
             await user.save()
         
         return enrollment
@@ -182,6 +203,12 @@ class EnrollmentService:
         if course:
             course.stats.active_students = max(0, course.stats.active_students - 1)
             await course.save()
+        
+        # Update user stats - decrement courses_enrolled
+        user = await User.get(user_id)
+        if user and user.stats:
+            user.stats.courses_enrolled = max(0, user.stats.courses_enrolled - 1)
+            await user.save()
     
     async def _create_first_lesson_progress(self, course_id: str, user_id: str) -> None:
         """Create progress record for the first lesson of the course."""

@@ -342,8 +342,16 @@ class CourseService:
             
             # Check various access conditions
             if course.pricing.is_free:
-                # Free course
-                access_info = {"has_access": True, "is_enrolled": False}
+                # Free course - check actual enrollment
+                enrollment = await Enrollment.find_one({
+                    "user_id": str(user.id),
+                    "course_id": str(course.id),
+                    "is_active": True
+                })
+                access_info = {
+                    "has_access": True,
+                    "is_enrolled": enrollment is not None
+                }
             elif user.premium_status:
                 # Premium user has access to all courses
                 access_info = {"has_access": True, "is_enrolled": True}

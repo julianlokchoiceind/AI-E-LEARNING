@@ -44,8 +44,8 @@ export default function FAQPage() {
   const { mutate: voteFAQ, loading: isVoting } = useVoteFAQ();
   
   // Extract data from React Query responses
-  const faqs = faqResponse?.data?.faqs || [];
-  const totalPages = faqResponse?.data?.totalPages || 1;
+  const faqs = faqResponse?.data?.items || [];
+  const totalPages = Math.ceil((faqResponse?.data?.total || 0) / (faqResponse?.data?.per_page || 10));
   const categories = categoriesResponse?.data?.categories || [];
 
   // Categories are now automatically fetched via React Query

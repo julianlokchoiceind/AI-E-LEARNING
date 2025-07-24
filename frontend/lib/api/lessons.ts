@@ -40,7 +40,7 @@ export interface LessonUpdateData {
     transcript?: string;
     captions?: string;
     thumbnail?: string;
-  } | null;
+  };
   content?: string;
   has_quiz?: boolean;
   quiz_required?: boolean;

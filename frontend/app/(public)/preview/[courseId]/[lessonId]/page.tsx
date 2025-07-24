@@ -76,7 +76,7 @@ const PreviewLessonPage = () => {
             <Lock className="w-8 h-8 text-gray-400" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            {error || 'Preview Not Available'}
+            {typeof error === 'string' ? error : 'Preview Not Available'}
           </h2>
           <p className="text-gray-600 mb-6">
             This lesson preview is not available or the lesson was not found.
@@ -132,7 +132,7 @@ const PreviewLessonPage = () => {
             {/* Video Player */}
             <Card className="mb-6 overflow-hidden">
               <PreviewVideoPlayer
-                videoUrl={lesson.video.url || ''}
+                videoUrl={lesson.video?.url || ''}
                 title={lesson.title}
                 className="w-full"
               />
@@ -146,7 +146,7 @@ const PreviewLessonPage = () => {
                   <div className="flex items-center gap-4 text-sm text-gray-600">
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      <span>{formatDuration(lesson.video.duration)}</span>
+                      <span>{formatDuration(lesson.video?.duration || 0)}</span>
                     </div>
                     <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                       Free Preview

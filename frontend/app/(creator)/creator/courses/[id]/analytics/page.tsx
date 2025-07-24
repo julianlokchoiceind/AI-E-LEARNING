@@ -23,7 +23,7 @@ const CourseAnalyticsPage = () => {
     data: analyticsResponse, 
     loading,
     execute: refetchAnalytics 
-  } = useCourseAnalyticsQuery(courseId, !!courseId);
+  } = useCourseAnalyticsQuery(courseId, '30days', !!courseId);
 
   // Extract analytics data from React Query response
   const analytics = analyticsResponse?.success ? analyticsResponse.data : null;
@@ -207,7 +207,7 @@ const CourseAnalyticsPage = () => {
           {/* Lesson Performance */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Lesson Completion Rates</h2>
-            {analytics.lesson_completion_rates?.length > 0 ? (
+            {analytics.lesson_completion_rates && analytics.lesson_completion_rates.length > 0 ? (
               <div className="space-y-3">
                 {analytics.lesson_completion_rates.slice(0, 5).map((lesson: any) => (
                   <div key={lesson.lesson_id} className="flex justify-between items-center">
@@ -235,7 +235,7 @@ const CourseAnalyticsPage = () => {
         </div>
 
         {/* Quiz Performance */}
-        {analytics.quiz_pass_rates?.length > 0 && (
+        {analytics.quiz_pass_rates && analytics.quiz_pass_rates.length > 0 && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Quiz Performance</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -276,7 +276,7 @@ const CourseAnalyticsPage = () => {
           )}
 
           {/* Student Progress Distribution - Only show if we have enrollments */}
-          {analytics.total_enrollments > 0 && (
+          {analytics.total_enrollments && analytics.total_enrollments > 0 && (
             <Card>
               <AnalyticsChart
                 title="Student Progress Distribution"

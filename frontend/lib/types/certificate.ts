@@ -36,6 +36,7 @@ export interface CertificateWithDetails extends Certificate {
   course_level: string;
   course_category: string;
   course_creator: string;
+  course_instructor?: string; // Alias for course_creator
   user_name: string;
   user_email: string;
 }

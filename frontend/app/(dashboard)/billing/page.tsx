@@ -79,7 +79,7 @@ export default function BillingPage() {
     return null;
   }
 
-  const hasActiveSubscription = subscriptionStatus?.has_subscription && subscriptionStatus?.status === 'active';
+  const hasActiveSubscription = subscriptionStatus?.data?.has_subscription && subscriptionStatus?.data?.status === 'active';
   const isPremiumUser = user.premiumStatus;
 
   return (
@@ -117,15 +117,15 @@ export default function BillingPage() {
               </div>
             ) : hasActiveSubscription ? (
               <div>
-                <Badge className={getSubscriptionStatusColor(subscriptionStatus.status)}>
-                  {subscriptionStatus.type.toUpperCase()} - {subscriptionStatus.status.toUpperCase()}
+                <Badge className={getSubscriptionStatusColor(subscriptionStatus?.data?.status || 'inactive')}>
+                  {subscriptionStatus?.data?.type?.toUpperCase() || 'FREE'} - {subscriptionStatus?.data?.status?.toUpperCase() || 'INACTIVE'}
                 </Badge>
                 <div className="mt-3">
                   <p className="text-2xl font-bold text-gray-900">$29/month</p>
                   <p className="text-sm text-gray-600">
-                    {subscriptionStatus.cancel_at_period_end 
-                      ? `Cancels on ${new Date(subscriptionStatus.current_period_end).toLocaleDateString()}`
-                      : `Renews on ${new Date(subscriptionStatus.current_period_end).toLocaleDateString()}`
+                    {subscriptionStatus?.data?.cancel_at_period_end 
+                      ? `Cancels on ${new Date(subscriptionStatus?.data?.current_period_end || Date.now()).toLocaleDateString()}`
+                      : `Renews on ${new Date(subscriptionStatus?.data?.current_period_end || Date.now()).toLocaleDateString()}`
                     }
                   </p>
                 </div>
@@ -178,11 +178,11 @@ export default function BillingPage() {
               <h2 className="text-lg font-semibold">Next Billing</h2>
               <Calendar className="w-5 h-5 text-blue-600" />
             </div>
-            {hasActiveSubscription && !subscriptionStatus.cancel_at_period_end ? (
+            {hasActiveSubscription && !subscriptionStatus?.data?.cancel_at_period_end ? (
               <div>
                 <p className="text-2xl font-bold text-gray-900">$29.00</p>
                 <p className="text-sm text-gray-600">
-                  Due {new Date(subscriptionStatus.current_period_end).toLocaleDateString()}
+                  Due {new Date(subscriptionStatus?.data?.current_period_end || Date.now()).toLocaleDateString()}
                 </p>
               </div>
             ) : (
@@ -221,15 +221,15 @@ export default function BillingPage() {
                   </div>
                   <div className="flex justify-between">
                     <span>Status:</span>
-                    <Badge className={getSubscriptionStatusColor(subscriptionStatus.status)}>
-                      {subscriptionStatus.status.toUpperCase()}
+                    <Badge className={getSubscriptionStatusColor(subscriptionStatus?.data?.status || 'inactive')}>
+                      {subscriptionStatus?.data?.status?.toUpperCase() || 'INACTIVE'}
                     </Badge>
                   </div>
                 </div>
               </div>
               
               <div className="space-y-3">
-                {subscriptionStatus.cancel_at_period_end ? (
+                {subscriptionStatus?.data?.cancel_at_period_end ? (
                   <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <div className="flex items-center">
                       <AlertCircle className="w-5 h-5 text-yellow-600 mr-2" />
@@ -238,7 +238,7 @@ export default function BillingPage() {
                       </span>
                     </div>
                     <p className="text-sm text-yellow-700 mt-1">
-                      Your subscription will end on {new Date(subscriptionStatus.current_period_end).toLocaleDateString()}
+                      Your subscription will end on {new Date(subscriptionStatus?.data?.current_period_end || Date.now()).toLocaleDateString()}
                     </p>
                   </div>
                 ) : (

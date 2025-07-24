@@ -35,7 +35,6 @@ async function checkRuntime() {
   console.log('🚀 Starting Next.js server...');
   const server = execSync('npm run start', {
     cwd: path.join(projectRoot, 'frontend'),
-    detached: true,
     stdio: 'ignore'
   });
   

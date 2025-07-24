@@ -502,10 +502,22 @@ class PaymentService:
                         enrollment.metadata = enrollment.metadata or {}
                         enrollment.metadata["cancelled_reason"] = "Payment refunded"
                         await enrollment.save()
+                        
+                        # Update course stats when refunding
+                        course = await Course.get(payment.course_id)
+                        if course:
+                            course.stats.active_students = max(0, course.stats.active_students - 1)
+                            course.stats.total_enrollments = max(0, course.stats.total_enrollments - 1)
+                            await course.save()
                 
                 # Send refund confirmation email
                 user = await User.get(payment.user_id)
                 if user:
+                    # Update user stats when refunding
+                    if user.stats:
+                        user.stats.courses_enrolled = max(0, user.stats.courses_enrolled - 1)
+                        await user.save()
+                    
                     await EmailService.send_refund_confirmation(
                         user.email,
                         user.name,

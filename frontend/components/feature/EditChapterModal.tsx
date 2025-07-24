@@ -68,9 +68,18 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
         }
       });
 
-      if (response.success) {
+      if (response.success && response.data) {
         ToastService.success(response.message || 'Something went wrong');
-        onChapterUpdated(response.data);
+        // Convert response to ChapterEditData format
+        const updatedChapter: ChapterEditData = {
+          id: response.data.id,
+          title: response.data.title,
+          description: response.data.description,
+          order: response.data.order,
+          course_id: response.data.course_id,
+          status: response.data.status
+        };
+        onChapterUpdated(updatedChapter);
         onClose();
       }
     } catch (error: any) {

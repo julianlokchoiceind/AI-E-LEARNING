@@ -100,9 +100,9 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
           url: formData.video_url.trim(),
           youtube_id: extractYouTubeId(formData.video_url) || undefined,
           duration: formData.duration ? parseFloat(formData.duration) * 60 : undefined
-        } : null,
+        } : undefined,
         content: formData.content.trim(),
-        status: formData.status
+        status: formData.status as 'draft' | 'published'
       };
 
       const response = await updateLessonMutation({ 

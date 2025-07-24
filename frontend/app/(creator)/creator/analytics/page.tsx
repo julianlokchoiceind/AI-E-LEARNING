@@ -22,7 +22,7 @@ const CreatorAnalyticsPage = () => {
     data: coursesResponse,
     loading: coursesLoading,
     execute: refetchCourses
-  } = useCreatorCoursesQuery(!!user);
+  } = useCreatorCoursesQuery({}, !!user);
 
   // Extract real courses data and calculate statistics
   const courses = coursesResponse?.data?.courses || [];

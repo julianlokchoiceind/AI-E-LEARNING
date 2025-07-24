@@ -31,7 +31,8 @@ const CourseCatalogPage = () => {
     sort: sortBy as "rating" | "popular" | "newest" | "price",
   });
   
-  const { mutate: enrollInCourse, loading: enrollingCourse } = useEnrollInCourse();
+  const { mutate: enrollInCourse } = useEnrollInCourse();
+  const [enrollingCourses, setEnrollingCourses] = useState<Set<string>>(new Set());
   
   // Extract courses from React Query response
   const courses = coursesData?.data?.courses || [];
@@ -75,12 +76,21 @@ const CourseCatalogPage = () => {
       return;
     }
 
-    // Find the course to check pricing
+    // Find the course to check pricing and enrollment status
     const course = courses.find((c: any) => c.id === courseId);
     if (!course) {
       ToastService.error('Something went wrong');
       return;
     }
+
+    // If already enrolled, navigate directly to learning page
+    if (course.is_enrolled) {
+      router.push(`/learn/${courseId}`);
+      return;
+    }
+
+    // Mark this course as enrolling
+    setEnrollingCourses(prev => new Set(prev).add(courseId));
 
     // Check if it's a free course or user has premium access
     if (course.pricing.is_free || user.premiumStatus) {
@@ -90,10 +100,23 @@ const CourseCatalogPage = () => {
           // React Query will show success toast automatically
           router.push(`/learn/${courseId}`);
         },
+        onSettled: () => {
+          // Remove from enrolling set regardless of success or failure
+          setEnrollingCourses(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(courseId);
+            return newSet;
+          });
+        },
         // Error handling is automatic via useApiMutation
       });
     } else {
       // Redirect to payment for paid courses
+      setEnrollingCourses(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(courseId);
+        return newSet;
+      });
       router.push(`/checkout/course/${courseId}`);
     }
   };
@@ -239,7 +262,7 @@ const CourseCatalogPage = () => {
                 key={course.id}
                 course={course}
                 onEnroll={handleEnroll}
-                isEnrolling={enrollingCourse}
+                isEnrolling={enrollingCourses.has(course.id)}
               />
             ))}
           </div>

@@ -511,6 +511,7 @@ export const api = {
   patch: apiClient.patch.bind(apiClient),
   delete: apiClient.delete.bind(apiClient),
   upload: apiClient.upload.bind(apiClient),
+  download: apiClient.download.bind(apiClient),
   isAuthenticated: apiClient.isAuthenticated.bind(apiClient),
   clearAuth: apiClient.clearAuth.bind(apiClient),
   healthCheck: apiClient.healthCheck.bind(apiClient),

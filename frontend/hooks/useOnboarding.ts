@@ -5,9 +5,10 @@
 
 import { useOnboardingStatusQuery } from '@/hooks/queries/useStudent';
 import { useAuth } from '@/hooks/useAuth';
+import { OnboardingStatus } from '@/lib/api/onboarding';
 
 export interface UseOnboardingReturn {
-  status: any | null;
+  status: OnboardingStatus | null;
   loading: boolean;
   error: string | null;
   shouldShowOnboarding: boolean;
@@ -30,7 +31,7 @@ export const useOnboarding = (): UseOnboardingReturn => {
   };
 
   // Extract status from React Query response
-  const status = onboardingResponse?.success ? onboardingResponse.data : null;
+  const status = onboardingResponse?.success ? onboardingResponse.data as OnboardingStatus : null;
   const error = onboardingResponse && !onboardingResponse.success ? 
     (onboardingResponse.message || 'Something went wrong') : null;
 

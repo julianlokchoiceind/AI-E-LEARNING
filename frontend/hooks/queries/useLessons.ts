@@ -42,6 +42,7 @@ interface LessonUpdateData {
     description?: string;
   }>;
   order?: number;
+  status?: 'draft' | 'published';
 }
 
 interface ReorderData {

@@ -4,9 +4,11 @@ import React from 'react';
 
 interface CourseReviewsProps {
   courseId: string;
+  isEnrolled?: boolean;
+  isCreator?: boolean;
 }
 
-export function CourseReviews({ courseId }: CourseReviewsProps) {
+export function CourseReviews({ courseId, isEnrolled, isCreator }: CourseReviewsProps) {
   return (
     <div className="space-y-6">
       <div className="text-center py-8">

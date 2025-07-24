@@ -33,6 +33,8 @@ interface CourseResponse {
   published_at?: string;
   created_at: string;
   updated_at: string;
+  is_enrolled?: boolean;
+  has_access?: boolean;
 }
 
 interface CoursesListData {
@@ -58,6 +60,7 @@ export interface CourseDetailData extends CourseResponse {
   preview_video?: string;
   slug: string;
   language: string;
+  progress_percentage?: number;
 }
 
 interface CreateCourseData {

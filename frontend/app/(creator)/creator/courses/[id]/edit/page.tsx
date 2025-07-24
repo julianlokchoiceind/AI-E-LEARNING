@@ -28,6 +28,21 @@ import { useDeleteChapter } from '@/hooks/queries/useChapters';
 import { useDeleteLesson } from '@/hooks/queries/useLessons';
 import { ToastService } from '@/lib/toast/ToastService';
 
+// Type for chapters with lessons
+interface ChapterWithLessons {
+  id: string;
+  course_id: string;
+  title: string;
+  description?: string;
+  order: number;
+  total_lessons: number;
+  total_duration: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  lessons?: LessonResponse[];
+}
+
 const CourseBuilderPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -63,9 +78,9 @@ const CourseBuilderPage = () => {
     if (chaptersResponse?.data) {
       // Backend returns { success: true, data: { chapters: [...] } }
       // So chaptersResponse.data.chapters is the chapters array
-      return (chaptersResponse.data as any)?.chapters || [];
+      return (chaptersResponse.data as { chapters: ChapterWithLessons[] })?.chapters || [];
     }
-    return [];
+    return [] as ChapterWithLessons[];
   }, [chaptersResponse]);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
@@ -123,8 +138,7 @@ const CourseBuilderPage = () => {
           throw error;
         }
       },
-      enabled: !!courseData,
-      showToastOnError: false, // Prevent duplicate toast notifications
+      showToastOnError: false // Prevent duplicate toast notifications
     }
   );
 

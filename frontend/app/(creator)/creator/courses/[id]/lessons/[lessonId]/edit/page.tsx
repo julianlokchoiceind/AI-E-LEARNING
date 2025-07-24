@@ -117,10 +117,10 @@ const LessonEditPage = () => {
             data: {
               title: data.title,
               description: data.description,
-              video: data.video,
+              video: data.video || undefined,
               content: data.content,
-              resources: validResources,
-              status: data.status
+              resources: validResources as any, // Type assertion to handle extended resource types
+              status: data.status as 'draft' | 'published'
             }
           });
         } catch (error) {
@@ -396,7 +396,7 @@ const LessonEditPage = () => {
                   <h3 className="font-semibold mb-4">Lesson Status</h3>
                   <select
                     value={lessonData.status}
-                    onChange={(e) => setLessonData((prev: Lesson | null) => ({ ...prev!, status: e.target.value }))}
+                    onChange={(e) => setLessonData((prev: Lesson | null) => ({ ...prev!, status: e.target.value as 'draft' | 'published' }))}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="draft">Draft</option>
@@ -463,7 +463,6 @@ const LessonEditPage = () => {
                       onChange={(e) => setLessonData(prev => ({
                         ...prev!,
                         video: { 
-                          duration: 0,
                           ...prev?.video, 
                           duration: parseInt(e.target.value) || 0 
                         }

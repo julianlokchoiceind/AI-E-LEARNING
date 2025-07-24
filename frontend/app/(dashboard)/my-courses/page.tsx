@@ -51,7 +51,7 @@ export default function MyCoursesPage() {
   const { data: coursesResponse, loading, execute: refetchCourses } = useMyCoursesQuery();
   
   // Extract enrollments from React Query response
-  const enrollments = coursesResponse?.data || [];
+  const enrollments = Array.isArray(coursesResponse?.data) ? coursesResponse.data : [];
 
   // Filter courses
   const filteredCourses = enrollments.filter((enrollment: any) => {

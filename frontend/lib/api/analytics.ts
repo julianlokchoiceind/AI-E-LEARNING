@@ -27,6 +27,10 @@ export interface CourseAnalytics {
     title: string;
     total_enrollments: number;
   };
+  course_title?: string; // For backward compatibility
+  total_enrollments?: number; // Top-level for backward compatibility
+  active_students?: number;
+  completed_students?: number;
   enrollment_trends: Array<{
     date: string;
     enrollments: number;
@@ -41,16 +45,33 @@ export interface CourseAnalytics {
     completion_rate: number;
     total_students: number;
   }>;
+  lesson_completion_rates?: Array<{ // Alternative name
+    lesson_id: string;
+    completion_rate: number;
+    total_students: number;
+  }>;
   revenue: {
     total: number;
     average_price: number;
     total_sales: number;
   };
+  total_revenue?: number; // Top-level for backward compatibility
+  revenue_this_period?: number;
   engagement: {
     average_progress: number;
     average_watch_time: number;
     completion_rate: number;
   };
+  average_progress?: number; // Top-level for backward compatibility
+  average_watch_time?: number;
+  total_watch_time?: number;
+  completion_rate?: number;
+  average_rating?: number;
+  total_reviews?: number;
+  quiz_pass_rates?: Array<{
+    quiz_id: string;
+    pass_rate: number;
+  }>;
   time_range: string;
 }
 

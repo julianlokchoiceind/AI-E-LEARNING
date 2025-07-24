@@ -116,7 +116,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         throw new Error(onboardingStatusResponse?.message || 'Something went wrong');
       }
       
-      const status = onboardingStatusResponse.data;
+      const status = onboardingStatusResponse.data as OnboardingStatus;
       if (status.is_completed || status.skipped) {
         onClose();
         return;
