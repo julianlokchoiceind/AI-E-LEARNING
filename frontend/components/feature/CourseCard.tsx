@@ -178,7 +178,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
           {isEnrolling 
             ? 'Enrolling...' 
             : course.is_enrolled
-              ? 'Continue Learning'
+              ? 'Start Learning'
               : (course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now')
           }
         </Button>

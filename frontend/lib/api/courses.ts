@@ -72,7 +72,7 @@ interface CreateCourseData {
 // Get courses list with filters
 export const getCourses = async (queryParams?: string): Promise<StandardResponse<CoursesListData>> => {
   const url = queryParams ? `/courses?${queryParams}` : '/courses';
-  return api.get<StandardResponse<CoursesListData>>(url);
+  return api.get<StandardResponse<CoursesListData>>(url, { requireAuth: true });
 };
 
 // Get creator courses with pagination and filters
