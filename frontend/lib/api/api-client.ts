@@ -140,10 +140,8 @@ class ApiClient {
       'Expires': '0'
     } : baseHeaders;
 
-    // Add auth header if needed
-    const finalHeaders = requireAuth 
-      ? await this.addAuthHeader(requestHeaders)
-      : requestHeaders;
+    // Always add auth header if token exists (for enrollment status)
+    const finalHeaders = await this.addAuthHeader(requestHeaders);
 
     console.log('🔐 [AUTH DEBUG] Final headers:', {
       requireAuth,
@@ -424,10 +422,8 @@ class ApiClient {
     
     const requestHeaders: HeadersInit = baseHeaders;
 
-    // Add auth header if needed
-    const finalHeaders = requireAuth 
-      ? await this.addAuthHeader(requestHeaders)
-      : requestHeaders;
+    // Always add auth header if token exists (for enrollment status)
+    const finalHeaders = await this.addAuthHeader(requestHeaders);
 
     // Make request
     const fullUrl = `${this.baseUrl}${url}`;

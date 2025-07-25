@@ -61,25 +61,36 @@ async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCrede
     Returns None if no token provided or token is invalid.
     Used for endpoints that work for both authenticated and anonymous users.
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     if not credentials:
+        logger.info("No credentials provided")
         return None
     
     try:
         # Extract token from Bearer header
         token = credentials.credentials
+        logger.info(f"Token received: {token[:20]}... (length: {len(token)})")
         
         # Decode token
         user_id = decode_token(token)
+        logger.info(f"Decoded user_id: {user_id}")
+        
         if not user_id:
+            logger.warning("Token decode returned None")
             return None
         
         # Get user from database
         try:
             user = await User.get(PydanticObjectId(user_id))
+            logger.info(f"User found: {user.email}")
             return user
-        except:
+        except Exception as e:
+            logger.error(f"Error getting user from DB: {e}")
             return None
-    except:
+    except Exception as e:
+        logger.error(f"Error in get_current_user_optional: {e}")
         return None
 
 

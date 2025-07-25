@@ -108,14 +108,29 @@ def decode_token(token: str) -> Optional[str]:
     Returns:
         Subject (user ID) if valid, None otherwise
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
+        logger.info(f"Attempting to decode token with algorithm: {settings.JWT_ALGORITHM}")
+        logger.info(f"Token preview: {token[:50]}...")
+        
         payload = jwt.decode(
             token, 
             settings.JWT_SECRET, 
             algorithms=[settings.JWT_ALGORITHM]
         )
+        
+        logger.info(f"Token decoded successfully. Payload keys: {list(payload.keys())}")
+        logger.info(f"Subject (sub): {payload.get('sub')}")
+        
         return payload.get("sub")
-    except JWTError:
+    except JWTError as e:
+        logger.error(f"JWT decode error: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error in decode_token: {e}")
         return None
 
 

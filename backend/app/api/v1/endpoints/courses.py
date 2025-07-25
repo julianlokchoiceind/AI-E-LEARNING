@@ -116,7 +116,12 @@ async def list_courses(
         )
         
         # Batch check access for all courses at once (avoid N+1 queries)
-        access_info_map = await CourseService.batch_check_course_access(result["courses"], current_user)
+        try:
+            access_info_map = await CourseService.batch_check_course_access(result["courses"], current_user)
+        except Exception as e:
+            logger.error(f"Error in batch_check_course_access: {e}")
+            # Fallback to no access info if error
+            access_info_map = {}
         
         # Convert courses to response format with access info
         courses_with_access = []
@@ -180,8 +185,13 @@ async def get_course(
         access_info = await CourseService.check_course_access(course, current_user)
         course_dict.update(access_info)
         
-        # TODO: Add progress percentage when Progress model is implemented
-        course_dict["progress_percentage"] = 0
+        # Add progress info if user is enrolled
+        if current_user and access_info.get("is_enrolled"):
+            progress_info = await CourseService.get_course_progress_info(str(course.id), str(current_user.id))
+            course_dict.update(progress_info)
+        else:
+            course_dict["progress_percentage"] = 0
+            course_dict["continue_lesson_id"] = None
         
         return StandardResponse(
             success=True,
@@ -226,8 +236,13 @@ async def update_course(
         access_info = await CourseService.check_course_access(course, current_user)
         course_dict.update(access_info)
         
-        # TODO: Add progress percentage when Progress model is implemented
-        course_dict["progress_percentage"] = 0
+        # Add progress info if user is enrolled
+        if current_user and access_info.get("is_enrolled"):
+            progress_info = await CourseService.get_course_progress_info(str(course.id), str(current_user.id))
+            course_dict.update(progress_info)
+        else:
+            course_dict["progress_percentage"] = 0
+            course_dict["continue_lesson_id"] = None
         
         return StandardResponse(
             success=True,

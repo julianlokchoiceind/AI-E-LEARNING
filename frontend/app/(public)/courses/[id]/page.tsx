@@ -286,31 +286,37 @@ const CourseDetailPage = () => {
                 ) : (
                   <Button
                     onClick={() => {
-                      // Safety check - ensure chapters have data
-                      if (!chapters || chapters.length === 0) {
-                        ToastService.error('Course has no chapters yet');
-                        return;
-                      }
-                      
-                      const firstLesson = chapters[0]?.lessons?.[0];
-                      if (!firstLesson) {
-                        ToastService.error('No lessons available');
-                        return;
-                      }
-                      
-                      // Navigate with or without preview param
-                      if (isCreatorOrAdmin) {
-                        router.push(`/learn/${courseId}/${firstLesson.id}?preview=true`);
+                      // Use continue_lesson_id if available
+                      if (course.continue_lesson_id) {
+                        if (isCreatorOrAdmin) {
+                          router.push(`/learn/${courseId}/${course.continue_lesson_id}?preview=true`);
+                        } else {
+                          router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
+                        }
                       } else {
-                        // For students - currently navigate to first lesson
-                        // TODO: Get last accessed lesson from enrollment data
-                        router.push(`/learn/${courseId}/${firstLesson.id}`);
+                        // Fallback to first lesson
+                        if (!chapters || chapters.length === 0) {
+                          ToastService.error('Course has no chapters yet');
+                          return;
+                        }
+                        
+                        const firstLesson = chapters[0]?.lessons?.[0];
+                        if (!firstLesson) {
+                          ToastService.error('No lessons available');
+                          return;
+                        }
+                        
+                        if (isCreatorOrAdmin) {
+                          router.push(`/learn/${courseId}/${firstLesson.id}?preview=true`);
+                        } else {
+                          router.push(`/learn/${courseId}/${firstLesson.id}`);
+                        }
                       }
                     }}
                     className="w-full mb-4"
                     size="lg"
                   >
-                    Continue Learning
+                    {course.progress_percentage && course.progress_percentage > 0 ? 'Continue Learning' : 'Start Learning'}
                   </Button>
                 )}
 

@@ -30,6 +30,8 @@ export interface Course {
   updated_at: string
   is_enrolled?: boolean
   has_access?: boolean
+  progress_percentage?: number
+  continue_lesson_id?: string
 }
 
 export interface CoursePricing {

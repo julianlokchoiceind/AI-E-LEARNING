@@ -5,10 +5,15 @@ Based on CLAUDE.md course creation workflow.
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from beanie import PydanticObjectId
+from bson import ObjectId
+from bson.errors import InvalidId
 from slugify import slugify
 from app.models.course import Course, CourseCategory, CourseLevel, CourseStatus, Pricing
 from app.models.user import User
 from app.models.enrollment import Enrollment
+from app.models.progress import Progress
+from app.models.lesson import Lesson
+from app.models.chapter import Chapter
 from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse, CourseCreateResponse
 from app.core.exceptions import (
     NotFoundException,
@@ -323,8 +328,62 @@ class CourseService:
         }
     
     @staticmethod
+    async def get_course_progress_info(course_id: str, user_id: str) -> Dict[str, Any]:
+        """
+        Get progress information for a course including continue_lesson_id and progress_percentage.
+        """
+        # Get enrollment info
+        enrollment = await Enrollment.find_one({
+            "user_id": user_id,
+            "course_id": course_id,
+            "is_active": True
+        })
+        
+        if not enrollment:
+            return {
+                "progress_percentage": 0,
+                "continue_lesson_id": None
+            }
+        
+        # Calculate progress percentage from enrollment
+        progress_percentage = enrollment.progress.completion_percentage if enrollment.progress else 0
+        
+        # Find the last accessed lesson or the first lesson
+        if enrollment.progress and enrollment.progress.current_lesson_id:
+            # Convert ObjectId to string to avoid serialization error
+            continue_lesson_id = str(enrollment.progress.current_lesson_id)
+        else:
+            # Get first lesson of the course
+            try:
+                # Step 1: Safely convert course_id
+                course_obj_id = ObjectId(course_id)
+            except InvalidId:
+                # Step 2: If invalid, set to None
+                continue_lesson_id = None
+            else:
+                # Step 3: If valid, continue with queries
+                first_chapter = await Chapter.find_one(
+                    {"course_id": course_obj_id, "status": "published"},
+                    sort=[("order", 1)]
+                )
+                if first_chapter:
+                    # Use first_chapter.id directly (it's already an ObjectId)
+                    first_lesson = await Lesson.find_one(
+                        {"chapter_id": first_chapter.id, "status": "published"},
+                        sort=[("order", 1)]
+                    )
+                    continue_lesson_id = str(first_lesson.id) if first_lesson else None
+                else:
+                    continue_lesson_id = None
+        
+        return {
+            "progress_percentage": progress_percentage,
+            "continue_lesson_id": continue_lesson_id
+        }
+    
+    @staticmethod
     @measure_performance("course.batch_check_access")
-    async def batch_check_course_access(courses: List[Course], user: Optional[User] = None) -> Dict[str, Dict[str, bool]]:
+    async def batch_check_course_access(courses: List[Course], user: Optional[User] = None) -> Dict[str, Dict[str, Any]]:
         """
         Check access for multiple courses at once to avoid N+1 queries.
         Returns a dictionary mapping course_id to access info.
@@ -336,7 +395,9 @@ class CourseService:
             if not user:
                 result[str(course.id)] = {
                     "has_access": course.pricing.is_free,
-                    "is_enrolled": False
+                    "is_enrolled": False,
+                    "progress_percentage": 0,
+                    "continue_lesson_id": None
                 }
                 continue
             
@@ -376,6 +437,16 @@ class CourseService:
                     access_info = {"has_access": True, "is_enrolled": True}
                 else:
                     access_info = {"has_access": False, "is_enrolled": False}
+            
+            # Add progress info if enrolled
+            if access_info.get("is_enrolled"):
+                progress_info = await CourseService.get_course_progress_info(str(course.id), str(user.id))
+                access_info.update(progress_info)
+            else:
+                access_info.update({
+                    "progress_percentage": 0,
+                    "continue_lesson_id": None
+                })
             
             result[str(course.id)] = access_info
         

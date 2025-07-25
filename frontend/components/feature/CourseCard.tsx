@@ -33,6 +33,8 @@ interface CourseCardProps {
       total_reviews: number;
     };
     is_enrolled?: boolean;
+    continue_lesson_id?: string;
+    progress_percentage?: number;
   };
   onEnroll?: (courseId: string) => void;
   isEnrolling?: boolean;
@@ -47,6 +49,14 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
 
   const handleEnroll = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // If already enrolled, navigate to learning page
+    if (course.is_enrolled && course.continue_lesson_id) {
+      router.push(`/learn/${course.id}/${course.continue_lesson_id}`);
+      return;
+    }
+    
+    // Otherwise, call the enrollment handler
     if (onEnroll) {
       onEnroll(course.id);
     }
@@ -178,7 +188,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
           {isEnrolling 
             ? 'Enrolling...' 
             : course.is_enrolled
-              ? 'Start Learning'
+              ? (course.progress_percentage && course.progress_percentage > 0 ? 'Continue Learning' : 'Start Learning')
               : (course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now')
           }
         </Button>

@@ -83,9 +83,9 @@ const CourseCatalogPage = () => {
       return;
     }
 
-    // If already enrolled, navigate directly to learning page
-    if (course.is_enrolled) {
-      router.push(`/learn/${courseId}`);
+    // If already enrolled, navigate directly to learning page with lesson ID
+    if (course.is_enrolled && course.continue_lesson_id) {
+      router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
       return;
     }
 

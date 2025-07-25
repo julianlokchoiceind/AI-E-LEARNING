@@ -35,6 +35,8 @@ interface CourseResponse {
   updated_at: string;
   is_enrolled?: boolean;
   has_access?: boolean;
+  progress_percentage?: number;
+  continue_lesson_id?: string;
 }
 
 interface CoursesListData {
@@ -72,7 +74,7 @@ interface CreateCourseData {
 // Get courses list with filters
 export const getCourses = async (queryParams?: string): Promise<StandardResponse<CoursesListData>> => {
   const url = queryParams ? `/courses?${queryParams}` : '/courses';
-  return api.get<StandardResponse<CoursesListData>>(url, { requireAuth: true });
+  return api.get<StandardResponse<CoursesListData>>(url, { requireAuth: false });
 };
 
 // Get creator courses with pagination and filters

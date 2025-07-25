@@ -85,6 +85,7 @@ class CourseResponse(BaseModel):
     is_enrolled: Optional[bool] = False
     has_access: Optional[bool] = False
     progress_percentage: Optional[float] = 0
+    continue_lesson_id: Optional[str] = None
     
     class Config:
         populate_by_name = True
