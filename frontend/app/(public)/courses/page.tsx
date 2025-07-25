@@ -9,6 +9,7 @@ import { useCoursesQuery, useEnrollInCourse } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { ToastService } from '@/lib/toast/ToastService';
+import { getCourseById } from '@/lib/api/courses';
 
 const CourseCatalogPage = () => {
   // UI state only - data fetching handled by React Query
@@ -96,9 +97,23 @@ const CourseCatalogPage = () => {
     if (course.pricing.is_free || user.premiumStatus) {
       // Direct enrollment for free access - React Query mutation handles error/success
       enrollInCourse({ courseId }, {
-        onSuccess: () => {
+        onSuccess: async (response) => {
           // React Query will show success toast automatically
-          router.push(`/learn/${courseId}`);
+          // Get course details to find first lesson
+          try {
+            const courseData = await getCourseById(courseId);
+            
+            if (courseData.success && courseData.data?.continue_lesson_id) {
+              // Navigate to first lesson
+              router.push(`/learn/${courseId}/${courseData.data.continue_lesson_id}`);
+            } else {
+              // Fallback to course page
+              router.push(`/courses/${courseId}`);
+            }
+          } catch (error) {
+            // On error, just go to course page
+            router.push(`/courses/${courseId}`);
+          }
         },
         onSettled: () => {
           // Remove from enrolling set regardless of success or failure
