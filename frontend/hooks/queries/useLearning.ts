@@ -62,17 +62,26 @@ export function useLessonProgressQuery(lessonId: string, enabled: boolean = true
     ['lesson-progress', lessonId],
     async (): Promise<StandardResponse<any>> => {
       try {
-        return await api.get(`/progress/lessons/${lessonId}/progress`, { requireAuth: true });
+        const response = await api.get(`/progress/lessons/${lessonId}/progress`, { requireAuth: true });
+        return response;
       } catch (error: any) {
-        // If no progress exists, return null (this is normal)
-        if (error.statusCode === 404) {
+        // If no progress exists, return null (this is normal for first-time access)
+        if (error.statusCode === 404 || error.type === 'NOT_FOUND') {
           return { success: true, data: null, message: 'No progress found' };
         }
-        throw error;
+        // For other errors, still return a valid response structure
+        console.warn('Error fetching lesson progress:', error);
+        return { success: false, data: null, message: error.message || 'Failed to fetch progress' };
       }
     },
     {
       enabled: enabled && !!lessonId,
+      retry: (failureCount, error: any) => {
+        // Don't retry on 404 errors
+        if (error?.statusCode === 404) return false;
+        // Retry up to 2 times for other errors
+        return failureCount < 2;
+      },
       ...getCacheConfig('LESSON_PROGRESS') // Lesson progress - fresh data
     }
   );
@@ -228,10 +237,12 @@ export function useBatchLessonProgressQuery(lessonIds: string[], enabled: boolea
               return null;
             } catch (err: any) {
               // If no progress exists for this lesson, that's okay
-              if (err.statusCode === 404) {
+              if (err.statusCode === 404 || err.type === 'NOT_FOUND') {
                 return null;
               }
-              throw err;
+              // For other errors, log but don't throw (allow other lessons to continue)
+              console.warn(`Error fetching progress for lesson ${lessonId}:`, err);
+              return null;
             }
           });
           

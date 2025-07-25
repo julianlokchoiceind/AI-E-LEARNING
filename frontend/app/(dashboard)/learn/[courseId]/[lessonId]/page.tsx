@@ -143,6 +143,7 @@ export default function LessonPlayerPage() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [currentVideoDuration, setCurrentVideoDuration] = useState<number | null>(null);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
+  const [lessonStarted, setLessonStarted] = useState(false);
 
   // Combined loading state - includes batch progress and quiz loading
   const loading = lessonLoading || progressLoading || chaptersLoading || batchProgressLoading || quizLoading || quizProgressLoading || courseLoading;
@@ -172,6 +173,11 @@ export default function LessonPlayerPage() {
     }
   }, [lessonId, chapters]);
 
+  // Reset lessonStarted when navigating to a new lesson
+  useEffect(() => {
+    setLessonStarted(false);
+  }, [lessonId]);
+
   // Calculate course progress
   const courseProgress = useMemo(() => {
     if (!chapters.length) return { 
@@ -195,8 +201,10 @@ export default function LessonPlayerPage() {
   }, [chapters, lessonsProgress]);
 
   useEffect(() => {
-    // Start lesson when lesson data is available - React Query handles data fetching automatically
-    if (lesson && !progress && !isPreviewMode) {
+    // Start lesson when lesson data is available and hasn't been started yet
+    if (lesson && !lessonStarted && !isPreviewMode) {
+      setLessonStarted(true); // Mark as started to prevent multiple calls
+      
       startLesson({ lessonId }, {
         onSuccess: () => {
           // Progress will be refetched automatically by React Query
@@ -209,6 +217,8 @@ export default function LessonPlayerPage() {
             return;
           }
           console.error('Error starting lesson:', error);
+          // Reset lessonStarted on error to allow retry
+          setLessonStarted(false);
         }
       });
     }
@@ -216,7 +226,7 @@ export default function LessonPlayerPage() {
     // Quiz data is now automatically fetched via React Query hooks
     // No need for manual checkForQuiz() calls
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lesson, lessonId, progress, isPreviewMode, startLesson, refetchProgress, router]);
+  }, [lesson, lessonId, lessonStarted, isPreviewMode, startLesson, refetchProgress, router]);
 
   // React Query data processing - automatic lesson navigation setup
   useEffect(() => {
