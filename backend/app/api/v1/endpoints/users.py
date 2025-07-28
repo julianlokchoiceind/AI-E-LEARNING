@@ -156,12 +156,27 @@ async def get_dashboard_data(
         for enrollment in recent_enrollments:
             course = await Course.get(enrollment.course_id)
             if course:
+                # Get the next lesson to continue
+                continue_lesson_id = None
+                if enrollment.progress.get("current_lesson_id"):
+                    continue_lesson_id = enrollment.progress["current_lesson_id"]
+                else:
+                    # Get first lesson if no current lesson
+                    from app.models.lesson import Lesson
+                    first_lesson = await Lesson.find_one(
+                        {"course_id": course.id},
+                        sort=[("order", 1)]
+                    )
+                    if first_lesson:
+                        continue_lesson_id = str(first_lesson.id)
+                
                 recent_courses.append({
                     "id": str(course.id),
                     "title": course.title,
                     "thumbnail": course.thumbnail,
                     "progress": enrollment.progress.completion_percentage,
-                    "last_accessed": enrollment.last_accessed
+                    "last_accessed": enrollment.last_accessed,
+                    "continue_lesson_id": continue_lesson_id
                 })
         
         # Calculate learning streak (simplified version)

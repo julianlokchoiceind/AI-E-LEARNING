@@ -68,6 +68,12 @@ class EnrollmentService:
         # Get total lessons count
         total_lessons = await Lesson.find({"course_id": course_id}).count()
         
+        # Get first lesson to set as current lesson
+        first_lesson = await Lesson.find_one(
+            {"course_id": course_id},
+            sort=[("order", 1)]
+        )
+        
         # Create enrollment
         enrollment = Enrollment(
             user_id=user_id,
@@ -77,7 +83,8 @@ class EnrollmentService:
             progress={
                 "total_lessons": total_lessons,
                 "lessons_completed": 0,
-                "completion_percentage": 0.0
+                "completion_percentage": 0.0,
+                "current_lesson_id": str(first_lesson.id) if first_lesson else None
             }
         )
         

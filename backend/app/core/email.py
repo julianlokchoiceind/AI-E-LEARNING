@@ -203,7 +203,8 @@ class EmailService:
         to_email: str,
         name: str,
         course_title: str,
-        course_id: Optional[str] = None
+        course_id: Optional[str] = None,
+        lesson_id: Optional[str] = None
     ) -> bool:
         """
         Send course enrollment confirmation email.
@@ -213,10 +214,25 @@ class EmailService:
             name: Student name
             course_title: Title of the enrolled course
             course_id: Course ID for direct link
+            lesson_id: First lesson ID for direct learning link
             
         Returns:
             bool: True if email sent successfully
         """
+        # Determine the best link for the user
+        if course_id and lesson_id:
+            # Direct link to start learning
+            learning_url = f"{settings.FRONTEND_URL}/learn/{course_id}/{lesson_id}"
+            button_text = "Start Learning Now"
+        elif course_id:
+            # Link to course detail page
+            learning_url = f"{settings.FRONTEND_URL}/courses/{course_id}"
+            button_text = "View Course"
+        else:
+            # Fallback to dashboard
+            learning_url = f"{settings.FRONTEND_URL}/dashboard"
+            button_text = "Go to Dashboard"
+            
         subject = f"Enrollment Confirmed - {course_title}"
         html_content = f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -228,10 +244,10 @@ class EmailService:
             </div>
             <p>You can start learning right away!</p>
             <div style="margin: 30px 0;">
-                <a href="{settings.FRONTEND_URL}/my-courses" 
+                <a href="{learning_url}" 
                    style="background-color: #10B981; color: white; padding: 12px 24px; 
                           text-decoration: none; border-radius: 6px; display: inline-block;">
-                    Start Learning
+                    {button_text}
                 </a>
             </div>
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e5e5;">

@@ -33,18 +33,25 @@ async def enroll_in_course(
         
         # Send enrollment confirmation email
         try:
-            # Get course details for email
+            # Get course details and first lesson for email
             from app.core.database import get_database
             from bson import ObjectId
             db = get_database()
             course = await db.courses.find_one({"_id": ObjectId(course_id)})
+            
+            # Get first lesson to include in email link
+            first_lesson = await db.lessons.find_one(
+                {"course_id": ObjectId(course_id)},
+                sort=[("order", 1)]
+            )
             
             if course:
                 await email_service.send_enrollment_confirmation(
                     to_email=current_user.email,
                     name=current_user.name,
                     course_title=course.get("title", "Course"),
-                    course_id=course_id
+                    course_id=course_id,
+                    lesson_id=str(first_lesson["_id"]) if first_lesson else None
                 )
                 logger.info(f"Enrollment confirmation email sent to: {current_user.email}")
         except Exception as e:

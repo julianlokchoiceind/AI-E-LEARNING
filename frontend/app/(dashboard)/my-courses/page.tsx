@@ -219,7 +219,9 @@ export default function MyCoursesPage() {
                 {/* Action Buttons */}
                 <div className="flex gap-2">
                   <Link
-                    href={`/learn/${enrollment.course_id}`}
+                    href={enrollment.progress.current_lesson_id 
+                      ? `/learn/${enrollment.course_id}/${enrollment.progress.current_lesson_id}`
+                      : `/courses/${enrollment.course_id}`}
                     className="flex-1 text-center bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors"
                   >
                     {enrollment.progress.is_completed ? 'Review' : 'Continue Learning'}

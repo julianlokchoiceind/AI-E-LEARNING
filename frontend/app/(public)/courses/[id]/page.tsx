@@ -34,7 +34,7 @@ const CourseDetailPage = () => {
   const [checkingEnrollment, setCheckingEnrollment] = useState(false);
 
   // React Query hooks - automatic caching and state management
-  const { data: courseResponse, loading: courseLoading } = useCourseQuery(courseId);
+  const { data: courseResponse, loading: courseLoading, execute: refetchCourse } = useCourseQuery(courseId);
   const { data: enrollmentResponse, loading: enrollmentLoading } = useEnrollmentQuery(
     courseId,
     false
@@ -59,6 +59,8 @@ const CourseDetailPage = () => {
         .then((response) => {
           if (response.success && response.data) {
             setUserEnrollmentStatus(true);
+            // Force refresh course data to get continue_lesson_id
+            refetchCourse();
           } else {
             setUserEnrollmentStatus(false);
           }
@@ -108,13 +110,38 @@ const CourseDetailPage = () => {
           onSuccess: (response) => {
             // React Query will automatically invalidate and refetch enrollment data
             ToastService.success(response.message || 'Something went wrong');
-            router.push(`/learn/${courseId}`);
+            
+            // Check if the enrollment response has progress information
+            if (response.data?.progress?.current_lesson_id) {
+              router.push(`/learn/${courseId}/${response.data.progress.current_lesson_id}`);
+            } else {
+              // Fallback: Try to get the first lesson from chapters
+              const firstLesson = chapters[0]?.lessons?.[0];
+              if (firstLesson) {
+                router.push(`/learn/${courseId}/${firstLesson.id}`);
+              } else {
+                // Last fallback: go to course page to select lesson
+                router.push(`/courses/${courseId}`);
+              }
+            }
           },
           onError: (error: any) => {
             // If "already enrolled" error → treat as success and redirect
             if (error.message?.includes('already enrolled')) {
               ToastService.success('Already enrolled, redirecting...');
-              router.push(`/learn/${courseId}`);
+              
+              // Use continue_lesson_id from course data if available
+              if (course?.continue_lesson_id) {
+                router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
+              } else {
+                // Fallback to first lesson
+                const firstLesson = chapters[0]?.lessons?.[0];
+                if (firstLesson) {
+                  router.push(`/learn/${courseId}/${firstLesson.id}`);
+                } else {
+                  router.push(`/courses/${courseId}`);
+                }
+              }
               return;
             }
             console.error('Failed to enroll:', error);

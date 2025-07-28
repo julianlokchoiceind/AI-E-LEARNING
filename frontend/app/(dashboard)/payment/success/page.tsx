@@ -106,7 +106,15 @@ export default function PaymentSuccessPage() {
                 </div>
 
                 <Button 
-                  onClick={() => router.push(`/learn/${courseId}`)}
+                  onClick={() => {
+                    // Navigate to learning page with lesson ID if available
+                    if (course?.continue_lesson_id) {
+                      router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
+                    } else {
+                      // Fallback to course detail page to select first lesson
+                      router.push(`/courses/${courseId}`);
+                    }
+                  }}
                   className="w-full"
                   size="lg"
                 >

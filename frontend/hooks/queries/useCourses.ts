@@ -230,6 +230,7 @@ export function useEnrollInCourse() {
     {
       operationName: 'enroll-course',
       invalidateQueries: [
+        ['course'],           // Refresh course details to get continue_lesson_id
         ['my-courses'],       // Refresh student's enrolled courses
         ['student-dashboard'], // Update dashboard stats
         ['enrollment'],       // Update enrollment records
@@ -238,11 +239,8 @@ export function useEnrollInCourse() {
         ['creator-courses'],  // Update creator dashboard stats
       ],
       onSuccess: (response, variables) => {
-        // Only invalidate the specific course that was enrolled in
-        queryClient.invalidateQueries({ 
-          queryKey: ['course', variables.courseId],
-          exact: true 
-        });
+        // Invalidate the specific course to get fresh data with continue_lesson_id
+        queryClient.invalidateQueries(['course', variables.courseId]);
         // Also invalidate the specific enrollment query
         queryClient.invalidateQueries({ 
           queryKey: ['enrollment', variables.courseId],

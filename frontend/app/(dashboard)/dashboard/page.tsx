@@ -39,6 +39,7 @@ interface DashboardData {
     thumbnail?: string;
     progress: number;
     last_accessed?: string;
+    continue_lesson_id?: string;
   }>;
   upcoming_lessons: Array<{
     course_id: string;
@@ -258,7 +259,7 @@ export default function DashboardPage() {
                     </div>
                     
                     <Link
-                      href={`/learn/${course.id}`}
+                      href={course.continue_lesson_id ? `/learn/${course.id}/${course.continue_lesson_id}` : `/courses/${course.id}`}
                       className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors"
                     >
                       Continue

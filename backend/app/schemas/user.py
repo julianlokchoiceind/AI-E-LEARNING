@@ -96,6 +96,7 @@ class RecentCourse(BaseModel):
     thumbnail: Optional[str] = None
     progress: float
     last_accessed: Optional[datetime] = None
+    continue_lesson_id: Optional[str] = None
 
 class UpcomingLesson(BaseModel):
     course_id: str

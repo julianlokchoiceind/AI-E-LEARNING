@@ -43,10 +43,6 @@ interface CourseCardProps {
 const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling = false }) => {
   const router = useRouter();
 
-  const handleClick = () => {
-    router.push(`/courses/${course.id}`);
-  };
-
   const handleEnroll = (e: React.MouseEvent) => {
     e.stopPropagation();
     
@@ -56,10 +52,8 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
       return;
     }
     
-    // Otherwise, call the enrollment handler
-    if (onEnroll) {
-      onEnroll(course.id);
-    }
+    // For non-enrolled users, navigate to detail page
+    router.push(`/courses/${course.id}`);
   };
 
   const formatDuration = (minutes: number) => {
@@ -94,8 +88,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
 
   return (
     <Card 
-      className="cursor-pointer hover:shadow-lg transition-shadow duration-300 active:scale-95 active:shadow-md"
-      onClick={handleClick}
+      className="hover:shadow-lg transition-shadow duration-300"
     >
       {/* Course Thumbnail */}
       <div className="relative h-40 sm:h-48 bg-gray-200 rounded-t-lg overflow-hidden">
@@ -177,19 +170,19 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
           />
         </div>
 
-        {/* Enroll Button - Larger touch target on mobile */}
+        {/* Action Button - Larger touch target on mobile */}
         <Button
           onClick={handleEnroll}
           className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium touch-manipulation"
-          variant={course.is_enrolled ? 'outline' : (course.pricing.is_free ? 'primary' : 'secondary')}
+          variant={course.is_enrolled ? 'outline' : 'secondary'}
           loading={isEnrolling}
           disabled={isEnrolling}
         >
           {isEnrolling 
-            ? 'Enrolling...' 
+            ? 'Loading...' 
             : course.is_enrolled
               ? (course.progress_percentage && course.progress_percentage > 0 ? 'Continue Learning' : 'Start Learning')
-              : (course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now')
+              : 'View Details'
           }
         </Button>
       </div>

@@ -5,11 +5,9 @@ import { Search, Filter, ChevronDown } from 'lucide-react';
 import CourseCard from '@/components/feature/CourseCard';
 import { Button } from '@/components/ui/Button';
 import { CourseCardSkeleton, EmptyState, LoadingSpinner } from '@/components/ui/LoadingStates';
-import { useCoursesQuery, useEnrollInCourse } from '@/hooks/queries/useCourses';
+import { useCoursesQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { ToastService } from '@/lib/toast/ToastService';
-import { getCourseById } from '@/lib/api/courses';
 
 const CourseCatalogPage = () => {
   // UI state only - data fetching handled by React Query
@@ -31,9 +29,6 @@ const CourseCatalogPage = () => {
     pricing: priceFilter === 'all' ? undefined : (priceFilter as "free" | "paid"),
     sort: sortBy as "rating" | "popular" | "newest" | "price",
   });
-  
-  const { mutate: enrollInCourse } = useEnrollInCourse();
-  const [enrollingCourses, setEnrollingCourses] = useState<Set<string>>(new Set());
   
   // Extract courses from React Query response
   const courses = coursesData?.data?.courses || [];
@@ -71,94 +66,9 @@ const CourseCatalogPage = () => {
   // No manual fetchCourses needed - React Query handles this automatically
 
   const handleEnroll = (courseId: string) => {
-    // Check if user is logged in
-    if (!user) {
-      router.push('/login?redirect=' + encodeURIComponent(`/courses/${courseId}`));
-      return;
-    }
-
-    // Find the course to check pricing and enrollment status
-    const course = courses.find((c: any) => c.id === courseId);
-    if (!course) {
-      ToastService.error('Something went wrong');
-      return;
-    }
-
-    // If already enrolled, navigate directly to learning page with lesson ID
-    if (course.is_enrolled && course.continue_lesson_id) {
-      router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
-      return;
-    }
-
-    // Mark this course as enrolling
-    setEnrollingCourses(prev => new Set(prev).add(courseId));
-
-    // Check if it's a free course or user has premium access
-    if (course.pricing.is_free || user.premiumStatus) {
-      // Direct enrollment for free access - React Query mutation handles error/success
-      enrollInCourse({ courseId }, {
-        onSuccess: async (response) => {
-          // React Query will show success toast automatically
-          console.log('✅ Enrollment successful:', response);
-          
-          // Check if course has lessons
-          try {
-            const courseData = await getCourseById(courseId);
-            console.log('📚 Course data:', courseData);
-            
-            if (courseData.success && courseData.data) {
-              if (courseData.data.continue_lesson_id) {
-                // Navigate to first lesson
-                console.log('🎯 Redirecting to lesson:', courseData.data.continue_lesson_id);
-                router.push(`/learn/${courseId}/${courseData.data.continue_lesson_id}`);
-              } else if (courseData.data.total_lessons > 0) {
-                // Has lessons but no continue_lesson_id, go to course details
-                console.log('📖 Course has lessons but no continue_lesson_id, going to course page');
-                router.push(`/courses/${courseId}`);
-              } else {
-                // No lessons yet, go to course page with message
-                console.log('⚠️ Course has no lessons yet, going to course page');
-                ToastService.info('Course enrolled! Content will be available soon.');
-                router.push(`/courses/${courseId}`);
-              }
-            } else {
-              // Fallback to course page
-              console.log('⚠️ Could not get course data, fallback to course page');
-              router.push(`/courses/${courseId}`);
-            }
-          } catch (error) {
-            // On error, just go to course page
-            console.error('❌ Error getting course details:', error);
-            router.push(`/courses/${courseId}`);
-          }
-        },
-        onError: (error) => {
-          console.error('❌ Enrollment failed:', error);
-          setEnrollingCourses(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(courseId);
-            return newSet;
-          });
-        },
-        onSettled: () => {
-          // Remove from enrolling set regardless of success or failure
-          setEnrollingCourses(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(courseId);
-            return newSet;
-          });
-        },
-        // Error handling is automatic via useApiMutation
-      });
-    } else {
-      // Redirect to payment for paid courses
-      setEnrollingCourses(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(courseId);
-        return newSet;
-      });
-      router.push(`/checkout/course/${courseId}`);
-    }
+    // This function is no longer needed as CourseCard now handles navigation directly
+    // Keeping it for backward compatibility but it just navigates to course detail
+    router.push(`/courses/${courseId}`);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -301,8 +211,6 @@ const CourseCatalogPage = () => {
               <CourseCard
                 key={course.id}
                 course={course}
-                onEnroll={handleEnroll}
-                isEnrolling={enrollingCourses.has(course.id)}
               />
             ))}
           </div>
