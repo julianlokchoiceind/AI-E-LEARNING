@@ -124,11 +124,19 @@ class FAQService:
         skip = (query.page - 1) * query.per_page
         faqs = await FAQ.find(filter_dict).sort(sort).skip(skip).limit(query.per_page).to_list()
         
+        # Convert _id to id for frontend consistency (smart backend pattern)
+        formatted_faqs = []
+        for faq in faqs:
+            faq_dict = faq.dict(exclude={"id"})
+            faq_dict["id"] = str(faq.id)
+            formatted_faqs.append(faq_dict)
+        
         return {
-            "items": faqs,
+            "items": formatted_faqs,
             "total": total,
             "page": query.page,
-            "per_page": query.per_page
+            "per_page": query.per_page,
+            "total_pages": (total + query.per_page - 1) // query.per_page
         }
     
     async def get_faqs_by_category(self, category: FAQCategory) -> List[FAQ]:

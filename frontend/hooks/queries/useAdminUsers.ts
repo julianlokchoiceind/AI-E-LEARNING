@@ -93,9 +93,12 @@ export function useDeleteUser() {
     {
       operationName: 'delete-user',
       invalidateQueries: [
-        ['admin-users'],      // Refresh user list
-        ['admin-dashboard'],  // Update dashboard stats
-        ['user-analytics'],   // Update analytics data
+        ['admin-users'],          // Refresh user list
+        ['admin-dashboard'],      // Update dashboard stats
+        ['user-analytics'],       // Update analytics data
+        ['users-by-role'],        // Update role-based lists
+        ['premium-users'],        // Update premium user lists
+        ['user-search'],          // Update search results
       ],
     }
   );

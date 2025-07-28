@@ -116,8 +116,8 @@ export default function CourseApproval() {
   // Combined loading state for actions
   const actionLoading = approveLoading || rejectLoading || toggleLoading || deleteLoading || createLoading;
   
-  // Extract courses and pagination data from response (consistent with API structure)
-  const typedCoursesData = coursesData as StandardResponse<{ courses: any[], total: number, page: number, per_page: number, total_pages: number }> | null;
+  // Extract courses and pagination data from response (flat structure from backend)
+  const typedCoursesData = coursesData as StandardResponse<{ courses: any[], total: number, page: number, per_page: number, total_pages: number, summary: any }> | null;
   const courses = typedCoursesData?.data?.courses || [];
   const totalItems = typedCoursesData?.data?.total || 0;
   const totalPages = typedCoursesData?.data?.total_pages || 1;
@@ -150,7 +150,7 @@ export default function CourseApproval() {
   };
 
   const handleToggleFree = (course: Course, currentStatus: boolean) => {
-    const courseId = course.id || course.id!;
+    const courseId = course.id;
     toggleFree({ courseId, isFree: !currentStatus });
   };
 
@@ -216,7 +216,7 @@ export default function CourseApproval() {
     if (selectedCourses.size === courses.length) {
       setSelectedCourses(new Set());
     } else {
-      setSelectedCourses(new Set(courses.map((c: Course) => c.id || '')));
+      setSelectedCourses(new Set(courses.map((c: Course) => c.id)));
     }
   };
 
@@ -528,8 +528,8 @@ export default function CourseApproval() {
                     <td className="px-4 py-4">
                       <input
                         type="checkbox"
-                        checked={selectedCourses.has(course.id || '')}
-                        onChange={() => handleSelectCourse(course.id || '')}
+                        checked={selectedCourses.has(course.id)}
+                        onChange={() => handleSelectCourse(course.id)}
                         className="rounded"
                       />
                     </td>
@@ -600,7 +600,7 @@ export default function CourseApproval() {
                           size="sm"
                           variant="ghost"
                           onClick={() => {
-                            const courseId = course.id || course.id!;
+                            const courseId = course.id;
                             router.push(`/admin/courses/${courseId}/edit`);
                           }}
                           className="text-gray-600 hover:bg-gray-50"

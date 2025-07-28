@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { Pagination } from '@/components/ui/Pagination';
 import { LoadingSpinner, EmptyState, UserListSkeleton } from '@/components/ui/LoadingStates';
 import { 
   useAdminUsersQuery,
@@ -25,7 +26,8 @@ import {
   Edit,
   Trash2,
   Eye,
-  RefreshCw
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react';
 
 interface User {
@@ -54,12 +56,18 @@ export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   
   // React Query hooks for data fetching and mutations
   const { data: usersData, loading, execute: refetchUsers } = useAdminUsersQuery({
     search: searchTerm,
     role: roleFilter,
-    premiumOnly: premiumFilter === 'premium' ? true : undefined
+    premiumOnly: premiumFilter === 'premium' ? true : undefined,
+    page: currentPage,
+    per_page: itemsPerPage
   });
   
   const { mutate: togglePremiumMutation, loading: premiumLoading } = useToggleUserPremium();
@@ -69,15 +77,34 @@ export default function UserManagement() {
   // Combined loading state for actions
   const actionLoading = premiumLoading || roleLoading || deleteLoading;
   
-  // Extract users from React Query response
+  // Extract users and pagination data from React Query response
   const users = usersData?.data?.users || [];
+  const totalItems = usersData?.data?.total_count || usersData?.data?.total || 0;
+  const totalPages = usersData?.data?.total_pages || 1;
 
-  // No manual fetchUsers needed - React Query handles this automatically
-  // refetchUsers is available for manual refresh if needed
+  // Handle filter changes - reset to page 1
+  const handleFilterChange = (newValue: string, filterType: 'search' | 'role' | 'premium') => {
+    setCurrentPage(1); // Reset to first page when filters change
+    
+    switch (filterType) {
+      case 'search':
+        setSearchTerm(newValue);
+        break;
+      case 'role':
+        setRoleFilter(newValue);
+        break;
+      case 'premium':
+        setPremiumFilter(newValue);
+        break;
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const handleSearch = () => {
-    // React Query will automatically refetch when search terms change
-    // If manual refetch is needed, use: refetchUsers()
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   const handleTogglePremium = async (userId: string, currentStatus: boolean) => {
@@ -108,6 +135,58 @@ export default function UserManagement() {
     });
   };
 
+  const handleSelectAll = () => {
+    if (selectedUsers.size === users.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(users.map((u: any) => u.id)));
+    }
+  };
+
+  const handleSelectUser = (userId: string) => {
+    const newSelected = new Set(selectedUsers);
+    if (newSelected.has(userId)) {
+      newSelected.delete(userId);
+    } else {
+      newSelected.add(userId);
+    }
+    setSelectedUsers(newSelected);
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedUsers.size === 0) return;
+    setShowBulkDeleteModal(true);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    // Store the users to delete
+    const usersToDelete = Array.from(selectedUsers);
+    
+    // Delete all selected users sequentially to avoid overwhelming the server
+    for (const userId of usersToDelete) {
+      await new Promise<void>((resolve) => {
+        deleteUserMutation(userId, {
+          onSuccess: () => {
+            // Remove from selected set immediately after successful deletion
+            setSelectedUsers(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(userId);
+              return newSet;
+            });
+            resolve();
+          },
+          onError: () => {
+            console.error(`Failed to delete user ${userId}`);
+            resolve(); // Continue even if one fails
+          }
+        });
+      });
+    }
+    
+    // Close modal after all operations complete
+    setShowBulkDeleteModal(false);
+  };
+
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'admin':
@@ -121,18 +200,7 @@ export default function UserManagement() {
     }
   };
 
-  const filteredUsers = users.filter((user: any) => {
-    const matchesSearch = searchTerm === '' || 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = roleFilter === '' || user.role === roleFilter;
-    const matchesPremium = premiumFilter === '' || 
-      (premiumFilter === 'premium' && user.premium_status) ||
-      (premiumFilter === 'regular' && !user.premium_status);
-    
-    return matchesSearch && matchesRole && matchesPremium;
-  });
+  // No client-side filtering needed - server handles it
 
   return (
     <div className="space-y-6">
@@ -158,7 +226,7 @@ export default function UserManagement() {
               type="text"
               placeholder="Search users..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleFilterChange(e.target.value, 'search')}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
             />
@@ -167,7 +235,7 @@ export default function UserManagement() {
           {/* Role Filter */}
           <select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
+            onChange={(e) => handleFilterChange(e.target.value, 'role')}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">All Roles</option>
@@ -179,7 +247,7 @@ export default function UserManagement() {
           {/* Premium Filter */}
           <select
             value={premiumFilter}
-            onChange={(e) => setPremiumFilter(e.target.value)}
+            onChange={(e) => handleFilterChange(e.target.value, 'premium')}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">All Users</option>
@@ -187,25 +255,61 @@ export default function UserManagement() {
             <option value="regular">Regular Users</option>
           </select>
 
-          {/* Search Button */}
-          <Button onClick={handleSearch} className="w-full">
+          {/* Clear Filters Button */}
+          <Button 
+            onClick={() => {
+              setSearchTerm('');
+              setRoleFilter('');
+              setPremiumFilter('');
+              setCurrentPage(1);
+              setSelectedUsers(new Set());
+            }} 
+            variant="outline"
+            className="w-full">
             <Filter className="w-4 h-4 mr-2" />
-            Apply Filters
+            Clear Filters
           </Button>
         </div>
+
+        {/* Bulk Actions */}
+        {selectedUsers.size > 0 && (
+          <div className="mt-4 flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+            <span className="text-blue-700">
+              {selectedUsers.size} user{selectedUsers.size > 1 ? 's' : ''} selected
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedUsers(new Set())}
+              >
+                Clear
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBulkDelete}
+                className="text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Selected
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Users Table */}
       <Card className="overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold">
-            Users ({filteredUsers.length})
+            Users ({totalItems})
           </h2>
         </div>
 
         {loading ? (
           <UserListSkeleton rows={6} />
-        ) : filteredUsers.length === 0 ? (
+        ) : users.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             <EmptyState
               title="No users found"
@@ -216,6 +320,7 @@ export default function UserManagement() {
                   setSearchTerm('');
                   setRoleFilter('');
                   setPremiumFilter('');
+                  setSelectedUsers(new Set());
                   // React Query will automatically refetch when filters change
                 }
               }}
@@ -226,6 +331,14 @@ export default function UserManagement() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.size === users.length && users.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded"
+                    />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     User
                   </th>
@@ -247,8 +360,17 @@ export default function UserManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredUsers.map((user: any) => (
+                {users.map((user: any) => (
                   <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.has(user.id)}
+                        onChange={() => handleSelectUser(user.id)}
+                        className="rounded"
+                        disabled={user.role === 'admin'}
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -342,6 +464,22 @@ export default function UserManagement() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Table Footer with Pagination */}
+        {totalPages > 1 && (
+          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              loading={loading}
+              showInfo={true}
+              className="flex justify-center"
+            />
           </div>
         )}
       </Card>
@@ -464,6 +602,68 @@ export default function UserManagement() {
                 onClick={() => setShowDeleteModal(false)}
               >
                 Cancel
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Bulk Delete Modal */}
+      {showBulkDeleteModal && (
+        <Modal
+          isOpen={showBulkDeleteModal}
+          onClose={() => setShowBulkDeleteModal(false)}
+          title="Delete Multiple Users"
+          size="md"
+        >
+          <div className="space-y-6">
+            {/* Warning Icon & Message */}
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Confirm Bulk Deletion
+                </h3>
+                <p className="text-gray-600">
+                  You are about to permanently delete {selectedUsers.size} user{selectedUsers.size > 1 ? 's' : ''}. 
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            {/* Warning Details */}
+            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                <h4 className="font-medium text-yellow-800">Warning</h4>
+              </div>
+              <p className="text-sm text-yellow-700">
+                All user data including courses, progress, certificates, and payments will be permanently deleted.
+                This action cannot be reversed.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowBulkDeleteModal(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleConfirmBulkDelete}
+                loading={deleteLoading}
+                className="flex-1"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete {selectedUsers.size} User{selectedUsers.size > 1 ? 's' : ''}
               </Button>
             </div>
           </div>

@@ -1390,14 +1390,10 @@ class AdminService:
             
             return {
                 "courses": formatted_courses,
-                "pagination": {
-                    "total_count": total_count,
-                    "page": page,
-                    "per_page": per_page,
-                    "total_pages": (total_count + per_page - 1) // per_page,
-                    "has_next": page * per_page < total_count,
-                    "has_prev": page > 1
-                },
+                "total": total_count,
+                "page": page,
+                "per_page": per_page,
+                "total_pages": (total_count + per_page - 1) // per_page,
                 "summary": {
                     "total_courses": total_count,
                     "status_breakdown": {

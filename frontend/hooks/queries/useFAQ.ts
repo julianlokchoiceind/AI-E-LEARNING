@@ -145,28 +145,24 @@ export function usePublishFAQ() {
 export function useBulkFAQActions() {
   return useApiMutation(
     async ({ action, faqIds }: { action: 'delete' | 'publish' | 'unpublish'; faqIds: string[] }) => {
-      // Implementation would depend on backend bulk API
-      const results = await Promise.all(
-        faqIds.map(id => {
-          switch (action) {
-            case 'delete':
-              return deleteFAQ(id);
-            case 'publish':
-              return updateFAQ(id, { is_published: true });
-            case 'unpublish':
-              return updateFAQ(id, { is_published: false });
-            default:
-              throw new Error('Invalid bulk action');
-          }
-        })
-      );
+      // Filter out any undefined/null IDs to prevent CORS errors
+      const validFaqIds = faqIds.filter(id => id && typeof id === 'string' && id.trim() !== '');
       
-      // Wrap results in StandardResponse format
-      return {
-        success: true,
-        data: { affected_count: results.length, results },
-        message: `Successfully ${action}ed ${results.length} FAQ(s)`
-      };
+      if (validFaqIds.length === 0) {
+        throw new Error('No valid FAQ IDs provided for bulk action');
+      }
+      
+      // Use the proper bulk API endpoint instead of individual calls
+      const { bulkAction } = await import('@/lib/api/faq');
+      
+      // Map frontend action names to backend expected names
+      const backendAction = action === 'publish' ? 'publish' : 
+                           action === 'unpublish' ? 'unpublish' : 'delete';
+      
+      return await bulkAction({
+        faq_ids: validFaqIds,
+        action: backendAction
+      });
     },
     {
       operationName: 'bulk-faq-action',

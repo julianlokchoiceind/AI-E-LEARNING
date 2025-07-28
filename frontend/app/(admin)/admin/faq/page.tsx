@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
   Plus, 
   Edit, 
@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { Pagination } from '@/components/ui/Pagination';
 import { LoadingSpinner, EmptyState, AdminFAQTableSkeleton } from '@/components/ui/LoadingStates';
 import { 
   useFAQsQuery,
@@ -34,6 +35,8 @@ export default function AdminFAQPage() {
   const [selectedFaqs, setSelectedFaqs] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
   
   // Delete modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -55,7 +58,8 @@ export default function AdminFAQPage() {
   const { data: faqsData, loading, execute: refetchFAQs } = useFAQsQuery({
     search: searchQuery,
     category: selectedCategory,
-    limit: 100
+    page: currentPage,
+    limit: itemsPerPage
   });
   
   const { mutate: createFAQMutation, loading: createLoading } = useCreateFAQ();
@@ -66,10 +70,18 @@ export default function AdminFAQPage() {
   // Combined loading state for actions
   const actionLoading = createLoading || updateLoading || deleteLoading || bulkLoading;
   
-  // Extract FAQs from React Query response
-  const faqs = useMemo(() => {
-    return faqsData?.data?.items || faqsData?.data?.faqs || [];
-  }, [faqsData]);
+  // Extract FAQs and pagination data from React Query response
+  // Backend now handles _id to id conversion (smart backend pattern)
+  const faqs = faqsData?.data?.items || faqsData?.data?.faqs || [];
+  const totalItems = faqsData?.data?.total || 0;
+  const totalPages = faqsData?.data?.total_pages || 1;
+  console.log('🗂️ FAQ Data Debug:', {
+    faqsDataStructure: faqsData ? Object.keys(faqsData) : 'no data',
+    dataStructure: faqsData?.data ? Object.keys(faqsData.data) : 'no data.data',
+    faqsCount: faqs.length,
+    firstFaqId: faqs[0]?.id,
+    firstFaqKeys: faqs[0] ? Object.keys(faqs[0]) : 'no first FAQ'
+  });
 
   // No manual fetchFAQs needed - React Query handles this automatically
   // refetchFAQs is available for manual refresh if needed
@@ -164,6 +176,21 @@ export default function AdminFAQPage() {
     setShowCreateModal(true);
   };
 
+  // Handle filter changes - reset to page 1
+  const handleSearchChange = (value: string) => {
+    setCurrentPage(1); // Reset to first page when search changes
+    setSearchQuery(value);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setCurrentPage(1); // Reset to first page when category changes
+    setSelectedCategory(value);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const resetForm = () => {
     setFormData({
       question: '',
@@ -198,9 +225,9 @@ export default function AdminFAQPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">FAQ Management</h1>
         <Button
           onClick={() => {
@@ -214,7 +241,7 @@ export default function AdminFAQPage() {
       </div>
 
       {/* Filters and Actions */}
-      <Card className="mb-6">
+      <Card>
         <CardContent className="p-4">
           <div className="flex flex-col gap-4">
             {/* Search and Category Filter */}
@@ -225,13 +252,13 @@ export default function AdminFAQPage() {
                   type="text"
                   placeholder="Search FAQs..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10"
                 />
               </div>
               <select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={(e) => handleCategoryChange(e.target.value)}
                 className="px-4 py-2 border rounded-md"
               >
                 <option value="">All Categories</option>
@@ -302,6 +329,7 @@ export default function AdminFAQPage() {
                     if (searchQuery || selectedCategory) {
                       setSearchQuery('');
                       setSelectedCategory('');
+                      setCurrentPage(1);
                       // React Query will automatically refetch when filters change
                     } else {
                       resetForm();
@@ -332,7 +360,7 @@ export default function AdminFAQPage() {
                     <th className="p-4 text-left font-medium text-gray-700">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="bg-white divide-y divide-gray-200">
                   {faqs.map((faq: any) => {
                     const categoryInfo = FAQ_CATEGORIES.find(c => c.value === faq.category);
                     return (
@@ -400,6 +428,22 @@ export default function AdminFAQPage() {
                 </tbody>
               </table>
             </div>
+            )}
+
+            {/* Table Footer with Pagination */}
+            {totalPages > 1 && (
+              <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={handlePageChange}
+                  loading={loading}
+                  showInfo={true}
+                  className="flex justify-center"
+                />
+              </div>
             )}
           </CardContent>
         </Card>

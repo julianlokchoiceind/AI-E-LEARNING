@@ -147,8 +147,15 @@ class SupportTicketService:
         skip = (query.page - 1) * query.per_page
         tickets = await SupportTicket.find(filter_dict).sort(sort_field).skip(skip).limit(query.per_page).to_list()
         
+        # Convert _id to id for frontend consistency (smart backend pattern)
+        formatted_tickets = []
+        for ticket in tickets:
+            ticket_dict = ticket.dict(exclude={"id"})
+            ticket_dict["id"] = str(ticket.id)
+            formatted_tickets.append(ticket_dict)
+        
         return {
-            "items": [ticket.dict() for ticket in tickets],
+            "items": formatted_tickets,
             "total": total,
             "page": query.page,
             "per_page": query.per_page,

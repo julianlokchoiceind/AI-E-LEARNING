@@ -174,5 +174,6 @@ export const createFAQ = faqAPI.createFAQ;
 export const updateFAQ = faqAPI.updateFAQ;
 export const deleteFAQ = faqAPI.deleteFAQ;
 export const voteFAQ = faqAPI.voteFAQ;
+export const bulkAction = faqAPI.bulkAction;
 export const searchFAQs = faqAPI.getFAQs; // Alias for consistency
 export const getFAQCategories = faqAPI.getCategories;
