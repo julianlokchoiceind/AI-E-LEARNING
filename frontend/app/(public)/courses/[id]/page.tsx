@@ -13,7 +13,7 @@ import { CourseRating } from '@/components/feature/CourseRating';
 import { useCourseQuery, useEnrollInCourse } from '@/hooks/queries/useCourses';
 import { useEnrollmentQuery } from '@/hooks/queries/useEnrollments';
 import { getCourseEnrollment } from '@/lib/api/enrollments';
-import { useChaptersWithLessonsQuery } from '@/hooks/queries/useChapters';
+import { useCourseChaptersQuery } from '@/hooks/queries/useLearning';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
@@ -27,20 +27,26 @@ const CourseDetailPage = () => {
   const isCreatorOrAdmin = user?.role === 'creator' || user?.role === 'admin';
 
   // UI state first
-  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'creator' | 'reviews'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'creator' | 'reviews'>(
+    'overview'
+  );
   const [userEnrollmentStatus, setUserEnrollmentStatus] = useState<boolean | null>(null);
   const [checkingEnrollment, setCheckingEnrollment] = useState(false);
 
   // React Query hooks - automatic caching and state management
   const { data: courseResponse, loading: courseLoading } = useCourseQuery(courseId);
-  const { data: enrollmentResponse, loading: enrollmentLoading } = useEnrollmentQuery(courseId, false);
-  const { data: chaptersResponse, loading: chaptersLoading } = useChaptersWithLessonsQuery(courseId);
+  const { data: enrollmentResponse, loading: enrollmentLoading } = useEnrollmentQuery(
+    courseId,
+    false
+  );
+  const { data: chaptersResponse, loading: chaptersLoading } = useCourseChaptersQuery(courseId);
   const { mutate: enrollMutation, loading: enrolling } = useEnrollInCourse();
 
   // Extract data from React Query responses
   const course = courseResponse?.data || null;
   const isEnrolled = userEnrollmentStatus ?? false; // Use dynamic enrollment status
   const chapters = (chaptersResponse?.data?.chapters || []) as (Chapter & { lessons?: Lesson[] })[];
+
 
   // Combined loading state
   const loading = authLoading || courseLoading || chaptersLoading;
@@ -50,14 +56,14 @@ const CourseDetailPage = () => {
     if (user && courseId) {
       setCheckingEnrollment(true);
       getCourseEnrollment(courseId)
-        .then(response => {
+        .then((response) => {
           if (response.success && response.data) {
             setUserEnrollmentStatus(true);
           } else {
             setUserEnrollmentStatus(false);
           }
         })
-        .catch(error => {
+        .catch((error) => {
           // Not enrolled is expected - set to false
           setUserEnrollmentStatus(false);
         })
@@ -74,19 +80,18 @@ const CourseDetailPage = () => {
   // Calculate access based on PRD pricing logic
   const hasAccess = React.useMemo(() => {
     if (!course) return false;
-    
+
     // 1. Free course - everyone has access
     if (course.pricing?.is_free) return true;
-    
+
     // 2. Premium user - free access to all courses
     if (user?.premiumStatus) return true;
-    
+
     // 3. Check if user purchased this course
     if (isEnrolled) return true;
-    
+
     return false;
   }, [course, user, isEnrolled]);
-
 
   const handleEnroll = async () => {
     if (!user) {
@@ -97,23 +102,26 @@ const CourseDetailPage = () => {
     // Check if it's a free course or user has access
     if (course?.pricing?.is_free || user.premiumStatus) {
       // Direct enrollment for free access using React Query mutation
-      enrollMutation({ courseId }, {
-        onSuccess: (response) => {
-          // React Query will automatically invalidate and refetch enrollment data
-          ToastService.success(response.message || 'Something went wrong');
-          router.push(`/learn/${courseId}`);
-        },
-        onError: (error: any) => {
-          // If "already enrolled" error → treat as success and redirect
-          if (error.message?.includes('already enrolled')) {
-            ToastService.success('Already enrolled, redirecting...');
+      enrollMutation(
+        { courseId },
+        {
+          onSuccess: (response) => {
+            // React Query will automatically invalidate and refetch enrollment data
+            ToastService.success(response.message || 'Something went wrong');
             router.push(`/learn/${courseId}`);
-            return;
-          }
-          console.error('Failed to enroll:', error);
-          ToastService.error(error.message || 'Something went wrong');
+          },
+          onError: (error: any) => {
+            // If "already enrolled" error → treat as success and redirect
+            if (error.message?.includes('already enrolled')) {
+              ToastService.success('Already enrolled, redirecting...');
+              router.push(`/learn/${courseId}`);
+              return;
+            }
+            console.error('Failed to enroll:', error);
+            ToastService.error(error.message || 'Something went wrong');
+          },
         }
-      });
+      );
     } else {
       // Redirect to payment
       router.push(`/checkout/course/${courseId}`);
@@ -155,7 +163,7 @@ const CourseDetailPage = () => {
           description="The course you're looking for doesn't exist or has been removed."
           action={{
             label: 'Browse Courses',
-            onClick: () => router.push('/courses')
+            onClick: () => router.push('/courses'),
           }}
         />
       </div>
@@ -172,7 +180,9 @@ const CourseDetailPage = () => {
             <div className="lg:col-span-2">
               {/* Breadcrumb */}
               <nav className="mb-4 text-sm">
-                <a href="/courses" className="hover:underline">Courses</a>
+                <a href="/courses" className="hover:underline">
+                  Courses
+                </a>
                 <span className="mx-2">/</span>
                 <span>{course.category}</span>
               </nav>
@@ -185,17 +195,17 @@ const CourseDetailPage = () => {
                 <Badge className={getLevelColor(course.level)}>
                   {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
                 </Badge>
-                
+
                 <div className="flex items-center gap-1">
                   <Clock className="w-5 h-5" />
                   <span>{formatDuration(course.total_duration)}</span>
                 </div>
-                
+
                 <div className="flex items-center gap-1">
                   <BookOpen className="w-5 h-5" />
                   <span>{course.total_lessons} lessons</span>
                 </div>
-                
+
                 <div className="flex items-center gap-1">
                   <Users className="w-5 h-5" />
                   <span>{course.stats.total_enrollments} students</span>
@@ -217,14 +227,14 @@ const CourseDetailPage = () => {
                       />
                     ))}
                   </div>
-                  <span className="font-semibold">
-                    {course.stats.average_rating.toFixed(1)}
-                  </span>
+                  <span className="font-semibold">{course.stats.average_rating.toFixed(1)}</span>
                   <span>({course.stats.total_reviews} reviews)</span>
                 </div>
               )}
 
-              <p className="text-lg">Created by <span className="font-semibold">{course.creator_name}</span></p>
+              <p className="text-lg">
+                Created by <span className="font-semibold">{course.creator_name}</span>
+              </p>
             </div>
 
             {/* Enrollment Card - Right Side */}
@@ -260,7 +270,9 @@ const CourseDetailPage = () => {
                     <div>
                       {course.pricing.discount_price ? (
                         <div>
-                          <span className="text-3xl font-bold">${course.pricing.discount_price}</span>
+                          <span className="text-3xl font-bold">
+                            ${course.pricing.discount_price}
+                          </span>
                           <span className="text-xl text-gray-500 line-through ml-2">
                             ${course.pricing.price}
                           </span>
@@ -280,8 +292,11 @@ const CourseDetailPage = () => {
                     className="w-full mb-4"
                     size="lg"
                   >
-                    {checkingEnrollment ? 'Checking...' : 
-                     course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now'}
+                    {checkingEnrollment
+                      ? 'Checking...'
+                      : course.pricing.is_free
+                        ? 'Enroll for Free'
+                        : 'Enroll Now'}
                   </Button>
                 ) : (
                   <Button
@@ -289,7 +304,9 @@ const CourseDetailPage = () => {
                       // Use continue_lesson_id if available
                       if (course.continue_lesson_id) {
                         if (isCreatorOrAdmin) {
-                          router.push(`/learn/${courseId}/${course.continue_lesson_id}?preview=true`);
+                          router.push(
+                            `/learn/${courseId}/${course.continue_lesson_id}?preview=true`
+                          );
                         } else {
                           router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
                         }
@@ -299,13 +316,13 @@ const CourseDetailPage = () => {
                           ToastService.error('Course has no chapters yet');
                           return;
                         }
-                        
+
                         const firstLesson = chapters[0]?.lessons?.[0];
                         if (!firstLesson) {
                           ToastService.error('No lessons available');
                           return;
                         }
-                        
+
                         if (isCreatorOrAdmin) {
                           router.push(`/learn/${courseId}/${firstLesson.id}?preview=true`);
                         } else {
@@ -316,7 +333,9 @@ const CourseDetailPage = () => {
                     className="w-full mb-4"
                     size="lg"
                   >
-                    {course.progress_percentage && course.progress_percentage > 0 ? 'Continue Learning' : 'Start Learning'}
+                    {course.progress_percentage && course.progress_percentage > 0
+                      ? 'Continue Learning'
+                      : 'Start Learning'}
                   </Button>
                 )}
 
@@ -407,57 +426,66 @@ const CourseDetailPage = () => {
         {activeTab === 'curriculum' && (
           <div className="max-w-4xl">
             <h2 className="text-2xl font-bold mb-6">Course Curriculum</h2>
-            <div className="space-y-4">
-              {chapters.map((chapter: any) => (
-                <Card key={chapter.id} className="overflow-hidden">
-                  <div className="p-4 bg-gray-50">
-                    <h3 className="font-semibold text-lg">{chapter.title}</h3>
-                    <p className="text-sm text-gray-600">
-                      {chapter.total_lessons} lessons • {formatDuration(chapter.total_duration)}
-                    </p>
-                  </div>
-                  <div className="divide-y">
-                    {(chapter.lessons || []).map((lesson: any) => (
-                      <div
-                        key={lesson.id}
-                        className="p-4 flex items-center justify-between hover:bg-gray-50"
-                      >
-                        <div className="flex items-center gap-3">
-                          {lesson.is_locked ? (
-                            <Lock className="w-5 h-5 text-gray-400" />
-                          ) : lesson.is_completed ? (
-                            <Check className="w-5 h-5 text-green-500" />
-                          ) : (
-                            <PlayCircle className="w-5 h-5 text-blue-600" />
-                          )}
-                          <div>
-                            <h4 className="font-medium">{lesson.title}</h4>
-                            <div className="flex items-center gap-3 text-sm text-gray-600">
-                              <span>{formatDuration(Math.floor(lesson.video.duration / 60))}</span>
-                              {lesson.has_quiz && <span>• Quiz</span>}
-                              {lesson.is_free_preview && (
-                                <Badge variant="outline" className="text-xs">
-                                  Preview
-                                </Badge>
-                              )}
+            {chapters.length === 0 ? (
+              <div className="text-gray-500 text-center py-8">
+                <p>No curriculum available yet.</p>
+                <p className="text-sm mt-2">Chapters and lessons will appear here once added.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {chapters.map((chapter: any) => (
+                  <Card key={chapter.id} className="overflow-hidden">
+                    <div className="p-4 bg-gray-50">
+                      <h3 className="font-semibold text-lg">{chapter.title}</h3>
+                      <p className="text-sm text-gray-600">
+                        {chapter.total_lessons} lessons • {formatDuration(chapter.total_duration)}
+                      </p>
+                    </div>
+                    <div className="divide-y">
+                      {(chapter.lessons || []).map((lesson: any) => (
+                        <div
+                          key={lesson.id}
+                          className="p-4 flex items-center justify-between hover:bg-gray-50"
+                        >
+                          <div className="flex items-center gap-3">
+                            {lesson.is_locked ? (
+                              <Lock className="w-5 h-5 text-gray-400" />
+                            ) : lesson.is_completed ? (
+                              <Check className="w-5 h-5 text-green-500" />
+                            ) : (
+                              <PlayCircle className="w-5 h-5 text-blue-600" />
+                            )}
+                            <div>
+                              <h4 className="font-medium">{lesson.title}</h4>
+                              <div className="flex items-center gap-3 text-sm text-gray-600">
+                                <span>
+                                  {formatDuration(Math.floor(lesson.video.duration / 60))}
+                                </span>
+                                {lesson.has_quiz && <span>• Quiz</span>}
+                                {lesson.is_free_preview && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Preview
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
+                          {lesson.is_free_preview && !isEnrolled && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => router.push(`/preview/${courseId}/${lesson.id}`)}
+                            >
+                              Preview
+                            </Button>
+                          )}
                         </div>
-                        {lesson.is_free_preview && !isEnrolled && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.push(`/preview/${courseId}/${lesson.id}`)}
-                          >
-                            Preview
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              ))}
-            </div>
+                      ))}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -471,8 +499,8 @@ const CourseDetailPage = () => {
                   <h3 className="text-xl font-semibold mb-2">{course.creator_name}</h3>
                   <p className="text-gray-600 mb-4">AI/ML Expert & Educator</p>
                   <p className="text-gray-700">
-                    Experienced creator with expertise in AI and machine learning.
-                    Passionate about teaching and helping students master complex concepts.
+                    Experienced creator with expertise in AI and machine learning. Passionate about
+                    teaching and helping students master complex concepts.
                   </p>
                 </div>
               </div>
@@ -482,8 +510,8 @@ const CourseDetailPage = () => {
 
         {activeTab === 'reviews' && (
           <div className="max-w-4xl">
-            <CourseReviews 
-              courseId={courseId} 
+            <CourseReviews
+              courseId={courseId}
               isEnrolled={isEnrolled}
               isCreator={user?.id === course.creator_id}
             />

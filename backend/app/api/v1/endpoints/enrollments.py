@@ -51,9 +51,25 @@ async def enroll_in_course(
             logger.error(f"Failed to send enrollment confirmation email: {str(e)}")
             # Don't fail enrollment if email fails
         
+        # Convert Beanie model to Pydantic schema
+        enrollment_data = EnrollmentSchema(
+            id=str(enrollment.id),
+            user_id=enrollment.user_id,
+            course_id=enrollment.course_id,
+            enrollment_type=enrollment.enrollment_type,
+            payment_id=enrollment.payment_id,
+            progress=enrollment.progress.dict() if enrollment.progress else {},
+            certificate=enrollment.certificate.dict() if enrollment.certificate else {},
+            is_active=enrollment.is_active,
+            expires_at=enrollment.expires_at,
+            enrolled_at=enrollment.enrolled_at,
+            last_accessed=enrollment.last_accessed,
+            updated_at=enrollment.updated_at
+        )
+        
         return StandardResponse(
             success=True,
-            data=enrollment,
+            data=enrollment_data,
             message="Successfully enrolled in course"
         )
     except Exception as e:
@@ -69,10 +85,29 @@ async def get_my_enrollments(
     """Get all courses user is enrolled in."""
     enrollments = await enrollment_service.get_user_enrollments(str(current_user.id))
     
+    # Convert each Beanie model to Pydantic schema
+    enrollment_schemas = []
+    for enrollment in enrollments:
+        enrollment_data = EnrollmentSchema(
+            id=str(enrollment.id),
+            user_id=enrollment.user_id,
+            course_id=enrollment.course_id,
+            enrollment_type=enrollment.enrollment_type,
+            payment_id=enrollment.payment_id,
+            progress=enrollment.progress.dict() if enrollment.progress else {},
+            certificate=enrollment.certificate.dict() if enrollment.certificate else {},
+            is_active=enrollment.is_active,
+            expires_at=enrollment.expires_at,
+            enrolled_at=enrollment.enrolled_at,
+            last_accessed=enrollment.last_accessed,
+            updated_at=enrollment.updated_at
+        )
+        enrollment_schemas.append(enrollment_data)
+    
     return StandardResponse(
         success=True,
-        data=enrollments,
-        message=f"Found {len(enrollments)} enrolled courses"
+        data=enrollment_schemas,
+        message=f"Found {len(enrollment_schemas)} enrolled courses"
     )
 
 @router.get("/courses/{course_id}/enrollment", response_model=StandardResponse[EnrollmentSchema], status_code=status.HTTP_200_OK)
@@ -89,9 +124,25 @@ async def get_course_enrollment(
             detail="Not enrolled in this course"
         )
     
+    # Convert Beanie model to Pydantic schema (same as enrollment creation)
+    enrollment_data = EnrollmentSchema(
+        id=str(enrollment.id),
+        user_id=enrollment.user_id,
+        course_id=enrollment.course_id,
+        enrollment_type=enrollment.enrollment_type,
+        payment_id=enrollment.payment_id,
+        progress=enrollment.progress.dict() if enrollment.progress else {},
+        certificate=enrollment.certificate.dict() if enrollment.certificate else {},
+        is_active=enrollment.is_active,
+        expires_at=enrollment.expires_at,
+        enrolled_at=enrollment.enrolled_at,
+        last_accessed=enrollment.last_accessed,
+        updated_at=enrollment.updated_at
+    )
+    
     return StandardResponse(
         success=True,
-        data=enrollment,
+        data=enrollment_data,
         message="Enrollment retrieved successfully"
     )
 

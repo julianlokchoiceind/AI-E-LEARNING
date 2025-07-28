@@ -339,7 +339,13 @@ async def get_course_chapters_with_lessons_public(
     Returns published chapters and lessons only.
     """
     # Check if course exists and is published
-    course = await Course.get(course_id)
+    from bson import ObjectId
+    try:
+        course_obj_id = ObjectId(course_id) if isinstance(course_id, str) else course_id
+        course = await Course.get(course_obj_id)
+    except:
+        course = None
+        
     if not course:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

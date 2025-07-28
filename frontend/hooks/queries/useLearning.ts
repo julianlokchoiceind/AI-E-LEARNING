@@ -105,6 +105,7 @@ export function useCourseChaptersQuery(courseId: string) {
     async (): Promise<StandardResponse<ChaptersResponse>> => {
       // Use public endpoint that works without authentication (for preview mode)
       const response: StandardResponse<ChaptersResponse> = await api.get(`/courses/${courseId}/chapters-with-lessons-public`, { requireAuth: false });
+      
       if (!response.success) {
         throw new Error(response.message || 'Something went wrong');
       }

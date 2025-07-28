@@ -99,21 +99,46 @@ const CourseCatalogPage = () => {
       enrollInCourse({ courseId }, {
         onSuccess: async (response) => {
           // React Query will show success toast automatically
-          // Get course details to find first lesson
+          console.log('✅ Enrollment successful:', response);
+          
+          // Check if course has lessons
           try {
             const courseData = await getCourseById(courseId);
+            console.log('📚 Course data:', courseData);
             
-            if (courseData.success && courseData.data?.continue_lesson_id) {
-              // Navigate to first lesson
-              router.push(`/learn/${courseId}/${courseData.data.continue_lesson_id}`);
+            if (courseData.success && courseData.data) {
+              if (courseData.data.continue_lesson_id) {
+                // Navigate to first lesson
+                console.log('🎯 Redirecting to lesson:', courseData.data.continue_lesson_id);
+                router.push(`/learn/${courseId}/${courseData.data.continue_lesson_id}`);
+              } else if (courseData.data.total_lessons > 0) {
+                // Has lessons but no continue_lesson_id, go to course details
+                console.log('📖 Course has lessons but no continue_lesson_id, going to course page');
+                router.push(`/courses/${courseId}`);
+              } else {
+                // No lessons yet, go to course page with message
+                console.log('⚠️ Course has no lessons yet, going to course page');
+                ToastService.info('Course enrolled! Content will be available soon.');
+                router.push(`/courses/${courseId}`);
+              }
             } else {
               // Fallback to course page
+              console.log('⚠️ Could not get course data, fallback to course page');
               router.push(`/courses/${courseId}`);
             }
           } catch (error) {
             // On error, just go to course page
+            console.error('❌ Error getting course details:', error);
             router.push(`/courses/${courseId}`);
           }
+        },
+        onError: (error) => {
+          console.error('❌ Enrollment failed:', error);
+          setEnrollingCourses(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(courseId);
+            return newSet;
+          });
         },
         onSettled: () => {
           // Remove from enrolling set regardless of success or failure
