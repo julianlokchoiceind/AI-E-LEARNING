@@ -53,6 +53,7 @@ async def connect_to_mongo():
         from app.models.enrollment import Enrollment
         from app.models.payment import Payment
         from app.models.faq import FAQ
+        from app.models.faq_category import FAQCategory
         from app.models.support_ticket import SupportTicket, TicketMessage
         from app.models.review import Review, ReviewVote, ReviewReport
         from app.models.certificate import Certificate
@@ -71,6 +72,7 @@ async def connect_to_mongo():
                 Enrollment,
                 Payment,
                 FAQ,
+                FAQCategory,
                 SupportTicket,
                 TicketMessage,
                 Review,

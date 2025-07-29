@@ -1,67 +1,30 @@
 /**
  * FAQ API client functions
+ * Updated to use dynamic categories instead of hardcoded enum
  */
 
 import { apiClient } from './api-client';
 import { StandardResponse } from '@/lib/types/api';
+import { 
+  FAQ, 
+  FAQCreateData, 
+  FAQUpdateData, 
+  FAQSearchParams, 
+  FAQListResponse,
+  FAQVoteRequest,
+  FAQVoteResponse
+} from '@/lib/types/faq';
 
-export interface FAQCategory {
-  value: string;
-  label: string;
-  count: number;
-}
-
-export interface FAQ {
-  id: string;
-  question: string;
-  answer: string;
-  category: 'general' | 'pricing' | 'learning' | 'technical' | 'creator' | 'admin';
-  priority: number;
-  tags: string[];
-  related_faqs: string[];
-  is_published: boolean;
-  slug?: string;
-  view_count: number;
-  helpful_votes: number;
-  unhelpful_votes: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface FAQListResponse {
-  items?: FAQ[];
-  faqs?: FAQ[]; // Alternative property name from backend
-  total: number;
-  page: number;
-  per_page: number;
-}
-
-export interface FAQSearchParams {
-  q?: string;
-  category?: string;
-  tags?: string[];
-  page?: number;
-  per_page?: number;
-  sort_by?: 'priority' | 'view_count' | 'created_at';
-  sort_order?: 'asc' | 'desc';
-}
-
-export interface FAQCreateData {
-  question: string;
-  answer: string;
-  category?: FAQ['category'];
-  priority?: number;
-  tags?: string[];
-  related_faqs?: string[];
-  is_published?: boolean;
-  slug?: string;
-}
-
-export interface FAQUpdateData extends Partial<FAQCreateData> {}
-
-export interface FAQVoteData {
-  is_helpful: boolean;
-}
+// Re-export types for backward compatibility
+export type { 
+  FAQ, 
+  FAQCreateData, 
+  FAQUpdateData, 
+  FAQSearchParams, 
+  FAQListResponse,
+  FAQVoteRequest,
+  FAQVoteResponse
+} from '@/lib/types/faq';
 
 export interface FAQBulkAction {
   faq_ids: string[];
@@ -79,7 +42,7 @@ export const faqAPI = {
     if (params) {
       if (params.q) queryParams.append('q', params.q);
       if (params.category) queryParams.append('category', params.category);
-      if (params.tags) params.tags.forEach(tag => queryParams.append('tags', tag));
+      if (params.is_published !== undefined) queryParams.append('is_published', params.is_published.toString());
       if (params.page) queryParams.append('page', params.page.toString());
       if (params.per_page) queryParams.append('per_page', params.per_page.toString());
       if (params.sort_by) queryParams.append('sort_by', params.sort_by);
@@ -87,13 +50,6 @@ export const faqAPI = {
     }
     
     return apiClient.get<StandardResponse<FAQListResponse>>(`/faq?${queryParams.toString()}`);
-  },
-
-  /**
-   * Get FAQ categories with count
-   */
-  async getCategories(): Promise<StandardResponse<FAQCategory[]>> {
-    return apiClient.get<StandardResponse<FAQCategory[]>>('/faq/categories');
   },
 
   /**
@@ -144,14 +100,8 @@ export const faqAPI = {
   /**
    * Vote on FAQ helpfulness
    */
-  async voteFAQ(id: string, data: FAQVoteData): Promise<StandardResponse<{
-    helpful_votes: number;
-    unhelpful_votes: number;
-  }>> {
-    const response = await apiClient.post<StandardResponse<{
-      helpful_votes: number;
-      unhelpful_votes: number;
-    }>>(`/faq/${id}/vote`, data);
+  async voteFAQ(id: string, data: FAQVoteRequest): Promise<StandardResponse<FAQVoteResponse>> {
+    const response = await apiClient.post<StandardResponse<FAQVoteResponse>>(`/faq/${id}/vote`, data);
     return response;
   },
 
@@ -176,4 +126,3 @@ export const deleteFAQ = faqAPI.deleteFAQ;
 export const voteFAQ = faqAPI.voteFAQ;
 export const bulkAction = faqAPI.bulkAction;
 export const searchFAQs = faqAPI.getFAQs; // Alias for consistency
-export const getFAQCategories = faqAPI.getCategories;

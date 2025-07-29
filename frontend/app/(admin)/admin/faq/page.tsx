@@ -26,7 +26,7 @@ import {
   useBulkFAQActions
 } from '@/hooks/queries/useFAQ';
 import { FAQ, FAQCreateData, FAQUpdateData } from '@/lib/api/faq';
-import { FAQ_CATEGORIES } from '@/lib/types/faq';
+import { useActiveFAQCategoriesQuery } from '@/hooks/queries/useFAQCategories';
 import DeleteFAQModal, { FAQDeleteData } from '@/components/feature/DeleteFAQModal';
 
 export default function AdminFAQPage() {
@@ -46,9 +46,8 @@ export default function AdminFAQPage() {
   const [formData, setFormData] = useState<FAQCreateData>({
     question: '',
     answer: '',
-    category: 'general',
+    category_id: '',
     priority: 0,
-    tags: [],
     related_faqs: [],
     is_published: true,
     slug: '',
@@ -61,6 +60,10 @@ export default function AdminFAQPage() {
     page: currentPage,
     limit: itemsPerPage
   });
+  
+  // Get active FAQ categories for dropdowns
+  const { data: categoriesData } = useActiveFAQCategoriesQuery();
+  const categories = categoriesData?.data?.categories || [];
   
   const { mutate: createFAQMutation, loading: createLoading } = useCreateFAQ();
   const { mutate: updateFAQMutation, loading: updateLoading } = useUpdateFAQ();
@@ -88,17 +91,23 @@ export default function AdminFAQPage() {
 
   const handleCreateOrUpdate = async () => {
     if (editingFaq) {
-      updateFAQMutation({ faqId: editingFaq.id, data: formData as FAQUpdateData }, {
+      // Ensure slug is handled correctly for update too
+      const updateData = {
+        ...formData,
+        slug: formData.slug || undefined
+      };
+      updateFAQMutation({ faqId: editingFaq.id, data: updateData as FAQUpdateData }, {
         onSuccess: (response) => {
           resetForm();
           // React Query will automatically invalidate and refetch FAQs
         }
       });
     } else {
-      // Ensure category is always defined
+      // Ensure category_id and slug are handled correctly
       const finalFormData = {
         ...formData,
-        category: formData.category || 'general'
+        category_id: formData.category_id || undefined,
+        slug: formData.slug || undefined  // Convert empty string to undefined for auto-generation
       };
       
       createFAQMutation(finalFormData, {
@@ -116,7 +125,7 @@ export default function AdminFAQPage() {
       id: faq.id,
       question: faq.question,
       answer: faq.answer,
-      category: faq.category
+      category_id: faq.category_id
     });
     setIsDeleteModalOpen(true);
   };
@@ -166,9 +175,8 @@ export default function AdminFAQPage() {
     setFormData({
       question: faq.question,
       answer: faq.answer,
-      category: faq.category,
+      category_id: faq.category_id,
       priority: faq.priority,
-      tags: faq.tags,
       related_faqs: faq.related_faqs,
       is_published: faq.is_published,
       slug: faq.slug || '',
@@ -195,9 +203,8 @@ export default function AdminFAQPage() {
     setFormData({
       question: '',
       answer: '',
-      category: 'general',
+      category_id: '',
       priority: 0,
-      tags: [],
       related_faqs: [],
       is_published: true,
       slug: '',
@@ -262,9 +269,9 @@ export default function AdminFAQPage() {
                 className="px-4 py-2 border rounded-md"
               >
                 <option value="">All Categories</option>
-                {FAQ_CATEGORIES.map((cat: any) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.icon} {cat.label}
+                {categories.map((cat: any) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
                   </option>
                 ))}
               </select>
@@ -362,7 +369,7 @@ export default function AdminFAQPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {faqs.map((faq: any) => {
-                    const categoryInfo = FAQ_CATEGORIES.find(c => c.value === faq.category);
+                    const categoryInfo = categories.find((c: any) => c.id === faq.category_id);
                     return (
                       <tr key={faq.id} className="hover:bg-gray-50">
                         <td className="p-4">
@@ -385,7 +392,7 @@ export default function AdminFAQPage() {
                         </td>
                         <td className="p-4">
                           <span className="text-sm">
-                            {categoryInfo?.icon} {categoryInfo?.label}
+                            {categoryInfo?.name || 'Uncategorized'}
                           </span>
                         </td>
                         <td className="p-4">
@@ -487,13 +494,14 @@ export default function AdminFAQPage() {
                 Category
               </label>
               <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                value={formData.category_id || ''}
+                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                 className="w-full px-3 py-2 border rounded-md"
               >
-                {FAQ_CATEGORIES.map((cat: any) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.icon} {cat.label}
+                <option value="">Select Category</option>
+                {categories.map((cat: any) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
                   </option>
                 ))}
               </select>
@@ -513,19 +521,6 @@ export default function AdminFAQPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tags (comma separated)
-            </label>
-            <Input
-              value={formData.tags?.join(', ') || ''}
-              onChange={(e) => setFormData({ 
-                ...formData, 
-                tags: e.target.value.split(',').map(t => t.trim()).filter(t => t) 
-              })}
-              placeholder="ai, learning, tutorial"
-            />
-          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

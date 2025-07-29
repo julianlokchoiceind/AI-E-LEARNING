@@ -14,11 +14,10 @@ import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/hooks/useAuth';
-import { useFAQsQuery, useFAQCategoriesQuery, useVoteFAQ } from '@/hooks/queries/useFAQ';
-import { FAQ, FAQCategory, FAQListResponse } from '@/lib/api/faq';
-import { FAQ_CATEGORIES } from '@/lib/types/faq';
+import { useFAQsQuery, useVoteFAQ } from '@/hooks/queries/useFAQ';
+import { useFAQCategoriesQuery } from '@/hooks/queries/useFAQCategories';
+import { FAQ, FAQListResponse } from '@/lib/api/faq';
 import { LoadingSpinner, EmptyState, FAQListSkeleton } from '@/components/ui/LoadingStates';
 
 export default function FAQPage() {
@@ -101,8 +100,8 @@ export default function FAQPage() {
     });
   };
 
-  const getCategoryInfo = (category: string) => {
-    return FAQ_CATEGORIES.find(c => c.value === category);
+  const getCategoryInfo = (categoryId: string) => {
+    return categories.find((c: any) => c.id === categoryId);
   };
 
   if (loading) {
@@ -146,15 +145,14 @@ export default function FAQPage() {
               All Categories
             </Button>
             {categories.map((category: any) => {
-              const info = getCategoryInfo(category.value);
               return (
                 <Button
-                  key={category.value}
-                  variant={selectedCategory === category.value ? 'primary' : 'outline'}
+                  key={category.id}
+                  variant={selectedCategory === category.id ? 'primary' : 'outline'}
                   size="sm"
-                  onClick={() => setSelectedCategory(category.value)}
+                  onClick={() => setSelectedCategory(category.id)}
                 >
-                  {info?.icon} {category.label} ({category.count})
+                  {category.name}
                 </Button>
               );
             })}
@@ -179,7 +177,7 @@ export default function FAQPage() {
             {faqs.map((faq: any) => {
               const isExpanded = expandedFaqs.has(faq.id);
               const hasVoted = votedFaqs.has(faq.id);
-              const categoryInfo = getCategoryInfo(faq.category);
+              const categoryInfo = getCategoryInfo(faq.category_id);
               
               return (
                 <Card key={faq.id} className="overflow-hidden">
@@ -195,16 +193,9 @@ export default function FAQPage() {
                           </h3>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             <span className="flex items-center gap-1">
-                              {categoryInfo?.icon} {categoryInfo?.label}
+                              {categoryInfo?.name || 'General'}
                             </span>
                             <span>{faq.view_count} views</span>
-                            {faq.tags.length > 0 && (
-                              <div className="flex items-center gap-1">
-                                <Tag className="h-3 w-3" />
-                                {faq.tags.slice(0, 2).join(', ')}
-                                {faq.tags.length > 2 && '...'}
-                              </div>
-                            )}
                           </div>
                         </div>
                         {isExpanded ? (
@@ -223,16 +214,6 @@ export default function FAQPage() {
                             dangerouslySetInnerHTML={{ __html: faq.answer }}
                           />
                           
-                          {/* Tags */}
-                          {faq.tags.length > 0 && (
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              {faq.tags.map((tag: any, index: number) => (
-                                <Badge key={index} variant="secondary">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
                           
                           {/* Vote Section */}
                           <div className="mt-6 flex items-center justify-between">

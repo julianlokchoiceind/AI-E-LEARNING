@@ -11,14 +11,21 @@ from beanie import PydanticObjectId
 from fastapi import HTTPException
 
 # Local imports
-from app.models.faq import FAQ, FAQCategory
+from app.models.faq import FAQ
+from app.models.faq_category import FAQCategory
 from app.schemas.faq import FAQCreate, FAQUpdate, FAQSearchQuery
 
 
 class FAQService:
     """Service for managing FAQs"""
     
-    async def create_faq(self, faq_data: FAQCreate) -> FAQ:
+    def _format_faq(self, faq: FAQ) -> dict:
+        """Format FAQ for response (smart backend pattern)"""
+        faq_dict = faq.dict(exclude={"id"})
+        faq_dict["id"] = str(faq.id)
+        return faq_dict
+    
+    async def create_faq(self, faq_data: FAQCreate) -> dict:
         """Create a new FAQ"""
         # Check if similar question exists
         existing = await FAQ.find_one({
@@ -31,13 +38,24 @@ class FAQService:
                 detail="A similar FAQ already exists"
             )
         
+        # Validate category_id if provided
+        if faq_data.category_id:
+            category = await FAQCategory.get(faq_data.category_id)
+            if not category:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid category ID"
+                )
+        
         # Create FAQ
         faq = FAQ(**faq_data.dict())
+        # Ensure pre_save is called to generate slug if needed
+        await faq.pre_save()
         await faq.save()
         
-        return faq
+        return self._format_faq(faq)
     
-    async def get_faq(self, faq_id: str) -> FAQ:
+    async def get_faq(self, faq_id: str) -> dict:
         """Get FAQ by ID"""
         faq = await FAQ.get(faq_id)
         if not faq:
@@ -50,9 +68,9 @@ class FAQService:
         faq.view_count += 1
         await faq.save()
         
-        return faq
+        return self._format_faq(faq)
     
-    async def update_faq(self, faq_id: str, update_data: FAQUpdate) -> FAQ:
+    async def update_faq(self, faq_id: str, update_data: FAQUpdate) -> dict:
         """Update FAQ"""
         faq = await FAQ.get(faq_id)
         if not faq:
@@ -60,6 +78,15 @@ class FAQService:
                 status_code=404,
                 detail="FAQ not found"
             )
+        
+        # Validate category_id if being updated
+        if hasattr(update_data, 'category_id') and update_data.category_id:
+            category = await FAQCategory.get(update_data.category_id)
+            if not category:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid category ID"
+                )
         
         # Update fields
         update_dict = update_data.dict(exclude_unset=True)
@@ -69,7 +96,7 @@ class FAQService:
         faq.updated_at = datetime.utcnow()
         await faq.save()
         
-        return faq
+        return self._format_faq(faq)
     
     async def delete_faq(self, faq_id: str) -> dict:
         """Delete FAQ"""
@@ -93,15 +120,11 @@ class FAQService:
             # Search in question and answer
             filter_dict["$or"] = [
                 {"question": {"$regex": query.q, "$options": "i"}},
-                {"answer": {"$regex": query.q, "$options": "i"}},
-                {"tags": {"$in": [query.q.lower()]}}
+                {"answer": {"$regex": query.q, "$options": "i"}}
             ]
         
         if query.category:
-            filter_dict["category"] = query.category
-        
-        if query.tags:
-            filter_dict["tags"] = {"$in": query.tags}
+            filter_dict["category_id"] = query.category
         
         if query.is_published is not None:
             filter_dict["is_published"] = query.is_published
@@ -112,9 +135,9 @@ class FAQService:
         # Build sort
         sort_field = query.sort_by
         if sort_field == "priority" and not query.category:
-            # If sorting by priority without category filter, also sort by category
+            # If sorting by priority without category filter, also sort by category_id
             sort = [
-                ("category", 1),
+                ("category_id", 1),
                 (sort_field, -1 if query.sort_order == "desc" else 1)
             ]
         else:
@@ -125,11 +148,7 @@ class FAQService:
         faqs = await FAQ.find(filter_dict).sort(sort).skip(skip).limit(query.per_page).to_list()
         
         # Convert _id to id for frontend consistency (smart backend pattern)
-        formatted_faqs = []
-        for faq in faqs:
-            faq_dict = faq.dict(exclude={"id"})
-            faq_dict["id"] = str(faq.id)
-            formatted_faqs.append(faq_dict)
+        formatted_faqs = [self._format_faq(faq) for faq in faqs]
         
         return {
             "items": formatted_faqs,
@@ -139,12 +158,13 @@ class FAQService:
             "total_pages": (total + query.per_page - 1) // query.per_page
         }
     
-    async def get_faqs_by_category(self, category: FAQCategory) -> List[FAQ]:
+    async def get_faqs_by_category(self, category_id: str) -> List[dict]:
         """Get all published FAQs by category"""
-        return await FAQ.find({
-            "category": category,
+        faqs = await FAQ.find({
+            "category_id": category_id,
             "is_published": True
         }).sort([("priority", -1), ("view_count", -1)]).to_list()
+        return [self._format_faq(faq) for faq in faqs]
     
     async def vote_faq(self, faq_id: str, is_helpful: bool) -> Dict:
         """Vote on FAQ helpfulness"""
@@ -169,7 +189,7 @@ class FAQService:
             "unhelpful_votes": faq.unhelpful_votes
         }
     
-    async def get_related_faqs(self, faq_id: str) -> List[FAQ]:
+    async def get_related_faqs(self, faq_id: str) -> List[dict]:
         """Get related FAQs"""
         faq = await FAQ.get(faq_id)
         if not faq or not faq.related_faqs:
@@ -178,16 +198,18 @@ class FAQService:
         # Convert string IDs to ObjectIds
         related_ids = [PydanticObjectId(id_str) for id_str in faq.related_faqs]
         
-        return await FAQ.find({
+        faqs = await FAQ.find({
             "_id": {"$in": related_ids},
             "is_published": True
         }).to_list()
+        return [self._format_faq(faq) for faq in faqs]
     
-    async def get_popular_faqs(self, limit: int = 10) -> List[FAQ]:
+    async def get_popular_faqs(self, limit: int = 10) -> List[dict]:
         """Get most viewed FAQs"""
-        return await FAQ.find({
+        faqs = await FAQ.find({
             "is_published": True
         }).sort([("view_count", -1)]).limit(limit).to_list()
+        return [self._format_faq(faq) for faq in faqs]
     
     async def bulk_action(self, faq_ids: List[str], action: str) -> dict:
         """Perform bulk action on FAQs"""

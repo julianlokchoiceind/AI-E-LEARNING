@@ -7,7 +7,7 @@ export interface FAQDeleteData {
   id: string;
   question: string;
   answer: string;
-  category: string;
+  category_id?: string;
 }
 
 interface DeleteFAQModalProps {

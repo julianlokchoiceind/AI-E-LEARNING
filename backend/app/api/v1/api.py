@@ -3,7 +3,7 @@ API v1 router that includes all endpoints.
 """
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, courses, chapters, lessons, progress, enrollments, users, ai, quizzes, admin, payments, analytics, security, performance, faq, support, reviews, certificates, onboarding
+from app.api.v1.endpoints import auth, courses, chapters, lessons, progress, enrollments, users, ai, quizzes, admin, payments, analytics, security, performance, faq, faq_categories, support, reviews, certificates, onboarding
 
 api_router = APIRouter()
 
@@ -24,6 +24,7 @@ api_router.include_router(analytics.router, prefix="/analytics", tags=["analytic
 api_router.include_router(security.router, prefix="/security", tags=["security"])
 api_router.include_router(performance.router, prefix="/performance", tags=["performance"])
 api_router.include_router(faq.router, prefix="/faq", tags=["faq"])
+api_router.include_router(faq_categories.router, prefix="/faq-categories", tags=["faq-categories"])
 api_router.include_router(support.router, prefix="/support", tags=["support"])
 api_router.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
 api_router.include_router(certificates.router, prefix="/certificates", tags=["certificates"])

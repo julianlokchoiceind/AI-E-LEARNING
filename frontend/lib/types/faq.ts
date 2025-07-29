@@ -1,16 +1,14 @@
 /**
  * FAQ type definitions
+ * Updated to use dynamic categories instead of hardcoded enum
  */
-
-export type FAQCategory = 'general' | 'pricing' | 'learning' | 'technical' | 'creator' | 'admin';
 
 export interface FAQ {
   id: string;
   question: string;
   answer: string;
-  category: FAQCategory;
+  category_id?: string; // Optional reference to dynamic FAQ category
   priority: number;
-  tags: string[];
   related_faqs: string[];
   is_published: boolean;
   slug?: string;
@@ -24,56 +22,57 @@ export interface FAQ {
 export interface FAQFormData {
   question: string;
   answer: string;
-  category: FAQCategory;
+  category_id?: string; // Optional reference to dynamic FAQ category
   priority: number;
-  tags: string[];
   related_faqs: string[];
   is_published: boolean;
   slug?: string;
 }
 
-export interface FAQCategoryInfo {
-  value: FAQCategory;
-  label: string;
-  description: string;
-  icon: string;
+export interface FAQCreateData {
+  question: string;
+  answer: string;
+  category_id?: string;
+  priority?: number;
+  related_faqs?: string[];
+  is_published?: boolean;
+  slug?: string;
 }
 
-export const FAQ_CATEGORIES: FAQCategoryInfo[] = [
-  {
-    value: 'general',
-    label: 'General',
-    description: 'General questions about the platform',
-    icon: '📋',
-  },
-  {
-    value: 'pricing',
-    label: 'Pricing & Payment',
-    description: 'Questions about pricing, subscriptions, and payments',
-    icon: '💰',
-  },
-  {
-    value: 'learning',
-    label: 'Learning',
-    description: 'Questions about courses, learning features, and progress',
-    icon: '📚',
-  },
-  {
-    value: 'technical',
-    label: 'Technical',
-    description: 'Technical issues, browser support, and troubleshooting',
-    icon: '🛠️',
-  },
-  {
-    value: 'creator',
-    label: 'Content Creator',
-    description: 'Questions for course creators and instructors',
-    icon: '🎨',
-  },
-  {
-    value: 'admin',
-    label: 'Admin',
-    description: 'Administrative and platform management questions',
-    icon: '👤',
-  },
-];
+export interface FAQUpdateData {
+  question?: string;
+  answer?: string;
+  category_id?: string;
+  priority?: number;
+  related_faqs?: string[];
+  is_published?: boolean;
+  slug?: string;
+}
+
+export interface FAQSearchParams {
+  q?: string;          // Search query
+  category?: string;   // Category ID for filtering
+  is_published?: boolean;
+  page?: number;
+  per_page?: number;
+  sort_by?: 'priority' | 'view_count' | 'created_at';
+  sort_order?: 'asc' | 'desc';
+}
+
+export interface FAQVoteRequest {
+  is_helpful: boolean;
+}
+
+export interface FAQVoteResponse {
+  success: boolean;
+  message: string;
+  helpful_votes: number;
+  unhelpful_votes: number;
+}
+
+export interface FAQListResponse {
+  items: FAQ[];
+  total: number;
+  page: number;
+  per_page: number;
+}

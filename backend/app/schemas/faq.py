@@ -9,35 +9,29 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, validator
 
 # Local imports
-from app.models.faq import FAQCategory
 from app.schemas.base import PyObjectId, StandardResponse
 
 
 class FAQBase(BaseModel):
     """Base FAQ schema"""
-    question: str = Field(..., min_length=5, max_length=500)
-    answer: str = Field(..., min_length=10, max_length=5000)
-    category: FAQCategory = Field(default=FAQCategory.GENERAL)
+    question: str = Field(..., min_length=1, max_length=500)
+    answer: str = Field(..., min_length=1, max_length=5000)
+    category_id: Optional[str] = None  # Reference to FAQCategory._id
     priority: int = Field(default=0, ge=0, le=100)
-    tags: List[str] = Field(default_factory=list, max_items=10)
     related_faqs: List[str] = Field(default_factory=list, max_items=5)
     is_published: bool = Field(default=True)
     slug: Optional[str] = Field(None, pattern="^[a-z0-9-]+$")
     
-    @validator('tags')
-    def validate_tags(cls, v):
-        """Validate tags"""
-        return [tag.lower().strip() for tag in v if tag.strip()]
-    
     @validator('slug')
     def validate_slug(cls, v, values):
         """Generate slug if not provided"""
-        if not v and 'question' in values:
+        # Treat empty string as None for auto-generation
+        if (not v or v == '') and 'question' in values:
             # Simple slug generation
             slug = values['question'].lower()
             slug = ''.join(c if c.isalnum() or c == ' ' else '' for c in slug)
             slug = '-'.join(slug.split())[:100]
-            return slug
+            return slug if slug else None  # Return None if slug is empty after processing
         return v
 
 
@@ -48,11 +42,10 @@ class FAQCreate(FAQBase):
 
 class FAQUpdate(BaseModel):
     """Schema for updating FAQ"""
-    question: Optional[str] = Field(None, min_length=5, max_length=500)
-    answer: Optional[str] = Field(None, min_length=10, max_length=5000)
-    category: Optional[FAQCategory] = None
+    question: Optional[str] = Field(None, min_length=1, max_length=500)
+    answer: Optional[str] = Field(None, min_length=1, max_length=5000)
+    category_id: Optional[str] = None  # Reference to FAQCategory._id
     priority: Optional[int] = Field(None, ge=0, le=100)
-    tags: Optional[List[str]] = Field(None, max_items=10)
     related_faqs: Optional[List[str]] = Field(None, max_items=5)
     is_published: Optional[bool] = None
     slug: Optional[str] = Field(None, pattern="^[a-z0-9-]+$")
@@ -92,8 +85,7 @@ class FAQListResponse(BaseModel):
 class FAQSearchQuery(BaseModel):
     """FAQ search query parameters"""
     q: Optional[str] = Field(None, description="Search query")
-    category: Optional[FAQCategory] = None
-    tags: Optional[List[str]] = None
+    category: Optional[str] = None  # Category ID for filtering
     is_published: Optional[bool] = True
     page: int = Field(1, ge=1)
     per_page: int = Field(20, ge=1, le=100)
