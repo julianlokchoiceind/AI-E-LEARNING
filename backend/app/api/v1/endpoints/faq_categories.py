@@ -16,7 +16,9 @@ from app.schemas.faq_category import (
     FAQCategoryUpdate,
     FAQCategoryResponse,
     FAQCategoryListResponse,
-    FAQCategoryWithFAQsResponse
+    FAQCategoryWithFAQsResponse,
+    FAQCategoryBulkAction,
+    FAQCategoryReorderRequest
 )
 from app.schemas.base import StandardResponse
 from app.services.faq_category_service import FAQCategoryService
@@ -175,4 +177,22 @@ async def reorder_categories(
         success=True,
         data=result,
         message=result["message"]
+    )
+
+
+@router.post("/bulk-action", response_model=StandardResponse)
+async def bulk_action_categories(
+    bulk_data: FAQCategoryBulkAction,
+    current_user: User = Depends(get_admin_user)
+):
+    """
+    Perform bulk actions on FAQ categories (Admin only)
+    Actions: activate, deactivate, delete
+    """
+    result = await service.bulk_action(bulk_data.category_ids, bulk_data.action)
+    
+    return StandardResponse(
+        success=True,
+        data=result,
+        message=result.get("message", "Bulk action completed successfully")
     )

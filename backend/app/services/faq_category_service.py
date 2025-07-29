@@ -247,3 +247,66 @@ class FAQCategoryService:
                 status_code=404,
                 detail="FAQ category not found"
             )
+    
+    async def bulk_action(self, category_ids: List[str], action: str) -> Dict:
+        """
+        Perform bulk actions on FAQ categories
+        Actions: activate, deactivate, delete
+        """
+        if not category_ids:
+            return {
+                "success": False,
+                "message": "No categories provided",
+                "affected": 0
+            }
+        
+        affected = 0
+        errors = []
+        
+        for category_id in category_ids:
+            try:
+                if action == "activate":
+                    category = await FAQCategory.get(category_id)
+                    if category and not category.is_active:
+                        category.is_active = True
+                        await category.save()
+                        affected += 1
+                        
+                elif action == "deactivate":
+                    category = await FAQCategory.get(category_id)
+                    if category and category.is_active:
+                        category.is_active = False
+                        await category.save()
+                        affected += 1
+                        
+                elif action == "delete":
+                    # Check if category has FAQs
+                    category = await FAQCategory.get(category_id)
+                    if category:
+                        if category.faq_count > 0:
+                            errors.append(f"Category '{category.name}' has {category.faq_count} FAQs and cannot be deleted")
+                            continue
+                        
+                        await category.delete()
+                        affected += 1
+                        
+            except Exception as e:
+                errors.append(f"Error processing category {category_id}: {str(e)}")
+        
+        # Prepare response message
+        action_past = {
+            "activate": "activated",
+            "deactivate": "deactivated", 
+            "delete": "deleted"
+        }.get(action, action)
+        
+        message = f"Successfully {action_past} {affected} categories"
+        if errors:
+            message += f". {len(errors)} errors occurred"
+        
+        return {
+            "success": True,
+            "message": message,
+            "affected": affected,
+            "errors": errors if errors else None
+        }

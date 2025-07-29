@@ -53,6 +53,25 @@ export const faqAPI = {
   },
 
   /**
+   * Get FAQs for admin management (includes unpublished)
+   */
+  async getAdminFAQs(params?: FAQSearchParams): Promise<StandardResponse<FAQListResponse>> {
+    const queryParams = new URLSearchParams();
+    
+    if (params) {
+      if (params.q) queryParams.append('q', params.q);
+      if (params.category) queryParams.append('category', params.category);
+      if (params.is_published !== undefined) queryParams.append('is_published', params.is_published.toString());
+      if (params.page) queryParams.append('page', params.page.toString());
+      if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+      if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+      if (params.sort_order) queryParams.append('sort_order', params.sort_order);
+    }
+    
+    return apiClient.get<StandardResponse<FAQListResponse>>(`/faq/admin?${queryParams.toString()}`);
+  },
+
+  /**
    * Get popular FAQs
    */
   async getPopularFAQs(limit: number = 10): Promise<StandardResponse<FAQListResponse>> {
@@ -120,6 +139,7 @@ export const faqAPI = {
 
 // Export individual functions for React Query hooks
 export const getFAQs = faqAPI.getFAQs;
+export const getAdminFAQs = faqAPI.getAdminFAQs;
 export const createFAQ = faqAPI.createFAQ;
 export const updateFAQ = faqAPI.updateFAQ;
 export const deleteFAQ = faqAPI.deleteFAQ;

@@ -25,7 +25,8 @@ import {
   useCreateFAQCategory,
   useUpdateFAQCategory,
   useDeleteFAQCategory,
-  useReorderFAQCategories
+  useReorderFAQCategories,
+  useBulkFAQCategoryActions
 } from '@/hooks/queries/useFAQCategories';
 import { 
   FAQCategoryData, 
@@ -62,6 +63,7 @@ export default function FAQCategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<FAQCategoryData | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<FAQCategoryData | null>(null);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [formErrors, setFormErrors] = useState<string[]>([]);
   
   const [formData, setFormData] = useState<FAQCategoryCreateData>({
@@ -82,9 +84,10 @@ export default function FAQCategoriesPage() {
   const { mutate: updateCategory, loading: updateLoading } = useUpdateFAQCategory();
   const { mutate: deleteCategory, loading: deleteLoading } = useDeleteFAQCategory();
   const { mutate: reorderCategories, loading: reorderLoading } = useReorderFAQCategories();
+  const { mutate: bulkAction, loading: bulkLoading } = useBulkFAQCategoryActions();
   
   // Combined loading state for actions
-  const actionLoading = createLoading || updateLoading || deleteLoading || reorderLoading;
+  const actionLoading = createLoading || updateLoading || deleteLoading || reorderLoading || bulkLoading;
   
   // Extract categories from React Query response
   const categories = categoriesData?.data?.categories || [];
@@ -221,6 +224,53 @@ export default function FAQCategoriesPage() {
     }
   };
 
+  const handleBulkActivate = () => {
+    if (selectedCategories.size === 0) return;
+    
+    bulkAction({
+      categoryIds: Array.from(selectedCategories),
+      action: 'activate'
+    }, {
+      onSuccess: () => {
+        setSelectedCategories(new Set());
+      }
+    });
+  };
+
+  const handleBulkDeactivate = () => {
+    if (selectedCategories.size === 0) return;
+    
+    bulkAction({
+      categoryIds: Array.from(selectedCategories),
+      action: 'deactivate'
+    }, {
+      onSuccess: () => {
+        setSelectedCategories(new Set());
+      }
+    });
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedCategories.size === 0) return;
+    setShowBulkDeleteModal(true);
+  };
+
+  const handleConfirmBulkDelete = () => {
+    bulkAction({
+      categoryIds: Array.from(selectedCategories),
+      action: 'delete'
+    }, {
+      onSuccess: () => {
+        setSelectedCategories(new Set());
+        setShowBulkDeleteModal(false);
+      },
+      onError: (error) => {
+        // Error is already handled by the mutation (toast shown)
+        // Keep modal open for user to see the error
+      }
+    });
+  };
+
   // Filter categories based on search and status
   const filteredCategories = categories.filter((category: FAQCategoryData) => {
     const matchesSearch = !searchQuery || 
@@ -328,11 +378,15 @@ export default function FAQCategoriesPage() {
                 <div className="flex gap-2">
                   <Button
                     size="sm"
+                    variant="ghost"
+                    onClick={() => setSelectedCategories(new Set())}
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    size="sm"
                     variant="outline"
-                    onClick={() => {
-                      // Bulk activate - implementation needed if required
-                      console.log('Bulk activate:', Array.from(selectedCategories));
-                    }}
+                    onClick={handleBulkActivate}
                     disabled={actionLoading}
                   >
                     <Eye className="h-4 w-4 mr-1" />
@@ -341,14 +395,21 @@ export default function FAQCategoriesPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => {
-                      // Bulk deactivate - implementation needed if required  
-                      console.log('Bulk deactivate:', Array.from(selectedCategories));
-                    }}
+                    onClick={handleBulkDeactivate}
                     disabled={actionLoading}
                   >
                     <EyeOff className="h-4 w-4 mr-1" />
                     Deactivate
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleBulkDelete}
+                    disabled={actionLoading}
+                    className="text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
                   </Button>
                 </div>
               </div>
@@ -506,8 +567,8 @@ export default function FAQCategoriesPage() {
                               variant="ghost"
                               className="text-red-600 hover:bg-red-50"
                               onClick={() => handleDelete(category)}
-                              disabled={actionLoading || (category.faq_count && category.faq_count > 0)}
-                              title={category.faq_count && category.faq_count > 0 ? 'Cannot delete category with FAQs' : 'Delete category'}
+                              disabled={actionLoading || (Number(category.faq_count) > 0)}
+                              title={Number(category.faq_count) > 0 ? 'Cannot delete category with FAQs' : 'Delete category'}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -676,14 +737,14 @@ export default function FAQCategoriesPage() {
                   This will permanently delete the FAQ category. This action cannot be undone.
                 </p>
                 
-                {categoryToDelete.faq_count && categoryToDelete.faq_count > 0 && (
+                {Number(categoryToDelete.faq_count) > 0 && (
                   <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="w-5 h-5 text-yellow-600" />
                       <span className="font-medium text-yellow-800">Cannot Delete</span>
                     </div>
                     <p className="text-sm text-yellow-700 mt-1">
-                      This category contains {categoryToDelete.faq_count} FAQ{categoryToDelete.faq_count > 1 ? 's' : ''}. 
+                      This category contains {categoryToDelete.faq_count} FAQ{Number(categoryToDelete.faq_count) > 1 ? 's' : ''}. 
                       Please move or delete all FAQs before deleting the category.
                     </p>
                   </div>
@@ -707,7 +768,7 @@ export default function FAQCategoriesPage() {
                 variant="danger"
                 onClick={handleConfirmDelete}
                 loading={deleteLoading}
-                disabled={categoryToDelete.faq_count && categoryToDelete.faq_count > 0}
+                disabled={Number(categoryToDelete.faq_count) > 0}
                 className="flex-1"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
@@ -717,6 +778,74 @@ export default function FAQCategoriesPage() {
           </div>
         )}
       </Modal>
+
+      {/* Bulk Delete Modal */}
+      {showBulkDeleteModal && (
+        <Modal
+          isOpen={showBulkDeleteModal}
+          onClose={() => setShowBulkDeleteModal(false)}
+          title="Delete Multiple Categories"
+          size="md"
+        >
+          <div className="space-y-6">
+            {/* Warning Icon & Message */}
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Are you sure you want to delete {selectedCategories.size} categories?
+                </h3>
+                <p className="mt-2 text-sm text-gray-600">
+                  This action cannot be undone. All selected categories will be permanently deleted.
+                </p>
+                <p className="mt-1 text-sm text-red-600">
+                  Note: Categories with FAQs cannot be deleted.
+                </p>
+              </div>
+            </div>
+
+            {/* Selected Categories List */}
+            <div className="max-h-40 overflow-y-auto border rounded-md p-3 bg-gray-50">
+              <ul className="text-sm space-y-1">
+                {Array.from(selectedCategories).map(categoryId => {
+                  const category = categories.find((c: FAQCategoryData) => c.id === categoryId);
+                  return category ? (
+                    <li key={categoryId} className="text-gray-700">
+                      • {category.name} {Number(category.faq_count) > 0 && (
+                        <span className="text-red-600 text-xs">
+                          ({category.faq_count} FAQs - cannot delete)
+                        </span>
+                      )}
+                    </li>
+                  ) : null;
+                })}
+              </ul>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowBulkDeleteModal(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleConfirmBulkDelete}
+                loading={bulkLoading}
+                className="flex-1"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete {selectedCategories.size} Categories
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

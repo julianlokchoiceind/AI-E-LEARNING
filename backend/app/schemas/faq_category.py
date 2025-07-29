@@ -96,6 +96,27 @@ class FAQCategoryWithFAQsResponse(BaseModel):
     updated_at: datetime
 
 
+class FAQCategoryBulkAction(BaseModel):
+    """Bulk action on FAQ categories"""
+    category_ids: List[str]
+    action: str = Field(..., pattern="^(activate|deactivate|delete)$")
+
+
+class FAQCategoryReorderRequest(BaseModel):
+    """Request schema for reordering categories"""
+    category_orders: List[dict] = Field(..., description="List of {id: str, order: int}")
+    
+    @validator('category_orders')
+    def validate_orders(cls, v):
+        """Ensure each item has id and order"""
+        for item in v:
+            if 'id' not in item or 'order' not in item:
+                raise ValueError('Each item must have id and order fields')
+            if not isinstance(item['order'], int) or item['order'] < 0:
+                raise ValueError('Order must be a non-negative integer')
+        return v
+
+
 class StandardResponse(BaseModel):
     """Standard API response format"""
     success: bool

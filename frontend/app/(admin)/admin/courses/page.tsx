@@ -150,7 +150,8 @@ export default function CourseApproval() {
   };
 
   const handleToggleFree = (course: Course, currentStatus: boolean) => {
-    const courseId = course.id;
+    const courseId = course.id || course._id;
+    if (!courseId) return;
     toggleFree({ courseId, isFree: !currentStatus });
   };
 
@@ -216,7 +217,8 @@ export default function CourseApproval() {
     if (selectedCourses.size === courses.length) {
       setSelectedCourses(new Set());
     } else {
-      setSelectedCourses(new Set(courses.map((c: Course) => c.id)));
+      const courseIds = courses.map((c: Course) => c.id || c._id).filter(Boolean) as string[];
+      setSelectedCourses(new Set(courseIds));
     }
   };
 
@@ -523,13 +525,15 @@ export default function CourseApproval() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCourses.map((course: Course) => (
-                  <tr key={course.id} className="hover:bg-gray-50">
+                {filteredCourses.map((course: Course) => {
+                  const courseId = course.id || course._id || '';
+                  return (
+                  <tr key={courseId} className="hover:bg-gray-50">
                     <td className="px-4 py-4">
                       <input
                         type="checkbox"
-                        checked={selectedCourses.has(course.id)}
-                        onChange={() => handleSelectCourse(course.id)}
+                        checked={selectedCourses.has(courseId)}
+                        onChange={() => handleSelectCourse(courseId)}
                         className="rounded"
                       />
                     </td>
@@ -658,7 +662,7 @@ export default function CourseApproval() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

@@ -85,7 +85,7 @@ export const DeleteFAQModal: React.FC<DeleteFAQModalProps> = ({
             
             <div>
               <p className="text-sm font-medium text-gray-700">Category:</p>
-              <p className="text-sm text-gray-900 capitalize">{faq.category}</p>
+              <p className="text-sm text-gray-900 capitalize">{faq.category_id || 'Uncategorized'}</p>
             </div>
           </div>
         </div>

@@ -58,9 +58,12 @@ export const faqCategoriesApi = {
     is_active?: boolean; 
     include_stats?: boolean 
   }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.is_active !== undefined) queryParams.append('is_active', params.is_active.toString());
+    if (params?.include_stats !== undefined) queryParams.append('include_stats', params.include_stats.toString());
+    
     return apiClient.get<StandardResponse<FAQCategoriesListResponse>>(
-      '/faq-categories', 
-      { params }
+      `/faq-categories${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     );
   },
 
@@ -72,9 +75,12 @@ export const faqCategoriesApi = {
     is_active?: boolean; 
     include_stats?: boolean 
   }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.is_active !== undefined) queryParams.append('is_active', params.is_active.toString());
+    if (params?.include_stats !== undefined) queryParams.append('include_stats', params.include_stats.toString());
+    
     return apiClient.get<StandardResponse<FAQCategoriesListResponse>>(
-      '/faq-categories/admin', 
-      { params }
+      `/faq-categories/admin${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     );
   },
 
@@ -133,6 +139,22 @@ export const faqCategoriesApi = {
     return apiClient.post<StandardResponse<{ success: boolean; message: string }>>(
       '/faq-categories/reorder',
       { category_orders: orders }
+    );
+  },
+
+  /**
+   * Perform bulk actions on FAQ categories (admin only)
+   * Actions: activate, deactivate, delete
+   */
+  bulkAction: (categoryIds: string[], action: 'activate' | 'deactivate' | 'delete') => {
+    return apiClient.post<StandardResponse<{ 
+      success: boolean; 
+      message: string; 
+      affected: number;
+      errors?: string[];
+    }>>(
+      '/faq-categories/bulk-action',
+      { category_ids: categoryIds, action }
     );
   }
 };

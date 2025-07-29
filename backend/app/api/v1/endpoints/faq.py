@@ -28,19 +28,26 @@ async def get_faqs(
     q: str = Query(None, description="Search query"),
     category: str = Query(None, description="Filter by category"),
     tags: List[str] = Query(None, description="Filter by tags"),
+    is_published: bool = Query(None, description="Filter by published status"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     sort_by: str = Query("priority", pattern="^(priority|view_count|created_at)$"),
-    sort_order: str = Query("desc", pattern="^(asc|desc)$")
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
 ):
     """
-    Get all published FAQs with optional search and filters
+    Get FAQs with optional search and filters
+    Note: Only published FAQs are returned for public access
+    Use admin endpoints for unpublished FAQs
     """
+    # Public endpoint always shows only published FAQs
+    if is_published is None:
+        is_published = True
+    
     query = FAQSearchQuery(
         q=q,
         category=category,
         tags=tags,
-        is_published=True,
+        is_published=is_published,
         page=page,
         per_page=per_page,
         sort_by=sort_by,
@@ -134,6 +141,42 @@ async def create_faq(
         success=True,
         data=faq,
         message="FAQ created successfully"
+    )
+
+
+@router.get("/admin", response_model=StandardResponse[dict])
+async def get_admin_faqs(
+    q: str = Query(None, description="Search query"),
+    category: str = Query(None, description="Filter by category"),
+    tags: List[str] = Query(None, description="Filter by tags"),
+    is_published: bool = Query(None, description="Filter by published status (None = all)"),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    sort_by: str = Query("priority", pattern="^(priority|view_count|created_at)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
+    current_user: User = Depends(get_admin_user)
+):
+    """
+    Get all FAQs for admin management (Admin only)
+    Shows both published and unpublished FAQs
+    """
+    query = FAQSearchQuery(
+        q=q,
+        category=category,
+        tags=tags,
+        is_published=is_published,  # None means show all
+        page=page,
+        per_page=per_page,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
+    
+    result = await faq_service.search_faqs(query)
+    
+    return StandardResponse(
+        success=True,
+        data=result,
+        message="FAQs retrieved successfully"
     )
 
 

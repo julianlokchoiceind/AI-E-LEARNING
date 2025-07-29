@@ -240,7 +240,7 @@ export function useEnrollInCourse() {
       ],
       onSuccess: (response, variables) => {
         // Invalidate the specific course to get fresh data with continue_lesson_id
-        queryClient.invalidateQueries(['course', variables.courseId]);
+        queryClient.invalidateQueries({ queryKey: ['course', variables.courseId] });
         // Also invalidate the specific enrollment query
         queryClient.invalidateQueries({ 
           queryKey: ['enrollment', variables.courseId],

@@ -5,6 +5,7 @@ import { useApiMutation } from '@/hooks/useApiMutation';
 import { getCacheConfig } from '@/lib/constants/cache-config';
 import { 
   getFAQs,
+  getAdminFAQs,
   createFAQ,
   updateFAQ,
   deleteFAQ,
@@ -24,16 +25,30 @@ interface FAQFilters {
 }
 
 /**
- * FAQ LIST - Admin FAQ management
- * Critical: FAQ content management
+ * FAQ LIST - Public FAQ listing
+ * Critical: FAQ content browsing
  */
 export function useFAQsQuery(filters: FAQFilters = {}) {
   const { search = '', category = '', published, page = 1, limit = 20 } = filters;
   
   return useApiQuery(
     ['faqs', { search, category, published, page, limit }],
-    () => getFAQs({ q: search, category, page, per_page: limit }),
+    () => getFAQs({ q: search, category, is_published: published, page, per_page: limit }),
     getCacheConfig('FAQ_CONTENT') // 30s fresh - FAQ content for public browsing
+  );
+}
+
+/**
+ * ADMIN FAQ LIST - Admin FAQ management
+ * Critical: FAQ content management (includes unpublished)
+ */
+export function useAdminFAQsQuery(filters: FAQFilters = {}) {
+  const { search = '', category = '', published, page = 1, limit = 20 } = filters;
+  
+  return useApiQuery(
+    ['admin-faqs', { search, category, published, page, limit }],
+    () => getAdminFAQs({ q: search, category, is_published: published, page, per_page: limit }),
+    getCacheConfig('FAQ_CONTENT') // 30s fresh - FAQ content management
   );
 }
 
@@ -47,7 +62,8 @@ export function useCreateFAQ() {
     {
       operationName: 'create-faq',
       invalidateQueries: [
-        ['faqs'], // Refresh FAQ list
+        ['faqs'], // Refresh public FAQ list
+        ['admin-faqs'], // Refresh admin FAQ list
         ['faq-categories'], // Update categories if new category added
       ],
     }
@@ -64,7 +80,8 @@ export function useUpdateFAQ() {
     {
       operationName: 'update-faq',
       invalidateQueries: [
-        ['faqs'], // Refresh FAQ list
+        ['faqs'], // Refresh public FAQ list
+        ['admin-faqs'], // Refresh admin FAQ list
         ['faq', 'faqId'], // Refresh specific FAQ if viewing
       ],
     }
@@ -81,7 +98,8 @@ export function useDeleteFAQ() {
     {
       operationName: 'delete-faq',
       invalidateQueries: [
-        ['faqs'], // Refresh FAQ list
+        ['faqs'], // Refresh public FAQ list
+        ['admin-faqs'], // Refresh admin FAQ list
         ['faq-categories'], // Update categories count
       ],
     }
@@ -114,7 +132,7 @@ export function useFAQCategoriesQuery() {
     ['faq-categories'],
     () => getFAQs({ per_page: 1000 }).then(response => {
       // Extract unique categories from FAQ data
-      const categories = Array.from(new Set(response.data?.items?.map(faq => faq.category) || []));
+      const categories = Array.from(new Set(response.data?.items?.map(faq => faq.category_id).filter(Boolean) || []));
       return { success: true, data: { categories }, message: 'FAQ categories retrieved successfully' };
     }),
     getCacheConfig('APP_CONFIGURATION') // 10min stable - FAQ categories rarely change
@@ -131,7 +149,8 @@ export function usePublishFAQ() {
       updateFAQ(faqId, { is_published: published }),
     {
       invalidateQueries: [
-        ['faqs'], // Refresh FAQ list
+        ['faqs'], // Refresh public FAQ list
+        ['admin-faqs'], // Refresh admin FAQ list
       ],
       operationName: 'publish-faq', // Unique operation ID for toast deduplication
     }
@@ -167,7 +186,8 @@ export function useBulkFAQActions() {
     {
       operationName: 'bulk-faq-action',
       invalidateQueries: [
-        ['faqs'], // Refresh FAQ list
+        ['faqs'], // Refresh public FAQ list
+        ['admin-faqs'], // Refresh admin FAQ list
       ],
     }
   );
@@ -183,7 +203,8 @@ export function useVoteFAQ() {
       voteFAQ(faqId, { is_helpful: isHelpful }),
     {
       invalidateQueries: [
-        ['faqs'], // Refresh FAQ list to show updated vote counts
+        ['faqs'], // Refresh public FAQ list to show updated vote counts
+        ['admin-faqs'], // Refresh admin FAQ list
       ],
       operationName: 'vote-faq', // Unique operation ID for toast deduplication
     }

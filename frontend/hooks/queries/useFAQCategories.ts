@@ -33,7 +33,7 @@ export function useFAQCategoriesQuery(filters: FAQCategoriesFilters = {}) {
   return useApiQuery<FAQCategoriesListResponse>(
     ['faq-categories', { is_active, include_stats }],
     () => faqCategoriesApi.list({ is_active, include_stats }),
-    getCacheConfig('STABLE') // 5min cache - categories rarely change
+    getCacheConfig('APP_CONFIGURATION') // 10min stable - FAQ categories rarely change
   );
 }
 
@@ -47,7 +47,7 @@ export function useFAQCategoryQuery(categoryId: string, enabled: boolean = true)
     () => faqCategoriesApi.get(categoryId),
     {
       enabled: enabled && !!categoryId,
-      ...getCacheConfig('STABLE') // 5min cache - category details stable
+      ...getCacheConfig('APP_CONFIGURATION') // 10min stable - category details stable
     }
   );
 }
@@ -62,7 +62,7 @@ export function useFAQCategoryWithFAQsQuery(categoryId: string, enabled: boolean
     () => faqCategoriesApi.getWithFAQs(categoryId),
     {
       enabled: enabled && !!categoryId,
-      ...getCacheConfig('MODERATE') // 2min cache - FAQ content can change more frequently
+      ...getCacheConfig('FAQ_CONTENT') // 30s fresh - FAQ content for browsing
     }
   );
 }
@@ -162,6 +162,28 @@ export function useReorderFAQCategories() {
   );
 }
 
+/**
+ * BULK ACTIONS - Bulk operations on FAQ categories
+ * Critical: Admin bulk management operations
+ */
+export function useBulkFAQCategoryActions() {
+  return useApiMutation<
+    { success: boolean; message: string; affected: number; errors?: string[] },
+    { categoryIds: string[]; action: 'activate' | 'deactivate' | 'delete' }
+  >(
+    ({ categoryIds, action }) => faqCategoriesApi.bulkAction(categoryIds, action),
+    {
+      operationName: 'bulk-faq-category-action',
+      invalidateQueries: [
+        ['faq-categories'],       // Refresh public category list
+        ['admin-faq-categories'], // Refresh admin category list
+        ['active-faq-categories'], // Refresh active categories dropdown
+        ['faq'],                  // FAQ lists may be affected by category changes
+      ],
+    }
+  );
+}
+
 // =============================================================================
 // UTILITY HOOKS - Helper functions for FAQ category operations
 // =============================================================================
@@ -176,23 +198,7 @@ export function useActiveFAQCategoriesQuery(enabled: boolean = true) {
     () => faqCategoriesApi.list({ is_active: true, include_stats: false }),
     {
       enabled,
-      ...getCacheConfig('STABLE'), // 5min cache - categories for forms rarely change
-      select: (response) => {
-        // Transform data for easier form usage
-        const categories = response?.data?.categories || [];
-        return {
-          ...response,
-          data: {
-            ...response.data,
-            categories: categories.map(cat => ({
-              id: cat.id,
-              name: cat.name,
-              slug: cat.slug,
-              order: cat.order
-            }))
-          }
-        };
-      }
+      ...getCacheConfig('APP_CONFIGURATION') // 10min stable - categories for forms rarely change
     }
   );
 }

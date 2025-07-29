@@ -19,7 +19,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
 import { LoadingSpinner, EmptyState, AdminFAQTableSkeleton } from '@/components/ui/LoadingStates';
 import { 
-  useFAQsQuery,
+  useAdminFAQsQuery,
   useCreateFAQ,
   useUpdateFAQ,
   useDeleteFAQ,
@@ -54,7 +54,7 @@ export default function AdminFAQPage() {
   });
   
   // React Query hooks for FAQ management
-  const { data: faqsData, loading, execute: refetchFAQs } = useFAQsQuery({
+  const { data: faqsData, loading, execute: refetchFAQs } = useAdminFAQsQuery({
     search: searchQuery,
     category: selectedCategory,
     page: currentPage,
@@ -75,9 +75,9 @@ export default function AdminFAQPage() {
   
   // Extract FAQs and pagination data from React Query response
   // Backend now handles _id to id conversion (smart backend pattern)
-  const faqs = faqsData?.data?.items || faqsData?.data?.faqs || [];
+  const faqs = faqsData?.data?.items || [];
   const totalItems = faqsData?.data?.total || 0;
-  const totalPages = faqsData?.data?.total_pages || 1;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   console.log('🗂️ FAQ Data Debug:', {
     faqsDataStructure: faqsData ? Object.keys(faqsData) : 'no data',
     dataStructure: faqsData?.data ? Object.keys(faqsData.data) : 'no data.data',

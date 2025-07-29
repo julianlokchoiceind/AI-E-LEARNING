@@ -79,7 +79,7 @@ export default function UserManagement() {
   
   // Extract users and pagination data from React Query response
   const users = usersData?.data?.users || [];
-  const totalItems = usersData?.data?.total_count || usersData?.data?.total || 0;
+  const totalItems = usersData?.data?.total_count || 0;
   const totalPages = usersData?.data?.total_pages || 1;
 
   // Handle filter changes - reset to page 1

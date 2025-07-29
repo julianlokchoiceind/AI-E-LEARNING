@@ -63,7 +63,7 @@ export function useLessonProgressQuery(lessonId: string, enabled: boolean = true
     async (): Promise<StandardResponse<any>> => {
       try {
         const response = await api.get(`/progress/lessons/${lessonId}/progress`, { requireAuth: true });
-        return response;
+        return response as StandardResponse<any>;
       } catch (error: any) {
         // If no progress exists, return null (this is normal for first-time access)
         if (error.statusCode === 404 || error.type === 'NOT_FOUND') {
@@ -76,12 +76,6 @@ export function useLessonProgressQuery(lessonId: string, enabled: boolean = true
     },
     {
       enabled: enabled && !!lessonId,
-      retry: (failureCount, error: any) => {
-        // Don't retry on 404 errors
-        if (error?.statusCode === 404) return false;
-        // Retry up to 2 times for other errors
-        return failureCount < 2;
-      },
       ...getCacheConfig('LESSON_PROGRESS') // Lesson progress - fresh data
     }
   );
