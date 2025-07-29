@@ -235,7 +235,10 @@ export default function AdminFAQPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">FAQ Management</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">FAQ Management</h1>
+          <p className="text-gray-600">Manage frequently asked questions and their organization</p>
+        </div>
         <Button
           onClick={() => {
             resetForm();
@@ -279,8 +282,8 @@ export default function AdminFAQPage() {
 
             {/* Bulk Actions */}
             {selectedFaqs.size > 0 && (
-              <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg">
-                <span className="text-sm font-medium">
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                <span className="text-blue-700">
                   {selectedFaqs.size} FAQ{selectedFaqs.size > 1 ? 's' : ''} selected
                 </span>
                 <div className="flex gap-2">
@@ -320,12 +323,16 @@ export default function AdminFAQPage() {
       </Card>
 
       {/* FAQ Table */}
-      {loading ? (
-        <AdminFAQTableSkeleton />
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            {faqs.length === 0 ? (
+      <Card className="overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold">
+            FAQs ({totalItems})
+          </h2>
+        </div>
+
+        {loading ? (
+          <AdminFAQTableSkeleton />
+        ) : faqs.length === 0 ? (
             <div className="flex justify-center items-center h-64">
               <EmptyState
                 title="No FAQs found"
@@ -348,10 +355,10 @@ export default function AdminFAQPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="p-4 text-left">
+                    <th className="px-4 py-3">
                       <input
                         type="checkbox"
                         checked={selectedFaqs.size === faqs.length && faqs.length > 0}
@@ -359,12 +366,12 @@ export default function AdminFAQPage() {
                         className="rounded"
                       />
                     </th>
-                    <th className="p-4 text-left font-medium text-gray-700">Question</th>
-                    <th className="p-4 text-left font-medium text-gray-700">Category</th>
-                    <th className="p-4 text-left font-medium text-gray-700">Priority</th>
-                    <th className="p-4 text-left font-medium text-gray-700">Views</th>
-                    <th className="p-4 text-left font-medium text-gray-700">Status</th>
-                    <th className="p-4 text-left font-medium text-gray-700">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -372,7 +379,7 @@ export default function AdminFAQPage() {
                     const categoryInfo = categories.find((c: any) => c.id === faq.category_id);
                     return (
                       <tr key={faq.id} className="hover:bg-gray-50">
-                        <td className="p-4">
+                        <td className="px-4 py-4">
                           <input
                             type="checkbox"
                             checked={selectedFaqs.has(faq.id)}
@@ -380,7 +387,7 @@ export default function AdminFAQPage() {
                             className="rounded"
                           />
                         </td>
-                        <td className="p-4">
+                        <td className="px-6 py-4">
                           <div>
                             <p className="font-medium text-gray-900">{faq.question}</p>
                             <p className="text-sm text-gray-500 mt-1">
@@ -390,26 +397,26 @@ export default function AdminFAQPage() {
                             </p>
                           </div>
                         </td>
-                        <td className="p-4">
-                          <span className="text-sm">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">
                             {categoryInfo?.name || 'Uncategorized'}
                           </span>
                         </td>
-                        <td className="p-4">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <Badge variant={faq.priority > 50 ? 'default' : 'secondary'}>
                             {faq.priority}
                           </Badge>
                         </td>
-                        <td className="p-4 text-sm text-gray-600">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {faq.view_count}
                         </td>
-                        <td className="p-4">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <Badge variant={faq.is_published ? 'default' : 'secondary'}>
                             {faq.is_published ? 'Published' : 'Draft'}
                           </Badge>
                         </td>
-                        <td className="p-4">
-                          <div className="flex gap-2">
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center space-x-2">
                             <Button
                               size="sm"
                               variant="ghost"
@@ -435,26 +442,24 @@ export default function AdminFAQPage() {
                 </tbody>
               </table>
             </div>
-            )}
+          )}
 
-            {/* Table Footer with Pagination */}
-            {totalPages > 1 && (
-              <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  totalItems={totalItems}
-                  itemsPerPage={itemsPerPage}
-                  onPageChange={handlePageChange}
-                  loading={loading}
-                  showInfo={true}
-                  className="flex justify-center"
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+          {/* Table Footer with Pagination */}
+          {totalPages > 1 && (
+            <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                loading={loading}
+                showInfo={true}
+                className="flex justify-center"
+              />
+            </div>
+          )}
+      </Card>
 
       {/* Create/Edit Modal */}
       <Modal
