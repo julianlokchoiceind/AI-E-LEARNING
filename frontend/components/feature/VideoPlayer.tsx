@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import YouTube, { YouTubeProps, YouTubeEvent } from 'react-youtube';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize, Settings, X } from 'lucide-react';
 
@@ -14,13 +15,6 @@ interface VideoPlayerProps {
   onDurationChange?: (duration: number) => void;
   initialProgress?: number;
   nextLessonId?: string;
-}
-
-declare global {
-  interface Window {
-    YT: any;
-    onYouTubeIframeAPIReady: () => void;
-  }
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
@@ -47,7 +41,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [showSettings, setShowSettings] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const playerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -63,8 +56,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     window.addEventListener('resize', checkMobile);
     
     return () => window.removeEventListener('resize', checkMobile);
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Extract YouTube video ID from URL
@@ -76,65 +67,29 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const videoId = getYouTubeVideoId(videoUrl);
 
-  // Load YouTube IFrame API
-  useEffect(() => {
-    if (!videoId) return;
-
-    // Check if API is already loaded
-    if (window.YT && window.YT.Player) {
-      initializePlayer();
-      return;
+  // YouTube player options
+  const opts: YouTubeProps['opts'] = {
+    playerVars: {
+      autoplay: 0,
+      controls: 0,          // Disable controls to use custom controls
+      disablekb: 1,         // Disable keyboard controls
+      modestbranding: 1,    // Hide YouTube logo
+      rel: 0,               // Don't show related videos
+      showinfo: 0,          // Hide video info
+      iv_load_policy: 3,    // Hide annotations
+      fs: 0,                // Disable fullscreen button
+      playsinline: 1,       // Play inline on mobile
+      origin: window.location.protocol + '//' + window.location.host
     }
-
-    // Load the IFrame Player API
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-
-    // API ready callback
-    window.onYouTubeIframeAPIReady = () => {
-      initializePlayer();
-    };
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoId]);
-
-  const initializePlayer = () => {
-    if (!playerRef.current || !videoId) return;
-
-    const newPlayer = new window.YT.Player(playerRef.current, {
-      videoId: videoId,
-      playerVars: {
-        controls: 0,          // Disable controls to prevent seeking
-        disablekb: 1,         // Disable keyboard controls
-        modestbranding: 1,    // Hide YouTube logo
-        rel: 0,               // Don't show related videos
-        showinfo: 0,          // Hide video info
-        iv_load_policy: 3,    // Hide annotations
-        fs: 0,                // Disable fullscreen button
-        playsinline: 1,       // Play inline on mobile
-        origin: window.location.origin
-      },
-      events: {
-        onReady: onPlayerReady,
-        onStateChange: onPlayerStateChange,
-        onError: onPlayerError
-      }
-    });
-
-    setPlayer(newPlayer);
   };
 
-  const onPlayerReady = (event: any) => {
+  const onPlayerReady = (event: YouTubeEvent) => {
+    const playerInstance = event.target;
+    setPlayer(playerInstance);
     setIsReady(true);
-    const videoDuration = event.target.getDuration();
+    
+    // Get duration
+    const videoDuration = playerInstance.getDuration();
     setDuration(videoDuration);
 
     // Call onDurationChange callback if provided
@@ -145,30 +100,38 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     // Resume from last position if available
     if (initialProgress > 0 && videoDuration > 0) {
       const resumeTime = (initialProgress / 100) * videoDuration;
-      event.target.seekTo(resumeTime, true);
+      playerInstance.seekTo(resumeTime, true);
     }
+
+    // Set initial volume
+    playerInstance.setVolume(volume * 100);
   };
 
-  const onPlayerStateChange = (event: any) => {
+  const onPlayerStateChange = (event: YouTubeEvent) => {
     const state = event.data;
+    const playerStates = window.YT?.PlayerState || {
+      PLAYING: 1,
+      PAUSED: 2,
+      ENDED: 0
+    };
     
-    if (state === window.YT.PlayerState.PLAYING) {
+    if (state === playerStates.PLAYING) {
       setIsPlaying(true);
       startProgressTracking();
       startHideControlsTimer();
-    } else if (state === window.YT.PlayerState.PAUSED) {
+    } else if (state === playerStates.PAUSED) {
       setIsPlaying(false);
       stopProgressTracking();
       clearHideControlsTimer();
       setShowControls(true);
-    } else if (state === window.YT.PlayerState.ENDED) {
+    } else if (state === playerStates.ENDED) {
       setIsPlaying(false);
       stopProgressTracking();
       setShowControls(true);
     }
   };
 
-  const onPlayerError = (event: any) => {
+  const onPlayerError = (event: YouTubeEvent) => {
     console.error('YouTube Player Error:', event.data);
     ToastService.error('Error loading video. Please try again.');
   };
@@ -177,12 +140,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (intervalRef.current) return;
 
     intervalRef.current = setInterval(() => {
-      if (!player || !isReady || !player.getCurrentTime) return;
+      if (!player || !isReady) return;
 
       const current = player.getCurrentTime();
       const total = player.getDuration();
       
-      if (current && total) {
+      if (current && total && total > 0) {
         setCurrentTime(current);
         setDuration(total);
         
@@ -246,20 +209,10 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const handlePlayPause = () => {
     if (!player || !isReady) return;
 
-    // Check if getPlayerState method exists
-    if (typeof player.getPlayerState === 'function') {
-      if (player.getPlayerState() === window.YT.PlayerState.PLAYING) {
-        player.pauseVideo();
-      } else {
-        player.playVideo();
-      }
+    if (isPlaying) {
+      player.pauseVideo();
     } else {
-      // Fallback: use the state we're already tracking
-      if (isPlaying) {
-        player.pauseVideo();
-      } else {
-        player.playVideo();
-      }
+      player.playVideo();
     }
   };
 
@@ -325,8 +278,14 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
     
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      stopProgressTracking();
+      clearHideControlsTimer();
+    };
   }, []);
 
   const formatTime = (seconds: number): string => {
@@ -361,8 +320,18 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
           if (isPlaying) startHideControlsTimer();
         }}
       >
-        {/* YouTube Player */}
-        <div ref={playerRef} className="w-full aspect-video" />
+        {/* YouTube Player using react-youtube */}
+        <div className="w-full aspect-video">
+          <YouTube
+            videoId={videoId}
+            opts={opts}
+            onReady={onPlayerReady}
+            onStateChange={onPlayerStateChange}
+            onError={onPlayerError}
+            className="w-full h-full"
+            iframeClassName="w-full h-full"
+          />
+        </div>
         
         {/* Custom Control Overlay */}
         <div className={`absolute inset-0 transition-opacity duration-300 ${

@@ -31,7 +31,7 @@ class ProgressService:
         # Check enrollment
         enrollment = await Enrollment.find_one({
             "user_id": user_id,
-            "course_id": lesson.course_id,
+            "course_id": str(lesson.course_id),
             "is_active": True
         })
         if not enrollment:
@@ -46,7 +46,7 @@ class ProgressService:
         if not progress:
             progress = Progress(
                 user_id=user_id,
-                course_id=lesson.course_id,
+                course_id=str(lesson.course_id),
                 lesson_id=lesson_id,
                 started_at=datetime.utcnow()
             )
@@ -84,7 +84,7 @@ class ProgressService:
         # Check enrollment
         enrollment = await Enrollment.find_one({
             "user_id": user_id,
-            "course_id": lesson.course_id,
+            "course_id": str(lesson.course_id),
             "is_active": True
         })
         if not enrollment:
@@ -104,7 +104,7 @@ class ProgressService:
         if not progress:
             progress = Progress(
                 user_id=user_id,
-                course_id=lesson.course_id,
+                course_id=str(lesson.course_id),
                 lesson_id=lesson_id,
                 started_at=datetime.utcnow(),
                 is_unlocked=True
@@ -274,7 +274,7 @@ class ProgressService:
             if not progress:
                 progress = Progress(
                     user_id=user_id,
-                    course_id=next_lesson.course_id,
+                    course_id=str(next_lesson.course_id),
                     lesson_id=str(next_lesson.id),
                     is_unlocked=True
                 )
@@ -309,6 +309,37 @@ class ProgressService:
         
         enrollment.updated_at = datetime.utcnow()
         await enrollment.save()
+    
+    async def get_batch_lesson_progress(self, lesson_ids: List[str], user_id: str) -> List[dict]:
+        """Get progress for multiple lessons in a single query."""
+        if not lesson_ids:
+            return []
+        
+        # Get all progress records in one query
+        progress_list = await Progress.find({
+            "lesson_id": {"$in": lesson_ids},
+            "user_id": user_id
+        }).to_list()
+        
+        # Convert to dict format expected by frontend
+        result = []
+        for progress in progress_list:
+            result.append({
+                "lesson_id": progress.lesson_id,
+                "is_completed": progress.is_completed,
+                "is_unlocked": progress.is_unlocked,
+                "video_progress": {
+                    "watch_percentage": progress.video_progress.watch_percentage,
+                    "current_position": progress.video_progress.current_position,
+                    "is_completed": progress.video_progress.is_completed
+                } if progress.video_progress else {
+                    "watch_percentage": 0,
+                    "current_position": 0,
+                    "is_completed": False
+                }
+            })
+        
+        return result
 
 # Create service instance
 progress_service = ProgressService()
