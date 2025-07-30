@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional, List
-from bson import ObjectId
 from app.models.progress import Progress, VideoProgress
 from app.models.lesson import Lesson
 from app.models.enrollment import Enrollment

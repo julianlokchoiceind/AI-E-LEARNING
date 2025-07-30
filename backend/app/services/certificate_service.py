@@ -7,7 +7,6 @@ import secrets
 import logging
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
-from bson import ObjectId
 from beanie import PydanticObjectId
 
 from app.models.certificate import Certificate
@@ -58,14 +57,9 @@ class CertificateService:
         """Create a new certificate for course completion"""
         
         # Verify enrollment exists and is completed
-        enrollment = await Enrollment.find_one({
-            "_id": ObjectId(enrollment_id),
-            "user_id": user_id,
-            "course_id": course_id,
-            "progress.is_completed": True
-        })
+        enrollment = await Enrollment.get(PydanticObjectId(enrollment_id))
         
-        if not enrollment:
+        if not enrollment or enrollment.user_id != user_id or enrollment.course_id != course_id or not enrollment.progress.is_completed:
             raise NotFoundError("Completed enrollment not found")
         
         # Check if certificate already exists
@@ -313,9 +307,7 @@ class CertificateService:
         await certificate.save()
         
         # Update enrollment
-        enrollment = await Enrollment.find_one({
-            "_id": ObjectId(certificate.enrollment_id)
-        })
+        enrollment = await Enrollment.get(PydanticObjectId(certificate.enrollment_id))
         if enrollment:
             enrollment.certificate.is_issued = False
             await enrollment.save()
@@ -359,11 +351,10 @@ class CertificateService:
         enrollment_id: str
     ) -> Optional[Certificate]:
         """Check if course is completed and issue certificate if eligible"""
-        enrollment = await Enrollment.find_one({
-            "_id": ObjectId(enrollment_id),
-            "user_id": user_id,
-            "course_id": course_id
-        })
+        enrollment = await Enrollment.get(PydanticObjectId(enrollment_id))
+        
+        if enrollment and (enrollment.user_id != user_id or enrollment.course_id != course_id):
+            enrollment = None
         
         if not enrollment:
             return None

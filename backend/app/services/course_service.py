@@ -5,8 +5,6 @@ Based on CLAUDE.md course creation workflow.
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from beanie import PydanticObjectId
-from bson import ObjectId
-from bson.errors import InvalidId
 from slugify import slugify
 from app.models.course import Course, CourseCategory, CourseLevel, CourseStatus, Pricing
 from app.models.user import User
@@ -356,8 +354,8 @@ class CourseService:
             # Get first lesson of the course
             try:
                 # Step 1: Safely convert course_id
-                course_obj_id = ObjectId(course_id)
-            except InvalidId:
+                course_obj_id = PydanticObjectId(course_id)
+            except (ValueError, Exception):
                 # Step 2: If invalid, set to None
                 continue_lesson_id = None
             else:
