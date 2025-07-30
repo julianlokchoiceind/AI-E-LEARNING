@@ -152,6 +152,13 @@ origins = [
 # Remove duplicates while preserving order
 origins = list(dict.fromkeys(origins))
 
+# Add security middleware first
+app.add_middleware(SecurityHeadersMiddleware)
+# Re-enabled with smart 3-layer validation approach
+app.add_middleware(InputValidationMiddleware)  # Fixed: field-aware validation with nh3 sanitization
+app.add_middleware(TokenBlacklistMiddleware)  # Check blacklisted tokens for secure logout
+
+# CORS Middleware MUST be added LAST to execute FIRST (best practice)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -159,12 +166,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Add security middleware - DEBUG: Testing each middleware individually
-app.add_middleware(SecurityHeadersMiddleware)
-# Re-enabled with smart 3-layer validation approach
-app.add_middleware(InputValidationMiddleware)  # Fixed: field-aware validation with nh3 sanitization
-app.add_middleware(TokenBlacklistMiddleware)  # Check blacklisted tokens for secure logout
 
 
 # Health check endpoint
