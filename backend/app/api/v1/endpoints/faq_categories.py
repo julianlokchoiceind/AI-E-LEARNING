@@ -151,27 +151,14 @@ async def delete_category(
 
 @router.post("/reorder", response_model=StandardResponse)
 async def reorder_categories(
-    category_orders: List[dict],
+    reorder_data: FAQCategoryReorderRequest,
     current_user: User = Depends(get_admin_user)
 ):
     """
     Bulk update category order (admin only)
-    Expects: [{"id": "category_id", "order": 0}, ...]
+    Expects: {"category_orders": [{"id": "category_id", "order": 0}, ...]}
     """
-    # Validate input format
-    for item in category_orders:
-        if "id" not in item or "order" not in item:
-            raise HTTPException(
-                status_code=400,
-                detail="Each item must have 'id' and 'order' fields"
-            )
-        if not isinstance(item["order"], int) or item["order"] < 0:
-            raise HTTPException(
-                status_code=400,
-                detail="Order must be a non-negative integer"
-            )
-    
-    result = await service.reorder_categories(category_orders)
+    result = await service.reorder_categories(reorder_data.category_orders)
     
     return StandardResponse(
         success=True,

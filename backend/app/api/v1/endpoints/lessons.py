@@ -656,7 +656,7 @@ async def get_upload_constraints(
     )
 
 
-@router.post("/{lesson_id}/reorder", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
+@router.post("/lessons/{lesson_id}/reorder", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
 async def reorder_lessons(
     lesson_id: str,
     new_order: int = Body(..., embed=True),

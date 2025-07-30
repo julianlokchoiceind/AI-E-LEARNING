@@ -188,21 +188,28 @@ class FAQCategoryService:
     
     async def reorder_categories(self, category_orders: List[Dict]) -> Dict:
         """Bulk update category order - smart backend"""
-        # Validate all category IDs exist
-        ids = [item["id"] for item in category_orders]
-        categories = await FAQCategory.find({"_id": {"$in": ids}}).to_list()
+        # Validate all categories exist first
+        for item in category_orders:
+            try:
+                category = await FAQCategory.get(PydanticObjectId(item["id"]))
+                if not category:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Category {item['id']} not found"
+                    )
+            except (ValueError, Exception) as e:
+                if isinstance(e, HTTPException):
+                    raise
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid category ID format: {item['id']}"
+                )
         
-        if len(categories) != len(ids):
-            raise HTTPException(
-                status_code=400,
-                detail="Some category IDs not found"
-            )
-        
-        # Bulk update orders
+        # Bulk update orders using Beanie's update method
         for order_item in category_orders:
-            await FAQCategory.find_one(
-                {"_id": order_item["id"]}
-            ).update({"$set": {"order": order_item["order"]}})
+            category = await FAQCategory.get(PydanticObjectId(order_item["id"]))
+            category.order = order_item["order"]
+            await category.save()
         
         return {
             "success": True,
@@ -233,14 +240,14 @@ class FAQCategoryService:
     async def _get_category_or_404(self, category_id: str) -> FAQCategory:
         """Get category or raise 404 - helper method"""
         try:
-            category = await FAQCategory.get(category_id)
+            category = await FAQCategory.get(PydanticObjectId(category_id))
             if not category:
                 raise HTTPException(
                     status_code=404,
                     detail="FAQ category not found"
                 )
             return category
-        except Exception as e:
+        except (ValueError, Exception) as e:
             if isinstance(e, HTTPException):
                 raise
             raise HTTPException(
