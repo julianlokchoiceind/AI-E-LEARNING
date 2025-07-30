@@ -1,4 +1,5 @@
 from typing import List, Optional
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Body, Query
 from app.models.user import User
 from app.models.progress import Progress
@@ -6,8 +7,40 @@ from app.models.enrollment import Enrollment
 from app.core.deps import get_current_user, get_current_optional_user
 from app.services.progress_service import progress_service
 from app.services.certificate_service import CertificateService
-from app.schemas.progress import VideoProgressUpdate
+from app.schemas.progress import VideoProgressUpdate, ProgressSchema
 from app.schemas.base import StandardResponse
+
+logger = logging.getLogger(__name__)
+
+def serialize_progress(progress: Progress) -> dict:
+    """Serialize Progress model to dict with proper type conversion"""
+    if not progress:
+        return {}
+    
+    # Get the dict representation
+    data = progress.dict(exclude={"id", "_id"})
+    
+    # Add the ID as string
+    data["id"] = str(progress.id) if progress.id else None
+    
+    # Ensure all datetime fields are properly serialized
+    for field in ["started_at", "completed_at", "last_accessed", "created_at", "updated_at"]:
+        if field in data and data[field]:
+            data[field] = data[field].isoformat()
+    
+    # Handle nested video_progress
+    if data.get("video_progress") and hasattr(data["video_progress"], "dict"):
+        data["video_progress"] = data["video_progress"].dict()
+        if data["video_progress"].get("completed_at"):
+            data["video_progress"]["completed_at"] = data["video_progress"]["completed_at"].isoformat()
+    
+    # Handle nested quiz_progress if present
+    if data.get("quiz_progress") and hasattr(data["quiz_progress"], "dict"):
+        data["quiz_progress"] = data["quiz_progress"].dict()
+        if data["quiz_progress"].get("passed_at"):
+            data["quiz_progress"]["passed_at"] = data["quiz_progress"]["passed_at"].isoformat()
+            
+    return data
 
 router = APIRouter()
 
@@ -29,10 +62,13 @@ async def start_lesson(
         progress = await progress_service.start_lesson(lesson_id, str(current_user.id))
         return StandardResponse(
             success=True,
-            data=progress,
+            data=serialize_progress(progress),
             message="Lesson started successfully"
         )
     except Exception as e:
+        import traceback
+        logger.error(f"Error in start_lesson endpoint: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
@@ -67,7 +103,7 @@ async def update_video_progress(
         
         return StandardResponse(
             success=True,
-            data=progress,
+            data=serialize_progress(progress),
             message=message
         )
     except Exception as e:
@@ -94,7 +130,7 @@ async def complete_lesson(
         progress = await progress_service.complete_lesson(lesson_id, str(current_user.id))
         return StandardResponse(
             success=True,
-            data=progress,
+            data=serialize_progress(progress),
             message="Lesson marked as completed"
         )
     except Exception as e:
@@ -119,7 +155,7 @@ async def get_lesson_progress(
     
     return StandardResponse(
         success=True,
-        data=progress,
+        data=serialize_progress(progress),
         message="Progress retrieved successfully"
     )
 
@@ -131,9 +167,12 @@ async def get_course_progress(
     """Get all lesson progress for a course."""
     progress_list = await progress_service.get_course_progress(course_id, str(current_user.id))
     
+    # Serialize each progress object
+    serialized_list = [serialize_progress(progress) for progress in progress_list]
+    
     return StandardResponse(
         success=True,
-        data=progress_list,
+        data=serialized_list,
         message="Course progress retrieved successfully"
     )
 

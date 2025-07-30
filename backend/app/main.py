@@ -142,6 +142,67 @@ app.state.limiter = limiter
 # Keep using the default rate limit handler but ensure CORS headers
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# Custom exception handler to ensure CORS headers are included in error responses
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
+
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Custom HTTPException handler that includes CORS headers"""
+    # Get origin from request
+    origin = request.headers.get("origin", "")
+    
+    # Build response
+    response = JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
+    
+    # Add CORS headers if origin matches allowed origins
+    if origin in origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+    
+    # Add any additional headers from the exception
+    if hasattr(exc, 'headers') and exc.headers:
+        for key, value in exc.headers.items():
+            response.headers[key] = value
+    
+    return response
+
+# Add custom HTTPException handler
+app.add_exception_handler(HTTPException, http_exception_handler)
+
+# Also handle general exceptions to ensure CORS headers
+async def general_exception_handler(request: Request, exc: Exception):
+    """General exception handler that includes CORS headers"""
+    import traceback
+    error_detail = f"{type(exc).__name__}: {str(exc)}"
+    logger.error(f"Unhandled exception: {error_detail}")
+    logger.error(f"Traceback:\n{traceback.format_exc()}")
+    
+    # Get origin from request
+    origin = request.headers.get("origin", "")
+    
+    # Build error response - include actual error in development
+    response = JSONResponse(
+        status_code=500,
+        content={"detail": error_detail if settings.DEBUG else "Internal server error"},
+    )
+    
+    # Add CORS headers if origin matches allowed origins
+    if origin in origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+    
+    return response
+
+# Add general exception handler
+app.add_exception_handler(Exception, general_exception_handler)
+
 # Configure CORS
 # Dynamically build origins list
 origins = [
@@ -154,8 +215,8 @@ origins = list(dict.fromkeys(origins))
 
 # Add security middleware first
 app.add_middleware(SecurityHeadersMiddleware)
-# Re-enabled with smart 3-layer validation approach
-app.add_middleware(InputValidationMiddleware)  # Fixed: field-aware validation with nh3 sanitization
+
+app.add_middleware(InputValidationMiddleware)
 app.add_middleware(TokenBlacklistMiddleware)  # Check blacklisted tokens for secure logout
 
 # CORS Middleware MUST be added LAST to execute FIRST (best practice)
