@@ -158,8 +158,8 @@ async def get_dashboard_data(
             if course:
                 # Get the next lesson to continue
                 continue_lesson_id = None
-                if enrollment.progress.get("current_lesson_id"):
-                    continue_lesson_id = enrollment.progress["current_lesson_id"]
+                if enrollment.progress.current_lesson_id:
+                    continue_lesson_id = enrollment.progress.current_lesson_id
                 else:
                     # Get first lesson if no current lesson
                     from app.models.lesson import Lesson
