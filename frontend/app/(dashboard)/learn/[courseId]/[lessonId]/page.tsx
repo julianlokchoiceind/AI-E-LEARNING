@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, CheckCircle, Clock, BookOpen, Info, VideoOff, Menu } from 'lucide-react';
 import { VideoPlayer } from '@/components/feature/VideoPlayer';
@@ -12,6 +12,7 @@ import { LessonBreadcrumbs } from '@/components/seo/Breadcrumbs';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { ToastService } from '@/lib/toast/ToastService';
 import { formatDuration, formatDurationHuman, calculateRemainingTime } from '@/lib/utils/time';
+import { debounce } from '@/lib/utils/debounce';
 import { API_ENDPOINTS } from '@/lib/constants/api-endpoints';
 import { useAuth } from '@/hooks/useAuth';
 import { 
@@ -92,13 +93,17 @@ export default function LessonPlayerPage() {
   const lesson = lessonResponse?.data || null;
   // In preview mode, set progress to a dummy object to prevent startLesson from being called
   const progress = isPreviewMode ? { is_completed: false, video_progress: { watch_percentage: 0 } } : (progressResponse?.data || null);
+  
   const chapters = chaptersResponse?.data?.chapters || [];
+  
   const courseData = courseResponse?.data || null;
   
   
-  // Calculate all lesson IDs for batch progress fetching
-  const allLessonIds = chapters.flatMap((chapter: Chapter) => 
-    chapter.lessons.map((lesson: Lesson) => lesson.id)
+  // Calculate all lesson IDs for batch progress fetching - MEMOIZED for performance
+  const allLessonIds = useMemo(() => 
+    chapters.flatMap((chapter: Chapter) => 
+      chapter.lessons.map((lesson: Lesson) => lesson.id)
+    ), [chapters]
   );
   
   // Batch fetch lesson progress using React Query - replaces manual fetchAllLessonsProgress
@@ -108,28 +113,46 @@ export default function LessonPlayerPage() {
     isPreviewMode // Pass preview mode to skip authentication
   );
   
-  // Convert batch progress data to Map for efficient lookup
-  const lessonsProgress = new Map<string, LessonProgress>();
-  const progressArray = batchProgressData?.data || [];
-  if (Array.isArray(progressArray)) {
-    progressArray.forEach((progressItem: any) => {
-      lessonsProgress.set(progressItem.lesson_id, {
-        lesson_id: progressItem.lesson_id,
-        is_completed: progressItem.is_completed,
-        is_unlocked: progressItem.is_unlocked
+  // Convert batch progress data to Map for efficient lookup - MEMOIZED to prevent recreation
+  const lessonsProgress = useMemo(() => {
+    const map = new Map<string, LessonProgress>();
+    const progressArray = batchProgressData?.data || [];
+    if (Array.isArray(progressArray)) {
+      progressArray.forEach((progressItem: any) => {
+        map.set(progressItem.lesson_id, {
+          lesson_id: progressItem.lesson_id,
+          is_completed: progressItem.is_completed,
+          is_unlocked: progressItem.is_unlocked
+        });
       });
-    });
-  }
+    }
+    return map;
+  }, [batchProgressData?.data]);
   
-  // React Query hooks for quiz data - replaces manual quiz API calls
-  const { data: quizResponse, loading: quizLoading } = useLessonQuizQuery(lessonId, !!lessonId, isPreviewMode);
+  // Stable quiz loading state - once unlocked, stays unlocked to prevent re-render loops
+  const [quizUnlocked, setQuizUnlocked] = useState(false);
+  
+  // Check if quiz should be unlocked (80% completion) but only update state when needed
+  useEffect(() => {
+    const watchPercentage = progress?.video_progress?.watch_percentage ?? 0;
+    if (watchPercentage >= 80 && !quizUnlocked) {
+      setQuizUnlocked(true);
+    }
+  }, [progress?.video_progress?.watch_percentage, quizUnlocked]);
+  
+  // React Query hooks for quiz data - now with stable loading state
+  const { data: quizResponse, loading: quizLoading } = useLessonQuizQuery(
+    lessonId, 
+    !!lessonId && quizUnlocked, // Only load quiz after 80% video completion (stable state)
+    isPreviewMode
+  );
   
   // Get quiz ID with proper type safety
   const quizId = quizResponse?.data?.id || '';
   
   const { data: quizProgressResponse, loading: quizProgressLoading } = useQuizProgressQuery(
     quizId, 
-    !!quizId && !isPreviewMode // Don't fetch quiz progress in preview mode
+    !!quizId && !isPreviewMode && quizUnlocked // Don't fetch quiz progress in preview mode or before 80% (stable state)
   );
 
   // Extract quiz data from React Query responses
@@ -148,8 +171,28 @@ export default function LessonPlayerPage() {
   // Combined loading state - includes batch progress and quiz loading
   const loading = lessonLoading || progressLoading || chaptersLoading || batchProgressLoading || quizLoading || quizProgressLoading || courseLoading;
 
-  // Accordion functions for desktop sidebar
-  const toggleChapter = (chapterId: string) => {
+  // DETAILED DEBUG: Track what's causing re-renders
+  console.log('[LEARN PAGE RENDER]', {
+    lessonId,
+    chaptersCount: chapters.length,
+    hasLesson: !!lesson,
+    hasProgress: !!progress,
+    loading: {
+      lesson: lessonLoading,
+      progress: progressLoading, 
+      chapters: chaptersLoading,
+      batch: batchProgressLoading,
+      quiz: quizLoading,
+      quizProgress: quizProgressLoading,
+      course: courseLoading
+    },
+    chaptersResponseStatus: chaptersResponse ? 'exists' : 'null',
+    progressResponseStatus: progressResponse ? 'exists' : 'null',
+    timestamp: Date.now()
+  });
+
+  // Accordion functions for desktop sidebar - MEMOIZED to prevent re-creation
+  const toggleChapter = useCallback((chapterId: string) => {
     setExpandedChapters(prev => {
       const newSet = new Set(prev);
       if (newSet.has(chapterId)) {
@@ -159,7 +202,7 @@ export default function LessonPlayerPage() {
       }
       return newSet;
     });
-  };
+  }, []);
 
   // Auto-expand chapter containing current lesson
   useEffect(() => {
@@ -264,46 +307,66 @@ export default function LessonPlayerPage() {
   // useLessonQuizQuery and useQuizProgressQuery replace manual API calls
   // This provides automatic caching, error handling, and loading states
 
-  const handleVideoDurationChange = (duration: number) => {
+  const handleVideoDurationChange = useCallback((duration: number) => {
     // Update local state with actual YouTube duration
     setCurrentVideoDuration(duration);
-  };
+  }, []);
 
-  const handleVideoProgress = (percentage: number) => {
+  // Debounced progress handler to prevent excessive API calls and re-renders
+  const debouncedUpdateProgress = useMemo(
+    () => debounce((percentage: number) => {
+      if (isPreviewMode) return;
+      
+      updateProgress({ 
+        lessonId, 
+        progress: {
+          watchPercentage: percentage,
+          currentPosition: 0, // VideoPlayer should provide this
+          totalWatchTime: 0 // VideoPlayer should provide this
+        }
+      }, {
+        onSuccess: () => {
+          // Progress data will be automatically refetched by React Query
+        },
+        onError: (error: any) => {
+          console.error('Error updating progress:', error);
+        }
+      });
+    }, 5000), // Debounce for 5 seconds to prevent API spam and re-render loops
+    [isPreviewMode, updateProgress, lessonId]
+  );
+
+  const handleVideoProgress = useCallback((percentage: number) => {
     // Skip saving in preview mode
     if (isPreviewMode) {
       return;
     }
     
-    // React Query mutation handles API call with automatic error handling
-    updateProgress({ 
-      lessonId, 
-      progress: {
-        watchPercentage: percentage,
-        currentPosition: 0, // VideoPlayer should provide this
-        totalWatchTime: 0 // VideoPlayer should provide this
-      }
-    }, {
-      onSuccess: () => {
-        // Progress data will be automatically refetched by React Query
-      },
-      onError: (error: any) => {
-        console.error('Error updating progress:', error);
-      }
-    });
-  };
+    // Use debounced function to prevent excessive API calls
+    debouncedUpdateProgress(percentage);
+  }, [isPreviewMode, debouncedUpdateProgress]);
 
-  const handleVideoComplete = () => {
+  const handleVideoComplete = useCallback(() => {
     // Skip saving in preview mode
     if (isPreviewMode) {
       ToastService.info('Preview Mode - Progress is not being tracked');
       return;
     }
     
-    // If there's a quiz and it hasn't been passed yet, show it
-    if (hasQuiz && !quizPassed) {
-      setShowQuiz(true);
-      ToastService.success('Great job! Now complete the quiz to finish this lesson.');
+    // Check if quiz will be available (might still be loading due to lazy loading)
+    const videoCompleted = (progress?.video_progress?.watch_percentage ?? 0) >= 80;
+    
+    // If video is completed but quiz is still loading, wait for it
+    if (videoCompleted && lessonId && !quizLoading) {
+      // If there's a quiz and it hasn't been passed yet, show it immediately (best practice)
+      if (hasQuiz && !quizPassed) {
+        setShowQuiz(true);
+        ToastService.success('Great job! Now complete the quiz to finish this lesson.');
+        return;
+      }
+    } else if (videoCompleted && quizLoading) {
+      // Quiz is still loading, inform user
+      ToastService.info('Loading quiz...');
       return;
     }
 
@@ -322,9 +385,9 @@ export default function LessonPlayerPage() {
         ToastService.error(error.message || 'Something went wrong');
       }
     });
-  };
+  }, [isPreviewMode, progress?.video_progress?.watch_percentage, lessonId, quizLoading, hasQuiz, quizPassed, markComplete]);
 
-  const handleQuizComplete = (passed: boolean) => {
+  const handleQuizComplete = useCallback((passed: boolean) => {
     // Skip saving in preview mode
     if (isPreviewMode) {
       ToastService.info('Preview Mode - Quiz results are not being saved');
@@ -350,11 +413,11 @@ export default function LessonPlayerPage() {
     } else {
       ToastService.error('Something went wrong');
     }
-  };
+  }, [isPreviewMode, markComplete, lessonId]);
 
-  const navigateToLesson = (targetLessonId: string) => {
+  const navigateToLesson = useCallback((targetLessonId: string) => {
     router.push(`/learn/${courseId}/${targetLessonId}`);
-  };
+  }, [router, courseId]);
 
   if (loading) {
     return (
