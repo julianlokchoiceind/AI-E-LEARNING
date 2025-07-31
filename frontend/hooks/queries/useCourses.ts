@@ -169,6 +169,7 @@ export function useUpdateCourse(silent: boolean = false) {
         ['course-chapters'], // Refresh course chapters (missing!)
         ['featured-courses'], // Update featured content - PUBLIC ✅
         ['course-search'], // Update search results - PUBLIC ✅
+        ['learn-page'], // 🚀 NEW: Invalidate consolidated learn page cache
       ],
       operationName: 'update-course', // Unique operation ID for toast deduplication
       showToast: !silent, // 🔧 FIX: Disable toast when silent=true (for autosave)
@@ -177,7 +178,7 @@ export function useUpdateCourse(silent: boolean = false) {
           courseId: variables.courseId,
           hasStatusChange: variables.data?.status ? true : false,
           newStatus: variables.data?.status,
-          invalidatedCaches: ['course', 'courses', 'admin-courses', 'creator-courses', 'course-editor', 'course-chapters', 'featured-courses', 'course-search'],
+          invalidatedCaches: ['course', 'courses', 'admin-courses', 'creator-courses', 'course-editor', 'course-chapters', 'featured-courses', 'course-search', 'learn-page'],
           timestamp: new Date().toISOString()
         });
       }
@@ -237,6 +238,7 @@ export function useEnrollInCourse() {
         ['recent-courses'],   // Update recent courses list
         ['admin-courses'],    // Update admin view stats
         ['creator-courses'],  // Update creator dashboard stats
+        ['learn-page'],       // 🚀 NEW: Invalidate consolidated learn page cache
       ],
       onSuccess: (response, variables) => {
         // Invalidate the specific course to get fresh data with continue_lesson_id
@@ -245,6 +247,11 @@ export function useEnrollInCourse() {
         queryClient.invalidateQueries({ 
           queryKey: ['enrollment', variables.courseId],
           exact: true 
+        });
+        // 🚀 NEW: Invalidate learn page cache for this course
+        queryClient.invalidateQueries({ 
+          queryKey: ['learn-page', variables.courseId],
+          exact: false // Invalidate all lessons in this course
         });
       }
     }
@@ -486,6 +493,7 @@ export function useUpdateChapter(silent: boolean = false) {
         ['course-search'],        // Update search results
         ['creator-courses'],      // Update creator dashboard
         ['admin-courses'],        // Update admin view
+        ['learn-page'],           // 🚀 NEW: Invalidate consolidated learn page cache
       ],
     }
   );
@@ -551,6 +559,7 @@ export function useUpdateLesson(silent: boolean = false) {
         ['course-search'],        // Update search results
         ['creator-courses'],      // Update creator dashboard
         ['admin-courses'],        // Update admin view
+        ['learn-page'],           // 🚀 NEW: Invalidate consolidated learn page cache
       ],
     }
   );

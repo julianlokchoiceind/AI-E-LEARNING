@@ -20,9 +20,10 @@ The documentation has been organized into focused modules for better readability
 
 ### [🏗️ 03. Technical Architecture](./docs/03_TECHNICAL_ARCHITECTURE.md)
 - System Architecture & Tech Stack
-- Code Organization & Standards
+- Code Organization & Standards  
 - Development Patterns & Best Practices
 - AI Memory & Critical Rules
+- 🚀 **NEW**: Smart Backend + Dumb Frontend Learn Page Optimization
 
 ### [🗃️ 04. Database Design](./docs/04_DATABASE_DESIGN.md)
 - MongoDB Schema Definitions
@@ -86,6 +87,7 @@ The documentation has been organized into focused modules for better readability
 - **NextAuth:** DO NOT modify session configuration - it's stable
 - **Toast Notifications:** Automatic via useApiMutation - no manual calls
 - **MongoDB IDs:** Backend MUST convert `_id` to `id` for frontend
+- 🚀 **Learn Page:** Use consolidated `useLearnPage` hook instead of individual hooks
 
 For complete development guidelines and patterns, see [Technical Architecture](./docs/03_TECHNICAL_ARCHITECTURE.md).
 
