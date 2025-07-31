@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, CheckCircle, Clock, BookOpen, Info, VideoOff, Menu } from 'lucide-react';
 import { VideoPlayer } from '@/components/feature/VideoPlayer';
@@ -68,6 +68,262 @@ interface LessonProgress {
   is_unlocked: boolean;
 }
 
+// Memoized VideoSection component to prevent VideoPlayer unmount/remount
+interface VideoSectionProps {
+  lesson: Lesson;
+  lessonId: string;
+  courseId: string;
+  handleVideoProgress: (percentage: number) => void;
+  handleVideoComplete: () => void;
+  handleVideoDurationChange: (duration: number) => void;
+  handleVideoTimeUpdate: (currentTime: number) => void;
+  progress: Progress | null | undefined;
+  nextLesson: Lesson | null;
+  formatDuration: (seconds: number) => string;
+  currentVideoTime: number;
+  currentVideoDuration: number | null;
+  videoProgress: number;
+}
+
+const VideoSection = React.memo<VideoSectionProps>(({
+  lesson,
+  lessonId,
+  courseId,
+  handleVideoProgress,
+  handleVideoComplete,
+  handleVideoDurationChange,
+  handleVideoTimeUpdate,
+  progress,
+  nextLesson,
+  formatDuration,
+  currentVideoTime,
+  currentVideoDuration,
+  videoProgress
+}) => {
+  // VideoSection render - should be rare due to memoization
+  
+  return (
+    <section className="bg-white rounded-lg shadow-sm overflow-hidden">
+      {lesson.video ? (
+        <>
+          <VideoPlayer
+            videoUrl={lesson.video.url}
+            lessonId={lessonId}
+            courseId={courseId}
+            onProgress={handleVideoProgress}
+            onComplete={handleVideoComplete}
+            onDurationChange={handleVideoDurationChange}
+            onTimeUpdate={handleVideoTimeUpdate}
+            initialProgress={progress?.video_progress.watch_percentage || 0}
+            nextLessonId={nextLesson?.id}
+          />
+          
+          {/* Enhanced Video Info Bar */}
+          <div className="px-4 md:px-6 py-3 md:py-4 border-t border-gray-200 bg-gray-50">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-sm">
+              {/* Duration */}
+              <div className="flex items-center">
+                <Clock className="w-4 h-4 text-gray-500 mr-2" />
+                <div>
+                  <div className="text-gray-500 text-xs">Duration</div>
+                  <div className="font-medium text-gray-900">
+                    {formatDuration(currentVideoDuration || lesson.video.duration)}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Progress */}
+              <div className="flex items-center">
+                <div className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
+                  (progress?.video_progress.watch_percentage || 0) >= 80 
+                    ? 'bg-green-500' 
+                    : 'bg-blue-500'
+                }`}>
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <div>
+                  <div className="text-gray-500 text-xs">Progress</div>
+                  <div className="font-medium text-gray-900">
+                    {Math.round(videoProgress || progress?.video_progress.watch_percentage || 0)}%
+                  </div>
+                </div>
+              </div>
+              
+              {/* Current Position */}
+              <div className="flex items-center">
+                <BookOpen className="w-4 h-4 text-gray-500 mr-2" />
+                <div>
+                  <div className="text-gray-500 text-xs">Current Time</div>
+                  <div className="font-medium text-gray-900">
+                    {formatDuration(currentVideoTime)}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Status */}
+              <div className="flex items-center">
+                <CheckCircle className={`w-4 h-4 mr-2 ${
+                  progress?.is_completed 
+                    ? 'text-green-500' 
+                    : (progress?.video_progress.watch_percentage || 0) >= 80
+                    ? 'text-yellow-500'
+                    : 'text-gray-400'
+                }`} />
+                <div>
+                  <div className="text-gray-500 text-xs">Status</div>
+                  <div className={`font-medium text-sm ${
+                    progress?.is_completed 
+                      ? 'text-green-600' 
+                      : (progress?.video_progress.watch_percentage || 0) >= 80
+                      ? 'text-yellow-600'
+                      : 'text-gray-600'
+                  }`}>
+                    {progress?.is_completed 
+                      ? 'Completed' 
+                      : (progress?.video_progress.watch_percentage || 0) >= 80
+                      ? 'Ready to complete'
+                      : 'In progress'
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="mt-3">
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Watch Progress</span>
+                <span>{Math.round(videoProgress || progress?.video_progress.watch_percentage || 0)}% watched</span>
+              </div>
+              <ProgressBar 
+                value={videoProgress || progress?.video_progress.watch_percentage || 0} 
+                className="h-2"
+              />
+              {(progress?.video_progress.watch_percentage || 0) >= 80 && !progress?.is_completed && (
+                <div className="mt-2 text-xs text-yellow-600 flex items-center">
+                  <Info className="w-3 h-3 mr-1" />
+                  Complete the quiz below to finish this lesson
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="aspect-video bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <VideoOff className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Video content is being prepared
+            </h3>
+            <p className="text-gray-600 max-w-sm mx-auto">
+              The video for this lesson will be available soon. 
+              Please check back later or continue with the lesson materials below.
+            </p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison to prevent re-renders - don't compare callbacks
+  return (
+    prevProps.lesson.id === nextProps.lesson.id &&
+    prevProps.lesson.video?.url === nextProps.lesson.video?.url &&
+    prevProps.lessonId === nextProps.lessonId &&
+    prevProps.courseId === nextProps.courseId &&
+    prevProps.progress?.video_progress.watch_percentage === nextProps.progress?.video_progress.watch_percentage &&
+    prevProps.progress?.is_completed === nextProps.progress?.is_completed &&
+    prevProps.nextLesson?.id === nextProps.nextLesson?.id &&
+    prevProps.currentVideoTime === nextProps.currentVideoTime &&
+    prevProps.currentVideoDuration === nextProps.currentVideoDuration &&
+    prevProps.videoProgress === nextProps.videoProgress
+    // Don't compare callback functions - they're wrapped with useCallback in parent
+  );
+});
+
+VideoSection.displayName = 'VideoSection';
+
+// Separate component for quiz section to prevent re-renders
+interface QuizSectionProps {
+  hasQuiz: boolean;
+  showQuiz: boolean;
+  progress: Progress | null | undefined;
+  quizPassed: boolean;
+  lessonId: string;
+  handleQuizComplete: (passed: boolean) => void;
+}
+
+const QuizSection = React.memo<QuizSectionProps>(({
+  hasQuiz,
+  showQuiz,
+  progress,
+  quizPassed,
+  lessonId,
+  handleQuizComplete
+}) => {
+  if (!hasQuiz || (!showQuiz && ((progress?.video_progress?.watch_percentage ?? 0) < 80 || quizPassed))) {
+    return null;
+  }
+
+  return (
+    <section className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-yellow-50">
+        <h2 className="text-base md:text-lg font-semibold text-gray-900 flex items-center">
+          <CheckCircle className="w-4 md:w-5 h-4 md:h-5 mr-2 text-yellow-600" />
+          Quiz - Test Your Knowledge
+        </h2>
+        <p className="text-xs md:text-sm text-gray-600 mt-1">
+          Complete this quiz to finish the lesson and unlock the next one.
+        </p>
+      </div>
+      <div className="p-4 md:p-6">
+        <QuizComponent
+          lessonId={lessonId}
+          onComplete={handleQuizComplete}
+        />
+      </div>
+    </section>
+  );
+});
+
+QuizSection.displayName = 'QuizSection';
+
+// Custom hook to manage all lesson data with single loading state
+const useLessonData = (courseId: string, lessonId: string, isPreviewMode: boolean) => {
+  // Primary data - needed for initial render
+  const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId, true, isPreviewMode);
+  const { data: chaptersResponse, loading: chaptersLoading, error: chaptersError } = useCourseChaptersQuery(courseId);
+  
+  // Secondary data - can load after initial render
+  const { data: progressResponse, loading: progressLoading, execute: refetchProgress } = useLessonProgressQuery(
+    lessonId,
+    !isPreviewMode && !!lessonResponse // Only fetch after lesson is loaded
+  );
+  const { data: courseResponse, loading: courseLoading } = useCourseQuery(courseId);
+  
+  // Extract data
+  const lesson = lessonResponse?.data || null;
+  const progress = isPreviewMode ? { is_completed: false, video_progress: { watch_percentage: 0 } } : (progressResponse?.data || null);
+  const chapters = chaptersResponse?.data?.chapters || [];
+  const courseData = courseResponse?.data || null;
+  
+  return {
+    // Data
+    lesson,
+    progress,
+    chapters,
+    courseData,
+    chaptersError,
+    
+    // Loading states
+    isInitialLoading: lessonLoading || chaptersLoading,
+    isSecondaryLoading: progressLoading || courseLoading,
+    
+    // Actions
+    refetchProgress
+  };
+};
+
 export default function LessonPlayerPage() {
   const params = useParams();
   const router = useRouter();
@@ -77,26 +333,29 @@ export default function LessonPlayerPage() {
   const searchParams = useSearchParams();
   const isPreviewMode = searchParams.get('preview') === 'true';
 
-  // React Query hooks - automatic caching and state management
-  const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId, true, isPreviewMode);
-  const { data: progressResponse, loading: progressLoading, execute: refetchProgress } = useLessonProgressQuery(
-    lessonId,
-    !isPreviewMode // Only fetch progress if not in preview mode
-  );
-  const { data: chaptersResponse, loading: chaptersLoading, error: chaptersError } = useCourseChaptersQuery(courseId);
-  const { data: courseResponse, loading: courseLoading } = useCourseQuery(courseId);
+  // Use custom hook for all data fetching
+  const {
+    lesson,
+    progress,
+    chapters,
+    courseData,
+    chaptersError,
+    isInitialLoading,
+    isSecondaryLoading,
+    refetchProgress
+  } = useLessonData(courseId, lessonId, isPreviewMode);
+  
+  // Initialize optimistic progress with actual progress
+  useEffect(() => {
+    if (progress?.video_progress?.watch_percentage !== undefined) {
+      setVideoProgress(progress.video_progress.watch_percentage);
+    }
+  }, [progress?.video_progress?.watch_percentage]);
+  
+  // Mutations
   const { mutate: startLesson } = useStartLesson();
   const { mutate: updateProgress } = useUpdateLessonProgress();
   const { mutate: markComplete } = useMarkLessonComplete();
-
-  // Extract data from React Query responses
-  const lesson = lessonResponse?.data || null;
-  // In preview mode, set progress to a dummy object to prevent startLesson from being called
-  const progress = isPreviewMode ? { is_completed: false, video_progress: { watch_percentage: 0 } } : (progressResponse?.data || null);
-  
-  const chapters = chaptersResponse?.data?.chapters || [];
-  
-  const courseData = courseResponse?.data || null;
   
   
   // Calculate all lesson IDs for batch progress fetching - MEMOIZED for performance
@@ -165,31 +424,29 @@ export default function LessonPlayerPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [currentVideoDuration, setCurrentVideoDuration] = useState<number | null>(null);
+  const [currentVideoTime, setCurrentVideoTime] = useState<number>(0);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [lessonStarted, setLessonStarted] = useState(false);
+  // For optimistic UI update
+  const [videoProgress, setVideoProgress] = useState(0);
+  
+  // Quiz loading is handled separately since it's conditional
+  const isQuizDataLoading = quizUnlocked && (quizLoading || quizProgressLoading);
 
-  // Combined loading state - includes batch progress and quiz loading
-  const loading = lessonLoading || progressLoading || chaptersLoading || batchProgressLoading || quizLoading || quizProgressLoading || courseLoading;
-
-  // DETAILED DEBUG: Track what's causing re-renders
-  console.log('[LEARN PAGE RENDER]', {
-    lessonId,
-    chaptersCount: chapters.length,
-    hasLesson: !!lesson,
-    hasProgress: !!progress,
-    loading: {
-      lesson: lessonLoading,
-      progress: progressLoading, 
-      chapters: chaptersLoading,
-      batch: batchProgressLoading,
-      quiz: quizLoading,
-      quizProgress: quizProgressLoading,
-      course: courseLoading
-    },
-    chaptersResponseStatus: chaptersResponse ? 'exists' : 'null',
-    progressResponseStatus: progressResponse ? 'exists' : 'null',
-    timestamp: Date.now()
-  });
+  // DEBUG: Track renders only when there are actual changes
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[LEARN PAGE] Data loaded:', {
+        lessonId,
+        hasLesson: !!lesson,
+        hasChapters: chapters.length > 0,
+        hasProgress: !!progress,
+        watchPercentage: progress?.video_progress?.watch_percentage || 0,
+        quizUnlocked,
+        isQuizDataLoading
+      });
+    }
+  }, [lessonId, !!lesson, chapters.length, !!progress, progress?.video_progress?.watch_percentage, quizUnlocked, isQuizDataLoading]);
 
   // Accordion functions for desktop sidebar - MEMOIZED to prevent re-creation
   const toggleChapter = useCallback((chapterId: string) => {
@@ -273,11 +530,10 @@ export default function LessonPlayerPage() {
 
   // React Query data processing - automatic lesson navigation setup
   useEffect(() => {
-    // Extract chapters from React Query response for optimal dependency tracking
-    const chaptersData = chaptersResponse?.data?.chapters || [];
-    if (chaptersData.length > 0) {
+    // Use chapters from custom hook
+    if (chapters.length > 0) {
       // Process chapters data to find current chapter and next lesson
-      for (const chapter of chaptersData) {
+      for (const chapter of chapters) {
         const lessonIndex = chapter.lessons.findIndex((l: Lesson) => l.id === lessonId);
         if (lessonIndex !== -1) {
           
@@ -286,9 +542,9 @@ export default function LessonPlayerPage() {
             setNextLesson(chapter.lessons[lessonIndex + 1]);
           } else {
             // Check for first lesson in next chapter
-            const chapterIndex = chaptersData.findIndex((c: Chapter) => c.id === chapter.id);
-            if (chapterIndex < chaptersData.length - 1 && chaptersData[chapterIndex + 1].lessons.length > 0) {
-              setNextLesson(chaptersData[chapterIndex + 1].lessons[0]);
+            const chapterIndex = chapters.findIndex((c: Chapter) => c.id === chapter.id);
+            if (chapterIndex < chapters.length - 1 && chapters[chapterIndex + 1].lessons.length > 0) {
+              setNextLesson(chapters[chapterIndex + 1].lessons[0]);
             }
           }
           break;
@@ -298,7 +554,7 @@ export default function LessonPlayerPage() {
       // Note: Lesson progress is now automatically fetched via useBatchLessonProgressQuery
       // No need for manual fetchAllLessonsProgress calls
     }
-  }, [chaptersResponse, lessonId]);
+  }, [chapters, lessonId]);
 
   // ✅ COMPLETED: Replaced manual fetchAllLessonsProgress with React Query useBatchLessonProgressQuery
   // This eliminates multiple individual API calls and provides automatic caching and error handling
@@ -307,18 +563,42 @@ export default function LessonPlayerPage() {
   // useLessonQuizQuery and useQuizProgressQuery replace manual API calls
   // This provides automatic caching, error handling, and loading states
 
-  const handleVideoDurationChange = useCallback((duration: number) => {
-    // Update local state with actual YouTube duration
-    setCurrentVideoDuration(duration);
+  // Use refs to maintain stable callback references
+  const handleVideoDurationChangeRef = useRef<(duration: number) => void>();
+  const handleVideoTimeUpdateRef = useRef<(currentTime: number) => void>();
+  const handleVideoProgressRef = useRef<(percentage: number) => void>();
+  const handleVideoCompleteRef = useRef<() => void>();
+
+  // Update refs when dependencies change
+  useEffect(() => {
+    handleVideoDurationChangeRef.current = (duration: number) => {
+      setCurrentVideoDuration(duration);
+    };
+    
+    handleVideoTimeUpdateRef.current = (currentTime: number) => {
+      setCurrentVideoTime(currentTime);
+    };
   }, []);
 
-  // Debounced progress handler to prevent excessive API calls and re-renders
-  const debouncedUpdateProgress = useMemo(
-    () => debounce((percentage: number) => {
+  // Stable callback wrappers that never change
+  const handleVideoDurationChange = useCallback((duration: number) => {
+    handleVideoDurationChangeRef.current?.(duration);
+  }, []);
+
+  const handleVideoTimeUpdate = useCallback((currentTime: number) => {
+    handleVideoTimeUpdateRef.current?.(currentTime);
+  }, []);
+
+  // Create stable debounced function using ref to prevent recreation
+  const debouncedUpdateProgressRef = useRef<any>();
+  
+  useEffect(() => {
+    // Create debounced function that takes lessonId as parameter
+    debouncedUpdateProgressRef.current = debounce((currentLessonId: string, percentage: number) => {
       if (isPreviewMode) return;
       
       updateProgress({ 
-        lessonId, 
+        lessonId: currentLessonId, 
         progress: {
           watchPercentage: percentage,
           currentPosition: 0, // VideoPlayer should provide this
@@ -332,60 +612,68 @@ export default function LessonPlayerPage() {
           console.error('Error updating progress:', error);
         }
       });
-    }, 5000), // Debounce for 5 seconds to prevent API spam and re-render loops
-    [isPreviewMode, updateProgress, lessonId]
-  );
+    }, 5000); // Debounce for 5 seconds
+    
+    // Cleanup on unmount
+    return () => {
+      debouncedUpdateProgressRef.current?.cancel();
+    };
+  }, [isPreviewMode, updateProgress]); // Don't include lessonId!
 
-  const handleVideoProgress = useCallback((percentage: number) => {
-    // Skip saving in preview mode
-    if (isPreviewMode) {
-      return;
-    }
+  // Update refs when dependencies change
+  useEffect(() => {
+    handleVideoProgressRef.current = (percentage: number) => {
+      if (isPreviewMode) return;
+      
+      // Update optimistic UI immediately
+      setVideoProgress(percentage);
+      
+      // Call the stable debounced function with lessonId parameter
+      debouncedUpdateProgressRef.current?.(lessonId, percentage);
+    };
     
-    // Use debounced function to prevent excessive API calls
-    debouncedUpdateProgress(percentage);
-  }, [isPreviewMode, debouncedUpdateProgress]);
-
-  const handleVideoComplete = useCallback(() => {
-    // Skip saving in preview mode
-    if (isPreviewMode) {
-      ToastService.info('Preview Mode - Progress is not being tracked');
-      return;
-    }
-    
-    // Check if quiz will be available (might still be loading due to lazy loading)
-    const videoCompleted = (progress?.video_progress?.watch_percentage ?? 0) >= 80;
-    
-    // If video is completed but quiz is still loading, wait for it
-    if (videoCompleted && lessonId && !quizLoading) {
-      // If there's a quiz and it hasn't been passed yet, show it immediately (best practice)
-      if (hasQuiz && !quizPassed) {
-        setShowQuiz(true);
-        ToastService.success('Great job! Now complete the quiz to finish this lesson.');
+    handleVideoCompleteRef.current = () => {
+      if (isPreviewMode) {
+        ToastService.info('Preview Mode - Progress is not being tracked');
         return;
       }
-    } else if (videoCompleted && quizLoading) {
-      // Quiz is still loading, inform user
-      ToastService.info('Loading quiz...');
-      return;
-    }
-
-    // Otherwise, complete the lesson using React Query mutation
-    markComplete({ 
-      lessonId, 
-      quizScore: undefined 
-    }, {
-      onSuccess: (response: any) => {
-        // React Query will automatically refresh progress data via cache invalidation
-        // No need to manually update lessonsProgress - useBatchLessonProgressQuery will refetch
-        ToastService.success(response.message || 'Something went wrong');
-      },
-      onError: (error: any) => {
-        console.error('Error completing lesson:', error);
-        ToastService.error(error.message || 'Something went wrong');
+      
+      const videoCompleted = (progress?.video_progress?.watch_percentage ?? 0) >= 80;
+      
+      if (videoCompleted && lessonId && !quizLoading) {
+        if (hasQuiz && !quizPassed) {
+          setShowQuiz(true);
+          ToastService.success('Great job! Now complete the quiz to finish this lesson.');
+          return;
+        }
+      } else if (videoCompleted && quizLoading) {
+        ToastService.info('Loading quiz...');
+        return;
       }
-    });
-  }, [isPreviewMode, progress?.video_progress?.watch_percentage, lessonId, quizLoading, hasQuiz, quizPassed, markComplete]);
+
+      markComplete({ 
+        lessonId, 
+        quizScore: undefined 
+      }, {
+        onSuccess: (response: any) => {
+          ToastService.success(response.message || 'Something went wrong');
+        },
+        onError: (error: any) => {
+          console.error('Error completing lesson:', error);
+          ToastService.error(error.message || 'Something went wrong');
+        }
+      });
+    };
+  }, [isPreviewMode, progress?.video_progress?.watch_percentage, lessonId, quizLoading, hasQuiz, quizPassed, markComplete, setShowQuiz]);
+
+  // Stable callback wrappers
+  const handleVideoProgress = useCallback((percentage: number) => {
+    handleVideoProgressRef.current?.(percentage);
+  }, []);
+
+  const handleVideoComplete = useCallback(() => {
+    handleVideoCompleteRef.current?.();
+  }, []);
 
   const handleQuizComplete = useCallback((passed: boolean) => {
     // Skip saving in preview mode
@@ -419,7 +707,8 @@ export default function LessonPlayerPage() {
     router.push(`/learn/${courseId}/${targetLessonId}`);
   }, [router, courseId]);
 
-  if (loading) {
+  // Early return for initial loading (lesson + chapters)
+  if (isInitialLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -430,6 +719,7 @@ export default function LessonPlayerPage() {
     );
   }
 
+  // After initial load, check if lesson exists
   if (!lesson) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -445,6 +735,9 @@ export default function LessonPlayerPage() {
       </div>
     );
   }
+
+  // At this point, lesson and chapters are loaded
+  // Secondary data (progress, course info) can load in background
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -462,7 +755,7 @@ export default function LessonPlayerPage() {
 
           
           {/* Breadcrumb - Only show with accurate course data */}
-          {!courseLoading && courseData && courseData.title && courseData.category && (
+          {!isSecondaryLoading && courseData && courseData.title && courseData.category && (
             <LessonBreadcrumbs
               course={{
                 id: courseId,
@@ -554,7 +847,7 @@ export default function LessonPlayerPage() {
 
               {/* Chapters & Lessons Navigation */}
               <div className="overflow-y-auto h-[calc(100%-200px)]">
-                {chaptersLoading ? (
+                {isInitialLoading ? (
                   <div className="p-4 text-center text-gray-500">
                     <div className="animate-pulse space-y-3">
                       <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
@@ -734,129 +1027,22 @@ export default function LessonPlayerPage() {
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto min-w-0">
           <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-            {/* Video Section */}
-            <section className="bg-white rounded-lg shadow-sm overflow-hidden">
-              {lesson.video ? (
-                <>
-                  <VideoPlayer
-                    videoUrl={lesson.video.url}
-                    lessonId={lessonId}
-                    courseId={courseId}
-                    onProgress={handleVideoProgress}
-                    onComplete={handleVideoComplete}
-                    onDurationChange={handleVideoDurationChange}
-                    initialProgress={progress?.video_progress.watch_percentage || 0}
-                    nextLessonId={nextLesson?.id}
-                  />
-                  
-                  {/* Enhanced Video Info Bar */}
-                  <div className="px-4 md:px-6 py-3 md:py-4 border-t border-gray-200 bg-gray-50">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-sm">
-                      {/* Duration */}
-                      <div className="flex items-center">
-                        <Clock className="w-4 h-4 text-gray-500 mr-2" />
-                        <div>
-                          <div className="text-gray-500 text-xs">Duration</div>
-                          <div className="font-medium text-gray-900">
-                            {formatDuration(lesson.video.duration)}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Progress */}
-                      <div className="flex items-center">
-                        <div className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
-                          (progress?.video_progress.watch_percentage || 0) >= 80 
-                            ? 'bg-green-500' 
-                            : 'bg-blue-500'
-                        }`}>
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
-                        </div>
-                        <div>
-                          <div className="text-gray-500 text-xs">Progress</div>
-                          <div className="font-medium text-gray-900">
-                            {Math.round(progress?.video_progress.watch_percentage || 0)}%
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Current Position */}
-                      <div className="flex items-center">
-                        <BookOpen className="w-4 h-4 text-gray-500 mr-2" />
-                        <div>
-                          <div className="text-gray-500 text-xs">Current Time</div>
-                          <div className="font-medium text-gray-900">
-                            {progress?.video_progress.current_position 
-                              ? formatDuration(progress.video_progress.current_position)
-                              : '0:00'
-                            }
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Status */}
-                      <div className="flex items-center">
-                        <CheckCircle className={`w-4 h-4 mr-2 ${
-                          progress?.is_completed 
-                            ? 'text-green-500' 
-                            : (progress?.video_progress.watch_percentage || 0) >= 80
-                            ? 'text-yellow-500'
-                            : 'text-gray-400'
-                        }`} />
-                        <div>
-                          <div className="text-gray-500 text-xs">Status</div>
-                          <div className={`font-medium text-sm ${
-                            progress?.is_completed 
-                              ? 'text-green-600' 
-                              : (progress?.video_progress.watch_percentage || 0) >= 80
-                              ? 'text-yellow-600'
-                              : 'text-gray-600'
-                          }`}>
-                            {progress?.is_completed 
-                              ? 'Completed' 
-                              : (progress?.video_progress.watch_percentage || 0) >= 80
-                              ? 'Ready to complete'
-                              : 'In progress'
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Progress Bar */}
-                    <div className="mt-3">
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span>Watch Progress</span>
-                        <span>{Math.round(progress?.video_progress.watch_percentage || 0)}% watched</span>
-                      </div>
-                      <ProgressBar 
-                        value={progress?.video_progress.watch_percentage || 0} 
-                        className="h-2"
-                      />
-                      {(progress?.video_progress.watch_percentage || 0) >= 80 && !progress?.is_completed && (
-                        <div className="mt-2 text-xs text-yellow-600 flex items-center">
-                          <Info className="w-3 h-3 mr-1" />
-                          Complete the quiz below to finish this lesson
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                  <div className="text-center">
-                    <VideoOff className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Video content is being prepared
-                    </h3>
-                    <p className="text-gray-600 max-w-sm mx-auto">
-                      The video for this lesson will be available soon. 
-                      Please check back later or continue with the lesson materials below.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </section>
+            {/* Video Section - Memoized to prevent unmounting */}
+            <VideoSection
+              lesson={lesson}
+              lessonId={lessonId}
+              courseId={courseId}
+              handleVideoProgress={handleVideoProgress}
+              handleVideoComplete={handleVideoComplete}
+              handleVideoDurationChange={handleVideoDurationChange}
+              handleVideoTimeUpdate={handleVideoTimeUpdate}
+              progress={progress}
+              nextLesson={nextLesson}
+              formatDuration={formatDuration}
+              currentVideoTime={currentVideoTime}
+              currentVideoDuration={currentVideoDuration}
+              videoProgress={videoProgress}
+            />
 
             {/* Lesson Information */}
             <section className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -900,26 +1086,15 @@ export default function LessonPlayerPage() {
               </section>
             )}
 
-            {/* Quiz Section */}
-            {hasQuiz && (showQuiz || ((progress?.video_progress?.watch_percentage ?? 0) >= 80 && !quizPassed)) && (
-              <section className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-yellow-50">
-                  <h2 className="text-base md:text-lg font-semibold text-gray-900 flex items-center">
-                    <CheckCircle className="w-4 md:w-5 h-4 md:h-5 mr-2 text-yellow-600" />
-                    Quiz - Test Your Knowledge
-                  </h2>
-                  <p className="text-xs md:text-sm text-gray-600 mt-1">
-                    Complete this quiz to finish the lesson and unlock the next one.
-                  </p>
-                </div>
-                <div className="p-4 md:p-6">
-                  <QuizComponent
-                    lessonId={lessonId}
-                    onComplete={handleQuizComplete}
-                  />
-                </div>
-              </section>
-            )}
+            {/* Quiz Section - Memoized component */}
+            <QuizSection
+              hasQuiz={hasQuiz}
+              showQuiz={showQuiz}
+              progress={progress}
+              quizPassed={quizPassed}
+              lessonId={lessonId}
+              handleQuizComplete={handleQuizComplete}
+            />
 
             {/* Completion Status */}
             {progress?.is_completed && (

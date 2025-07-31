@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import YouTube, { YouTubeProps, YouTubeEvent } from 'react-youtube';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize, Settings, X } from 'lucide-react';
-import { debounce, throttle } from 'lodash';
+// Removed lodash debounce - parent component handles debouncing
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -14,6 +14,7 @@ interface VideoPlayerProps {
   onProgress?: (percentage: number) => void;
   onComplete?: () => void;
   onDurationChange?: (duration: number) => void;
+  onTimeUpdate?: (currentTime: number) => void;
   initialProgress?: number;
   nextLessonId?: string;
 }
@@ -25,6 +26,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   onProgress,
   onComplete,
   onDurationChange,
+  onTimeUpdate,
   initialProgress = 0,
   nextLessonId
 }) => {
@@ -53,42 +55,66 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   // Track component mount state
   const isMountedRef = useRef(true);
   
-  // Debounced progress callback
-  const debouncedOnProgress = useMemo(
-    () => onProgress ? debounce((percentage: number) => {
-      if (isMountedRef.current && onProgress) {
-        onProgress(percentage);
-      }
-    }, 500) : undefined,
-    [onProgress]
-  );
+  // Progress callback - parent component handles debouncing
+  // This prevents double debouncing issues
+  const handleProgressUpdate = useCallback((percentage: number) => {
+    if (isMountedRef.current && onProgress) {
+      onProgress(percentage);
+    }
+  }, [onProgress]);
   
-  // Direct play/pause without throttling for immediate response
+  // Direct play/pause with retry logic for YouTube API timing issues
   const handlePlayPauseClick = useCallback(() => {
     if (!playerRef.current || !isReady) {
       console.log('[VideoPlayer] Player not ready for play/pause');
       return;
     }
     
-    try {
-      const playerState = playerRef.current.getPlayerState();
-      const playerStates = window.YT?.PlayerState || { PLAYING: 1, PAUSED: 2 };
-      
-      console.log(`[VideoPlayer] Current state: ${playerState}, isPlaying: ${isPlaying}`);
-      
-      // Use actual player state instead of React state
-      if (playerState === playerStates.PLAYING) {
-        console.log('[VideoPlayer] Pausing video');
-        playerRef.current.pauseVideo();
-      } else {
-        console.log('[VideoPlayer] Playing video');
-        playerRef.current.playVideo();
+    const attemptPlayPause = (retries = 3) => {
+      try {
+        const playerState = playerRef.current.getPlayerState();
+        const playerStates = window.YT?.PlayerState || { PLAYING: 1, PAUSED: 2 };
+        
+        console.log('[VideoPlayer] Player state:', playerState, 'isPlaying:', isPlaying);
+        
+        // Use actual player state instead of React state
+        if (playerState === playerStates.PLAYING) {
+          playerRef.current.pauseVideo();
+          // Immediately update UI state for responsive feedback
+          setIsPlaying(false);
+          
+          // Verify pause worked after a short delay
+          setTimeout(() => {
+            if (playerRef.current && playerRef.current.getPlayerState() === playerStates.PLAYING && retries > 0) {
+              console.log('[VideoPlayer] Pause failed, retrying...');
+              attemptPlayPause(retries - 1);
+            }
+          }, 100);
+        } else {
+          playerRef.current.playVideo();
+          // Immediately update UI state for responsive feedback
+          setIsPlaying(true);
+          
+          // Verify play worked after a short delay
+          setTimeout(() => {
+            if (playerRef.current && playerRef.current.getPlayerState() !== playerStates.PLAYING && retries > 0) {
+              console.log('[VideoPlayer] Play failed, retrying...');
+              attemptPlayPause(retries - 1);
+            }
+          }, 100);
+        }
+      } catch (error) {
+        console.error('[VideoPlayer] Error toggling play/pause:', error);
+        if (retries > 0) {
+          setTimeout(() => attemptPlayPause(retries - 1), 100);
+        } else {
+          setPlayerError('Failed to toggle playback');
+        }
       }
-    } catch (error) {
-      console.error('[VideoPlayer] Error toggling play/pause:', error);
-      setPlayerError('Failed to toggle playback');
-    }
-  }, [isReady]);
+    };
+    
+    attemptPlayPause();
+  }, [isReady, isPlaying]);
   
   // Detect mobile device
   useEffect(() => {
@@ -141,7 +167,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           if (!playerRef.current || !isMountedRef.current) return;
           
           const videoDuration = playerRef.current.getDuration();
-          console.log(`[VideoPlayer] Attempt ${attempt}: Duration = ${videoDuration}`);
+          // Duration attempt ${attempt}: ${videoDuration}
           
           if (videoDuration && videoDuration > 0) {
             setDuration(videoDuration);
@@ -177,13 +203,15 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
     }
   }, [initialProgress, onDurationChange, volume]);
 
-  const onPlayerStateChange = (event: YouTubeEvent) => {
+  const onPlayerStateChange = useCallback((event: YouTubeEvent) => {
     const state = event.data;
     const playerStates = window.YT?.PlayerState || {
       PLAYING: 1,
       PAUSED: 2,
       ENDED: 0
     };
+    
+    console.log('[VideoPlayer] State change:', state);
     
     if (state === playerStates.PLAYING) {
       setIsPlaying(true);
@@ -192,7 +220,6 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
       if (playerRef.current && duration === 0) {
         const videoDuration = playerRef.current.getDuration();
         if (videoDuration && videoDuration > 0) {
-          console.log(`[VideoPlayer] Got duration on play: ${videoDuration}`);
           setDuration(videoDuration);
           if (onDurationChange && isMountedRef.current) {
             onDurationChange(videoDuration);
@@ -212,7 +239,15 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
       stopProgressTracking();
       setShowControls(true);
     }
-  };
+  }, [duration, onDurationChange]);
+
+  // Move function declarations before they're used
+  const stopProgressTracking = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
 
   const onPlayerError = useCallback((event: YouTubeEvent) => {
     console.error('YouTube Player Error:', event.data);
@@ -224,11 +259,11 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
 
   const startProgressTracking = useCallback(() => {
     if (intervalRef.current) {
-      console.log('[VideoPlayer] Progress tracking already running');
+      // Progress tracking already running
       return;
     }
 
-    console.log('[VideoPlayer] Starting progress tracking');
+    // Starting progress tracking
     intervalRef.current = setInterval(() => {
       if (!playerRef.current || !isReady || !isMountedRef.current) return;
 
@@ -245,16 +280,22 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
             onDurationChange(total);
           }
           
+          // Call onTimeUpdate callback to update parent component
+          if (onTimeUpdate && isMountedRef.current) {
+            onTimeUpdate(current);
+          }
+          
           const percentage = (current / total) * 100;
           setWatchPercentage(percentage);
           
-          // Log progress update
-          console.log(`[VideoPlayer] Progress: ${current.toFixed(1)}s / ${total.toFixed(1)}s (${percentage.toFixed(1)}%)`);
+          // Log progress update only in development and less frequently
+          if (process.env.NODE_ENV === 'development' && Math.floor(percentage) % 10 === 0) {
+            console.log(`[VideoPlayer] Progress: ${current.toFixed(1)}s / ${total.toFixed(1)}s (${percentage.toFixed(1)}%)`);
+          }
           
-          // Call debounced onProgress callback
-          if (debouncedOnProgress) {
-            console.log('[VideoPlayer] Calling debouncedOnProgress');
-            debouncedOnProgress(percentage);
+          // Call onProgress callback directly - parent handles debouncing
+          if (onProgress && isMountedRef.current) {
+            onProgress(percentage);
           }
 
           // Check for 80% completion
@@ -271,14 +312,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
         // Don't stop tracking on error, just log it
       }
     }, 1000); // Update every second
-  }, [isReady, hasCompletedOnce, onComplete, onDurationChange, debouncedOnProgress]);
-
-  const stopProgressTracking = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  };
+  }, [isReady, hasCompletedOnce, onComplete, onDurationChange, onTimeUpdate, onProgress]);
 
   // Auto-hide controls
   const startHideControlsTimer = () => {
@@ -406,15 +440,12 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
       stopProgressTracking();
       clearHideControlsTimer();
       
-      // Cancel debounced functions
-      if (debouncedOnProgress) {
-        debouncedOnProgress.cancel();
-      }
+      // No debounced functions to cancel
       
       // Clear player reference
       playerRef.current = null;
     };
-  }, [debouncedOnProgress]);
+  }, []);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -739,6 +770,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
 };
 
 // Memoize the component to prevent unnecessary re-renders
+// Don't compare callbacks since they might change on parent re-renders
 export const VideoPlayer = React.memo(VideoPlayerComponent, (prevProps, nextProps) => {
   return (
     prevProps.videoUrl === nextProps.videoUrl &&
@@ -746,5 +778,6 @@ export const VideoPlayer = React.memo(VideoPlayerComponent, (prevProps, nextProp
     prevProps.courseId === nextProps.courseId &&
     prevProps.initialProgress === nextProps.initialProgress &&
     prevProps.nextLessonId === nextProps.nextLessonId
+    // Don't compare callback functions - they're handled internally with debouncing
   );
 });
