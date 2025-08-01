@@ -4,6 +4,8 @@ import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { getCacheConfig } from '@/lib/constants/cache-config';
 import { quizAPI } from '@/lib/api/quizzes';
+import { api } from '@/lib/api/api-client';
+import { StandardResponse } from '@/lib/types/api';
 
 /**
  * React Query hooks for Quiz functionality
@@ -64,8 +66,32 @@ export function useQuizProgressQuery(quizId: string, enabled: boolean = true) {
 
 /**
  * Submit quiz answers
+ * Used by: QuizComponent  
+ * Migrated from: useLearning.ts
+ * This version is used by QuizComponent which expects lessonId and answers array
  */
 export function useSubmitQuiz() {
+  return useApiMutation(
+    async ({ lessonId, answers }: { lessonId: string; answers: any[] }) => {
+      return api.post<StandardResponse<any>>(`/lessons/${lessonId}/quiz/submit`, { answers });
+    },
+    {
+      invalidateQueries: [
+        ['quiz-progress'], // Refresh quiz progress
+        ['lesson-progress'], // Refresh lesson progress
+        ['course-progress'], // Update overall course progress
+        ['student-dashboard'], // Update dashboard stats
+        ['course-chapters'], // May unlock next lesson
+      ],
+    }
+  );
+}
+
+/**
+ * Submit quiz answers (alternative version for direct quiz API)
+ * This version uses the quiz API directly with quiz_id
+ */
+export function useSubmitQuizDirect() {
   return useApiMutation(
     async (submission: QuizSubmission) => {
       return quizAPI.submitQuiz(submission.quiz_id, {

@@ -35,7 +35,7 @@ const calculateRemainingTime = (lessons: any[], progressMap: any) => {
 import { useAuth } from '@/hooks/useAuth';
 
 // Import the NEW consolidated hooks
-import { useLearnPage, useUpdateLessonProgress, type LessonData, type ChapterData, type LearnPageData } from '@/hooks/queries/useLearnPage';
+import { useLearnPage, useUpdateLessonProgress, type LessonData, type ChapterData, type LearnPageData, type Resource } from '@/hooks/queries/useLearnPage';
 
 /**
  * OPTIMIZED LEARN PAGE COMPONENT
@@ -55,7 +55,49 @@ import { useLearnPage, useUpdateLessonProgress, type LessonData, type ChapterDat
  * - REALTIME cache: Immediate updates for progress tracking
  */
 
-import { NavigationInfo } from '@/hooks/queries/useLearnPage';
+import { NavigationInfo, LessonProgress } from '@/hooks/queries/useLearnPage';
+
+// Type conversion helpers for component compatibility
+const createLessonProgressMap = (userProgress: Record<string, LessonProgress> | undefined): Map<string, any> => {
+  if (!userProgress) return new Map();
+  
+  return new Map(
+    Object.entries(userProgress).map(([lessonId, progress]) => [
+      lessonId,
+      {
+        lesson_id: lessonId,
+        is_completed: progress.is_completed,
+        is_unlocked: progress.is_unlocked
+      }
+    ])
+  );
+};
+
+const convertChaptersForMobile = (chapters: ChapterData[]): any[] => {
+  return chapters.map((ch) => ({
+    id: ch.id,
+    title: ch.title,
+    order: ch.order,
+    lessons: ch.lessons.map((l) => ({
+      id: l.id,
+      title: l.title,
+      order: l.order,
+      video: l.video ? { duration: l.video.duration || 0 } : undefined
+    }))
+  }));
+};
+
+const convertResourcesForDisplay = (resources: Resource[]): any[] => {
+  return resources.map((resource) => ({
+    ...resource,
+    type: getResourceType(resource.type)
+  }));
+};
+
+const getResourceType = (type: string): 'pdf' | 'doc' | 'zip' | 'link' | 'code' | 'exercise' | 'other' => {
+  const validTypes = ['pdf', 'doc', 'zip', 'link', 'code', 'exercise'];
+  return validTypes.includes(type) ? type as any : 'other';
+};
 
 // Memoized VideoSection component (unchanged from original)
 interface VideoSectionProps {
@@ -290,21 +332,14 @@ export default function OptimizedLessonPlayerPage() {
   const { mutate: updateProgress, loading: isUpdatingProgress } = useUpdateLessonProgress();
 
   // Extract data from consolidated response
-  const lesson = learnData?.current_lesson || null;
-  const course = learnData?.course || null;
-  const chapters = learnData?.chapters || [];
-  const enrollment = learnData?.enrollment || null;
-  const navigation = learnData?.navigation || null;
-  const userProgress = learnData?.user_progress || {};
+  const pageData = learnData?.data || null;
+  const lesson = pageData?.current_lesson || null;
+  const course = pageData?.course || null;
+  const chapters = pageData?.chapters || [];
+  const enrollment = pageData?.enrollment || null;
+  const navigation = pageData?.navigation || null;
+  const userProgress = pageData?.user_progress || {};
 
-  // DEBUG: Log actual values
-  console.log('[DEBUG] Learn page state:', {
-    learnData,
-    learnDataError,
-    lesson,
-    course,
-    isLoading: isLoadingLearnData
-  });
 
   // UI State (simplified)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -385,7 +420,6 @@ export default function OptimizedLessonPlayerPage() {
       if (isPreviewMode) return;
       
       updateProgress({ 
-        courseId,
         progressData: {
           lesson_id: currentLessonId,
           watch_percentage: percentage,
@@ -417,7 +451,6 @@ export default function OptimizedLessonPlayerPage() {
     
     if (!isPreviewMode) {
       updateProgress({
-        courseId,
         progressData: {
           lesson_id: lessonId,
           watch_percentage: 100,
@@ -426,7 +459,7 @@ export default function OptimizedLessonPlayerPage() {
         }
       });
     }
-  }, [lesson?.has_quiz, isPreviewMode, updateProgress, courseId, lessonId, currentVideoTime]);
+  }, [lesson?.has_quiz, isPreviewMode, updateProgress, lessonId, currentVideoTime]);
 
   const handleVideoDurationChange = useCallback((duration: number) => {
     setCurrentVideoDuration(duration);
@@ -499,11 +532,20 @@ export default function OptimizedLessonPlayerPage() {
           </button>
 
           {/* Breadcrumb */}
-          <LessonBreadcrumbs
-            course={course}
-            lesson={lesson}
-            className="flex-1"
-          />
+          {course && lesson && (
+            <LessonBreadcrumbs
+              course={{
+                id: course.id,
+                title: course.title,
+                category: course.category || 'General'
+              }}
+              lesson={{
+                id: lesson.id,
+                title: lesson.title
+              }}
+              className="flex-1"
+            />
+          )}
         </div>
       </header>
 
@@ -761,7 +803,7 @@ export default function OptimizedLessonPlayerPage() {
               currentVideoTime={currentVideoTime}
               currentVideoDuration={currentVideoDuration}
               videoProgress={videoProgress}
-              navigation={navigation}
+              navigation={navigation || undefined}
             />
 
             {/* Lesson Information */}
@@ -799,7 +841,7 @@ export default function OptimizedLessonPlayerPage() {
                 </div>
                 <div className="p-4 md:p-6">
                   <ResourceDisplay 
-                    resources={lesson.resources}
+                    resources={convertResourcesForDisplay(lesson.resources)}
                     className=""
                   />
                 </div>
@@ -869,12 +911,12 @@ export default function OptimizedLessonPlayerPage() {
       <MobileNavigationDrawer
         isOpen={mobileDrawerOpen}
         onClose={() => setMobileDrawerOpen(false)}
-        course={course}
-        chapters={chapters}
+        chapters={convertChaptersForMobile(chapters)}
         currentLessonId={lessonId}
-        onNavigateLesson={handleNavigateLesson}
         courseProgress={courseProgress}
-        isPreviewMode={isPreviewMode}
+        lessonsProgress={createLessonProgressMap(userProgress)}
+        onNavigateToLesson={handleNavigateLesson}
+        currentVideoDuration={currentVideoDuration}
       />
 
       {/* AI Assistant - Keep existing floating widget */}

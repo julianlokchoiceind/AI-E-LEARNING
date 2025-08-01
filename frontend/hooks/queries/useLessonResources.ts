@@ -28,7 +28,6 @@ export function useUploadLessonResource() {
     {
       operationName: 'upload-lesson-resource',
       invalidateQueries: (variables) => {
-        console.log('🔄 Invalidating queries for lesson:', variables.lessonId);
         return [
           ['lesson', variables.lessonId], // Refresh specific lesson data using actual ID
           ['lessons'], // Refresh lesson lists if cached
@@ -53,7 +52,6 @@ export function useAddLessonUrlResource() {
     {
       operationName: 'add-lesson-url-resource',
       invalidateQueries: (variables) => {
-        console.log('🔄 Invalidating queries for lesson:', variables.lessonId);
         return [
           ['lesson', variables.lessonId], // Refresh specific lesson data using actual ID
           ['lessons'], // Refresh lesson lists if cached
@@ -76,7 +74,6 @@ export function useDeleteLessonResource() {
     {
       operationName: 'delete-lesson-resource',
       invalidateQueries: (variables) => {
-        console.log('🔄 Invalidating queries for lesson:', variables.lessonId);
         return [
           ['lesson', variables.lessonId], // Refresh specific lesson data using actual ID
           ['lessons'], // Refresh lesson lists if cached

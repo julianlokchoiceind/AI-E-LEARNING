@@ -184,30 +184,15 @@ export function useLearnPage(courseId: string, lessonId: string, enabled: boolea
         `/learn/${courseId}/${lessonId}`,
         { requireAuth: false } // Support both authenticated and guest users
       );
-      return response.data || null;
+      return response;
     },
     {
       enabled: enabled && !!courseId && !!lessonId,
-      ...getCacheConfig('REALTIME'), // staleTime: 0 for immediate updates
-      retry: 3, // Important for learn page reliability
-      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+      ...getCacheConfig('LESSON_PROGRESS'), // FRESH tier for immediate updates
       
       // Error handling for better UX
       onError: (error: any) => {
-        console.error('[useLearnPage] Failed to load learn page data:', error);
         // Don't show toast automatically - let component handle it
-      },
-      
-      // Success callback for debugging
-      onSuccess: (data) => {
-        console.log('[useLearnPage] Learn page data loaded:', {
-          courseId,
-          lessonId,
-          isPreviewMode: data?.is_preview_mode,
-          totalLessons: data?.course?.total_lessons,
-          currentProgress: data?.enrollment?.progress?.completion_percentage,
-          timestamp: new Date().toISOString()
-        });
       }
     }
   );
@@ -223,11 +208,16 @@ export function useLearnPage(courseId: string, lessonId: string, enabled: boolea
  * - Business logic handled by backend
  */
 export function useUpdateLessonProgress() {
-  return useApiMutation<ProgressUpdateResponse, { courseId: string; progressData: UpdateProgressData }>(
-    async ({ courseId, progressData }) => {
+  return useApiMutation<ProgressUpdateResponse, { progressData: UpdateProgressData }>(
+    async ({ progressData }) => {
+      // Use the existing progress API with correct endpoint
       const response = await api.put<StandardResponse<ProgressUpdateResponse>>(
-        `/learn/${courseId}/progress`,
-        progressData,
+        `/progress/lessons/${progressData.lesson_id}/progress`,
+        {
+          watch_percentage: progressData.watch_percentage,
+          current_position: progressData.current_position,
+          total_watch_time: progressData.total_watch_time
+        },
         { requireAuth: true }
       );
       return response;
@@ -238,32 +228,24 @@ export function useUpdateLessonProgress() {
       
       // Cache invalidation strategy
       invalidateQueries: (variables) => [
-        ['learn-page', variables.courseId], // Invalidate for any lesson in the course
+        ['learn-page'], // Invalidate learn page cache
         ['courses'], // Update course catalog completion status
         ['my-courses'], // Update student dashboard
         ['creator-courses'], // Update creator analytics
         ['admin-courses'], // Update admin view
         ['enrollment'], // Update enrollment progress
         ['student-dashboard'], // Update dashboard stats
+        ['lesson-progress', variables.progressData.lesson_id], // Update specific lesson
       ],
       
       // Success callback for completion notifications
-      onSuccess: (response, variables) => {
-        if (response.data?.lesson_completed) {
-          console.log('[useUpdateLessonProgress] Lesson completed!', {
-            lessonId: variables.progressData.lesson_id,
-            courseCompleted: response.data.course_completed,
-            nextLessonUnlocked: response.data.next_lesson_unlocked
-          });
-        }
+      onSuccess: () => {
+        // Handle completion events in parent component
       },
       
       // Error handling
-      onError: (error, variables) => {
-        console.error('[useUpdateLessonProgress] Progress update failed:', {
-          lessonId: variables.progressData.lesson_id,
-          error: error.message
-        });
+      onError: () => {
+        // Error handled by parent component
       }
     }
   );
@@ -280,17 +262,17 @@ export function useUpdateLessonProgress() {
  * Extract course data from consolidated response
  */
 export function useCourseFromLearnPage(courseId: string, lessonId: string, enabled: boolean = true) {
-  const { data, isLoading, error } = useLearnPage(courseId, lessonId, enabled);
+  const { data, loading, error } = useLearnPage(courseId, lessonId, enabled);
   
   return {
-    data: data?.course || null,
-    isLoading,
+    data: data?.data?.course || null,
+    isLoading: loading,
     error,
     
     // Additional computed properties for compatibility
-    isEnrolled: !data?.is_preview_mode,
-    enrollment: data?.enrollment,
-    totalWatchTime: data?.total_watch_time_minutes
+    isEnrolled: !data?.data?.is_preview_mode,
+    enrollment: data?.data?.enrollment,
+    totalWatchTime: data?.data?.total_watch_time_minutes
   };
 }
 
@@ -298,18 +280,18 @@ export function useCourseFromLearnPage(courseId: string, lessonId: string, enabl
  * Extract current lesson data from consolidated response
  */
 export function useCurrentLessonFromLearnPage(courseId: string, lessonId: string, enabled: boolean = true) {
-  const { data, isLoading, error } = useLearnPage(courseId, lessonId, enabled);
+  const { data, loading, error } = useLearnPage(courseId, lessonId, enabled);
   
   return {
-    data: data?.current_lesson || null,
-    isLoading,
+    data: data?.data?.current_lesson || null,
+    isLoading: loading,
     error,
     
     // Additional computed properties
-    progress: data?.current_lesson?.progress,
-    navigation: data?.navigation,
-    isUnlocked: data?.current_lesson?.progress?.is_unlocked ?? false,
-    isCompleted: data?.current_lesson?.progress?.is_completed ?? false
+    progress: data?.data?.current_lesson?.progress,
+    navigation: data?.data?.navigation,
+    isUnlocked: data?.data?.current_lesson?.progress?.is_unlocked ?? false,
+    isCompleted: data?.data?.current_lesson?.progress?.is_completed ?? false
   };
 }
 
@@ -317,16 +299,16 @@ export function useCurrentLessonFromLearnPage(courseId: string, lessonId: string
  * Extract chapters data from consolidated response
  */
 export function useChaptersFromLearnPage(courseId: string, lessonId: string, enabled: boolean = true) {
-  const { data, isLoading, error } = useLearnPage(courseId, lessonId, enabled);
+  const { data, loading, error } = useLearnPage(courseId, lessonId, enabled);
   
   return {
-    data: data?.chapters || [],
-    isLoading,
+    data: data?.data?.chapters || [],
+    isLoading: loading,
     error,
     
     // Additional computed properties
-    totalChapters: data?.navigation?.total_chapters ?? 0,
-    currentChapterOrder: data?.navigation?.current_chapter_order ?? 1
+    totalChapters: data?.data?.navigation?.total_chapters ?? 0,
+    currentChapterOrder: data?.data?.navigation?.current_chapter_order ?? 1
   };
 }
 
@@ -334,28 +316,17 @@ export function useChaptersFromLearnPage(courseId: string, lessonId: string, ena
  * Extract user progress data from consolidated response
  */
 export function useProgressFromLearnPage(courseId: string, lessonId: string, enabled: boolean = true) {
-  const { data, isLoading, error } = useLearnPage(courseId, lessonId, enabled);
+  const { data, loading, error } = useLearnPage(courseId, lessonId, enabled);
   
   return {
-    data: data?.user_progress || {},
-    isLoading,
+    data: data?.data?.user_progress || {},
+    isLoading: loading,
     error,
     
     // Additional computed properties
-    courseProgress: data?.enrollment?.progress,
-    isPreviewMode: data?.is_preview_mode ?? true,
-    totalWatchTime: data?.total_watch_time_minutes ?? 0
+    courseProgress: data?.data?.enrollment?.progress,
+    isPreviewMode: data?.data?.is_preview_mode ?? true,
+    totalWatchTime: data?.data?.total_watch_time_minutes ?? 0
   };
 }
 
-/**
- * MIGRATION HELPER
- * 
- * This function helps identify which components are still using old hooks
- * during the migration process.
- */
-export function logOldHookUsage(hookName: string, location: string) {
-  if (process.env.NODE_ENV === 'development') {
-    console.warn(`[MIGRATION] Old hook ${hookName} still used in ${location}. Consider migrating to useLearnPage.`);
-  }
-}

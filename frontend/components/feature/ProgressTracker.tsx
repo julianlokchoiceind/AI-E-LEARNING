@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo } from 'react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { useCourseProgressQuery } from '@/hooks/queries/useLearning';
+import { useCourseProgressQuery } from '@/hooks/queries/useProgress';
 
 interface ProgressTrackerProps {
   courseId: string;

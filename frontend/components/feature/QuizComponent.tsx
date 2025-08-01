@@ -9,12 +9,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
 import { Label } from '@/components/ui/Label';
 import { ProgressBar as Progress } from '@/components/ui/ProgressBar';
 import { QuizAnswerSubmit, QuizAttemptResult } from '@/lib/api/quizzes';
-import { 
-  useSubmitQuiz
-} from '@/hooks/queries/useLearning';
 import {
   useLessonQuizQuery,
-  useQuizProgressQuery
+  useQuizProgressQuery,
+  useSubmitQuiz
 } from '@/hooks/queries/useQuizzes';
 
 interface QuizComponentProps {

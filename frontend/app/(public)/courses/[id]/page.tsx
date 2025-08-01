@@ -10,10 +10,9 @@ import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
 import { PreviewVideoPlayer } from '@/components/feature/PreviewVideoPlayer';
 import { CourseReviews } from '@/components/feature/CourseReviews';
 import { CourseRating } from '@/components/feature/CourseRating';
-import { useCourseQuery, useEnrollInCourse } from '@/hooks/queries/useCourses';
+import { useCourseQuery, useEnrollInCourse, useCourseChaptersPublicQuery } from '@/hooks/queries/useCourses';
 import { useEnrollmentQuery } from '@/hooks/queries/useEnrollments';
 import { getCourseEnrollment } from '@/lib/api/enrollments';
-import { useCourseChaptersQuery } from '@/hooks/queries/useLearning';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
@@ -39,7 +38,7 @@ const CourseDetailPage = () => {
     courseId,
     false
   );
-  const { data: chaptersResponse, loading: chaptersLoading } = useCourseChaptersQuery(courseId);
+  const { data: chaptersResponse, loading: chaptersLoading } = useCourseChaptersPublicQuery(courseId);
   const { mutate: enrollMutation, loading: enrolling } = useEnrollInCourse();
 
   // Extract data from React Query responses

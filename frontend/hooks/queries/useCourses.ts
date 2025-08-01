@@ -150,13 +150,6 @@ export function useCreateCourse() {
 export function useUpdateCourse(silent: boolean = false) {
   return useApiMutation(
     ({ courseId, data }: { courseId: string; data: any }) => {
-      console.log('🔧 [CACHE DEBUG] useUpdateCourse called:', {
-        courseId,
-        hasStatusChange: data?.status ? true : false,
-        newStatus: data?.status,
-        silent,
-        timestamp: new Date().toISOString()
-      });
       return updateCourse(courseId, data);
     },
     {
@@ -174,13 +167,7 @@ export function useUpdateCourse(silent: boolean = false) {
       operationName: 'update-course', // Unique operation ID for toast deduplication
       showToast: !silent, // 🔧 FIX: Disable toast when silent=true (for autosave)
       onSuccess: (response, variables) => {
-        console.log('🔧 [CACHE DEBUG] useUpdateCourse success - cache invalidated:', {
-          courseId: variables.courseId,
-          hasStatusChange: variables.data?.status ? true : false,
-          newStatus: variables.data?.status,
-          invalidatedCaches: ['course', 'courses', 'admin-courses', 'creator-courses', 'course-editor', 'course-chapters', 'featured-courses', 'course-search', 'learn-page'],
-          timestamp: new Date().toISOString()
-        });
+        // Course updated successfully
       }
     }
   );
@@ -447,6 +434,32 @@ export function useCourseChaptersQuery(courseId: string, enabled: boolean = true
     {
       enabled: enabled && !!courseId,
       ...getCacheConfig('CONTENT_CREATION') // Realtime - creator editing needs immediate updates
+    }
+  );
+}
+
+/**
+ * Hook for fetching chapters with lessons - PUBLIC endpoint
+ * Used by: Course detail page for unauthenticated users
+ * Migrated from: useLearning.ts
+ */
+export function useCourseChaptersPublicQuery(courseId: string) {
+  return useApiQuery(
+    ['course-chapters-public', courseId],
+    async (): Promise<StandardResponse<any>> => {
+      // Use public endpoint that works without authentication (for preview mode)
+      const response = await api.get<StandardResponse<any>>(`/courses/${courseId}/chapters-with-lessons-public`, { requireAuth: false });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Something went wrong');
+      }
+      
+      // Return the full StandardResponse
+      return response;
+    },
+    {
+      enabled: !!courseId,
+      ...getCacheConfig('COURSE_STRUCTURE') // Course structure - moderate freshness
     }
   );
 }
