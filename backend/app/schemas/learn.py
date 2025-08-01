@@ -170,7 +170,7 @@ class LearnPageResponse(BaseModel):
     
     # Computed properties
     is_preview_mode: bool = Field(default=True)  # False if user is enrolled
-    total_watch_time_minutes: int = Field(default=0)  # User's total watch time
+    total_watch_time_minutes: float = Field(default=0.0)  # User's total watch time
     
     # Cache metadata
     generated_at: datetime = Field(default_factory=datetime.utcnow)

@@ -414,17 +414,30 @@ export default function OptimizedLessonPlayerPage() {
 
   // Stable callback references using useRef pattern
   const debouncedUpdateProgressRef = useRef<any>();
+  const updateProgressRef = useRef(updateProgress);
   
+  // Keep updateProgress ref current
   useEffect(() => {
-    debouncedUpdateProgressRef.current = debounce((currentLessonId: string, percentage: number) => {
-      if (isPreviewMode) return;
+    updateProgressRef.current = updateProgress;
+  }, [updateProgress]);
+
+  useEffect(() => {
+    console.log('🔧 [DEBUG] Creating debounced progress function, isPreviewMode:', isPreviewMode);
+    debouncedUpdateProgressRef.current = debounce((currentLessonId: string, percentage: number, videoTime: number) => {
+      console.log('🔥 [DEBUG] Debounced function FIRED! Percentage:', percentage, 'VideoTime:', videoTime, 'isPreviewMode:', isPreviewMode);
       
-      updateProgress({ 
+      if (isPreviewMode) {
+        console.log('❌ [DEBUG] Progress blocked by preview mode');
+        return;
+      }
+      
+      console.log('✅ [DEBUG] Making progress API call...');
+      updateProgressRef.current({ 
         progressData: {
           lesson_id: currentLessonId,
           watch_percentage: percentage,
-          current_position: currentVideoTime,
-          total_watch_time: Math.floor(currentVideoTime)
+          current_position: videoTime,
+          total_watch_time: Math.floor(videoTime)
         }
       });
     }, 5000); // 5 second debounce
@@ -432,16 +445,31 @@ export default function OptimizedLessonPlayerPage() {
     return () => {
       debouncedUpdateProgressRef.current?.cancel();
     };
-  }, [isPreviewMode, updateProgress, courseId, currentVideoTime]);
+  }, [isPreviewMode]); // Removed updateProgress from dependencies
+
+  // Keep currentVideoTime in ref for debounced function access
+  const currentVideoTimeRef = useRef(currentVideoTime);
+  currentVideoTimeRef.current = currentVideoTime;
 
   // Video event handlers
   const handleVideoProgress = useCallback((percentage: number) => {
     // Optimistic UI update for immediate feedback
     setVideoProgress(percentage);
     
-    // Debounced API call
+    // Debounced API call with detailed logging
     if (!isPreviewMode && debouncedUpdateProgressRef.current) {
-      debouncedUpdateProgressRef.current(lessonId, percentage);
+      console.log('📞 [DEBUG] Calling debounced function with:', {
+        lessonId,
+        percentage,
+        videoTime: currentVideoTimeRef.current,
+        isPreviewMode
+      });
+      debouncedUpdateProgressRef.current(lessonId, percentage, currentVideoTimeRef.current);
+    } else {
+      console.log('❌ [DEBUG] Debounced call blocked:', {
+        isPreviewMode,
+        hasDebouncedFunction: !!debouncedUpdateProgressRef.current
+      });
     }
   }, [lessonId, isPreviewMode]);
 

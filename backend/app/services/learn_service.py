@@ -165,18 +165,17 @@ class LearnService:
     @staticmethod
     async def _fetch_user_data(course_id: str, user_id: str) -> Dict:
         """Fetch user-specific data (enrollment, progress)."""
-        user_obj_id = PydanticObjectId(user_id)
-        course_obj_id = PydanticObjectId(course_id)
+        # Note: Enrollment and Progress models store IDs as strings, not ObjectIds
         
         # Parallel fetch of enrollment and progress data
         enrollment, progress_list = await asyncio.gather(
             Enrollment.find_one({
-                "user_id": user_obj_id,
-                "course_id": course_obj_id,
+                "user_id": user_id,  # Use string ID to match model
+                "course_id": course_id,  # Use string ID to match model
                 "is_active": True
             }),
             Progress.find({
-                "user_id": user_obj_id,
+                "user_id": user_id,  # Use string ID to match how progress is saved
                 "course_id": course_id
             }).to_list(),
             return_exceptions=True

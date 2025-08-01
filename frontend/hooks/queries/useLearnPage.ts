@@ -228,7 +228,7 @@ export function useUpdateLessonProgress() {
       
       // Cache invalidation strategy
       invalidateQueries: (variables) => [
-        ['learn-page'], // Invalidate learn page cache
+        // Don't invalidate learn-page to prevent video reload
         ['courses'], // Update course catalog completion status
         ['my-courses'], // Update student dashboard
         ['creator-courses'], // Update creator analytics

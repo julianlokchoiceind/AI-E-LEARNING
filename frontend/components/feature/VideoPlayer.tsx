@@ -288,13 +288,12 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           const percentage = (current / total) * 100;
           setWatchPercentage(percentage);
           
-          // Log progress update only in development and less frequently
-          if (process.env.NODE_ENV === 'development' && Math.floor(percentage) % 10 === 0) {
-            console.log(`[VideoPlayer] Progress: ${current.toFixed(1)}s / ${total.toFixed(1)}s (${percentage.toFixed(1)}%)`);
-          }
+          // Debug logging for percentage calculation
+          console.log(`[VideoPlayer] Progress: ${current.toFixed(1)}s / ${total.toFixed(1)}s (${percentage.toFixed(1)}%)`);
           
           // Call onProgress callback directly - parent handles debouncing
           if (onProgress && isMountedRef.current) {
+            console.log(`[VideoPlayer] Calling onProgress with percentage: ${percentage.toFixed(1)}%`);
             onProgress(percentage);
           }
 
