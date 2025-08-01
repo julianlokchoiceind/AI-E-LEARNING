@@ -25,18 +25,10 @@ class ApiClient {
         const { getSession } = await import('next-auth/react');
         const session = await getSession();
         
-        console.log('🔐 [AUTH DEBUG] Session check:', {
-          hasSession: !!session,
-          hasAccessToken: !!session?.accessToken,
-          sessionKeys: session ? Object.keys(session) : [],
-          tokenLength: session?.accessToken ? (session.accessToken as string).length : 0
-        });
-        
         if (session?.accessToken) {
           return session.accessToken as string;
         }
       } catch (error) {
-        console.error('🔐 [AUTH DEBUG] Failed to get session:', error);
       }
     }
     return null;
@@ -63,7 +55,6 @@ class ApiClient {
     
     // 🔧 SIMPLE: Just abort after timeout - no complex logic
     const timeoutId = setTimeout(() => {
-      console.log('🚨 REQUEST TIMEOUT - ABORTING AFTER', actualTimeout, 'ms');
       controller.abort();
     }, actualTimeout);
 
@@ -143,28 +134,9 @@ class ApiClient {
     // Always add auth header if token exists (for enrollment status)
     const finalHeaders = await this.addAuthHeader(requestHeaders);
 
-    console.log('🔐 [AUTH DEBUG] Final headers:', {
-      requireAuth,
-      hasAuthHeader: !!(finalHeaders as any)['Authorization'],
-      authHeaderLength: (finalHeaders as any)['Authorization'] ? (finalHeaders as any)['Authorization'].length : 0,
-      allHeaders: Object.keys(finalHeaders as any)
-    });
-
     debug('API-CLIENT', 'Request headers:', finalHeaders);
 
     try {
-      console.log('🚀 [API-CLIENT] Making fetch request:', {
-        url: fullUrl,
-        method: fetchOptions.method,
-        headers: Object.fromEntries(Object.entries(finalHeaders)),
-        bodySize: fetchOptions.body ? 
-          (typeof fetchOptions.body === 'string' ? fetchOptions.body.length : 
-           fetchOptions.body instanceof FormData ? '[FormData]' : 
-           fetchOptions.body instanceof Blob ? fetchOptions.body.size : 
-           '[Unknown]') : 0,
-        timeout: timeout || this.defaultTimeout
-      });
-      
       const response = await fetch(fullUrl, {
         ...fetchOptions,
         headers: finalHeaders,

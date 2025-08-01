@@ -78,13 +78,6 @@ export default function AdminFAQPage() {
   const faqs = faqsData?.data?.items || [];
   const totalItems = faqsData?.data?.total || 0;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-  console.log('🗂️ FAQ Data Debug:', {
-    faqsDataStructure: faqsData ? Object.keys(faqsData) : 'no data',
-    dataStructure: faqsData?.data ? Object.keys(faqsData.data) : 'no data.data',
-    faqsCount: faqs.length,
-    firstFaqId: faqs[0]?.id,
-    firstFaqKeys: faqs[0] ? Object.keys(faqs[0]) : 'no first FAQ'
-  });
 
   // No manual fetchFAQs needed - React Query handles this automatically
   // refetchFAQs is available for manual refresh if needed

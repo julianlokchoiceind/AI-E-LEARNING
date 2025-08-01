@@ -118,16 +118,6 @@ const CourseBuilderPage = () => {
       initialLastSavedAt: courseData?.updated_at || courseData?.created_at, // Initialize from server data
       enabled: !!courseData, // 🔧 FIX: Only enable when courseData exists
       onSave: async (data) => {
-        console.log('🚀 [FORCE SAVE DEBUG] onSave called with data:', {
-          hasData: !!data,
-          hasId: !!data?.id,
-          hasUnderscore_id: !!data?._id,
-          dataKeys: data ? Object.keys(data) : [],
-          idValue: data?.id,
-          _idValue: data?._id,
-          title: data?.title
-        });
-        
         if (!data) {
           console.error('❌ [FORCE SAVE] No data provided');
           return;
@@ -140,9 +130,6 @@ const CourseBuilderPage = () => {
           console.error('❌ [FORCE SAVE] No course ID found in data or route params');
           return;
         }
-        
-        // Autosave triggered with course data
-        console.log('✅ [FORCE SAVE] Proceeding with save, courseId:', courseIdToUse);
         
         // Send ALL fields dynamically - no need to list manually!
         // We filter out system/read-only fields that shouldn't be sent in updates
@@ -164,9 +151,7 @@ const CourseBuilderPage = () => {
         );
         
         try {
-          console.log('📤 [FORCE SAVE] Calling updateCourseAction with ALL fields:', { courseId: courseIdToUse, data: updateData });
           await updateCourseAction({ courseId: courseIdToUse, data: updateData });
-          console.log('✅ [FORCE SAVE] Update successful');
         } catch (error) {
           console.error('❌ [FORCE SAVE] Update failed:', error);
           // Autosave failed - error will be handled by useAutosave hook
@@ -182,13 +167,6 @@ const CourseBuilderPage = () => {
       // Backend returns { success: true, data: { id, title, ... } }
       // So courseResponse.data is the actual course data
       const courseData = typedCourseResponse.data;
-      console.log('🔍 [DEBUG] Course response data:', {
-        hasId: !!courseData?.id,
-        hasUnderscore_id: !!(courseData as any)?._id,
-        keys: courseData ? Object.keys(courseData) : [],
-        idValue: courseData?.id,
-        _idValue: (courseData as any)?._id
-      });
       setCourseData(courseData);
       setTitleInput(courseData?.title || '');
     }

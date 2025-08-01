@@ -205,7 +205,6 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
         },
         {
           onSuccess: () => {
-            console.log('ResourceForm: URL resource added successfully');
             onSuccess(); // Trigger parent callback  
             onClose(); // Close modal
           },

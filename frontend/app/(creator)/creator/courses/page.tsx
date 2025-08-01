@@ -125,10 +125,6 @@ const CreatorCoursesPage = () => {
 
   // Handle courses loading errors
   useEffect(() => {
-    console.log('[CREATOR_COURSES_DEBUG] coursesResponse:', coursesResponse);
-    console.log('[CREATOR_COURSES_DEBUG] coursesResponse?.success:', coursesResponse?.success);
-    console.log('[CREATOR_COURSES_DEBUG] coursesResponse?.data:', coursesResponse?.data);
-    
     // Check for wrong response handling
     if (coursesResponse && !coursesResponse.success) {
       console.error('[CREATOR_COURSES_ERROR] API returned error:', coursesResponse);

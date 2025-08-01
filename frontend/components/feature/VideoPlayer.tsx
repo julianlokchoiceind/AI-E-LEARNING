@@ -66,7 +66,6 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   // Direct play/pause with retry logic for YouTube API timing issues
   const handlePlayPauseClick = useCallback(() => {
     if (!playerRef.current || !isReady) {
-      console.log('[VideoPlayer] Player not ready for play/pause');
       return;
     }
     
@@ -74,8 +73,6 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
       try {
         const playerState = playerRef.current.getPlayerState();
         const playerStates = window.YT?.PlayerState || { PLAYING: 1, PAUSED: 2 };
-        
-        console.log('[VideoPlayer] Player state:', playerState, 'isPlaying:', isPlaying);
         
         // Use actual player state instead of React state
         if (playerState === playerStates.PLAYING) {
@@ -86,7 +83,6 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           // Verify pause worked after a short delay
           setTimeout(() => {
             if (playerRef.current && playerRef.current.getPlayerState() === playerStates.PLAYING && retries > 0) {
-              console.log('[VideoPlayer] Pause failed, retrying...');
               attemptPlayPause(retries - 1);
             }
           }, 100);
@@ -98,7 +94,6 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           // Verify play worked after a short delay
           setTimeout(() => {
             if (playerRef.current && playerRef.current.getPlayerState() !== playerStates.PLAYING && retries > 0) {
-              console.log('[VideoPlayer] Play failed, retrying...');
               attemptPlayPause(retries - 1);
             }
           }, 100);
@@ -211,8 +206,6 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
       ENDED: 0
     };
     
-    console.log('[VideoPlayer] State change:', state);
-    
     if (state === playerStates.PLAYING) {
       setIsPlaying(true);
       
@@ -288,12 +281,8 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           const percentage = (current / total) * 100;
           setWatchPercentage(percentage);
           
-          // Debug logging for percentage calculation
-          console.log(`[VideoPlayer] Progress: ${current.toFixed(1)}s / ${total.toFixed(1)}s (${percentage.toFixed(1)}%)`);
-          
           // Call onProgress callback directly - parent handles debouncing
           if (onProgress && isMountedRef.current) {
-            console.log(`[VideoPlayer] Calling onProgress with percentage: ${percentage.toFixed(1)}%`);
             onProgress(percentage);
           }
 

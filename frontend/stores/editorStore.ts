@@ -44,30 +44,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   }),
   
   updateCourseData: (updates) => {
-    console.log('🔧 [EDITOR STORE DEBUG] updateCourseData called:', {
-      updates,
-      currentDataKeys: get().courseData ? Object.keys(get().courseData) : null,
-      hasOriginalData: !!get().originalData
-    });
-    
     const currentData = get().courseData;
     const newData = { ...currentData, ...updates };
     const originalData = get().originalData;
     
     const isDirtyCheck = JSON.stringify(newData) !== JSON.stringify(originalData);
     
-    console.log('🔧 [EDITOR STORE DEBUG] Setting new state:', {
-      newDataKeys: Object.keys(newData),
-      isDirty: isDirtyCheck,
-      originalDataKeys: originalData ? Object.keys(originalData) : null
-    });
-    
     set({
       courseData: newData,
       isDirty: isDirtyCheck,
     });
-    
-    console.log('🔧 [EDITOR STORE DEBUG] State updated. New courseData:', newData);
   },
   
   setActiveTab: (tab) => set({ activeTab: tab }),

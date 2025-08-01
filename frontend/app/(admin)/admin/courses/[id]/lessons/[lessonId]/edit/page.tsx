@@ -79,11 +79,6 @@ const LessonEditPage = () => {
 
   // Initialize lesson data
   useEffect(() => {
-    console.log('👀 Lesson data useEffect triggered:', { 
-      hasResponse: !!typedLessonResponse, 
-      success: typedLessonResponse?.success,
-      resourceCount: typedLessonResponse?.data?.resources?.length || 0
-    });
     if (typedLessonResponse?.success && typedLessonResponse.data) {
       const lesson = typedLessonResponse.data;
       const resources = lesson.resources || [];
@@ -109,7 +104,6 @@ const LessonEditPage = () => {
       
       setLessonData(lessonDataWithResources);
       setTitleInput(lesson.title);
-      console.log('📦 Setting resources state:', resources);
       setResources(resources); // Keep separate state for UI, but ensure sync with lessonData
     }
   }, [typedLessonResponse]);
@@ -117,7 +111,6 @@ const LessonEditPage = () => {
   // Sync resources with lessonData
   useEffect(() => {
     if (lessonData?.resources) {
-      console.log('📦 Syncing resources from lessonData:', lessonData.resources);
       setResources(lessonData.resources);
     }
   }, [lessonData?.resources]);

@@ -74,7 +74,6 @@ const CourseBuilderPage = () => {
   
   // Computed data from React Query responses
   const chapters = React.useMemo(() => {
-    console.log('[DEBUG] chaptersResponse:', chaptersResponse);
     if (chaptersResponse?.data) {
       // Backend returns { success: true, data: { chapters: [...] } }
       // So chaptersResponse.data.chapters is the chapters array
@@ -104,15 +103,7 @@ const CourseBuilderPage = () => {
       initialLastSavedAt: courseData?.updated_at || courseData?.created_at,
       enabled: !!courseData, // 🔧 FIX: Only enable when courseData exists
       onSave: async (data) => {
-        console.log('🔧 [AUTOSAVE DEBUG] onSave called with data:', {
-          hasData: !!data,
-          dataId: data?.id,
-          dataTitle: data?.title,
-          dataKeys: data ? Object.keys(data) : null
-        });
-        
         if (!data) {
-          console.log('🔧 [AUTOSAVE DEBUG] onSave early return - no data');
           return;
         }
         
@@ -125,14 +116,7 @@ const CourseBuilderPage = () => {
         }
         
         try {
-          console.log('🔧 [AUTOSAVE DEBUG] Calling updateCourseAction with:', {
-            courseId: courseIdToUse,
-            data: data
-          });
-          
           const result = await updateCourseAction({ courseId: courseIdToUse, data: data });
-          
-          console.log('🔧 [AUTOSAVE DEBUG] updateCourseAction success:', result);
         } catch (error) {
           console.error('🔧 [AUTOSAVE DEBUG] Autosave failed:', error);
           throw error;
@@ -172,14 +156,7 @@ const CourseBuilderPage = () => {
   // React Query handles data fetching automatically
 
   const handleTitleSave = () => {
-    console.log('🔧 [TITLE DEBUG] handleTitleSave called:', {
-      titleInput: titleInput.trim(),
-      currentTitle: courseData?.title,
-      willUpdate: titleInput.trim() && titleInput !== courseData?.title
-    });
-    
     if (titleInput.trim() && titleInput !== courseData?.title) {
-      console.log('🔧 [TITLE DEBUG] Calling updateCourseData with title:', titleInput.trim());
       updateCourseData({ title: titleInput.trim() });
       setIsEditingTitle(false);
     }
@@ -543,10 +520,6 @@ const CourseBuilderPage = () => {
                       <textarea
                         value={courseData.description || ''}
                         onChange={(e) => {
-                          console.log('🔧 [DESCRIPTION DEBUG] onChange called:', {
-                            newValue: e.target.value,
-                            currentValue: courseData.description
-                          });
                           updateCourseData({ description: e.target.value });
                         }}
                         rows={4}

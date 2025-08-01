@@ -422,16 +422,11 @@ export default function OptimizedLessonPlayerPage() {
   }, [updateProgress]);
 
   useEffect(() => {
-    console.log('🔧 [DEBUG] Creating debounced progress function, isPreviewMode:', isPreviewMode);
     debouncedUpdateProgressRef.current = debounce((currentLessonId: string, percentage: number, videoTime: number) => {
-      console.log('🔥 [DEBUG] Debounced function FIRED! Percentage:', percentage, 'VideoTime:', videoTime, 'isPreviewMode:', isPreviewMode);
-      
       if (isPreviewMode) {
-        console.log('❌ [DEBUG] Progress blocked by preview mode');
         return;
       }
       
-      console.log('✅ [DEBUG] Making progress API call...');
       updateProgressRef.current({ 
         progressData: {
           lesson_id: currentLessonId,
@@ -458,18 +453,7 @@ export default function OptimizedLessonPlayerPage() {
     
     // Debounced API call with detailed logging
     if (!isPreviewMode && debouncedUpdateProgressRef.current) {
-      console.log('📞 [DEBUG] Calling debounced function with:', {
-        lessonId,
-        percentage,
-        videoTime: currentVideoTimeRef.current,
-        isPreviewMode
-      });
       debouncedUpdateProgressRef.current(lessonId, percentage, currentVideoTimeRef.current);
-    } else {
-      console.log('❌ [DEBUG] Debounced call blocked:', {
-        isPreviewMode,
-        hasDebouncedFunction: !!debouncedUpdateProgressRef.current
-      });
     }
   }, [lessonId, isPreviewMode]);
 
