@@ -12,7 +12,6 @@ import { LessonBreadcrumbs } from '@/components/seo/Breadcrumbs';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { ToastService } from '@/lib/toast/ToastService';
 import { formatDuration, formatDurationHuman } from '@/lib/utils/time';
-import { debounce } from '@/lib/utils/debounce';
 
 // Calculate remaining time based on unfinished lessons
 const calculateRemainingTime = (lessons: any[], progressMap: any) => {
@@ -35,7 +34,7 @@ const calculateRemainingTime = (lessons: any[], progressMap: any) => {
 import { useAuth } from '@/hooks/useAuth';
 
 // Import the NEW consolidated hooks
-import { useLearnPage, useUpdateLessonProgress, type LessonData, type ChapterData, type LearnPageData, type Resource } from '@/hooks/queries/useLearnPage';
+import { useLearnPage, useUpdateLessonProgress, type LessonData, type ChapterData, type Resource } from '@/hooks/queries/useLearnPage';
 
 /**
  * OPTIMIZED LEARN PAGE COMPONENT
@@ -104,14 +103,16 @@ interface VideoSectionProps {
   lesson: LessonData;
   lessonId: string;
   courseId: string;
-  handleVideoProgress: (percentage: number) => void;
+  handleVideoProgress: (percentage: number, actualPercentage: number) => void;
   handleVideoComplete: () => void;
   handleVideoDurationChange: (duration: number) => void;
   handleVideoTimeUpdate: (currentTime: number) => void;
   handleVideoPause: (percentage: number, currentTime: number) => void;
+  handleVideoPlay: () => void;
   currentVideoTime: number;
   currentVideoDuration: number | null;
   videoProgress: number;
+  actualVideoProgress: number;
   navigation?: NavigationInfo;
 }
 
@@ -124,9 +125,11 @@ const VideoSection = React.memo<VideoSectionProps>(({
   handleVideoDurationChange,
   handleVideoTimeUpdate,
   handleVideoPause,
+  handleVideoPlay,
   currentVideoTime,
   currentVideoDuration,
   videoProgress,
+  actualVideoProgress,
   navigation
 }) => {
   const progress = lesson.progress;
@@ -144,8 +147,11 @@ const VideoSection = React.memo<VideoSectionProps>(({
             onDurationChange={handleVideoDurationChange}
             onTimeUpdate={handleVideoTimeUpdate}
             onPause={handleVideoPause}
+            onPlay={handleVideoPlay}
             initialProgress={progress?.video_progress.watch_percentage || 0}
+            initialCurrentPosition={progress?.video_progress.current_position || 0}
             nextLessonId={navigation?.next_lesson_id}
+            actualVideoProgress={actualVideoProgress}
           />
           
           {/* Enhanced Video Info Bar */}
@@ -165,14 +171,14 @@ const VideoSection = React.memo<VideoSectionProps>(({
               {/* Progress - FIXED consistency issue */}
               <div className="flex items-center">
                 <div className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
-                  videoProgress >= 80 ? 'bg-green-500' : 'bg-blue-500'
+                  actualVideoProgress >= 80 ? 'bg-green-500' : 'bg-blue-500'
                 }`}>
                   <div className="w-2 h-2 bg-white rounded-full"></div>
                 </div>
                 <div>
                   <div className="text-gray-500 text-xs">Progress</div>
                   <div className="font-medium text-gray-900">
-                    {Math.round(videoProgress)}%
+                    {Math.round(actualVideoProgress)}%
                   </div>
                 </div>
               </div>
@@ -193,7 +199,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
                 <CheckCircle className={`w-4 h-4 mr-2 ${
                   progress?.is_completed 
                     ? 'text-green-500' 
-                    : videoProgress >= 80
+                    : actualVideoProgress >= 80
                     ? 'text-yellow-500'
                     : 'text-gray-400'
                 }`} />
@@ -202,13 +208,13 @@ const VideoSection = React.memo<VideoSectionProps>(({
                   <div className={`font-medium text-sm ${
                     progress?.is_completed 
                       ? 'text-green-600' 
-                      : videoProgress >= 80
+                      : actualVideoProgress >= 80
                       ? 'text-yellow-600'
                       : 'text-gray-600'
                   }`}>
                     {progress?.is_completed 
                       ? 'Completed' 
-                      : videoProgress >= 80
+                      : actualVideoProgress >= 80
                       ? 'Ready to complete'
                       : 'In progress'
                     }
@@ -221,13 +227,13 @@ const VideoSection = React.memo<VideoSectionProps>(({
             <div className="mt-3">
               <div className="flex justify-between text-xs text-gray-500 mb-1">
                 <span>Watch Progress</span>
-                <span>{Math.round(videoProgress)}% watched</span>
+                <span>{Math.round(actualVideoProgress)}% watched</span>
               </div>
               <ProgressBar 
-                value={videoProgress} 
+                value={actualVideoProgress} 
                 className="h-2"
               />
-              {videoProgress >= 80 && !progress?.is_completed && (
+              {actualVideoProgress >= 80 && !progress?.is_completed && (
                 <div className="mt-2 text-xs text-yellow-600 flex items-center">
                   <Info className="w-3 h-3 mr-1" />
                   Complete the quiz below to finish this lesson
@@ -264,6 +270,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
     prevProps.currentVideoTime === nextProps.currentVideoTime &&
     prevProps.currentVideoDuration === nextProps.currentVideoDuration &&
     prevProps.videoProgress === nextProps.videoProgress &&
+    prevProps.actualVideoProgress === nextProps.actualVideoProgress &&
     prevProps.navigation?.next_lesson_id === nextProps.navigation?.next_lesson_id
   );
 });
@@ -331,13 +338,13 @@ export default function OptimizedLessonPlayerPage() {
   } = useLearnPage(courseId, lessonId, true);
 
   // 🚀 SINGLE MUTATION for progress updates
-  const { mutate: updateProgress, loading: isUpdatingProgress } = useUpdateLessonProgress();
+  const { mutate: updateProgress } = useUpdateLessonProgress();
 
   // Extract data from consolidated response
   const pageData = learnData?.data || null;
   const lesson = pageData?.current_lesson || null;
   const course = pageData?.course || null;
-  const chapters = pageData?.chapters || [];
+  const initialChapters = pageData?.chapters || [];
   const enrollment = pageData?.enrollment || null;
   const navigation = pageData?.navigation || null;
   const userProgress = pageData?.user_progress || {};
@@ -352,9 +359,15 @@ export default function OptimizedLessonPlayerPage() {
   const [currentVideoTime, setCurrentVideoTime] = useState<number>(0);
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [showQuiz, setShowQuiz] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  // Real-time chapters state for sidebar sync
+  const [chapters, setChapters] = useState(initialChapters);
   
   // 🎯 OPTIMISTIC UI STATE - for immediate feedback
   const [videoProgress, setVideoProgress] = useState(
+    lesson?.progress?.video_progress?.watch_percentage || 0
+  );
+  const [actualVideoProgress, setActualVideoProgress] = useState(
     lesson?.progress?.video_progress?.watch_percentage || 0
   );
 
@@ -362,11 +375,19 @@ export default function OptimizedLessonPlayerPage() {
   useEffect(() => {
     if (lesson?.progress?.video_progress?.watch_percentage !== undefined) {
       setVideoProgress(lesson.progress.video_progress.watch_percentage);
+      setActualVideoProgress(lesson.progress.video_progress.watch_percentage);
     }
   }, [lesson?.progress?.video_progress?.watch_percentage]);
 
   // 🚀 SINGLE LOADING STATE instead of 4 separate loading states
   const isLoading = isLoadingLearnData;
+  
+  // Sync chapters with initial data
+  useEffect(() => {
+    if (initialChapters.length > 0) {
+      setChapters(initialChapters);
+    }
+  }, [initialChapters]);
 
   // Auto-expand chapter containing current lesson
   useEffect(() => {
@@ -417,7 +438,6 @@ export default function OptimizedLessonPlayerPage() {
   }, []);
 
   // Stable callback references using useRef pattern
-  const debouncedUpdateProgressRef = useRef<any>();
   const updateProgressRef = useRef(updateProgress);
   
   // Keep updateProgress ref current
@@ -425,57 +445,108 @@ export default function OptimizedLessonPlayerPage() {
     updateProgressRef.current = updateProgress;
   }, [updateProgress]);
 
-  useEffect(() => {
-    debouncedUpdateProgressRef.current = debounce((currentLessonId: string, percentage: number, videoTime: number) => {
-      if (isPreviewMode) {
-        return;
-      }
-      
-      updateProgressRef.current({ 
-        progressData: {
-          lesson_id: currentLessonId,
-          watch_percentage: percentage,
-          current_position: videoTime,
-          total_watch_time: Math.floor(videoTime)
-        }
-      });
-    }, 15000); // 15 second debounce (industry standard)
-    
-    return () => {
-      debouncedUpdateProgressRef.current?.cancel();
-    };
-  }, [isPreviewMode]); // Removed updateProgress from dependencies
 
-  // Keep currentVideoTime in ref for debounced function access
+  // Keep currentVideoTime in ref for save handlers access
   const currentVideoTimeRef = useRef(currentVideoTime);
   currentVideoTimeRef.current = currentVideoTime;
+  
+  // Keep actualVideoProgress in ref for auto-save access
+  const actualVideoProgressRef = useRef(actualVideoProgress);
+  actualVideoProgressRef.current = actualVideoProgress;
 
   // Video event handlers
-  const handleVideoProgress = useCallback((percentage: number) => {
+  const handleVideoProgress = useCallback((percentage: number, actualPercentage: number) => {
     // Optimistic UI update for immediate feedback
     setVideoProgress(percentage);
     
-    // Debounced API call with detailed logging
-    if (!isPreviewMode && debouncedUpdateProgressRef.current) {
-      debouncedUpdateProgressRef.current(lessonId, percentage, currentVideoTimeRef.current);
+    // Only update actualVideoProgress if it's higher (maintain highest reached)
+    setActualVideoProgress(prev => Math.max(prev, actualPercentage));
+    
+    // Real-time sidebar sync: Update lesson progress in chapters data
+    if (actualPercentage >= 80 && lesson && !lesson.progress?.is_completed) {
+      // Update the current lesson's progress in the sidebar
+      // This triggers re-render and shows completion checkmark immediately
+      setChapters(prevChapters => 
+        prevChapters.map((chapter: ChapterData) => ({
+          ...chapter,
+          lessons: chapter.lessons.map((lessonItem: LessonData) => {
+            if (lessonItem.id === lessonId) {
+              return {
+                ...lessonItem,
+                progress: {
+                  lesson_id: lessonId,
+                  is_unlocked: lessonItem.progress?.is_unlocked ?? true,
+                  is_completed: true,
+                  video_progress: {
+                    watch_percentage: actualPercentage,
+                    current_position: lessonItem.progress?.video_progress?.current_position ?? 0,
+                    total_watch_time: lessonItem.progress?.video_progress?.total_watch_time ?? 0,
+                    is_completed: true,
+                    completed_at: new Date().toISOString()
+                  },
+                  quiz_progress: lessonItem.progress?.quiz_progress,
+                  started_at: lessonItem.progress?.started_at,
+                  completed_at: new Date().toISOString()
+                }
+              };
+            }
+            return lessonItem;
+          })
+        }))
+      );
     }
-  }, [lessonId, isPreviewMode]);
+  }, [lessonId, isPreviewMode, lesson]);
+
+
+  // Auto-save progress every 10 seconds while playing
+  useEffect(() => {
+    if (!isVideoPlaying || isPreviewMode) {
+      return;
+    }
+    
+    // Check initial progress using ref
+    if (actualVideoProgressRef.current === 0) {
+      return;
+    }
+    
+    const autoSaveInterval = setInterval(() => {
+      const currentProgress = actualVideoProgressRef.current;
+      const currentTime = currentVideoTimeRef.current;
+      
+      if (currentProgress > 0) {
+        updateProgressRef.current({
+          progressData: {
+            lesson_id: lessonId,
+            watch_percentage: currentProgress,
+            current_position: currentTime,
+            total_watch_time: Math.floor(currentTime)
+          }
+        });
+      }
+    }, 10000); // Save every 10 seconds
+    
+    return () => {
+      clearInterval(autoSaveInterval);
+    };
+  }, [isVideoPlaying, isPreviewMode, lessonId, actualVideoProgress > 0]); // Only re-run when progress goes from 0 to > 0
 
   const handleVideoComplete = useCallback(() => {
-    setVideoProgress(100);
+    // Don't force progress to 100% when reaching 80%
+    // Let actual progress continue naturally
     setShowQuiz(lesson?.has_quiz || false);
     
-    if (!isPreviewMode) {
+    // Save progress at 80% completion (for unlocking next lesson)
+    if (!isPreviewMode && actualVideoProgress >= 80) {
       updateProgress({
         progressData: {
           lesson_id: lessonId,
-          watch_percentage: 100,
+          watch_percentage: actualVideoProgress,
           current_position: currentVideoTime,
           total_watch_time: Math.floor(currentVideoTime)
         }
       });
     }
-  }, [lesson?.has_quiz, isPreviewMode, updateProgress, lessonId, currentVideoTime]);
+  }, [lesson?.has_quiz, isPreviewMode, updateProgress, lessonId, currentVideoTime, actualVideoProgress]);
 
   const handleVideoDurationChange = useCallback((duration: number) => {
     setCurrentVideoDuration(duration);
@@ -486,21 +557,23 @@ export default function OptimizedLessonPlayerPage() {
   }, []);
 
   const handleVideoPause = useCallback((percentage: number, videoTime: number) => {
-    if (!isPreviewMode && percentage > 0) {
-      // Cancel any pending debounced saves
-      debouncedUpdateProgressRef.current?.cancel();
-      
-      // Save immediately on pause
+    setIsVideoPlaying(false);
+    if (!isPreviewMode && actualVideoProgress > 0) {
+      // Save immediately on pause - use actualVideoProgress (highest reached)
       updateProgress({
         progressData: {
           lesson_id: lessonId,
-          watch_percentage: percentage,
+          watch_percentage: actualVideoProgress,
           current_position: videoTime,
           total_watch_time: Math.floor(videoTime)
         }
       });
     }
-  }, [lessonId, isPreviewMode, updateProgress]);
+  }, [lessonId, isPreviewMode, updateProgress, actualVideoProgress]);
+
+  const handleVideoPlay = useCallback(() => {
+    setIsVideoPlaying(true);
+  }, []);
 
   const handleQuizComplete = useCallback((passed: boolean) => {
     if (passed) {
@@ -761,11 +834,11 @@ export default function OptimizedLessonPlayerPage() {
                               </div>
                             </div>
                             
-                            {/* Progress indicator for current lesson */}
-                            {isCurrentLesson && lessonProgress?.video_progress && (
+                            {/* Progress indicator for current lesson - Real-time sync */}
+                            {isCurrentLesson && (
                               <div className="ml-2 flex-shrink-0">
                                 <div className="w-12 text-right text-xs text-blue-600 font-medium">
-                                  {Math.round(lessonProgress.video_progress.watch_percentage || 0)}%
+                                  {Math.round(actualVideoProgress)}%
                                 </div>
                               </div>
                             )}
@@ -834,9 +907,11 @@ export default function OptimizedLessonPlayerPage() {
               handleVideoDurationChange={handleVideoDurationChange}
               handleVideoTimeUpdate={handleVideoTimeUpdate}
               handleVideoPause={handleVideoPause}
+              handleVideoPlay={handleVideoPlay}
               currentVideoTime={currentVideoTime}
               currentVideoDuration={currentVideoDuration}
               videoProgress={videoProgress}
+              actualVideoProgress={actualVideoProgress}
               navigation={navigation || undefined}
             />
 
@@ -914,7 +989,7 @@ export default function OptimizedLessonPlayerPage() {
             )}
 
             {/* Next Lesson Navigation */}
-            {navigation?.next_lesson_id && videoProgress >= 80 && (!lesson.has_quiz || lesson.progress?.is_completed) && (
+            {navigation?.next_lesson_id && actualVideoProgress >= 80 && (!lesson.has_quiz || lesson.progress?.is_completed) && (
               <section className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm">
                 <div className="p-4 md:p-6">
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">

@@ -5,19 +5,21 @@ import { useRouter } from 'next/navigation';
 import YouTube, { YouTubeProps, YouTubeEvent } from 'react-youtube';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize, Settings, X } from 'lucide-react';
-// Removed lodash debounce - parent component handles debouncing
 
 interface VideoPlayerProps {
   videoUrl: string;
   lessonId: string;
   courseId: string;
-  onProgress?: (percentage: number) => void;
+  onProgress?: (percentage: number, actualPercentage: number) => void;
   onComplete?: () => void;
   onDurationChange?: (duration: number) => void;
   onTimeUpdate?: (currentTime: number) => void;
   onPause?: (percentage: number, currentTime: number) => void;
+  onPlay?: () => void;
   initialProgress?: number;
+  initialCurrentPosition?: number; // exact timestamp in seconds
   nextLessonId?: string;
+  actualVideoProgress?: number; // Pass actual progress from parent
 }
 
 const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
@@ -29,8 +31,11 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   onDurationChange,
   onTimeUpdate,
   onPause,
+  onPlay,
   initialProgress = 0,
-  nextLessonId
+  initialCurrentPosition = 0,
+  nextLessonId,
+  actualVideoProgress = 0
 }) => {
   // Use useRef to maintain player instance across re-renders
   const playerRef = useRef<any>(null);
@@ -40,6 +45,8 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [watchPercentage, setWatchPercentage] = useState(initialProgress);
+  // Remove internal actualWatchPercentage state - use prop from parent
+  const [maxWatchedTime, setMaxWatchedTime] = useState(0);
   const [hasCompletedOnce, setHasCompletedOnce] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
@@ -52,16 +59,16 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const seekCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   
   // Track component mount state
   const isMountedRef = useRef(true);
   
-  // Progress callback - parent component handles debouncing
-  // This prevents double debouncing issues
-  const handleProgressUpdate = useCallback((percentage: number) => {
+  // Memoized progress callback to prevent unnecessary re-renders
+  const handleProgressUpdate = useCallback((percentage: number, actualPercentage: number) => {
     if (isMountedRef.current && onProgress) {
-      onProgress(percentage);
+      onProgress(percentage, actualPercentage);
     }
   }, [onProgress]);
   
@@ -73,37 +80,53 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
     
     const attemptPlayPause = (retries = 3) => {
       try {
+        // Double check player exists and has required methods
+        if (!playerRef.current || typeof playerRef.current.getPlayerState !== 'function') {
+          if (retries > 0) {
+            setTimeout(() => attemptPlayPause(retries - 1), 200);
+          }
+          return;
+        }
+        
         const playerState = playerRef.current.getPlayerState();
         const playerStates = window.YT?.PlayerState || { PLAYING: 1, PAUSED: 2 };
         
         // Use actual player state instead of React state
         if (playerState === playerStates.PLAYING) {
-          playerRef.current.pauseVideo();
-          // Immediately update UI state for responsive feedback
-          setIsPlaying(false);
-          
-          // Verify pause worked after a short delay
-          setTimeout(() => {
-            if (playerRef.current && playerRef.current.getPlayerState() === playerStates.PLAYING && retries > 0) {
-              attemptPlayPause(retries - 1);
-            }
-          }, 100);
+          // Check player exists before calling pauseVideo
+          if (playerRef.current && typeof playerRef.current.pauseVideo === 'function') {
+            playerRef.current.pauseVideo();
+            // Immediately update UI state for responsive feedback
+            setIsPlaying(false);
+            
+            // Verify pause worked after a short delay
+            setTimeout(() => {
+              if (playerRef.current && typeof playerRef.current.getPlayerState === 'function' && 
+                  playerRef.current.getPlayerState() === playerStates.PLAYING && retries > 0) {
+                attemptPlayPause(retries - 1);
+              }
+            }, 100);
+          }
         } else {
-          playerRef.current.playVideo();
-          // Immediately update UI state for responsive feedback
-          setIsPlaying(true);
-          
-          // Verify play worked after a short delay
-          setTimeout(() => {
-            if (playerRef.current && playerRef.current.getPlayerState() !== playerStates.PLAYING && retries > 0) {
-              attemptPlayPause(retries - 1);
-            }
-          }, 100);
+          // Check player exists before calling playVideo
+          if (playerRef.current && typeof playerRef.current.playVideo === 'function') {
+            playerRef.current.playVideo();
+            // Immediately update UI state for responsive feedback
+            setIsPlaying(true);
+            
+            // Verify play worked after a short delay
+            setTimeout(() => {
+              if (playerRef.current && typeof playerRef.current.getPlayerState === 'function' && 
+                  playerRef.current.getPlayerState() !== playerStates.PLAYING && retries > 0) {
+                attemptPlayPause(retries - 1);
+              }
+            }, 100);
+          }
         }
       } catch (error) {
         console.error('[VideoPlayer] Error toggling play/pause:', error);
         if (retries > 0) {
-          setTimeout(() => attemptPlayPause(retries - 1), 100);
+          setTimeout(() => attemptPlayPause(retries - 1), 200);
         } else {
           setPlayerError('Failed to toggle playback');
         }
@@ -111,7 +134,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
     };
     
     attemptPlayPause();
-  }, [isReady, isPlaying]);
+  }, [isReady]);
   
   // Detect mobile device
   useEffect(() => {
@@ -134,8 +157,8 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
 
   const videoId = getYouTubeVideoId(videoUrl) || '';
 
-  // YouTube player options
-  const opts: YouTubeProps['opts'] = {
+  // Memoized YouTube player options for performance
+  const opts: YouTubeProps['opts'] = useMemo(() => ({
     playerVars: {
       autoplay: 0,
       controls: 0,          // Disable controls to use custom controls
@@ -146,13 +169,22 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
       iv_load_policy: 3,    // Hide annotations
       fs: 0,                // Disable fullscreen button
       playsinline: 1,       // Play inline on mobile
-      origin: window.location.protocol + '//' + window.location.host
+      origin: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
     }
-  };
+  }), []);
 
   const onPlayerReady = useCallback((event: YouTubeEvent) => {
     try {
       const playerInstance = event.target;
+      
+      // Ensure player instance is valid before assigning
+      if (!playerInstance || typeof playerInstance.getDuration !== 'function') {
+        console.error('[VideoPlayer] Invalid player instance received');
+        setPlayerError('Failed to initialize player');
+        setIsLoading(false);
+        return;
+      }
+      
       playerRef.current = playerInstance;
       setIsReady(true);
       setIsLoading(false);
@@ -164,7 +196,6 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           if (!playerRef.current || !isMountedRef.current) return;
           
           const videoDuration = playerRef.current.getDuration();
-          // Duration attempt ${attempt}: ${videoDuration}
           
           if (videoDuration && videoDuration > 0) {
             setDuration(videoDuration);
@@ -174,10 +205,22 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
               onDurationChange(videoDuration);
             }
             
-            // Resume from last position if available
-            if (initialProgress > 0) {
-              const resumeTime = (initialProgress / 100) * videoDuration;
-              playerRef.current.seekTo(resumeTime, true);
+            // Resume from exact saved position if available
+            try {
+              if (initialCurrentPosition > 0) {
+                playerRef.current.seekTo(initialCurrentPosition, true);
+                // Set max watched time based on saved position
+                setMaxWatchedTime(initialCurrentPosition);
+                maxWatchedTimeRef.current = initialCurrentPosition;
+              } else if (initialProgress > 0) {
+                // Fallback to percentage-based resume for backward compatibility
+                const resumeTime = (initialProgress / 100) * videoDuration;
+                playerRef.current.seekTo(resumeTime, true);
+                setMaxWatchedTime(resumeTime);
+                maxWatchedTimeRef.current = resumeTime;
+              }
+            } catch (error) {
+              console.error('[VideoPlayer] Error during resume:', error);
             }
           } else if (attempt < retries) {
             // Retry after delay
@@ -198,7 +241,57 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
       setPlayerError('Failed to initialize player');
       setIsLoading(false);
     }
-  }, [initialProgress, onDurationChange, volume]);
+  }, [initialProgress, initialCurrentPosition, onDurationChange, volume]);
+
+  // Ref to store current max watched time for seek monitoring
+  const maxWatchedTimeRef = useRef(0);
+  
+  // Update ref whenever maxWatchedTime changes
+  useEffect(() => {
+    maxWatchedTimeRef.current = maxWatchedTime;
+  }, [maxWatchedTime]);
+  
+  // Ref to store current actualVideoProgress to avoid closure issues
+  const actualWatchPercentageRef = useRef(actualVideoProgress);
+  
+  // Update ref whenever actualVideoProgress changes
+  useEffect(() => {
+    actualWatchPercentageRef.current = actualVideoProgress;
+  }, [actualVideoProgress]);
+
+  // Seek restriction monitoring
+  const startSeekMonitoring = useCallback(() => {
+    if (seekCheckIntervalRef.current) return;
+    
+    seekCheckIntervalRef.current = setInterval(() => {
+      if (!playerRef.current || !isReady || !isMountedRef.current) return;
+      
+      try {
+        // Check if player has required methods
+        if (typeof playerRef.current.getCurrentTime !== 'function' || 
+            typeof playerRef.current.seekTo !== 'function') {
+          return;
+        }
+        
+        const current = playerRef.current.getCurrentTime();
+        const currentMaxWatchedTime = maxWatchedTimeRef.current;
+        
+        if (current > currentMaxWatchedTime + 3) {
+          playerRef.current.seekTo(currentMaxWatchedTime, true);
+          ToastService.info('You can only watch up to where you\'ve already viewed');
+        }
+      } catch (error) {
+        console.error('[VideoPlayer] Error in seek monitoring:', error);
+      }
+    }, 250);
+  }, [isReady]);
+
+  const stopSeekMonitoring = useCallback(() => {
+    if (seekCheckIntervalRef.current) {
+      clearInterval(seekCheckIntervalRef.current);
+      seekCheckIntervalRef.current = null;
+    }
+  }, []);
 
   const onPlayerStateChange = useCallback((event: YouTubeEvent) => {
     const state = event.data;
@@ -210,6 +303,11 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
     
     if (state === playerStates.PLAYING) {
       setIsPlaying(true);
+      
+      // Notify parent component that video is playing
+      if (onPlay && isMountedRef.current) {
+        onPlay();
+      }
       
       // Double-check duration when video starts playing
       if (playerRef.current && duration === 0) {
@@ -223,23 +321,25 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
       }
       
       startProgressTracking();
+      startSeekMonitoring();
       startHideControlsTimer();
     } else if (state === playerStates.PAUSED) {
       setIsPlaying(false);
       stopProgressTracking();
+      stopSeekMonitoring();
       clearHideControlsTimer();
       setShowControls(true);
       
-      // Trigger pause callback with current progress
-      if (onPause && watchPercentage > 0 && isMountedRef.current) {
-        onPause(watchPercentage, currentTime);
+      if (onPause && isMountedRef.current && actualVideoProgress > 0) {
+        onPause(actualVideoProgress, currentTime);
       }
     } else if (state === playerStates.ENDED) {
       setIsPlaying(false);
       stopProgressTracking();
+      stopSeekMonitoring();
       setShowControls(true);
     }
-  }, [duration, onDurationChange, onPause, watchPercentage, currentTime]);
+  }, [duration, onDurationChange, onPause, onPlay, actualVideoProgress, currentTime, startSeekMonitoring, stopSeekMonitoring]);
 
   // Move function declarations before they're used
   const stopProgressTracking = useCallback(() => {
@@ -259,15 +359,18 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
 
   const startProgressTracking = useCallback(() => {
     if (intervalRef.current) {
-      // Progress tracking already running
       return;
     }
-
-    // Starting progress tracking
     intervalRef.current = setInterval(() => {
       if (!playerRef.current || !isReady || !isMountedRef.current) return;
 
       try {
+        // Check if player has required methods
+        if (typeof playerRef.current.getCurrentTime !== 'function' || 
+            typeof playerRef.current.getDuration !== 'function') {
+          return;
+        }
+        
         const current = playerRef.current.getCurrentTime();
         const total = playerRef.current.getDuration();
         
@@ -288,13 +391,22 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           const percentage = (current / total) * 100;
           setWatchPercentage(percentage);
           
-          // Call onProgress callback directly - parent handles debouncing
+          // Calculate actual percentage for callback
+          let currentActualPercentage;
+          
+          if (current > maxWatchedTime) {
+            currentActualPercentage = (current / total) * 100;
+            setMaxWatchedTime(current);
+          } else {
+            // Use the actual progress from parent
+            currentActualPercentage = actualVideoProgress;
+          }
           if (onProgress && isMountedRef.current) {
-            onProgress(percentage);
+            onProgress(percentage, currentActualPercentage);
           }
 
-          // Check for 80% completion
-          if (percentage >= 80 && !hasCompletedOnce) {
+          // Check for 80% completion based on actual progress
+          if (currentActualPercentage >= 80 && !hasCompletedOnce) {
             setHasCompletedOnce(true);
             if (onComplete && isMountedRef.current) {
               onComplete();
@@ -307,7 +419,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
         // Don't stop tracking on error, just log it
       }
     }, 1000); // Update every second
-  }, [isReady, hasCompletedOnce, onComplete, onDurationChange, onTimeUpdate, onProgress]);
+  }, [isReady, hasCompletedOnce, onComplete, onDurationChange, onTimeUpdate, onProgress, actualVideoProgress, maxWatchedTime]);
 
   // Auto-hide controls
   const startHideControlsTimer = () => {
@@ -433,14 +545,14 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
     return () => {
       isMountedRef.current = false;
       stopProgressTracking();
+      stopSeekMonitoring();
       clearHideControlsTimer();
       
-      // No debounced functions to cancel
       
       // Clear player reference
       playerRef.current = null;
     };
-  }, []);
+  }, [stopSeekMonitoring]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -449,7 +561,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   };
 
   const handleNextLesson = () => {
-    if (nextLessonId && watchPercentage >= 80) {
+    if (nextLessonId && actualVideoProgress >= 80) {
       router.push(`/learn/${courseId}/${nextLessonId}`);
     }
   };
@@ -515,7 +627,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                   <X className="w-6 h-6" />
                 </button>
                 <div className="text-sm text-center flex-1 mx-4">
-                  <span>{Math.round(watchPercentage)}% watched</span>
+                  <span>{Math.round(Math.max(initialProgress, actualVideoProgress))}% watched</span>
                 </div>
                 <button
                   onClick={() => setShowSettings(!showSettings)}
@@ -550,12 +662,37 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                 <span className="mx-2">/</span>
                 <span>{formatTime(duration)}</span>
                 {!isMobile && (
-                  <span className="ml-auto">{Math.round(watchPercentage)}% watched</span>
+                  <span className="ml-auto">{Math.round(Math.max(initialProgress, actualVideoProgress))}% watched</span>
                 )}
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-2 cursor-pointer hover:h-3 transition-all">
+              <div 
+                className="w-full bg-gray-700 rounded-full h-2 cursor-pointer hover:h-3 transition-all relative"
+                onClick={(e) => {
+                  if (!playerRef.current || !isReady || !duration) return;
+                  
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const clickX = e.clientX - rect.left;
+                  const clickPercentage = (clickX / rect.width) * 100;
+                  const seekTime = (clickPercentage / 100) * duration;
+                  
+                  // Restrict seek to max watched time or initial progress
+                  const maxAllowedTime = Math.max(maxWatchedTime, (initialProgress / 100) * duration);
+                  const allowedSeekTime = Math.min(seekTime, maxAllowedTime);
+                  playerRef.current.seekTo(allowedSeekTime, true);
+                  
+                  if (seekTime > maxAllowedTime) {
+                    ToastService.info('You can only seek to previously watched content');
+                  }
+                }}
+              >
+                {/* Max watched indicator */}
                 <div 
-                  className="bg-blue-600 h-full rounded-full transition-all duration-300"
+                  className="absolute top-0 left-0 h-full bg-blue-400/30 rounded-full"
+                  style={{ width: `${Math.max(initialProgress, (maxWatchedTime / duration) * 100)}%` }}
+                />
+                {/* Current position */}
+                <div 
+                  className="bg-blue-600 h-full rounded-full transition-all duration-300 relative"
                   style={{ width: `${watchPercentage}%` }}
                 />
               </div>
@@ -667,7 +804,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                 )}
 
                 {/* Next Lesson Button */}
-                {nextLessonId && watchPercentage >= 80 && (
+                {nextLessonId && actualVideoProgress >= 80 && (
                   <button
                     onClick={handleNextLesson}
                     className={`bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors ${
@@ -744,7 +881,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
         </div>
 
         {/* Sequential Learning Notice */}
-        {watchPercentage < 80 && !isMobile && (
+        {actualVideoProgress < 80 && !isMobile && (
           <div className="absolute top-4 right-4 bg-yellow-500/90 text-black px-3 py-1 rounded-lg text-sm">
             Watch 80% to unlock next lesson
           </div>
@@ -772,7 +909,9 @@ export const VideoPlayer = React.memo(VideoPlayerComponent, (prevProps, nextProp
     prevProps.lessonId === nextProps.lessonId &&
     prevProps.courseId === nextProps.courseId &&
     prevProps.initialProgress === nextProps.initialProgress &&
-    prevProps.nextLessonId === nextProps.nextLessonId
+    prevProps.initialCurrentPosition === nextProps.initialCurrentPosition &&
+    prevProps.nextLessonId === nextProps.nextLessonId &&
+    prevProps.actualVideoProgress === nextProps.actualVideoProgress
     // Don't compare callback functions - they're handled internally with debouncing
   );
 });
