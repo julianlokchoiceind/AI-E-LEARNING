@@ -123,7 +123,6 @@ export const updateCourse = async (courseId: string, data: Partial<CourseRespons
         timeout: 10000 // 10 seconds - standardized timeout
       }
     );
-    });
     return result;
   } catch (error) {
     console.error('🔧 [API DEBUG] updateCourse failed:', {

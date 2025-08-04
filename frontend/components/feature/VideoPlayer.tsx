@@ -15,6 +15,7 @@ interface VideoPlayerProps {
   onComplete?: () => void;
   onDurationChange?: (duration: number) => void;
   onTimeUpdate?: (currentTime: number) => void;
+  onPause?: (percentage: number, currentTime: number) => void;
   initialProgress?: number;
   nextLessonId?: string;
 }
@@ -27,6 +28,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   onComplete,
   onDurationChange,
   onTimeUpdate,
+  onPause,
   initialProgress = 0,
   nextLessonId
 }) => {
@@ -227,12 +229,17 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
       stopProgressTracking();
       clearHideControlsTimer();
       setShowControls(true);
+      
+      // Trigger pause callback with current progress
+      if (onPause && watchPercentage > 0 && isMountedRef.current) {
+        onPause(watchPercentage, currentTime);
+      }
     } else if (state === playerStates.ENDED) {
       setIsPlaying(false);
       stopProgressTracking();
       setShowControls(true);
     }
-  }, [duration, onDurationChange]);
+  }, [duration, onDurationChange, onPause, watchPercentage, currentTime]);
 
   // Move function declarations before they're used
   const stopProgressTracking = useCallback(() => {

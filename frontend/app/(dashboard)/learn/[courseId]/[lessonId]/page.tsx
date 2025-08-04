@@ -108,6 +108,7 @@ interface VideoSectionProps {
   handleVideoComplete: () => void;
   handleVideoDurationChange: (duration: number) => void;
   handleVideoTimeUpdate: (currentTime: number) => void;
+  handleVideoPause: (percentage: number, currentTime: number) => void;
   currentVideoTime: number;
   currentVideoDuration: number | null;
   videoProgress: number;
@@ -122,6 +123,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
   handleVideoComplete,
   handleVideoDurationChange,
   handleVideoTimeUpdate,
+  handleVideoPause,
   currentVideoTime,
   currentVideoDuration,
   videoProgress,
@@ -141,6 +143,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
             onComplete={handleVideoComplete}
             onDurationChange={handleVideoDurationChange}
             onTimeUpdate={handleVideoTimeUpdate}
+            onPause={handleVideoPause}
             initialProgress={progress?.video_progress.watch_percentage || 0}
             nextLessonId={navigation?.next_lesson_id}
           />
@@ -315,11 +318,10 @@ QuizSection.displayName = 'QuizSection';
 export default function OptimizedLessonPlayerPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { } = useAuth(); // User auth check handled by middleware
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
-  const searchParams = useSearchParams();
-  const isPreviewMode = searchParams.get('preview') === 'true';
 
   // 🚀 SINGLE CONSOLIDATED API CALL - replaces 7 individual calls
   const { 
@@ -339,6 +341,8 @@ export default function OptimizedLessonPlayerPage() {
   const enrollment = pageData?.enrollment || null;
   const navigation = pageData?.navigation || null;
   const userProgress = pageData?.user_progress || {};
+  // Check both API response and URL parameter for preview mode
+  const isPreviewMode = pageData?.is_preview_mode || searchParams.get('preview') === 'true' || false;
 
 
   // UI State (simplified)
@@ -435,7 +439,7 @@ export default function OptimizedLessonPlayerPage() {
           total_watch_time: Math.floor(videoTime)
         }
       });
-    }, 5000); // 5 second debounce
+    }, 15000); // 15 second debounce (industry standard)
     
     return () => {
       debouncedUpdateProgressRef.current?.cancel();
@@ -480,6 +484,23 @@ export default function OptimizedLessonPlayerPage() {
   const handleVideoTimeUpdate = useCallback((currentTime: number) => {
     setCurrentVideoTime(currentTime);
   }, []);
+
+  const handleVideoPause = useCallback((percentage: number, videoTime: number) => {
+    if (!isPreviewMode && percentage > 0) {
+      // Cancel any pending debounced saves
+      debouncedUpdateProgressRef.current?.cancel();
+      
+      // Save immediately on pause
+      updateProgress({
+        progressData: {
+          lesson_id: lessonId,
+          watch_percentage: percentage,
+          current_position: videoTime,
+          total_watch_time: Math.floor(videoTime)
+        }
+      });
+    }
+  }, [lessonId, isPreviewMode, updateProgress]);
 
   const handleQuizComplete = useCallback((passed: boolean) => {
     if (passed) {
@@ -812,6 +833,7 @@ export default function OptimizedLessonPlayerPage() {
               handleVideoComplete={handleVideoComplete}
               handleVideoDurationChange={handleVideoDurationChange}
               handleVideoTimeUpdate={handleVideoTimeUpdate}
+              handleVideoPause={handleVideoPause}
               currentVideoTime={currentVideoTime}
               currentVideoDuration={currentVideoDuration}
               videoProgress={videoProgress}
