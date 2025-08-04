@@ -359,7 +359,7 @@ const CourseDetailPage = () => {
                     className="w-full mb-4"
                     size="lg"
                   >
-                    {course.progress_percentage && course.progress_percentage > 0
+                    {course.continue_lesson_id || (course.progress_percentage && course.progress_percentage > 0)
                       ? 'Continue Learning'
                       : 'Start Learning'}
                   </Button>

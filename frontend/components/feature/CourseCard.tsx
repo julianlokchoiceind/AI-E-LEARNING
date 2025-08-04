@@ -181,7 +181,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
           {isEnrolling 
             ? 'Loading...' 
             : course.is_enrolled
-              ? (course.progress_percentage && course.progress_percentage > 0 ? 'Continue Learning' : 'Start Learning')
+              ? (course.continue_lesson_id || (course.progress_percentage && course.progress_percentage > 0) ? 'Continue Learning' : 'Start Learning')
               : 'View Details'
           }
         </Button>

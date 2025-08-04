@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, CheckCircle, Clock, BookOpen, Info, VideoOff, Menu } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Clock, BookOpen, Info, VideoOff, Menu, PlayCircle } from 'lucide-react';
 import { VideoPlayer } from '@/components/feature/VideoPlayer';
 import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
 import { QuizComponent } from '@/components/feature/QuizComponent';
@@ -196,23 +196,23 @@ const VideoSection = React.memo<VideoSectionProps>(({
               
               {/* Status */}
               <div className="flex items-center">
-                <CheckCircle className={`w-4 h-4 mr-2 ${
-                  progress?.is_completed 
-                    ? 'text-green-500' 
-                    : actualVideoProgress >= 80
-                    ? 'text-yellow-500'
-                    : 'text-gray-400'
-                }`} />
+                {progress?.is_completed && actualVideoProgress >= 95 ? (
+                  <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                ) : actualVideoProgress >= 80 ? (
+                  <Clock className="w-4 h-4 mr-2 text-yellow-500" />
+                ) : (
+                  <PlayCircle className="w-4 h-4 mr-2 text-blue-500" />
+                )}
                 <div>
                   <div className="text-gray-500 text-xs">Status</div>
                   <div className={`font-medium text-sm ${
-                    progress?.is_completed 
+                    progress?.is_completed && actualVideoProgress >= 95
                       ? 'text-green-600' 
                       : actualVideoProgress >= 80
                       ? 'text-yellow-600'
                       : 'text-gray-600'
                   }`}>
-                    {progress?.is_completed 
+                    {progress?.is_completed && actualVideoProgress >= 95
                       ? 'Completed' 
                       : actualVideoProgress >= 80
                       ? 'Ready to complete'
@@ -463,8 +463,8 @@ export default function OptimizedLessonPlayerPage() {
     setActualVideoProgress(prev => Math.max(prev, actualPercentage));
     
     // Real-time sidebar sync: Update lesson progress in chapters data
-    if (actualPercentage >= 80 && lesson && !lesson.progress?.is_completed) {
-      // Update the current lesson's progress in the sidebar
+    if (actualPercentage >= 95 && lesson && !lesson.progress?.is_completed) {
+      // Update the current lesson's progress in the sidebar only when truly completed
       // This triggers re-render and shows completion checkmark immediately
       setChapters(prevChapters => 
         prevChapters.map((chapter: ChapterData) => ({
@@ -782,7 +782,11 @@ export default function OptimizedLessonPlayerPage() {
                               w-full text-left px-4 py-3 transition-all
                               flex items-center justify-between group
                               border-l-4 border-transparent
-                              ${isCurrentLesson
+                              ${isCurrentLesson && actualVideoProgress >= 95
+                                ? 'bg-green-50 text-green-700 border-green-600'
+                                : isCurrentLesson && actualVideoProgress >= 80
+                                ? 'bg-yellow-50 text-yellow-700 border-yellow-600'
+                                : isCurrentLesson
                                 ? 'bg-blue-50 text-blue-700 border-blue-600'
                                 : isCompleted
                                 ? 'hover:bg-green-50 cursor-pointer'
@@ -795,8 +799,12 @@ export default function OptimizedLessonPlayerPage() {
                             <div className="flex items-center flex-1 min-w-0">
                               {/* Status Icon */}
                               <div className="mr-3 flex-shrink-0">
-                                {isCompleted ? (
+                                {lessonProgress?.is_completed && (!isCurrentLesson || actualVideoProgress >= 95) ? (
                                   <CheckCircle className="w-5 h-5 text-green-600" />
+                                ) : isCurrentLesson && actualVideoProgress >= 80 ? (
+                                  <Clock className="w-5 h-5 text-yellow-500" />
+                                ) : isCurrentLesson && actualVideoProgress > 0 ? (
+                                  <PlayCircle className="w-5 h-5 text-blue-500" />
                                 ) : isUnlocked || isPreviewMode ? (
                                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                                     isCurrentLesson ? 'border-blue-600 bg-blue-600' : 'border-gray-400'
@@ -826,8 +834,19 @@ export default function OptimizedLessonPlayerPage() {
                                     }
                                   </span>
                                   {isCurrentLesson && (
-                                    <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                                      Current
+                                    <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                      actualVideoProgress >= 95
+                                        ? 'bg-green-100 text-green-700'
+                                        : actualVideoProgress >= 80
+                                        ? 'bg-yellow-100 text-yellow-700'
+                                        : 'bg-blue-100 text-blue-700'
+                                    }`}>
+                                      {actualVideoProgress >= 95
+                                        ? 'Completed'
+                                        : actualVideoProgress >= 80
+                                        ? 'Ready'
+                                        : 'Current'
+                                      }
                                     </span>
                                   )}
                                 </div>
@@ -837,7 +856,13 @@ export default function OptimizedLessonPlayerPage() {
                             {/* Progress indicator for current lesson - Real-time sync */}
                             {isCurrentLesson && (
                               <div className="ml-2 flex-shrink-0">
-                                <div className="w-12 text-right text-xs text-blue-600 font-medium">
+                                <div className={`w-12 text-right text-xs font-medium ${
+                                  actualVideoProgress >= 95
+                                    ? 'text-green-600'
+                                    : actualVideoProgress >= 80
+                                    ? 'text-yellow-600'
+                                    : 'text-blue-600'
+                                }`}>
                                   {Math.round(actualVideoProgress)}%
                                 </div>
                               </div>
@@ -968,25 +993,7 @@ export default function OptimizedLessonPlayerPage() {
             />
 
             {/* Completion Status */}
-            {lesson.progress?.is_completed && (
-              <section className="bg-green-50 border border-green-200 rounded-lg shadow-sm">
-                <div className="p-4 md:p-6">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <CheckCircle className="w-8 h-8 text-green-600" />
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold text-green-800">
-                        Lesson Completed!
-                      </h3>
-                      <p className="text-green-700 text-sm">
-                        Great job! You have successfully completed this lesson.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
+
 
             {/* Next Lesson Navigation */}
             {navigation?.next_lesson_id && actualVideoProgress >= 80 && (!lesson.has_quiz || lesson.progress?.is_completed) && (
