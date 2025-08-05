@@ -52,6 +52,11 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
+  
+  // Drag & Drop states
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragStartPercentage, setDragStartPercentage] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -457,7 +462,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
     }
   };
   
-  const handleMouseMove = () => {
+  const handleControlsMouseMove = () => {
     setShowControls(true);
     if (isPlaying) {
       startHideControlsTimer();
@@ -579,6 +584,121 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Drag & Drop handlers
+  const handleProgressSeek = useCallback((percentage: number) => {
+    if (!playerRef.current || !isReady || !duration) return;
+    
+    const seekTime = (percentage / 100) * duration;
+    
+    // Apply seek restrictions
+    const initialProgressTime = (initialProgress / 100) * duration;
+    const actualProgressTime = duration > 0 ? (actualVideoProgress / 100) * duration : 0;
+    const effectiveMaxTime = Math.max(maxWatchedTime, actualProgressTime);
+    
+    const allowedSeekTime = Math.min(seekTime, effectiveMaxTime);
+    playerRef.current.seekTo(allowedSeekTime, true);
+    
+    if (seekTime > effectiveMaxTime) {
+      ToastService.info('You can only seek to previously watched content');
+    }
+  }, [playerRef, isReady, duration, maxWatchedTime, initialProgress, actualVideoProgress]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = (clickX / rect.width) * 100;
+    
+    setIsDragging(true);
+    setDragStartX(e.clientX);
+    setDragStartPercentage(percentage);
+    
+    handleProgressSeek(percentage);
+  }, [handleProgressSeek]);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const progressBar = document.querySelector('.progress-bar-draggable');
+    if (!progressBar) return;
+    
+    const rect = progressBar.getBoundingClientRect();
+    const currentX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const percentage = (currentX / rect.width) * 100;
+    
+    handleProgressSeek(percentage);
+  }, [isDragging, handleProgressSeek]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+    setDragStartX(0);
+    setDragStartPercentage(0);
+  }, []);
+
+  // Global mouse events for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      // Prevent text selection while dragging
+      document.body.style.userSelect = 'none';
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.userSelect = '';
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  // Touch support for mobile
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const rect = e.currentTarget.getBoundingClientRect();
+    const touchX = touch.clientX - rect.left;
+    const percentage = (touchX / rect.width) * 100;
+    
+    setIsDragging(true);
+    setDragStartX(touch.clientX);
+    setDragStartPercentage(percentage);
+    
+    handleProgressSeek(percentage);
+  }, [handleProgressSeek]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const progressBar = document.querySelector('.progress-bar-draggable');
+    if (!progressBar) return;
+    
+    const touch = e.touches[0];
+    const rect = progressBar.getBoundingClientRect();
+    const currentX = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
+    const percentage = (currentX / rect.width) * 100;
+    
+    handleProgressSeek(percentage);
+  }, [isDragging, handleProgressSeek]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+    setDragStartX(0);
+    setDragStartPercentage(0);
+  }, []);
+
+  // Touch events
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
+      
+      return () => {
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+  }, [isDragging, handleTouchMove, handleTouchEnd]);
+
   const handleNextLesson = () => {
     if (nextLessonId && actualVideoProgress >= 80) {
       router.push(`/learn/${courseId}/${nextLessonId}`);
@@ -612,7 +732,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
         className={`relative bg-black overflow-hidden transition-all duration-300 ${
           isFullscreen ? 'fixed inset-0 z-50' : 'rounded-lg'
         }`}
-        onMouseMove={handleMouseMove}
+        onMouseMove={handleControlsMouseMove}
         onMouseLeave={() => {
           if (isPlaying) startHideControlsTimer();
         }}
@@ -685,36 +805,29 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                 )}
               </div>
               <div 
-                className="w-full bg-gray-700 rounded-full h-2 cursor-pointer hover:h-3 transition-all relative"
+                className={`progress-bar-draggable w-full bg-gray-700 rounded-full transition-all relative select-none ${
+                  isDragging ? 'h-4 cursor-grabbing' : 'h-2 cursor-pointer hover:h-3'
+                }`}
+                onMouseDown={handleMouseDown}
+                onTouchStart={handleTouchStart}
                 onClick={(e) => {
+                  // Prevent click when dragging
+                  if (isDragging) {
+                    e.preventDefault();
+                    return;
+                  }
+                  
                   if (!playerRef.current || !isReady || !duration) return;
                   
                   const rect = e.currentTarget.getBoundingClientRect();
                   const clickX = e.clientX - rect.left;
                   const clickPercentage = (clickX / rect.width) * 100;
-                  const seekTime = (clickPercentage / 100) * duration;
                   
-                  // Restrict seek to max watched time or progress
-                  // Use the highest value between maxWatchedTime, initialProgress, and actualVideoProgress
-                  const initialProgressTime = (initialProgress / 100) * duration;
-                  const actualProgressTime = (actualVideoProgress / 100) * duration;
-                  const maxAllowedTime = Math.max(maxWatchedTime, initialProgressTime, actualProgressTime);
-                  
-                  console.log('[VideoPlayer] Seek attempt:', {
-                    clickPercentage: clickPercentage.toFixed(2) + '%',
-                    seekTime: formatTime(seekTime),
-                    maxWatchedTime: formatTime(maxWatchedTime),
-                    actualVideoProgress: actualVideoProgress + '%',
-                    maxAllowedTime: formatTime(maxAllowedTime),
-                    allowed: seekTime <= maxAllowedTime
+                  console.log('[VideoPlayer] Click seek:', {
+                    clickPercentage: clickPercentage.toFixed(2) + '%'
                   });
                   
-                  const allowedSeekTime = Math.min(seekTime, maxAllowedTime);
-                  playerRef.current.seekTo(allowedSeekTime, true);
-                  
-                  if (seekTime > maxAllowedTime) {
-                    ToastService.info('You can only seek to previously watched content');
-                  }
+                  handleProgressSeek(clickPercentage);
                 }}
               >
                 {/* Max watched indicator */}
@@ -726,7 +839,14 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                 <div 
                   className="bg-blue-600 h-full rounded-full transition-all duration-300 relative"
                   style={{ width: `${watchPercentage}%` }}
-                />
+                >
+                  {/* Draggable thumb */}
+                  <div className={`absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-blue-600 border-2 border-white shadow-lg transition-all duration-200 ${
+                    isDragging 
+                      ? 'w-4 h-4 -mr-2' 
+                      : 'w-3 h-3 -mr-1.5 hover:w-4 hover:h-4 hover:-mr-2'
+                  }`} />
+                </div>
               </div>
             </div>
 
