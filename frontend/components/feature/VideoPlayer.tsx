@@ -207,14 +207,28 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
             
             // Resume from exact saved position if available
             try {
+              // Calculate the actual max time based on actualVideoProgress
+              const actualProgressTime = actualVideoProgress > 0 ? (actualVideoProgress / 100) * videoDuration : 0;
+              
+              console.log('[VideoPlayer] Resume Debug:', {
+                initialCurrentPosition,
+                initialProgress,
+                actualVideoProgress,
+                videoDuration,
+                actualProgressTime,
+                calculatedMaxTime: Math.max(initialCurrentPosition, actualProgressTime, (initialProgress / 100) * videoDuration)
+              });
+              
               if (initialCurrentPosition > 0) {
                 playerRef.current.seekTo(initialCurrentPosition, true);
-                // Set max watched time based on saved position
-                setMaxWatchedTime(initialCurrentPosition);
-                maxWatchedTimeRef.current = initialCurrentPosition;
-              } else if (initialProgress > 0) {
-                // Fallback to percentage-based resume for backward compatibility
-                const resumeTime = (initialProgress / 100) * videoDuration;
+                // Set max watched time to the highest value
+                const maxTime = Math.max(initialCurrentPosition, actualProgressTime);
+                setMaxWatchedTime(maxTime);
+                maxWatchedTimeRef.current = maxTime;
+              } else if (initialProgress > 0 || actualVideoProgress > 0) {
+                // Use the higher progress value
+                const progressToUse = Math.max(initialProgress, actualVideoProgress);
+                const resumeTime = (progressToUse / 100) * videoDuration;
                 playerRef.current.seekTo(resumeTime, true);
                 setMaxWatchedTime(resumeTime);
                 maxWatchedTimeRef.current = resumeTime;
@@ -276,8 +290,13 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
         const current = playerRef.current.getCurrentTime();
         const currentMaxWatchedTime = maxWatchedTimeRef.current;
         
-        if (current > currentMaxWatchedTime + 3) {
-          playerRef.current.seekTo(currentMaxWatchedTime, true);
+        // Also consider actualVideoProgress when checking seek limits
+        const duration = playerRef.current.getDuration();
+        const actualProgressTime = duration > 0 ? (actualVideoProgress / 100) * duration : 0;
+        const effectiveMaxTime = Math.max(currentMaxWatchedTime, actualProgressTime);
+        
+        if (current > effectiveMaxTime + 3) {
+          playerRef.current.seekTo(effectiveMaxTime, true);
           ToastService.info('You can only watch up to where you\'ve already viewed');
         }
       } catch (error) {
@@ -675,8 +694,21 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                   const clickPercentage = (clickX / rect.width) * 100;
                   const seekTime = (clickPercentage / 100) * duration;
                   
-                  // Restrict seek to max watched time or initial progress
-                  const maxAllowedTime = Math.max(maxWatchedTime, (initialProgress / 100) * duration);
+                  // Restrict seek to max watched time or progress
+                  // Use the highest value between maxWatchedTime, initialProgress, and actualVideoProgress
+                  const initialProgressTime = (initialProgress / 100) * duration;
+                  const actualProgressTime = (actualVideoProgress / 100) * duration;
+                  const maxAllowedTime = Math.max(maxWatchedTime, initialProgressTime, actualProgressTime);
+                  
+                  console.log('[VideoPlayer] Seek attempt:', {
+                    clickPercentage: clickPercentage.toFixed(2) + '%',
+                    seekTime: formatTime(seekTime),
+                    maxWatchedTime: formatTime(maxWatchedTime),
+                    actualVideoProgress: actualVideoProgress + '%',
+                    maxAllowedTime: formatTime(maxAllowedTime),
+                    allowed: seekTime <= maxAllowedTime
+                  });
+                  
                   const allowedSeekTime = Math.min(seekTime, maxAllowedTime);
                   playerRef.current.seekTo(allowedSeekTime, true);
                   
