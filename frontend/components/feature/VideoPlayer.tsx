@@ -215,14 +215,6 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
               // Calculate the actual max time based on actualVideoProgress
               const actualProgressTime = actualVideoProgress > 0 ? (actualVideoProgress / 100) * videoDuration : 0;
               
-              console.log('[VideoPlayer] Resume Debug:', {
-                initialCurrentPosition,
-                initialProgress,
-                actualVideoProgress,
-                videoDuration,
-                actualProgressTime,
-                calculatedMaxTime: Math.max(initialCurrentPosition, actualProgressTime, (initialProgress / 100) * videoDuration)
-              });
               
               if (initialCurrentPosition > 0) {
                 playerRef.current.seekTo(initialCurrentPosition, true);
@@ -823,9 +815,6 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                   const clickX = e.clientX - rect.left;
                   const clickPercentage = (clickX / rect.width) * 100;
                   
-                  console.log('[VideoPlayer] Click seek:', {
-                    clickPercentage: clickPercentage.toFixed(2) + '%'
-                  });
                   
                   handleProgressSeek(clickPercentage);
                 }}
