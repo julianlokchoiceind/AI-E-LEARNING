@@ -51,8 +51,12 @@ class ProgressService:
                 started_at=datetime.utcnow()
             )
         
-        # Update video progress
-        progress.video_progress.watch_percentage = watch_percentage
+        # Update video progress - PROTECT AGAINST RESET
+        # Only update percentage if it's higher than current (prevent going backwards)
+        if watch_percentage > progress.video_progress.watch_percentage:
+            progress.video_progress.watch_percentage = watch_percentage
+        
+        # Always update current position (allow rewind)
         progress.video_progress.current_position = current_position
         progress.video_progress.total_watch_time += 1  # Increment by 1 second
         

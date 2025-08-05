@@ -12,7 +12,7 @@ class VideoProgressSchema(BaseModel):
     """Video progress tracking data schema."""
     watch_percentage: float = Field(default=0.0, ge=0.0, le=100.0)
     current_position: float = Field(default=0.0, ge=0.0)
-    total_watch_time: int = Field(default=0, ge=0)
+    total_watch_time: float = Field(default=0.0, ge=0.0)  # Changed from int to float
     is_completed: bool = Field(default=False)
     completed_at: Optional[datetime] = None
 
