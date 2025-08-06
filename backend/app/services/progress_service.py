@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
+from bson import ObjectId
 from app.models.progress import Progress, VideoProgress
 from app.models.lesson import Lesson
 from app.models.enrollment import Enrollment
@@ -164,9 +165,18 @@ class ProgressService:
         return progress_list
     
     async def calculate_course_completion(self, course_id: str, user_id: str) -> dict:
-        """Calculate course completion percentage and update enrollment."""
-        # Get all lessons in the course
-        total_lessons = await Lesson.find({"course_id": course_id}).count()
+        """Calculate course completion percentage using weighted average of lesson progress."""
+        # Handle ObjectId conversion - courses use ObjectId in lessons collection
+        try:
+            course_oid = ObjectId(course_id) if not isinstance(course_id, ObjectId) else course_id
+        except:
+            course_oid = course_id  # Fallback to string if not valid ObjectId
+        
+        # Get all lessons in the course (try both ObjectId and string)
+        total_lessons = await Lesson.find({"course_id": course_oid}).count()
+        if total_lessons == 0:
+            # Fallback to string-based query for backward compatibility
+            total_lessons = await Lesson.find({"course_id": course_id}).count()
         
         if total_lessons == 0:
             return {
@@ -176,15 +186,39 @@ class ProgressService:
                 "is_completed": False
             }
         
-        # Get completed lessons
-        completed_lessons = await Progress.find({
-            "course_id": course_id,
-            "user_id": user_id,
-            "is_completed": True
-        }).count()
+        # Get all lessons for this course to calculate weighted average
+        lessons = await Lesson.find({"course_id": course_oid}).to_list()
+        if not lessons:
+            # Fallback to string-based query
+            lessons = await Lesson.find({"course_id": course_id}).to_list()
         
-        # Calculate percentage
-        completion_percentage = (completed_lessons / total_lessons) * 100
+        # Calculate weighted average completion percentage
+        total_progress = 0.0
+        completed_lessons = 0
+        
+        for lesson in lessons:
+            lesson_id = str(lesson.id)
+            
+            # Get progress for this lesson
+            progress = await Progress.find_one({
+                "lesson_id": lesson_id,
+                "user_id": user_id
+            })
+            
+            if progress:
+                # Add lesson watch percentage to total
+                watch_percentage = progress.video_progress.watch_percentage
+                total_progress += watch_percentage
+                
+                # Count as completed if watch_percentage >= 80
+                if progress.is_completed:
+                    completed_lessons += 1
+            else:
+                # No progress record = 0% for this lesson
+                total_progress += 0.0
+        
+        # Calculate weighted average completion percentage (rounded to 1 decimal)
+        completion_percentage = round(total_progress / total_lessons, 1) if total_lessons > 0 else 0.0
         is_completed = completion_percentage >= 100
         
         # Update enrollment progress
@@ -285,30 +319,22 @@ class ProgressService:
                 await progress.save()
     
     async def _update_enrollment_progress(self, enrollment_id: str, course_id: str) -> None:
-        """Update course enrollment progress statistics."""
+        """Update course enrollment progress statistics using weighted calculation."""
         enrollment = await Enrollment.get(enrollment_id)
         if not enrollment:
             return
         
-        # Count total lessons in course
-        from app.models.lesson import Lesson
-        total_lessons = await Lesson.find({"course_id": course_id}).count()
+        # Use the same weighted calculation as calculate_course_completion
+        completion_data = await self.calculate_course_completion(course_id, enrollment.user_id)
         
-        # Count completed lessons
-        completed_lessons = await Progress.find({
-            "course_id": course_id,
-            "user_id": enrollment.user_id,
-            "is_completed": True
-        }).count()
+        # Update enrollment progress with weighted data
+        enrollment.progress.total_lessons = completion_data["total_lessons"]
+        enrollment.progress.lessons_completed = completion_data["completed_lessons"]
+        enrollment.progress.completion_percentage = completion_data["completion_percentage"]
+        enrollment.progress.is_completed = completion_data["is_completed"]
         
-        # Update enrollment progress
-        enrollment.progress.total_lessons = total_lessons
-        enrollment.progress.lessons_completed = completed_lessons
-        enrollment.progress.completion_percentage = (completed_lessons / total_lessons * 100) if total_lessons > 0 else 0
-        
-        # Check if course is completed
-        if completed_lessons == total_lessons and total_lessons > 0:
-            enrollment.progress.is_completed = True
+        # Set completion timestamp if completed
+        if completion_data["is_completed"] and not enrollment.progress.completed_at:
             enrollment.progress.completed_at = datetime.utcnow()
         
         enrollment.updated_at = datetime.utcnow()

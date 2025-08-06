@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, date
 from beanie import PydanticObjectId
 from app.core.performance import measure_performance
 from app.services.db_optimization import db_optimizer
+
 import csv
 import io
 import json
@@ -253,12 +254,31 @@ async def get_dashboard_data(
                     if first_lesson:
                         continue_lesson_id = str(first_lesson.id)
                 
+                # Simple time ago calculation
+                last_accessed_display = "Never"
+                if enrollment.last_accessed:
+                    time_diff = datetime.utcnow() - enrollment.last_accessed
+                    total_seconds = time_diff.total_seconds()
+                    
+                    if total_seconds < 60:
+                        last_accessed_display = "Just now"
+                    elif total_seconds < 3600:  # Less than 1 hour
+                        minutes = int(total_seconds // 60)
+                        last_accessed_display = f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+                    elif total_seconds < 86400:  # Less than 1 day
+                        hours = int(total_seconds // 3600)
+                        last_accessed_display = f"{hours} hour{'s' if hours != 1 else ''} ago"
+                    else:  # 1 day or more
+                        days = int(total_seconds // 86400)
+                        last_accessed_display = f"{days} day{'s' if days != 1 else ''} ago"
+                
                 recent_courses.append({
                     "id": str(course.id),
                     "title": course.title,
                     "thumbnail": course.thumbnail,
                     "progress": enrollment.progress.completion_percentage,
                     "last_accessed": enrollment.last_accessed,
+                    "last_accessed_display": last_accessed_display,
                     "continue_lesson_id": continue_lesson_id
                 })
         
@@ -765,7 +785,7 @@ async def debug_streak_calculation(
 ) -> StandardResponse[dict]:
     """Debug endpoint to check actual streak calculation from database."""
     try:
-        from app.services.streak_service import streak_service
+        
         from app.models.progress import Progress
         import pytz
         
@@ -797,8 +817,8 @@ async def debug_streak_calculation(
                 'completed_at': vn_time.isoformat()
             })
         
-        # Calculate streak using service
-        streak_data = await streak_service.calculate_user_streak(user_id)
+        # Calculate streak using existing utility function
+        current_streak, longest_streak = await _calculate_learning_streaks(user_id, current_user.preferences.timezone)
         
         # Prepare debug data
         debug_data = {
@@ -812,7 +832,7 @@ async def debug_streak_calculation(
                 str(date_key): activities 
                 for date_key, activities in daily_completions.items()
             },
-            "calculated_streak": streak_data,
+            "calculated_streak": {"current_streak": current_streak, "longest_streak": longest_streak},
             "stored_in_user": {
                 "current_streak": current_user.stats.current_streak,
                 "longest_streak": current_user.stats.longest_streak

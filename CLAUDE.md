@@ -78,6 +78,7 @@ The documentation has been organized into focused modules for better readability
 ## 🧠 Critical Development Rules
 
 ### 🔥 GOLDEN RULES - MUST READ
+0. **ARCHITECTURAL REQUIREMENT** - When implementing ANY new feature, MUST study CLAUDE.md & existing codebase first. Follow "Smart Backend, Dumb Frontend" architecture
 1. **ONLY CHANGE WHAT'S EXPLICITLY REQUESTED** - No scope creep allowed
 2. **CONSISTENCY OVER CREATIVITY** - Copy existing patterns exactly
 3. **PATTERN INHERITANCE** - If Feature A uses Pattern X, Feature B must use Pattern X
