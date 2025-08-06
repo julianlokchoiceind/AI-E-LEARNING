@@ -70,9 +70,9 @@ class ProgressService:
             
             # Unlock next lesson
             await self._unlock_next_lesson(lesson, user_id)
-            
-            # Update enrollment progress
-            await self._update_enrollment_progress(enrollment.id, lesson.course_id)
+        
+        # Always update enrollment progress for real-time updates
+        await self._update_enrollment_progress(enrollment.id, str(lesson.course_id))
         
         progress.last_accessed = datetime.utcnow()
         await progress.save()
@@ -166,17 +166,27 @@ class ProgressService:
     
     async def calculate_course_completion(self, course_id: str, user_id: str) -> dict:
         """Calculate course completion percentage using weighted average of lesson progress."""
-        # Handle ObjectId conversion - courses use ObjectId in lessons collection
-        try:
-            course_oid = ObjectId(course_id) if not isinstance(course_id, ObjectId) else course_id
-        except:
-            course_oid = course_id  # Fallback to string if not valid ObjectId
+        # Get lessons through chapters to match UI display
+        from app.models.chapter import Chapter
         
-        # Get all lessons in the course (try both ObjectId and string)
-        total_lessons = await Lesson.find({"course_id": course_oid}).count()
-        if total_lessons == 0:
-            # Fallback to string-based query for backward compatibility
-            total_lessons = await Lesson.find({"course_id": course_id}).count()
+        # Get all chapters for this course
+        chapters = await Chapter.find({"course_id": course_id}).sort([("order", 1)]).to_list()
+        
+        if not chapters:
+            return {
+                "total_lessons": 0,
+                "completed_lessons": 0,
+                "completion_percentage": 0.0,
+                "is_completed": False
+            }
+        
+        # Get all lessons from chapters (only lessons that UI shows)
+        lessons = []
+        for chapter in chapters:
+            chapter_lessons = await Lesson.find({"chapter_id": str(chapter.id)}).sort([("order", 1)]).to_list()
+            lessons.extend(chapter_lessons)
+        
+        total_lessons = len(lessons)
         
         if total_lessons == 0:
             return {
@@ -185,12 +195,6 @@ class ProgressService:
                 "completion_percentage": 0.0,
                 "is_completed": False
             }
-        
-        # Get all lessons for this course to calculate weighted average
-        lessons = await Lesson.find({"course_id": course_oid}).to_list()
-        if not lessons:
-            # Fallback to string-based query
-            lessons = await Lesson.find({"course_id": course_id}).to_list()
         
         # Calculate weighted average completion percentage
         total_progress = 0.0
