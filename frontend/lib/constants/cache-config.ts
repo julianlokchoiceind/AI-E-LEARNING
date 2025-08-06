@@ -74,7 +74,7 @@ export const CACHE_CONTEXTS = {
   FAQ_CONTENT: CACHE_TIERS.REALTIME,            // FAQ browsing - REALTIME for CRUD
   
   // User Experience  
-  USER_DASHBOARD: CACHE_TIERS.MODERATE,        // My courses, progress tracking
+  USER_DASHBOARD: CACHE_TIERS.REALTIME,        // My courses, progress tracking - REALTIME for immediate updates
   USER_PROFILE: CACHE_TIERS.MODERATE,          // Profile data, preferences
   LEARNING_PROGRESS: CACHE_TIERS.MODERATE,     // Video progress, quiz results
   

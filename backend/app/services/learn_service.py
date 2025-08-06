@@ -167,11 +167,6 @@ class LearnService:
         """Fetch user-specific data (enrollment, progress)."""
         # Note: Enrollment and Progress models store IDs as strings, not ObjectIds
         
-        # DEBUG: Log the query parameters
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info(f"DEBUG _fetch_user_data: user_id={user_id}, course_id={course_id}")
-        
         # Parallel fetch of enrollment and progress data
         enrollment, progress_list = await asyncio.gather(
             Enrollment.find_one({
@@ -192,10 +187,11 @@ class LearnService:
         if isinstance(progress_list, Exception):
             progress_list = []
         
-        # DEBUG: Log progress query results
-        logger.info(f"DEBUG: Found {len(progress_list)} progress records")
-        for p in progress_list:
-            logger.info(f"  - lesson_id: {p.lesson_id}, watch%: {p.video_progress.watch_percentage}")
+        # Update enrollment last_accessed when learn page is loaded
+        if enrollment:
+            enrollment.last_accessed = datetime.utcnow()
+            enrollment.updated_at = datetime.utcnow()
+            await enrollment.save()
         
         # Create progress map for quick lookup
         progress_map = {}
@@ -210,13 +206,8 @@ class LearnService:
                 
             except Exception as e:
                 # Skip problematic progress entries
-                logger.warning(f"Skipped progress entry due to error: {e}")
+                print(f"Warning: Skipped progress entry due to error: {e}")
                 continue
-        
-        # DEBUG: Log final progress map
-        logger.info(f"DEBUG: Final progress_map has {len(progress_map)} entries")
-        for lid, prog in progress_map.items():
-            logger.info(f"  - {lid}: {prog.video_progress.watch_percentage}%")
         
         return {
             'enrollment': LearnService._serialize_enrollment(enrollment) if enrollment else None,

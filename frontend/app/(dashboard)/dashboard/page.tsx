@@ -39,6 +39,7 @@ interface DashboardData {
     thumbnail?: string;
     progress: number;
     last_accessed?: string;
+    last_accessed_display?: string;
     continue_lesson_id?: string;
   }>;
   upcoming_lessons: Array<{
@@ -252,8 +253,8 @@ export default function DashboardPage() {
                       </div>
                       <p className="text-sm text-gray-500">
                         {course.progress}% complete
-                        {course.last_accessed && (
-                          <span> • Last accessed {formatDistanceToNow(new Date(course.last_accessed))}</span>
+                        {course.last_accessed_display && (
+                          <span> • Last accessed {course.last_accessed_display}</span>
                         )}
                       </p>
                     </div>
