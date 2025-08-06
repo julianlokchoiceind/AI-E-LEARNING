@@ -137,7 +137,7 @@ export const CACHE_CONTEXTS = {
   USER_SUPPORT_TICKETS: CACHE_TIERS.REALTIME,   // User's tickets - REALTIME for CRUD
   
   // Student Dashboard
-  STUDENT_DASHBOARD: CACHE_TIERS.FRESH,         // Student dashboard data
+  STUDENT_DASHBOARD: CACHE_TIERS.REALTIME,     // Student dashboard data - REALTIME for instant streak updates
   USER_COURSES: CACHE_TIERS.MODERATE,           // User's course list
   RECENT_COURSES: CACHE_TIERS.FRESH,            // Recently accessed courses
   ONBOARDING_STATUS: CACHE_TIERS.STABLE,        // Onboarding completion

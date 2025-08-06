@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import StreamingResponse
 from app.models.user import User
@@ -11,13 +11,14 @@ from app.services.progress_service import progress_service
 from app.schemas.user import UserResponse, UserProfileUpdate, DashboardData
 from app.schemas.enrollment import EnrollmentListResponse
 from app.schemas.base import StandardResponse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from beanie import PydanticObjectId
 from app.core.performance import measure_performance
 from app.services.db_optimization import db_optimizer
 import csv
 import io
 import json
+import pytz
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -25,6 +26,88 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 
 router = APIRouter()
+
+# =============================================================================
+# UTILITY FUNCTIONS - Streak Calculation Optimized
+# =============================================================================
+
+async def _calculate_learning_streaks(user_id: str, timezone: str = "Asia/Ho_Chi_Minh") -> Tuple[int, int]:
+    """
+    🔥 Calculate current and longest learning streaks from Progress database.
+    Optimized utility function - 100% accurate, single source of truth.
+    
+    Returns: (current_streak, longest_streak)
+    """
+    # Get completed lessons from database
+    completed_progress = await Progress.find({
+        "user_id": user_id,
+        "is_completed": True,
+        "completed_at": {"$exists": True, "$ne": None}
+    }).sort([("completed_at", 1)]).to_list()
+    
+    if not completed_progress:
+        return 0, 0
+    
+    # Convert to user timezone and extract unique dates
+    tz = pytz.timezone(timezone)
+    today = datetime.now(tz).date()
+    
+    active_dates = sorted(set(
+        progress.completed_at.astimezone(tz).date()
+        for progress in completed_progress
+    ))
+    
+    # Calculate current streak (from today backwards)
+    current_streak = _calculate_current_streak(active_dates, today)
+    
+    # Calculate longest streak ever
+    longest_streak = _calculate_longest_streak(active_dates)
+    
+    return current_streak, longest_streak
+
+
+def _calculate_current_streak(active_dates: List[date], today: date) -> int:
+    """Calculate current streak from today backwards."""
+    if not active_dates:
+        return 0
+    
+    latest_date = active_dates[-1]
+    days_since = (today - latest_date).days
+    
+    # Grace period: still active if learned today or yesterday
+    if days_since > 1:
+        return 0
+    
+    # Count consecutive days backwards
+    streak = 1
+    check_date = latest_date - timedelta(days=1)
+    
+    for i in range(len(active_dates) - 2, -1, -1):
+        if active_dates[i] == check_date:
+            streak += 1
+            check_date -= timedelta(days=1)
+        else:
+            break
+    
+    return streak
+
+
+def _calculate_longest_streak(active_dates: List[date]) -> int:
+    """Calculate longest consecutive streak in history."""
+    if not active_dates:
+        return 0
+    
+    longest_streak = 1
+    current_streak = 1
+    
+    for i in range(1, len(active_dates)):
+        if (active_dates[i] - active_dates[i-1]).days == 1:
+            current_streak += 1
+            longest_streak = max(longest_streak, current_streak)
+        else:
+            current_streak = 1
+    
+    return longest_streak
 
 @router.get("/me", response_model=StandardResponse[UserResponse], status_code=status.HTTP_200_OK)
 async def get_my_profile(
@@ -179,28 +262,16 @@ async def get_dashboard_data(
                     "continue_lesson_id": continue_lesson_id
                 })
         
-        # Calculate learning streak (simplified version)
-        # Check if user has learned in the last 24 hours
-        current_streak = 0
-        if enrollments:
-            latest_activity = max(
-                (e.last_accessed or e.enrolled_at for e in enrollments),
-                default=datetime.utcnow()
-            )
-            if latest_activity and (datetime.utcnow() - latest_activity) < timedelta(days=1):
-                current_streak = current_user.stats.current_streak + 1
-            else:
-                current_streak = 0
+        # Calculate learning streak - Optimized utility functions
+        current_streak, longest_streak = await _calculate_learning_streaks(user_id, current_user.preferences.timezone)
         
-        # Update user stats
+        # Update user stats - SYNC hoàn toàn với database thực tế
         current_user.stats.courses_enrolled = total_enrolled_courses
         current_user.stats.courses_completed = completed_courses
         current_user.stats.total_hours_learned = total_hours_learned
-        current_user.stats.current_streak = current_streak
+        current_user.stats.current_streak = current_streak  # ← FIX: Cập nhật current streak
+        current_user.stats.longest_streak = longest_streak  # ← FIX: Reset longest streak dựa trên database thực tế
         current_user.stats.last_active = datetime.utcnow()
-        
-        if current_streak > current_user.stats.longest_streak:
-            current_user.stats.longest_streak = current_streak
         
         await current_user.save()
         
@@ -234,7 +305,7 @@ async def get_dashboard_data(
                 "in_progress_courses": in_progress_courses,
                 "total_hours_learned": round(total_hours_learned, 1),
                 "current_streak": current_streak,
-                "longest_streak": current_user.stats.longest_streak
+                "longest_streak": longest_streak
             },
             "recent_courses": recent_courses,
             "upcoming_lessons": upcoming_lessons[:3],  # Limit to 3
@@ -686,6 +757,79 @@ async def get_progress_statistics(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
+        )
+
+@router.get("/debug-streak", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
+async def debug_streak_calculation(
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """Debug endpoint to check actual streak calculation from database."""
+    try:
+        from app.services.streak_service import streak_service
+        from app.models.progress import Progress
+        import pytz
+        
+        user_id = str(current_user.id)
+        
+        # Get all completed progress records
+        completed_progress = await Progress.find({
+            "user_id": user_id,
+            "is_completed": True,
+            "completed_at": {"$exists": True, "$ne": None}
+        }).sort([("completed_at", 1)]).to_list()
+        
+        # Get Vietnam timezone
+        vietnam_tz = pytz.timezone('Asia/Ho_Chi_Minh')
+        today = datetime.now(vietnam_tz).date()
+        
+        # Group by completion dates
+        daily_completions = {}
+        for progress in completed_progress:
+            vn_time = progress.completed_at.astimezone(vietnam_tz)
+            completion_date = vn_time.date()
+            
+            if completion_date not in daily_completions:
+                daily_completions[completion_date] = []
+            
+            daily_completions[completion_date].append({
+                'lesson_id': progress.lesson_id,
+                'course_id': progress.course_id,
+                'completed_at': vn_time.isoformat()
+            })
+        
+        # Calculate streak using service
+        streak_data = await streak_service.calculate_user_streak(user_id)
+        
+        # Prepare debug data
+        debug_data = {
+            "user_id": user_id,
+            "user_name": current_user.name,
+            "user_timezone": current_user.preferences.timezone,
+            "today": today.isoformat(),
+            "total_completed_lessons": len(completed_progress),
+            "total_active_days": len(daily_completions),
+            "daily_completions": {
+                str(date_key): activities 
+                for date_key, activities in daily_completions.items()
+            },
+            "calculated_streak": streak_data,
+            "stored_in_user": {
+                "current_streak": current_user.stats.current_streak,
+                "longest_streak": current_user.stats.longest_streak
+            }
+        }
+        
+        return StandardResponse(
+            success=True,
+            data=debug_data,
+            message="Streak debug data retrieved successfully"
+        )
+    except Exception as e:
+        import traceback
+        return StandardResponse(
+            success=False,
+            data={"error": str(e), "traceback": traceback.format_exc()},
+            message="Debug failed"
         )
 
 @router.get("/certificates", response_model=StandardResponse[list], status_code=status.HTTP_200_OK)
