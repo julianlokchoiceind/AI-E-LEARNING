@@ -191,7 +191,18 @@ class LearnService:
         if enrollment:
             enrollment.last_accessed = datetime.utcnow()
             enrollment.updated_at = datetime.utcnow()
-            await enrollment.save()
+            
+            # Recalculate progress to ensure it reflects current course structure
+            # (e.g., if lessons changed from published to draft)
+            from app.services.progress_service import progress_service
+            await progress_service.calculate_course_completion(course_id, user_id)
+            
+            # Refresh enrollment to get updated progress
+            enrollment = await Enrollment.find_one({
+                "user_id": user_id,
+                "course_id": course_id,
+                "is_active": True
+            })
         
         # Create progress map for quick lookup
         progress_map = {}
@@ -258,9 +269,14 @@ class LearnService:
             # Serialize lessons with progress
             enriched_lessons = []
             completed_count = 0
+            published_count = 0  # Count only published lessons
             
             for i, lesson in enumerate(lessons):
                 lesson_schema = LearnService._serialize_lesson(lesson)
+                
+                # Count published lessons
+                if lesson.status == "published":
+                    published_count += 1
                 
                 # Add progress data if available
                 if user_id and str(lesson.id) in progress_map:
@@ -285,7 +301,7 @@ class LearnService:
                 description=chapter.description,
                 order=chapter.order,
                 lessons=enriched_lessons,
-                total_lessons=len(lessons),
+                total_lessons=published_count,  # Use published count instead of all lessons
                 completed_lessons=completed_count,
                 status=chapter.status,
                 created_at=chapter.created_at,

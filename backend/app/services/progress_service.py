@@ -173,8 +173,12 @@ class ProgressService:
         # Chỉ lấy PUBLISHED chapters trước, sau đó mới lấy PUBLISHED lessons
         
         # Get only PUBLISHED chapters for this course
+        # IMPORTANT: Convert course_id to ObjectId for MongoDB query
+        from beanie import PydanticObjectId
+        course_obj_id = PydanticObjectId(course_id) if isinstance(course_id, str) else course_id
+        
         chapters = await Chapter.find({
-            "course_id": course_id, 
+            "course_id": course_obj_id, 
             "status": "published"
         }).sort([("order", 1)]).to_list()
         
@@ -189,8 +193,9 @@ class ProgressService:
         # Get only PUBLISHED lessons from PUBLISHED chapters
         lessons = []
         for chapter in chapters:
+            # IMPORTANT: chapter_id in Lesson is also PydanticObjectId
             chapter_lessons = await Lesson.find({
-                "chapter_id": str(chapter.id),
+                "chapter_id": chapter.id,  # Use ObjectId directly, not string
                 "status": "published"
             }).sort([("order", 1)]).to_list()
             lessons.extend(chapter_lessons)
