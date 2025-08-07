@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from bson import ObjectId
 from app.models.progress import Progress, VideoProgress
@@ -49,7 +49,7 @@ class ProgressService:
                 user_id=user_id,
                 course_id=str(lesson.course_id),
                 lesson_id=lesson_id,
-                started_at=datetime.utcnow()
+                started_at=datetime.now(timezone.utc)
             )
         
         # Update video progress - PROTECT AGAINST RESET
@@ -64,9 +64,9 @@ class ProgressService:
         # Check if completed (80% threshold)
         if watch_percentage >= 80 and not progress.video_progress.is_completed:
             progress.video_progress.is_completed = True
-            progress.video_progress.completed_at = datetime.utcnow()
+            progress.video_progress.completed_at = datetime.now(timezone.utc)
             progress.is_completed = True
-            progress.completed_at = datetime.utcnow()
+            progress.completed_at = datetime.now(timezone.utc)
             
             # Unlock next lesson
             await self._unlock_next_lesson(lesson, user_id)
@@ -74,7 +74,7 @@ class ProgressService:
         # Always update enrollment progress for real-time updates
         await self._update_enrollment_progress(enrollment.id, str(lesson.course_id))
         
-        progress.last_accessed = datetime.utcnow()
+        progress.last_accessed = datetime.now(timezone.utc)
         await progress.save()
         
         return progress
@@ -111,14 +111,14 @@ class ProgressService:
                 user_id=user_id,
                 course_id=str(lesson.course_id),
                 lesson_id=lesson_id,
-                started_at=datetime.utcnow(),
+                started_at=datetime.now(timezone.utc),
                 is_unlocked=True
             )
             await progress.save()
         
         # Update enrollment's current lesson
         enrollment.progress.current_lesson_id = lesson_id
-        enrollment.last_accessed = datetime.utcnow()
+        enrollment.last_accessed = datetime.now(timezone.utc)
         await enrollment.save()
         
         return progress
@@ -133,9 +133,9 @@ class ProgressService:
             raise ForbiddenError("Watch at least 80% of the video to complete the lesson")
         
         progress.is_completed = True
-        progress.completed_at = datetime.utcnow()
+        progress.completed_at = datetime.now(timezone.utc)
         progress.video_progress.is_completed = True
-        progress.video_progress.completed_at = datetime.utcnow()
+        progress.video_progress.completed_at = datetime.now(timezone.utc)
         
         await progress.save()
         
@@ -253,7 +253,7 @@ class ProgressService:
             enrollment.progress.is_completed = is_completed
             
             if is_completed and not enrollment.progress.completed_at:
-                enrollment.progress.completed_at = datetime.utcnow()
+                enrollment.progress.completed_at = datetime.now(timezone.utc)
                 
                 # Update user stats
                 from app.models.user import User
@@ -314,11 +314,31 @@ class ProgressService:
     
     async def _unlock_next_lesson(self, current_lesson: Lesson, user_id: str) -> None:
         """Unlock the next lesson in sequence."""
-        # Find next lesson in the same chapter
+        # First, try to find next lesson in the same chapter
         next_lesson = await Lesson.find_one({
             "chapter_id": current_lesson.chapter_id,
             "order": current_lesson.order + 1
         })
+        
+        # If no next lesson in current chapter, find first lesson of next chapter
+        if not next_lesson:
+            from app.models.chapter import Chapter
+            
+            # Get current chapter
+            current_chapter = await Chapter.get(current_lesson.chapter_id)
+            if current_chapter:
+                # Find next chapter
+                next_chapter = await Chapter.find_one({
+                    "course_id": current_chapter.course_id,
+                    "order": current_chapter.order + 1
+                })
+                
+                if next_chapter:
+                    # Get first lesson of next chapter
+                    next_lesson = await Lesson.find_one({
+                        "chapter_id": str(next_chapter.id),
+                        "order": 1
+                    })
         
         if next_lesson:
             # Create progress record for next lesson if it doesn't exist
@@ -334,6 +354,10 @@ class ProgressService:
                     lesson_id=str(next_lesson.id),
                     is_unlocked=True
                 )
+                await progress.save()
+            elif not progress.is_unlocked:
+                # Update existing progress to unlock
+                progress.is_unlocked = True
                 await progress.save()
     
     async def _update_enrollment_progress(self, enrollment_id: str, course_id: str) -> None:
@@ -353,9 +377,9 @@ class ProgressService:
         
         # Set completion timestamp if completed
         if completion_data["is_completed"] and not enrollment.progress.completed_at:
-            enrollment.progress.completed_at = datetime.utcnow()
+            enrollment.progress.completed_at = datetime.now(timezone.utc)
         
-        enrollment.updated_at = datetime.utcnow()
+        enrollment.updated_at = datetime.now(timezone.utc)
         await enrollment.save()
     
     async def get_batch_lesson_progress(self, lesson_ids: List[str], user_id: str) -> List[dict]:

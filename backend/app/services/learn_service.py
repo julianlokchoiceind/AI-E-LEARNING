@@ -285,9 +285,29 @@ class LearnService:
                         completed_count += 1
                 else:
                     # Default progress for guest users or lessons without progress
+                    # Check if this lesson should be unlocked based on previous lesson completion
+                    should_unlock = False
+                    if not user_id:  # Guest mode - all unlocked
+                        should_unlock = True
+                    elif i == 0:  # First lesson in chapter
+                        # Check if this is the first chapter or previous chapter is completed
+                        if enriched_chapters:  # Not the first chapter
+                            # Check if last lesson of previous chapter is completed
+                            prev_chapter_lessons = enriched_chapters[-1].lessons
+                            if prev_chapter_lessons and prev_chapter_lessons[-1].progress:
+                                should_unlock = prev_chapter_lessons[-1].progress.is_completed
+                            else:
+                                should_unlock = False
+                        else:  # First chapter, first lesson
+                            should_unlock = True
+                    else:  # Not first lesson in chapter
+                        # Check if previous lesson in same chapter is completed
+                        if i > 0 and enriched_lessons and enriched_lessons[-1].progress:
+                            should_unlock = enriched_lessons[-1].progress.is_completed
+                    
                     lesson_schema.progress = LessonProgressSchema(
                         lesson_id=str(lesson.id),
-                        is_unlocked=i == 0 or not user_id,  # First lesson or guest mode
+                        is_unlocked=should_unlock,
                         is_completed=False,
                         video_progress=VideoProgressSchema()
                     )

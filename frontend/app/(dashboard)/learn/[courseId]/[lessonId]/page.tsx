@@ -364,9 +364,6 @@ export default function OptimizedLessonPlayerPage() {
   const [chapters, setChapters] = useState(initialChapters);
   
   // 🎯 OPTIMISTIC UI STATE - for immediate feedback
-  const [videoProgress, setVideoProgress] = useState(
-    lesson?.progress?.video_progress?.watch_percentage || 0
-  );
   const [actualVideoProgress, setActualVideoProgress] = useState(
     lesson?.progress?.video_progress?.watch_percentage || 0
   );
@@ -374,7 +371,6 @@ export default function OptimizedLessonPlayerPage() {
   // Sync optimistic state with server data
   useEffect(() => {
     if (lesson?.progress?.video_progress?.watch_percentage !== undefined) {
-      setVideoProgress(lesson.progress.video_progress.watch_percentage);
       setActualVideoProgress(lesson.progress.video_progress.watch_percentage);
     }
   }, [lesson?.progress?.video_progress?.watch_percentage]);
@@ -455,10 +451,7 @@ export default function OptimizedLessonPlayerPage() {
   actualVideoProgressRef.current = actualVideoProgress;
 
   // Video event handlers
-  const handleVideoProgress = useCallback((percentage: number, actualPercentage: number) => {
-    // Optimistic UI update for immediate feedback
-    setVideoProgress(percentage);
-    
+  const handleVideoProgress = useCallback((_percentage: number, actualPercentage: number) => {
     // Only update actualVideoProgress if it's higher (maintain highest reached)
     setActualVideoProgress(prev => Math.max(prev, actualPercentage));
     
@@ -556,7 +549,7 @@ export default function OptimizedLessonPlayerPage() {
     setCurrentVideoTime(currentTime);
   }, []);
 
-  const handleVideoPause = useCallback((percentage: number, videoTime: number) => {
+  const handleVideoPause = useCallback((_percentage: number, videoTime: number) => {
     setIsVideoPlaying(false);
     if (!isPreviewMode && actualVideoProgress > 0) {
       // Save immediately on pause - use actualVideoProgress (highest reached)
@@ -792,28 +785,37 @@ export default function OptimizedLessonPlayerPage() {
                                 ? 'hover:bg-green-50 cursor-pointer'
                                 : isUnlocked || isPreviewMode
                                 ? 'hover:bg-gray-50 cursor-pointer'
-                                : 'opacity-50 cursor-not-allowed'
+                                : 'opacity-60 cursor-not-allowed bg-gray-50'
                               }
                             `}
                           >
                             <div className="flex items-center flex-1 min-w-0">
-                              {/* Status Icon */}
+                              {/* Status Icon - Following Coursera/Udemy patterns */}
                               <div className="mr-3 flex-shrink-0">
                                 {lessonProgress?.is_completed && (!isCurrentLesson || actualVideoProgress >= 95) ? (
+                                  // Completed: Green checkmark
                                   <CheckCircle className="w-5 h-5 text-green-600" />
                                 ) : isCurrentLesson && actualVideoProgress >= 80 ? (
+                                  // Almost complete: Yellow clock
                                   <Clock className="w-5 h-5 text-yellow-500" />
                                 ) : isCurrentLesson && actualVideoProgress > 0 ? (
+                                  // In progress: Blue play circle
                                   <PlayCircle className="w-5 h-5 text-blue-500" />
-                                ) : isUnlocked || isPreviewMode ? (
-                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                    isCurrentLesson ? 'border-blue-600 bg-blue-600' : 'border-gray-400'
-                                  }`}>
-                                    {isCurrentLesson && <div className="w-2 h-2 bg-white rounded-full" />}
+                                ) : !isUnlocked && !isPreviewMode ? (
+                                  // Locked: Gray lock icon
+                                  <div className="w-5 h-5 flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                    </svg>
                                   </div>
                                 ) : (
-                                  <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center">
-                                    <div className="w-2 h-2 bg-gray-500 rounded-full" />
+                                  // Unlocked but not started: Circle with dot inside (same color)
+                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                    isCurrentLesson ? 'border-blue-600' : 'border-gray-400'
+                                  }`}>
+                                    <div className={`w-2 h-2 rounded-full ${
+                                      isCurrentLesson ? 'bg-blue-600' : 'bg-gray-400'
+                                    }`} />
                                   </div>
                                 )}
                               </div>
@@ -825,25 +827,35 @@ export default function OptimizedLessonPlayerPage() {
                                 </div>
                                 <div className="flex items-center text-xs text-gray-500 mt-1">
                                   <Clock className="w-3 h-3 mr-1" />
-                                  <span>
-                                    {chapterLesson.id === lessonId && currentVideoDuration 
-                                      ? formatDuration(currentVideoDuration)
-                                      : chapterLesson.video?.youtube_url
-                                      ? formatDuration(chapterLesson.video?.duration || 0)
-                                      : 'No video'
+                                  <span className={!isUnlocked && !isPreviewMode ? 'text-gray-400' : ''}>
+                                    {chapterLesson.video?.youtube_url
+                                      ? (
+                                          // Always show duration for all lessons (best practice)
+                                          (chapterLesson.id === lessonId && currentVideoDuration) 
+                                            ? formatDuration(currentVideoDuration)
+                                            : chapterLesson.video?.duration && chapterLesson.video.duration > 0
+                                            ? formatDuration(chapterLesson.video.duration)
+                                            : 'Pending' // Duration not yet fetched
+                                        )
+                                      : '-'
                                     }
                                   </span>
-                                  {isCurrentLesson && (
+                                  {/* Show status badge - use actualVideoProgress for current lesson */}
+                                  {(isCompleted || (isCurrentLesson && actualVideoProgress > 0) || (!isCurrentLesson && (lessonProgress?.video_progress?.watch_percentage ?? 0) > 0)) && (
                                     <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
-                                      actualVideoProgress >= 95
+                                      isCompleted
                                         ? 'bg-green-100 text-green-700'
-                                        : actualVideoProgress >= 80
+                                        : isCurrentLesson && actualVideoProgress >= 95
+                                        ? 'bg-green-100 text-green-700'
+                                        : isCurrentLesson && actualVideoProgress >= 80
                                         ? 'bg-yellow-100 text-yellow-700'
                                         : 'bg-blue-100 text-blue-700'
                                     }`}>
-                                      {actualVideoProgress >= 95
+                                      {isCompleted 
                                         ? 'Completed'
-                                        : actualVideoProgress >= 80
+                                        : isCurrentLesson && actualVideoProgress >= 95
+                                        ? 'Completed'
+                                        : isCurrentLesson && actualVideoProgress >= 80
                                         ? 'Ready'
                                         : 'Current'
                                       }
@@ -853,17 +865,23 @@ export default function OptimizedLessonPlayerPage() {
                               </div>
                             </div>
                             
-                            {/* Progress indicator for current lesson - Real-time sync */}
-                            {isCurrentLesson && (
+                            {/* Progress indicator - Realtime for current, DB for others */}
+                            {(lessonProgress?.video_progress || isCurrentLesson) && (
                               <div className="ml-2 flex-shrink-0">
                                 <div className={`w-12 text-right text-xs font-medium ${
-                                  actualVideoProgress >= 95
+                                  isCompleted
                                     ? 'text-green-600'
-                                    : actualVideoProgress >= 80
-                                    ? 'text-yellow-600'
-                                    : 'text-blue-600'
+                                    : isCurrentLesson
+                                    ? 'text-blue-600'
+                                    : (lessonProgress?.video_progress?.watch_percentage ?? 0) > 0
+                                    ? 'text-blue-600'
+                                    : 'text-gray-600'
                                 }`}>
-                                  {Math.round(actualVideoProgress)}%
+                                  {/* Current lesson: realtime %, Others: DB % */}
+                                  {isCurrentLesson
+                                    ? `${Math.round(actualVideoProgress)}%`
+                                    : `${Math.round(lessonProgress?.video_progress?.watch_percentage ?? 0)}%`
+                                  }
                                 </div>
                               </div>
                             )}
@@ -935,7 +953,7 @@ export default function OptimizedLessonPlayerPage() {
               handleVideoPlay={handleVideoPlay}
               currentVideoTime={currentVideoTime}
               currentVideoDuration={currentVideoDuration}
-              videoProgress={videoProgress}
+              videoProgress={actualVideoProgress}
               actualVideoProgress={actualVideoProgress}
               navigation={navigation || undefined}
             />
@@ -986,7 +1004,7 @@ export default function OptimizedLessonPlayerPage() {
             <QuizSection
               hasQuiz={lesson.has_quiz}
               showQuiz={showQuiz}
-              videoProgress={videoProgress}
+              videoProgress={actualVideoProgress}
               isCompleted={lesson.progress?.is_completed || false}
               lessonId={lessonId}
               handleQuizComplete={handleQuizComplete}
