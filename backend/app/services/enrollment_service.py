@@ -113,7 +113,22 @@ class EnrollmentService:
         return enrollment
     
     async def get_user_enrollments(self, user_id: str) -> List[Enrollment]:
-        """Get all courses a user is enrolled in."""
+        """Get all courses a user is enrolled in with updated progress."""
+        enrollments = await Enrollment.find({
+            "user_id": user_id,
+            "is_active": True
+        }).sort(-Enrollment.enrolled_at).to_list()
+        
+        # Recalculate progress for each enrollment to ensure it's up-to-date
+        # (handles cases where course structure changed - lessons became draft/published)
+        from app.services.progress_service import progress_service
+        for enrollment in enrollments:
+            await progress_service.calculate_course_completion(
+                enrollment.course_id, 
+                user_id
+            )
+        
+        # Refresh enrollments to get updated progress
         enrollments = await Enrollment.find({
             "user_id": user_id,
             "is_active": True
