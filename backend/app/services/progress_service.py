@@ -169,8 +169,14 @@ class ProgressService:
         # Get lessons through chapters to match UI display
         from app.models.chapter import Chapter
         
-        # Get all chapters for this course
-        chapters = await Chapter.find({"course_id": course_id}).sort([("order", 1)]).to_list()
+        # ULTRATHINK: Chapters được ưu tiên cao nhất! 
+        # Chỉ lấy PUBLISHED chapters trước, sau đó mới lấy PUBLISHED lessons
+        
+        # Get only PUBLISHED chapters for this course
+        chapters = await Chapter.find({
+            "course_id": course_id, 
+            "status": "published"
+        }).sort([("order", 1)]).to_list()
         
         if not chapters:
             return {
@@ -180,10 +186,13 @@ class ProgressService:
                 "is_completed": False
             }
         
-        # Get all lessons from chapters (only lessons that UI shows)
+        # Get only PUBLISHED lessons from PUBLISHED chapters
         lessons = []
         for chapter in chapters:
-            chapter_lessons = await Lesson.find({"chapter_id": str(chapter.id)}).sort([("order", 1)]).to_list()
+            chapter_lessons = await Lesson.find({
+                "chapter_id": str(chapter.id),
+                "status": "published"
+            }).sort([("order", 1)]).to_list()
             lessons.extend(chapter_lessons)
         
         total_lessons = len(lessons)
