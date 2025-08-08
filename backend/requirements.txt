@@ -25,8 +25,7 @@ msal
 requests
 anthropic
 
-# Email
-aiosmtplib
+# Email (using Microsoft Graph API)
 
 # Testing
 pytest
@@ -42,7 +41,6 @@ sentry-sdk[fastapi]
 
 # Utilities
 python-dotenv
-pyyaml
 python-slugify
 
 # Report Generation

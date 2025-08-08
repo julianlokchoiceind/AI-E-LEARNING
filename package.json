@@ -18,10 +18,7 @@
     "install:all": "npm install && cd frontend && npm install && cd ../backend && pip install -r requirements.txt",
     "lint": "npm run lint:frontend && npm run lint:backend",
     "lint:frontend": "cd frontend && npm run lint",
-    "lint:backend": "cd backend && ruff check .",
-    "debug:courses": "node debug-course-management.js",
-    "debug:api": "node -e \"require('./debug-course-management.js').testApiEndpointsDirectly()\"",
-    "debug:full": "npm run debug:api && npm run debug:courses"
+    "lint:backend": "cd backend && ruff check ."
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
