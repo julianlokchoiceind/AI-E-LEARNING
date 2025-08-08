@@ -38,8 +38,11 @@ export interface RecentCourse {
 export interface UpcomingLesson {
   course_id: string;
   course_title: string;
+  lesson_id: string | null;
   lesson_title: string;
-  estimated_time: number;
+  chapter_title: string | null;
+  estimated_time: number | null;
+  lesson_order: number;
 }
 
 export interface DashboardData {

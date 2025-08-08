@@ -45,8 +45,11 @@ interface DashboardData {
   upcoming_lessons: Array<{
     course_id: string;
     course_title: string;
+    lesson_id: string | null;
     lesson_title: string;
-    estimated_time: number;
+    chapter_title: string | null;
+    estimated_time: number | null;
+    lesson_order: number;
   }>;
   certificates_earned: number;
 }
@@ -284,11 +287,34 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {dashboardData.upcoming_lessons.map((lesson: any, index: number) => (
-                  <Card key={index} className="p-4">
-                    <p className="font-medium text-sm">{lesson.lesson_title}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {lesson.course_title} • {lesson.estimated_time} min
-                    </p>
+                  <Card 
+                    key={index} 
+                    className={`p-4 ${lesson.lesson_id ? 'hover:bg-gray-50 cursor-pointer transition-colors' : ''}`}
+                    onClick={() => {
+                      if (lesson.lesson_id) {
+                        router.push(`/learn/${lesson.course_id}/${lesson.lesson_id}`);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">
+                          {lesson.lesson_title}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {lesson.course_title}
+                          {lesson.chapter_title && (
+                            <span> • {lesson.chapter_title}</span>
+                          )}
+                          {lesson.estimated_time && lesson.estimated_time > 0 && (
+                            <span> • {lesson.estimated_time} min</span>
+                          )}
+                        </p>
+                      </div>
+                      {lesson.lesson_id && (
+                        <span className="text-primary text-xs">→</span>
+                      )}
+                    </div>
                   </Card>
                 ))}
               </div>

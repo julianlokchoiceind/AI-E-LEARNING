@@ -5,6 +5,8 @@ from app.models.user import User
 from app.models.enrollment import Enrollment
 from app.models.progress import Progress
 from app.models.course import Course
+from app.models.lesson import Lesson
+from app.models.chapter import Chapter
 from app.core.deps import get_current_user
 from app.services.enrollment_service import enrollment_service
 from app.services.progress_service import progress_service
@@ -288,17 +290,56 @@ async def get_dashboard_data(
         await current_user.save()
         
         # Get upcoming lessons (next lesson in each in-progress course)
+        # Sort enrollments by last_accessed to get most recently accessed courses
+        sorted_enrollments = sorted(
+            [e for e in enrollments if not e.progress.is_completed],
+            key=lambda e: e.last_accessed or e.enrolled_at,
+            reverse=True
+        )[:5]  # Limit to top 5 for processing
+        
         upcoming_lessons = []
-        for enrollment in enrollments:
-            if not enrollment.progress.is_completed:
-                # This is a simplified version - in production, you'd get the actual next lesson
+        for enrollment in sorted_enrollments:
+            # Get the smart continue lesson ID
+            from app.services.learn_service import LearnService
+            continue_lesson_id = await LearnService._get_smart_continue_lesson_id(
+                enrollment, user_id, str(enrollment.course_id)
+            )
+            
+            if continue_lesson_id:
+                # Fetch the actual lesson details
+                lesson = await Lesson.get(continue_lesson_id)
+                course = await Course.get(enrollment.course_id)
+                
+                if lesson and course:
+                    # Get chapter information for context
+                    chapter = await Chapter.get(lesson.chapter_id) if lesson.chapter_id else None
+                    
+                    # Only include estimated_time if lesson has video duration
+                    estimated_time = None
+                    if lesson.video and lesson.video.duration:
+                        estimated_time = lesson.video.duration // 60  # Convert seconds to minutes
+                    
+                    upcoming_lessons.append({
+                        "course_id": str(course.id),
+                        "course_title": course.title,
+                        "lesson_id": str(lesson.id),
+                        "lesson_title": lesson.title,
+                        "chapter_title": chapter.title if chapter else None,
+                        "estimated_time": estimated_time,  # None if no duration available
+                        "lesson_order": lesson.order if hasattr(lesson, 'order') else 0
+                    })
+            else:
+                # Course has no more lessons but not marked as completed
                 course = await Course.get(enrollment.course_id)
                 if course:
                     upcoming_lessons.append({
                         "course_id": str(course.id),
                         "course_title": course.title,
-                        "lesson_title": "Next lesson in course",  # Simplified
-                        "estimated_time": 15  # minutes
+                        "lesson_id": None,
+                        "lesson_title": "No new lessons available",
+                        "chapter_title": None,
+                        "estimated_time": None,  # No duration for completed courses
+                        "lesson_order": 0
                     })
         
         # Prepare dashboard data

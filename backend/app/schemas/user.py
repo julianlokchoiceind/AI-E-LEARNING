@@ -102,8 +102,11 @@ class RecentCourse(BaseModel):
 class UpcomingLesson(BaseModel):
     course_id: str
     course_title: str
+    lesson_id: Optional[str] = None
     lesson_title: str
-    estimated_time: int  # in minutes
+    chapter_title: Optional[str] = None
+    estimated_time: Optional[int] = None  # in minutes, None if not available
+    lesson_order: int = 0
 
 class DashboardUser(BaseModel):
     id: str
