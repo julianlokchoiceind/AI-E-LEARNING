@@ -240,19 +240,11 @@ async def get_dashboard_data(
         for enrollment in recent_enrollments:
             course = await Course.get(enrollment.course_id)
             if course:
-                # Get the next lesson to continue
-                continue_lesson_id = None
-                if enrollment.progress.current_lesson_id:
-                    continue_lesson_id = enrollment.progress.current_lesson_id
-                else:
-                    # Get first lesson if no current lesson
-                    from app.models.lesson import Lesson
-                    first_lesson = await Lesson.find_one(
-                        {"course_id": course.id},
-                        sort=[("order", 1)]
-                    )
-                    if first_lesson:
-                        continue_lesson_id = str(first_lesson.id)
+                # Get the smart continue lesson ID
+                from app.services.learn_service import LearnService
+                continue_lesson_id = await LearnService._get_smart_continue_lesson_id(
+                    enrollment, str(current_user.id), str(course.id)
+                )
                 
                 # Simple time ago calculation
                 last_accessed_display = "Never"

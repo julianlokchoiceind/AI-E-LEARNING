@@ -12,6 +12,7 @@ import { LessonBreadcrumbs } from '@/components/seo/Breadcrumbs';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { ToastService } from '@/lib/toast/ToastService';
 import { formatDuration, formatDurationHuman } from '@/lib/utils/time';
+import { api } from '@/lib/api/api-client';
 
 // Calculate remaining time based on unfinished lessons
 const calculateRemainingTime = (lessons: any[], progressMap: any) => {
@@ -396,6 +397,17 @@ export default function OptimizedLessonPlayerPage() {
       }
     }
   }, [lessonId, chapters]);
+
+  // Update current_lesson_id when user navigates to a lesson
+  useEffect(() => {
+    if (lessonId && !isPreviewMode && !isLoading) {
+      // Call existing API to update current_lesson_id in enrollment
+      api.post(`/progress/lessons/${lessonId}/start`)
+        .catch(() => {
+          // Silent fail is OK - not critical for viewing
+        });
+    }
+  }, [lessonId, isPreviewMode, isLoading]);
 
   // Calculate course progress from consolidated data
   const courseProgress = useMemo(() => {

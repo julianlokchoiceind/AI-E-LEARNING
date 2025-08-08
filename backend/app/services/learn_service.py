@@ -221,7 +221,7 @@ class LearnService:
                 continue
         
         return {
-            'enrollment': LearnService._serialize_enrollment(enrollment) if enrollment else None,
+            'enrollment': await LearnService._serialize_enrollment(enrollment, user_id) if enrollment else None,
             'progress_map': progress_map,
             'is_preview_mode': enrollment is None,
             'total_watch_time_minutes': round(total_watch_time / 60, 1)
@@ -453,15 +453,20 @@ class LearnService:
         return LessonSchema(**lesson_dict)
 
     @staticmethod
-    def _serialize_enrollment(enrollment: Enrollment) -> EnrollmentSchema:
+    async def _serialize_enrollment(enrollment: Enrollment, user_id: str) -> EnrollmentSchema:
         """Serialize enrollment data following existing patterns."""
+        # Get smart continue_lesson_id
+        continue_lesson_id = await LearnService._get_smart_continue_lesson_id(
+            enrollment, user_id, str(enrollment.course_id)
+        )
+        
         course_progress = CourseProgressSchema(
             total_lessons=enrollment.progress.total_lessons or 0,
             completed_lessons=enrollment.progress.lessons_completed or 0,
             completion_percentage=enrollment.progress.completion_percentage or 0.0,
             is_completed=enrollment.progress.is_completed or False,
             current_lesson_id=enrollment.progress.current_lesson_id,
-            continue_lesson_id=enrollment.progress.current_lesson_id,  # Same as current for now
+            continue_lesson_id=continue_lesson_id,
             last_accessed=enrollment.last_accessed,
             completed_at=enrollment.progress.completed_at
         )
@@ -561,6 +566,70 @@ class LearnService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to update progress: {str(e)}"
             )
+
+    @staticmethod
+    async def _get_smart_continue_lesson_id(
+        enrollment: Enrollment, 
+        user_id: str, 
+        course_id: str
+    ) -> Optional[str]:
+        """
+        Get the smart continue lesson ID.
+        Returns the current lesson if not completed, otherwise finds the next incomplete lesson.
+        Handles multi-chapter scenarios properly.
+        """
+        # If has current_lesson_id, check if it's completed
+        if enrollment.progress.current_lesson_id:
+            # Check if current lesson is completed
+            progress = await Progress.find_one({
+                "lesson_id": enrollment.progress.current_lesson_id,
+                "user_id": user_id
+            })
+            
+            if not progress or not progress.is_completed:
+                # Current lesson not completed, continue with it
+                return enrollment.progress.current_lesson_id
+        
+        # Current lesson is completed or no current lesson, find next incomplete
+        return await LearnService._find_first_incomplete_lesson(course_id, user_id)
+    
+    @staticmethod
+    async def _find_first_incomplete_lesson(course_id: str, user_id: str) -> Optional[str]:
+        """
+        Find the first incomplete lesson in the course.
+        Properly handles multi-chapter courses by iterating through chapters in order.
+        """
+        # Convert course_id to ObjectId for MongoDB query
+        course_obj_id = PydanticObjectId(course_id) if isinstance(course_id, str) else course_id
+        
+        # Get all published chapters sorted by order
+        chapters = await Chapter.find({
+            "course_id": course_obj_id,
+            "status": "published"
+        }).sort([("order", 1)]).to_list()
+        
+        # Iterate through each chapter in order
+        for chapter in chapters:
+            # Get all published lessons in this chapter sorted by order
+            lessons = await Lesson.find({
+                "chapter_id": chapter.id,
+                "status": "published"
+            }).sort([("order", 1)]).to_list()
+            
+            # Check each lesson in the chapter
+            for lesson in lessons:
+                # Check if this lesson has progress
+                progress = await Progress.find_one({
+                    "lesson_id": str(lesson.id),
+                    "user_id": user_id
+                })
+                
+                # Found an incomplete lesson - return it
+                if not progress or not progress.is_completed:
+                    return str(lesson.id)
+        
+        # All lessons completed - return None
+        return None
 
 
 # Create service instance
