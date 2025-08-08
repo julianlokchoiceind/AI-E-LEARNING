@@ -421,8 +421,8 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
             onProgress(percentage, currentActualPercentage);
           }
 
-          // Check for 80% completion based on actual progress
-          if (currentActualPercentage >= 80 && !hasCompletedOnce) {
+          // Check for 95% completion based on actual progress
+          if (currentActualPercentage >= 95 && !hasCompletedOnce) {
             setHasCompletedOnce(true);
             if (onComplete && isMountedRef.current) {
               onComplete();
@@ -692,7 +692,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   }, [isDragging, handleTouchMove, handleTouchEnd]);
 
   const handleNextLesson = () => {
-    if (nextLessonId && actualVideoProgress >= 80) {
+    if (nextLessonId && actualVideoProgress >= 95) {
       router.push(`/learn/${courseId}/${nextLessonId}`);
     }
   };
@@ -945,7 +945,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                 )}
 
                 {/* Next Lesson Button */}
-                {nextLessonId && actualVideoProgress >= 80 && (
+                {nextLessonId && actualVideoProgress >= 95 && (
                   <button
                     onClick={handleNextLesson}
                     className={`bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors ${
@@ -1021,12 +1021,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           )}
         </div>
 
-        {/* Sequential Learning Notice */}
-        {actualVideoProgress < 80 && !isMobile && (
-          <div className="absolute top-4 right-4 bg-yellow-500/90 text-black px-3 py-1 rounded-lg text-sm">
-            Watch 80% to unlock next lesson
-          </div>
-        )}
+        {/* Sequential Learning Notice - Removed from video overlay */}
         
         {/* Loading Indicator */}
         {isLoading && (

@@ -172,7 +172,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
               {/* Progress - FIXED consistency issue */}
               <div className="flex items-center">
                 <div className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
-                  actualVideoProgress >= 80 ? 'bg-green-500' : 'bg-blue-500'
+                  actualVideoProgress >= 95 ? 'bg-green-500' : 'bg-blue-500'
                 }`}>
                   <div className="w-2 h-2 bg-white rounded-full"></div>
                 </div>
@@ -199,7 +199,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
               <div className="flex items-center">
                 {progress?.is_completed && actualVideoProgress >= 95 ? (
                   <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                ) : actualVideoProgress >= 80 ? (
+                ) : actualVideoProgress >= 95 ? (
                   <Clock className="w-4 h-4 mr-2 text-yellow-500" />
                 ) : (
                   <PlayCircle className="w-4 h-4 mr-2 text-blue-500" />
@@ -209,13 +209,13 @@ const VideoSection = React.memo<VideoSectionProps>(({
                   <div className={`font-medium text-sm ${
                     progress?.is_completed && actualVideoProgress >= 95
                       ? 'text-green-600' 
-                      : actualVideoProgress >= 80
+                      : actualVideoProgress >= 95
                       ? 'text-yellow-600'
                       : 'text-gray-600'
                   }`}>
                     {progress?.is_completed && actualVideoProgress >= 95
                       ? 'Completed' 
-                      : actualVideoProgress >= 80
+                      : actualVideoProgress >= 95
                       ? 'Ready to complete'
                       : 'In progress'
                     }
@@ -225,7 +225,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
             </div>
             
             {/* Progress Bar - FIXED to use consistent videoProgress */}
-            <div className="mt-3">
+            <div className="mt-6">
               <div className="flex justify-between text-xs text-gray-500 mb-1">
                 <span>Watch Progress</span>
                 <span>{Math.round(actualVideoProgress)}% watched</span>
@@ -234,7 +234,14 @@ const VideoSection = React.memo<VideoSectionProps>(({
                 value={actualVideoProgress} 
                 className="h-2"
               />
-              {actualVideoProgress >= 80 && !progress?.is_completed && (
+              {/* Sequential Learning Notice - Below progress bar */}
+              {actualVideoProgress < 95 && (
+                <div className="mt-2 text-xs text-amber-600 flex items-center">
+                  <Info className="w-3 h-3 mr-1" />
+                  Watch 95% of the video to unlock the next lesson
+                </div>
+              )}
+              {actualVideoProgress >= 95 && !progress?.is_completed && (
                 <div className="mt-2 text-xs text-yellow-600 flex items-center">
                   <Info className="w-3 h-3 mr-1" />
                   Complete the quiz below to finish this lesson
@@ -296,7 +303,7 @@ const QuizSection = React.memo<QuizSectionProps>(({
   lessonId,
   handleQuizComplete
 }) => {
-  if (!hasQuiz || (!showQuiz && (videoProgress < 80 || isCompleted))) {
+  if (!hasQuiz || (!showQuiz && (videoProgress < 95 || isCompleted))) {
     return null;
   }
 
@@ -540,8 +547,8 @@ export default function OptimizedLessonPlayerPage() {
     // Let actual progress continue naturally
     setShowQuiz(lesson?.has_quiz || false);
     
-    // Save progress at 80% completion (for unlocking next lesson)
-    if (!isPreviewMode && actualVideoProgress >= 80) {
+    // Save progress at 95% completion (for unlocking next lesson)
+    if (!isPreviewMode && actualVideoProgress >= 95) {
       updateProgress({
         progressData: {
           lesson_id: lessonId,
@@ -789,7 +796,7 @@ export default function OptimizedLessonPlayerPage() {
                               border-l-4 border-transparent
                               ${isCurrentLesson && actualVideoProgress >= 95
                                 ? 'bg-green-50 text-green-700 border-green-600'
-                                : isCurrentLesson && actualVideoProgress >= 80
+                                : isCurrentLesson && actualVideoProgress >= 95
                                 ? 'bg-yellow-50 text-yellow-700 border-yellow-600'
                                 : isCurrentLesson
                                 ? 'bg-blue-50 text-blue-700 border-blue-600'
@@ -807,7 +814,7 @@ export default function OptimizedLessonPlayerPage() {
                                 {lessonProgress?.is_completed && (!isCurrentLesson || actualVideoProgress >= 95) ? (
                                   // Completed: Green checkmark
                                   <CheckCircle className="w-5 h-5 text-green-600" />
-                                ) : isCurrentLesson && actualVideoProgress >= 80 ? (
+                                ) : isCurrentLesson && actualVideoProgress >= 95 ? (
                                   // Almost complete: Yellow clock
                                   <Clock className="w-5 h-5 text-yellow-500" />
                                 ) : isCurrentLesson && actualVideoProgress > 0 ? (
@@ -859,7 +866,7 @@ export default function OptimizedLessonPlayerPage() {
                                         ? 'bg-green-100 text-green-700'
                                         : isCurrentLesson && actualVideoProgress >= 95
                                         ? 'bg-green-100 text-green-700'
-                                        : isCurrentLesson && actualVideoProgress >= 80
+                                        : isCurrentLesson && actualVideoProgress >= 95
                                         ? 'bg-yellow-100 text-yellow-700'
                                         : 'bg-blue-100 text-blue-700'
                                     }`}>
@@ -867,7 +874,7 @@ export default function OptimizedLessonPlayerPage() {
                                         ? 'Completed'
                                         : isCurrentLesson && actualVideoProgress >= 95
                                         ? 'Completed'
-                                        : isCurrentLesson && actualVideoProgress >= 80
+                                        : isCurrentLesson && actualVideoProgress >= 95
                                         ? 'Ready'
                                         : 'Current'
                                       }
@@ -1023,32 +1030,6 @@ export default function OptimizedLessonPlayerPage() {
             />
 
             {/* Completion Status */}
-
-
-            {/* Next Lesson Navigation */}
-            {navigation?.next_lesson_id && actualVideoProgress >= 80 && (!lesson.has_quiz || lesson.progress?.is_completed) && (
-              <section className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm">
-                <div className="p-4 md:p-6">
-                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2">
-                        Ready for the next lesson?
-                      </h3>
-                      <p className="text-gray-600 text-sm">
-                        Continue your learning journey with the next lesson.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleNavigateLesson(navigation.next_lesson_id!)}
-                      className="w-full md:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center font-medium shadow-sm hover:shadow-md"
-                    >
-                      Continue Learning
-                      <ChevronRight className="w-5 h-5 ml-2" />
-                    </button>
-                  </div>
-                </div>
-              </section>
-            )}
           </div>
         </main>
       </div>

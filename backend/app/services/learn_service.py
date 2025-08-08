@@ -536,7 +536,7 @@ class LearnService:
             
             # Check if lesson was just completed
             lesson_completed = (
-                progress_data.watch_percentage >= 80 and 
+                progress_data.watch_percentage >= 95 and 
                 updated_progress.video_progress.is_completed
             )
             

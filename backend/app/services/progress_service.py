@@ -61,8 +61,8 @@ class ProgressService:
         progress.video_progress.current_position = current_position
         progress.video_progress.total_watch_time += 1  # Increment by 1 second
         
-        # Check if completed (80% threshold)
-        if watch_percentage >= 80 and not progress.video_progress.is_completed:
+        # Check if completed (95% threshold)
+        if watch_percentage >= 95 and not progress.video_progress.is_completed:
             progress.video_progress.is_completed = True
             progress.video_progress.completed_at = datetime.now(timezone.utc)
             progress.is_completed = True
@@ -129,8 +129,8 @@ class ProgressService:
         if not progress:
             raise NotFoundError("Progress record not found")
         
-        if progress.video_progress.watch_percentage < 80:
-            raise ForbiddenError("Watch at least 80% of the video to complete the lesson")
+        if progress.video_progress.watch_percentage < 95:
+            raise ForbiddenError("Watch at least 95% of the video to complete the lesson")
         
         progress.is_completed = True
         progress.completed_at = datetime.now(timezone.utc)
@@ -228,7 +228,7 @@ class ProgressService:
                 watch_percentage = progress.video_progress.watch_percentage
                 total_progress += watch_percentage
                 
-                # Count as completed if watch_percentage >= 80
+                # Count as completed if watch_percentage >= 95
                 if progress.is_completed:
                     completed_lessons += 1
             else:

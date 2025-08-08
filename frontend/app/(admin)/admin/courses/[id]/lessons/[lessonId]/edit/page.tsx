@@ -97,7 +97,7 @@ const LessonEditPage = () => {
         unlock_conditions: lesson.unlock_conditions || {
           previous_lesson_required: true,
           quiz_pass_required: false,
-          minimum_watch_percentage: 80
+          minimum_watch_percentage: 95
         },
         resources: resources // 🔧 CRITICAL FIX: Ensure resources are included in lessonData
       };
@@ -765,14 +765,14 @@ const LessonEditPage = () => {
                   <div className="flex items-center gap-2">
                     <Input
                       type="number"
-                      value={lessonData.unlock_conditions?.minimum_watch_percentage ?? 80}
+                      value={lessonData.unlock_conditions?.minimum_watch_percentage ?? 95}
                       onChange={(e) => setLessonData((prev: Lesson | null) => {
                         if (!prev) return null;
                         return {
                           ...prev,
                           unlock_conditions: {
                             ...prev.unlock_conditions || {},
-                            minimum_watch_percentage: parseInt(e.target.value) || 80
+                            minimum_watch_percentage: parseInt(e.target.value) || 95
                           }
                         };
                       })}

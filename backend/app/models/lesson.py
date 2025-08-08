@@ -100,7 +100,7 @@ class Lesson(Document):
                 "unlock_conditions": {
                     "previous_lesson_id": None,
                     "quiz_pass_required": False,
-                    "minimum_watch_percentage": 80
+                    "minimum_watch_percentage": 95
                 },
                 "status": "published"
             }

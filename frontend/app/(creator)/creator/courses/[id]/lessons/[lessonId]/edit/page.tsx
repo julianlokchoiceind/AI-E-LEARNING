@@ -631,7 +631,7 @@ const LessonEditPage = () => {
                   <div className="flex items-center gap-2">
                     <Input
                       type="number"
-                      value={lessonData.unlock_conditions?.minimum_watch_percentage ?? 80}
+                      value={lessonData.unlock_conditions?.minimum_watch_percentage ?? 95}
                       onChange={(e) => setLessonData((prev: Lesson | null) => ({
                         ...prev!,
                         unlock_conditions: {
