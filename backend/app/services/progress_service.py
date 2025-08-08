@@ -224,6 +224,7 @@ class ProgressService:
         # Calculate weighted average completion percentage
         total_progress = 0.0
         completed_lessons = 0
+        total_watch_time_seconds = 0.0  # Track total watch time across all lessons
         
         for lesson in lessons:
             lesson_id = str(lesson.id)
@@ -238,6 +239,9 @@ class ProgressService:
                 # Add lesson watch percentage to total
                 watch_percentage = progress.video_progress.watch_percentage
                 total_progress += watch_percentage
+                
+                # Accumulate watch time (in seconds)
+                total_watch_time_seconds += progress.video_progress.total_watch_time
                 
                 # Count as completed if watch_percentage >= 95
                 if progress.is_completed:
@@ -262,6 +266,9 @@ class ProgressService:
             enrollment.progress.total_lessons = total_lessons
             enrollment.progress.completion_percentage = completion_percentage
             enrollment.progress.is_completed = is_completed
+            
+            # Convert total watch time from seconds to minutes and update enrollment
+            enrollment.progress.total_watch_time = round(total_watch_time_seconds / 60.0, 2)
             
             if is_completed and not enrollment.progress.completed_at:
                 enrollment.progress.completed_at = datetime.now(timezone.utc)
