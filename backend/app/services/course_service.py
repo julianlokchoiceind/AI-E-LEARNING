@@ -19,6 +19,7 @@ from app.core.exceptions import (
     BadRequestException
 )
 from app.core.performance import measure_performance
+from app.services.learn_service import LearnService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -346,33 +347,10 @@ class CourseService:
         # Calculate progress percentage from enrollment
         progress_percentage = enrollment.progress.completion_percentage if enrollment.progress else 0
         
-        # Find the last accessed lesson or the first lesson
-        if enrollment.progress and enrollment.progress.current_lesson_id:
-            # Convert ObjectId to string to avoid serialization error
-            continue_lesson_id = str(enrollment.progress.current_lesson_id)
-        else:
-            # Get first lesson of the course
-            try:
-                # Step 1: Safely convert course_id
-                course_obj_id = PydanticObjectId(course_id)
-            except (ValueError, Exception):
-                # Step 2: If invalid, set to None
-                continue_lesson_id = None
-            else:
-                # Step 3: If valid, continue with queries
-                first_chapter = await Chapter.find_one(
-                    {"course_id": course_obj_id, "status": "published"},
-                    sort=[("order", 1)]
-                )
-                if first_chapter:
-                    # Use first_chapter.id directly (it's already an ObjectId)
-                    first_lesson = await Lesson.find_one(
-                        {"chapter_id": first_chapter.id, "status": "published"},
-                        sort=[("order", 1)]
-                    )
-                    continue_lesson_id = str(first_lesson.id) if first_lesson else None
-                else:
-                    continue_lesson_id = None
+        # Use smart logic to find the correct continue lesson
+        continue_lesson_id = await LearnService._get_smart_continue_lesson_id(
+            enrollment, user_id, course_id
+        )
         
         return {
             "progress_percentage": progress_percentage,

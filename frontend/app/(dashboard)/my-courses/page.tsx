@@ -24,6 +24,8 @@ interface EnrolledCourse {
     total_watch_time: number;
     is_completed: boolean;
     last_accessed?: string;
+    current_lesson_id?: string | null;
+    continue_lesson_id?: string | null;
   };
   course: {
     id: string;
@@ -219,7 +221,9 @@ export default function MyCoursesPage() {
                 {/* Action Buttons */}
                 <div className="flex gap-2">
                   <Link
-                    href={enrollment.progress.current_lesson_id 
+                    href={enrollment.progress.continue_lesson_id 
+                      ? `/learn/${enrollment.course_id}/${enrollment.progress.continue_lesson_id}`
+                      : enrollment.progress.current_lesson_id
                       ? `/learn/${enrollment.course_id}/${enrollment.progress.current_lesson_id}`
                       : `/courses/${enrollment.course_id}`}
                     className="flex-1 text-center bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors"

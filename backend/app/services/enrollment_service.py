@@ -158,6 +158,12 @@ class EnrollmentService:
         for enrollment in enrollments:
             course = course_lookup.get(str(enrollment.course_id))
             if course:
+                # Get smart continue_lesson_id for consistency across all pages
+                from app.services.learn_service import LearnService
+                continue_lesson_id = await LearnService._get_smart_continue_lesson_id(
+                    enrollment, user_id, str(course.id)
+                )
+                
                 enrollment_dict = enrollment.dict()
                 enrollment_dict['course'] = {
                     "id": str(course.id),
@@ -171,6 +177,8 @@ class EnrollmentService:
                     "total_lessons": course.total_lessons,
                     "instructor": course.creator_name
                 }
+                # Add continue_lesson_id to progress for consistency
+                enrollment_dict['progress']['continue_lesson_id'] = continue_lesson_id
                 result.append(enrollment_dict)
         
         return result

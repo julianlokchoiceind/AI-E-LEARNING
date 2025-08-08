@@ -71,6 +71,12 @@ class ProgressService:
             # Unlock next lesson
             await self._unlock_next_lesson(lesson, user_id)
         
+        # Update enrollment's current lesson to ensure consistency
+        # This ensures the Continue button works correctly everywhere
+        enrollment.progress.current_lesson_id = lesson_id
+        enrollment.last_accessed = datetime.now(timezone.utc)
+        await enrollment.save()
+        
         # Always update enrollment progress for real-time updates
         await self._update_enrollment_progress(enrollment.id, str(lesson.course_id))
         
@@ -151,6 +157,11 @@ class ProgressService:
             "course_id": lesson.course_id
         })
         if enrollment:
+            # When completing a lesson, clear current_lesson_id so it finds the next incomplete
+            # This ensures the Continue button moves to the next lesson
+            enrollment.progress.current_lesson_id = None
+            enrollment.last_accessed = datetime.now(timezone.utc)
+            await enrollment.save()
             await self._update_enrollment_progress(enrollment.id, lesson.course_id)
         
         return progress

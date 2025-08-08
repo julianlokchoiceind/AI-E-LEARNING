@@ -197,26 +197,20 @@ const VideoSection = React.memo<VideoSectionProps>(({
               
               {/* Status */}
               <div className="flex items-center">
-                {progress?.is_completed && actualVideoProgress >= 95 ? (
+                {actualVideoProgress >= 95 ? (
                   <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                ) : actualVideoProgress >= 95 ? (
-                  <Clock className="w-4 h-4 mr-2 text-yellow-500" />
                 ) : (
                   <PlayCircle className="w-4 h-4 mr-2 text-blue-500" />
                 )}
                 <div>
                   <div className="text-gray-500 text-xs">Status</div>
                   <div className={`font-medium text-sm ${
-                    progress?.is_completed && actualVideoProgress >= 95
+                    actualVideoProgress >= 95
                       ? 'text-green-600' 
-                      : actualVideoProgress >= 95
-                      ? 'text-yellow-600'
                       : 'text-gray-600'
                   }`}>
-                    {progress?.is_completed && actualVideoProgress >= 95
+                    {actualVideoProgress >= 95
                       ? 'Completed' 
-                      : actualVideoProgress >= 95
-                      ? 'Ready to complete'
                       : 'In progress'
                     }
                   </div>
@@ -474,20 +468,23 @@ export default function OptimizedLessonPlayerPage() {
     // Only update actualVideoProgress if it's higher (maintain highest reached)
     setActualVideoProgress(prev => Math.max(prev, actualPercentage));
     
-    // Real-time sidebar sync: Update lesson progress in chapters data
+    // Real-time sidebar sync: Update lesson progress AND unlock next lesson
     if (actualPercentage >= 95 && lesson && !lesson.progress?.is_completed) {
-      // Update the current lesson's progress in the sidebar only when truly completed
-      // This triggers re-render and shows completion checkmark immediately
-      setChapters(prevChapters => 
-        prevChapters.map((chapter: ChapterData) => ({
+      setChapters(prevChapters => {
+        let shouldUnlockNext = false;
+        let nextLessonUnlocked = false;
+        
+        return prevChapters.map((chapter: ChapterData, chapterIdx: number) => ({
           ...chapter,
-          lessons: chapter.lessons.map((lessonItem: LessonData) => {
+          lessons: chapter.lessons.map((lessonItem: LessonData, lessonIdx: number) => {
+            // Mark current lesson as completed
             if (lessonItem.id === lessonId) {
+              shouldUnlockNext = true;
               return {
                 ...lessonItem,
                 progress: {
                   lesson_id: lessonId,
-                  is_unlocked: lessonItem.progress?.is_unlocked ?? true,
+                  is_unlocked: true,
                   is_completed: true,
                   video_progress: {
                     watch_percentage: actualPercentage,
@@ -502,10 +499,51 @@ export default function OptimizedLessonPlayerPage() {
                 }
               };
             }
+            
+            // Unlock next lesson in same chapter
+            if (shouldUnlockNext && !nextLessonUnlocked && lessonItem.id !== lessonId) {
+              nextLessonUnlocked = true;
+              return {
+                ...lessonItem,
+                progress: {
+                  lesson_id: lessonItem.id,
+                  is_unlocked: true,
+                  is_completed: lessonItem.progress?.is_completed ?? false,
+                  video_progress: lessonItem.progress?.video_progress ?? {
+                    watch_percentage: 0,
+                    current_position: 0,
+                    total_watch_time: 0,
+                    is_completed: false
+                  }
+                }
+              };
+            }
+            
+            // Check for next chapter's first lesson
+            if (shouldUnlockNext && !nextLessonUnlocked && 
+                lessonIdx === 0 && chapterIdx > 0 && 
+                prevChapters[chapterIdx - 1].lessons.some((l: LessonData) => l.id === lessonId)) {
+              nextLessonUnlocked = true;
+              return {
+                ...lessonItem,
+                progress: {
+                  lesson_id: lessonItem.id,
+                  is_unlocked: true,
+                  is_completed: lessonItem.progress?.is_completed ?? false,
+                  video_progress: lessonItem.progress?.video_progress ?? {
+                    watch_percentage: 0,
+                    current_position: 0,
+                    total_watch_time: 0,
+                    is_completed: false
+                  }
+                }
+              };
+            }
+            
             return lessonItem;
           })
-        }))
-      );
+        }));
+      });
     }
   }, [lessonId, isPreviewMode, lesson]);
 
@@ -862,21 +900,17 @@ export default function OptimizedLessonPlayerPage() {
                                   {/* Show status badge - use actualVideoProgress for current lesson */}
                                   {(isCompleted || (isCurrentLesson && actualVideoProgress > 0) || (!isCurrentLesson && (lessonProgress?.video_progress?.watch_percentage ?? 0) > 0)) && (
                                     <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
-                                      isCompleted
+                                      isCompleted || (isCurrentLesson && actualVideoProgress >= 95)
                                         ? 'bg-green-100 text-green-700'
-                                        : isCurrentLesson && actualVideoProgress >= 95
-                                        ? 'bg-green-100 text-green-700'
-                                        : isCurrentLesson && actualVideoProgress >= 95
-                                        ? 'bg-yellow-100 text-yellow-700'
-                                        : 'bg-blue-100 text-blue-700'
+                                        : isCurrentLesson
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : ''
                                     }`}>
-                                      {isCompleted 
+                                      {isCompleted || (isCurrentLesson && actualVideoProgress >= 95)
                                         ? 'Completed'
-                                        : isCurrentLesson && actualVideoProgress >= 95
-                                        ? 'Completed'
-                                        : isCurrentLesson && actualVideoProgress >= 95
-                                        ? 'Ready'
-                                        : 'Current'
+                                        : isCurrentLesson
+                                        ? 'Current'
+                                        : ''
                                       }
                                     </span>
                                   )}
