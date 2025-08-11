@@ -14,50 +14,56 @@
 
 ---
 
-## 📋 **WEEK 9: ADVANCED QUIZ SYSTEM & ASSESSMENT**
+## 📋 **WEEK 9: SIMPLIFIED QUIZ SYSTEM (UDEMY MODEL)**
 
-### **🎯 Week 9 Objective:** Implement comprehensive quiz system with multiple question types and automatic grading
+### **🎯 Week 9 Objective:** Implement simplified quiz system with auto-save and cross-device resume capability
 
-### **Day 43 (Monday) - Enhanced Quiz Engine**
+### **Day 43 (Monday) - Quiz Model Enhancement**
 **Backend Developer:**
 ```
-☐ Extend Quiz model for multiple question types (3 hours)
-☐ Implement true/false and fill-in-blank questions (2 hours)
-☐ Create quiz templates and question banks (2 hours)
-☐ Add quiz time limits and attempt restrictions (1 hour)
+☐ Extend Quiz model for True/False questions (2 hours)
+☐ Create QuizProgress model for auto-save system (3 hours)
+☐ Remove gamification elements from existing quiz code (1 hour)
+☐ Update quiz validation for T/F questions (2 hours)
 ```
 
 **Frontend Developer:**
 ```
-☐ Create advanced quiz taking interface (4 hours)
-☐ Implement timer and progress indicators (2 hours)
-☐ Add question navigation and review mode (2 hours)
+☐ Create True/False question component (2 hours)
+☐ Update QuizComponent to handle both question types (2 hours)
+☐ Remove timer-related UI components (1 hour)
+☐ Add save status indicator to quiz interface (1 hour)
 ```
 
-### **Day 44 (Tuesday) - Quiz Analytics & Reporting**
+### **Day 44 (Tuesday) - Auto-Save System**
 **Backend Developer:**
 ```
-☐ Implement detailed quiz analytics endpoints (3 hours)
-☐ Create quiz performance tracking (2 hours)
-☐ Add question difficulty analysis (2 hours)
-☐ Implement quiz result aggregation (1 hour)
+☐ Implement QuizProgress API endpoints (3 hours)
+  - POST /quiz/{id}/save-progress (auto-save answers)
+  - GET /quiz/{id}/progress (resume quiz)
+  - DELETE /quiz/{id}/progress (cleanup after submit)
+☐ Create auto-save service logic (2 hours)
+☐ Add quiz progress integration with lesson unlock (2 hours)
+☐ Update existing quiz submission flow (1 hour)
 ```
 
 **Frontend Developer:**
 ```
-☐ Create quiz results visualization (3 hours)
-☐ Implement learner progress charts (3 hours)
-☐ Add quiz performance dashboard (2 hours)
+☐ Implement auto-save after each answer selection (3 hours)
+☐ Create resume quiz functionality (2 hours)
+☐ Add "Continue where you left off" UI (2 hours)
+☐ Handle network errors for auto-save (1 hour)
 ```
 
-### **Day 45 (Wednesday) - AI-Powered Quiz Generation**
+### **Day 45 (Wednesday) - AI Quiz Generation (Simplified)**
 📋 **Reference:** [AI_DETAILED_IMPLEMENTATION.md](./AI_DETAILED_IMPLEMENTATION.md) - Section 2 (Quiz Generator)
 
 **Senior Fullstack Lead:**
 ```
-☐ Integrate AI for automatic quiz generation (4 hours)
-☐ Create quiz questions from lesson transcripts (3 hours)
-☐ Implement quiz quality scoring (1 hour)
+☐ Update AI service to generate True/False questions (3 hours)
+☐ Enhance existing Multiple Choice generation (2 hours)
+☐ Remove complex quiz quality scoring (1 hour)
+☐ Test AI generation for both question types (2 hours)
 ```
 
 **Payment Specialist (Starting):**
@@ -69,40 +75,51 @@
 ☐ Create payment provider comparison analysis (3 hours)
 ```
 
-### **Day 46 (Thursday) - Quiz Gamification**
-**Frontend Developer:**
-```
-☐ Add quiz badges and achievements (3 hours)
-☐ Implement streak tracking for quiz completion (2 hours)
-☐ Create leaderboards for course quizzes (2 hours)
-☐ Add social sharing for quiz achievements (1 hour)
-```
-
+### **Day 46 (Thursday) - Quiz Integration & Testing**
 **Backend Developer:**
 ```
-☐ Create achievement system backend (3 hours)
-☐ Implement point scoring and ranking (2 hours)
-☐ Add quiz completion certificates (2 hours)
-☐ Create daily/weekly quiz challenges (1 hour)
+☐ Update lesson unlock logic to check quiz completion (3 hours)
+☐ Add quiz requirement flags to lesson progression (2 hours)
+☐ Create basic quiz analytics endpoints (2 hours)
+☐ Test quiz unlock integration (1 hour)
 ```
 
-### **Day 47 (Friday) - Quiz System Testing**
+**Frontend Developer:**
+```
+☐ Update lesson UI to show quiz requirements (2 hours)
+☐ Add quiz status badges in lesson cards (2 hours)
+☐ Create clean results page with explanations (3 hours)
+☐ Test cross-device resume functionality (1 hour)
+```
+
+### **Day 47 (Friday) - Complete Testing**
 📋 **Reference:** [TESTING_STRATEGY.md](./TESTING_STRATEGY.md) - Section 2 (Feature Testing)
 
 **Entire Team:**
 ```
-☐ Comprehensive quiz system testing (3 hours)
-☐ AI quiz generation testing and refinement (2 hours)
-☐ Performance testing with large question banks (2 hours)
+☐ Test complete quiz flow (Multiple Choice + True/False) (2 hours)
+☐ Test auto-save and resume across devices (2 hours)
+☐ Test quiz unlock integration with lessons (2 hours)
+☐ Performance testing with concurrent quiz attempts (1 hour)
 ☐ Week 9 retrospective and Week 10 planning (1 hour)
 ```
 
 **Week 9 Deliverables:**
-- ✅ Complete quiz system with multiple question types
-- ✅ AI-powered quiz generation from content
-- ✅ Quiz analytics and performance tracking
-- ✅ Gamification elements (badges, streaks, leaderboards)
-- ✅ Comprehensive quiz testing completed
+- ✅ Simplified quiz system with Multiple Choice + True/False questions
+- ✅ Backend auto-save system with QuizProgress model
+- ✅ Cross-device resume capability
+- ✅ Quiz integration with lesson unlock system
+- ✅ AI generation for both question types
+- ✅ Clean, Udemy-style quiz interface
+- ✅ Basic quiz completion analytics
+
+**🚫 Removed from Original Plan:**
+- ❌ Gamification elements (badges, achievements, leaderboards)
+- ❌ Timer/time limits and exam modes
+- ❌ Fill-in-blank and matching questions
+- ❌ Question banks and daily challenges
+- ❌ Social sharing features
+- ❌ Complex analytics and reporting
 
 ---
 
