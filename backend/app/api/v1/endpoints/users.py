@@ -273,7 +273,8 @@ async def get_dashboard_data(
                     "progress": enrollment.progress.completion_percentage,
                     "last_accessed": enrollment.last_accessed,
                     "last_accessed_display": last_accessed_display,
-                    "continue_lesson_id": continue_lesson_id
+                    "continue_lesson_id": continue_lesson_id,
+                    "current_lesson_id": enrollment.progress.current_lesson_id
                 })
         
         # Calculate learning streak - Optimized utility functions

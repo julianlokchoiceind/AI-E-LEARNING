@@ -157,9 +157,8 @@ class ProgressService:
             "course_id": lesson.course_id
         })
         if enrollment:
-            # When completing a lesson, clear current_lesson_id so it finds the next incomplete
-            # This ensures the Continue button moves to the next lesson
-            enrollment.progress.current_lesson_id = None
+            # Keep current_lesson_id to track the last accessed lesson for review purposes
+            # This ensures completed courses can navigate to the last lesson for review
             enrollment.last_accessed = datetime.now(timezone.utc)
             await enrollment.save()
             await self._update_enrollment_progress(enrollment.id, lesson.course_id)

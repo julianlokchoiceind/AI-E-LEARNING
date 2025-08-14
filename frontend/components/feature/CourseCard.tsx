@@ -34,6 +34,7 @@ interface CourseCardProps {
     };
     is_enrolled?: boolean;
     continue_lesson_id?: string;
+    current_lesson_id?: string;
     progress_percentage?: number;
   };
   onEnroll?: (courseId: string) => void;
@@ -46,9 +47,15 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
   const handleEnroll = (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // If already enrolled, navigate to learning page
-    if (course.is_enrolled && course.continue_lesson_id) {
-      router.push(`/learn/${course.id}/${course.continue_lesson_id}`);
+    // If already enrolled, navigate to learning page with 3-level fallback
+    if (course.is_enrolled) {
+      if (course.continue_lesson_id) {
+        router.push(`/learn/${course.id}/${course.continue_lesson_id}`);
+      } else if (course.current_lesson_id) {
+        router.push(`/learn/${course.id}/${course.current_lesson_id}`);
+      } else {
+        router.push(`/courses/${course.id}`);
+      }
       return;
     }
     
@@ -181,7 +188,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
           {isEnrolling 
             ? 'Loading...' 
             : course.is_enrolled
-              ? (course.continue_lesson_id || (course.progress_percentage && course.progress_percentage > 0) ? 'Continue Learning' : 'Start Learning')
+              ? (course.progress_percentage && course.progress_percentage >= 95 ? 'Review Course' : course.continue_lesson_id || course.current_lesson_id || (course.progress_percentage && course.progress_percentage > 0) ? 'Continue Learning' : 'Start Learning')
               : 'View Details'
           }
         </Button>

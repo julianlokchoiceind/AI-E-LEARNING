@@ -263,10 +263,16 @@ export default function DashboardPage() {
                     </div>
                     
                     <Link
-                      href={course.continue_lesson_id ? `/learn/${course.id}/${course.continue_lesson_id}` : `/courses/${course.id}`}
+                      href={
+                        course.continue_lesson_id 
+                          ? `/learn/${course.id}/${course.continue_lesson_id}`
+                          : course.current_lesson_id
+                          ? `/learn/${course.id}/${course.current_lesson_id}`
+                          : `/courses/${course.id}`
+                      }
                       className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors"
                     >
-                      {course.continue_lesson_id || course.progress > 0 ? 'Continue' : 'Start'}
+                      {course.progress >= 95 ? 'Review' : course.continue_lesson_id || course.current_lesson_id || course.progress > 0 ? 'Continue' : 'Start'}
                     </Link>
                   </div>
                 </Card>

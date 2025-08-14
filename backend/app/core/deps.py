@@ -20,11 +20,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     """
     import logging
     logger = logging.getLogger(__name__)
-    logger.info("get_current_user called")
     
     # Extract token from Bearer header
     token = credentials.credentials
-    logger.info(f"Token extracted: {token[:20]}...")
     
     # Decode token
     user_id = decode_token(token)
@@ -71,11 +69,9 @@ async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCrede
     try:
         # Extract token from Bearer header
         token = credentials.credentials
-        logger.info(f"Token received: {token[:20]}... (length: {len(token)})")
         
         # Decode token
         user_id = decode_token(token)
-        logger.info(f"Decoded user_id: {user_id}")
         
         if not user_id:
             logger.warning("Token decode returned None")
@@ -84,7 +80,6 @@ async def get_current_user_optional(credentials: Optional[HTTPAuthorizationCrede
         # Get user from database
         try:
             user = await User.get(PydanticObjectId(user_id))
-            logger.info(f"User found: {user.email}")
             return user
         except Exception as e:
             logger.error(f"Error getting user from DB: {e}")

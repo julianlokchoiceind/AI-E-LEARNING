@@ -675,7 +675,38 @@ class LearnService:
                 if not progress or not progress.is_completed:
                     return str(lesson.id)
         
-        # All lessons completed - return None
+        # All lessons completed - return last lesson for review
+        return await LearnService._find_last_lesson_in_course(course_id)
+    
+    @staticmethod
+    async def _find_last_lesson_in_course(course_id: str) -> Optional[str]:
+        """
+        Find the last lesson in the course for review purposes.
+        Returns the lesson with the highest order in the last chapter.
+        """
+        # Convert course_id to ObjectId for MongoDB query
+        course_obj_id = PydanticObjectId(course_id) if isinstance(course_id, str) else course_id
+        
+        # Get last published chapter (highest order)
+        chapters = await Chapter.find({
+            "course_id": course_obj_id,
+            "status": "published"
+        }).sort([("order", -1)]).limit(1).to_list()
+        
+        if not chapters:
+            return None
+            
+        last_chapter = chapters[0]
+        
+        # Get last published lesson in the last chapter
+        lessons = await Lesson.find({
+            "chapter_id": last_chapter.id,
+            "status": "published"
+        }).sort([("order", -1)]).limit(1).to_list()
+        
+        if lessons:
+            return str(lessons[0].id)
+            
         return None
 
 

@@ -33,6 +33,9 @@ export interface RecentCourse {
   thumbnail?: string;
   progress: number;
   last_accessed?: string;
+  last_accessed_display?: string;
+  continue_lesson_id?: string;
+  current_lesson_id?: string;
 }
 
 export interface UpcomingLesson {

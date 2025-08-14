@@ -129,9 +129,11 @@ const CourseDetailPage = () => {
             if (error.message?.includes('already enrolled')) {
               ToastService.success('Already enrolled, redirecting...');
               
-              // Use continue_lesson_id from course data if available
+              // Use 3-level fallback: continue_lesson_id → current_lesson_id → first lesson
               if (course?.continue_lesson_id) {
                 router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
+              } else if (course?.current_lesson_id) {
+                router.push(`/learn/${courseId}/${course.current_lesson_id}`);
               } else {
                 // Fallback to first lesson
                 const firstLesson = chapters[0]?.lessons?.[0];
@@ -327,7 +329,7 @@ const CourseDetailPage = () => {
                 ) : (
                   <Button
                     onClick={() => {
-                      // Use continue_lesson_id if available
+                      // 3-level fallback: continue_lesson_id → current_lesson_id → first lesson
                       if (course.continue_lesson_id) {
                         if (isCreatorOrAdmin) {
                           router.push(
@@ -335,6 +337,13 @@ const CourseDetailPage = () => {
                           );
                         } else {
                           router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
+                        }
+                      } else if (course.current_lesson_id) {
+                        // Navigate to current lesson (last lesson for completed courses)
+                        if (isCreatorOrAdmin) {
+                          router.push(`/learn/${courseId}/${course.current_lesson_id}?preview=true`);
+                        } else {
+                          router.push(`/learn/${courseId}/${course.current_lesson_id}`);
                         }
                       } else {
                         // Fallback to first lesson
@@ -359,7 +368,9 @@ const CourseDetailPage = () => {
                     className="w-full mb-4"
                     size="lg"
                   >
-                    {course.continue_lesson_id || (course.progress_percentage && course.progress_percentage > 0)
+                    {course.progress_percentage && course.progress_percentage >= 95
+                      ? 'Review Course'
+                      : course.continue_lesson_id || course.current_lesson_id || (course.progress_percentage && course.progress_percentage > 0)
                       ? 'Continue Learning'
                       : 'Start Learning'}
                   </Button>

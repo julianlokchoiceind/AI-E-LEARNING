@@ -112,17 +112,11 @@ def decode_token(token: str) -> Optional[str]:
     logger = logging.getLogger(__name__)
     
     try:
-        logger.info(f"Attempting to decode token with algorithm: {settings.JWT_ALGORITHM}")
-        logger.info(f"Token preview: {token[:50]}...")
-        
         payload = jwt.decode(
             token, 
             settings.JWT_SECRET, 
             algorithms=[settings.JWT_ALGORITHM]
         )
-        
-        logger.info(f"Token decoded successfully. Payload keys: {list(payload.keys())}")
-        logger.info(f"Subject (sub): {payload.get('sub')}")
         
         return payload.get("sub")
     except JWTError as e:
