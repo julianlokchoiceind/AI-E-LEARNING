@@ -186,7 +186,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
     // Validate video URL (optional but if provided, check format)
     if (formData.video_url && formData.video_url.trim()) {
       const videoUrl = formData.video_url.trim();
-      const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+      const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|shorts\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
       const vimeoRegex = /(?:vimeo\.com\/)([0-9]+)/;
       
       if (!youtubeRegex.test(videoUrl) && !vimeoRegex.test(videoUrl)) {

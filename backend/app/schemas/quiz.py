@@ -5,20 +5,34 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field, validator
 from beanie import PydanticObjectId
+from app.schemas.base import PyObjectId
 
 
 class QuizQuestionBase(BaseModel):
     """Base schema for quiz questions."""
     question: str = Field(..., min_length=1, max_length=1000)
-    options: List[str] = Field(..., min_items=4, max_items=4, description="Multiple choice options")
-    correct_answer: int = Field(..., ge=0, le=3, description="Index of correct answer (0-3)")
+    type: str = Field(default="multiple_choice", pattern="^(multiple_choice|true_false)$")
+    options: List[str] = Field(..., min_items=2, max_items=4, description="Answer options (2 for T/F, 4 for MC)")
+    correct_answer: int = Field(..., ge=0, le=3, description="Index of correct answer")
     explanation: Optional[str] = Field(None, max_length=2000)
     points: int = Field(default=1, ge=1)
     
     @validator('options')
-    def validate_options(cls, v):
+    def validate_options(cls, v, values):
+        if 'type' in values:
+            if values['type'] == 'true_false' and len(v) != 2:
+                raise ValueError("True/False questions must have exactly 2 options")
+            elif values['type'] == 'multiple_choice' and len(v) != 4:
+                raise ValueError("Multiple choice questions must have exactly 4 options")
         if len(set(v)) != len(v):
             raise ValueError("Options must be unique")
+        return v
+    
+    @validator('correct_answer')
+    def validate_correct_answer(cls, v, values):
+        if 'type' in values and 'options' in values:
+            if values['type'] == 'true_false' and v > 1:
+                raise ValueError("True/False questions must have correct_answer as 0 or 1")
         return v
 
 
@@ -37,11 +51,8 @@ class QuizConfigBase(BaseModel):
     """Base schema for quiz configuration."""
     time_limit: Optional[int] = Field(None, ge=1, description="Time limit in minutes")
     pass_percentage: int = Field(default=70, ge=0, le=100)
-    max_attempts: int = Field(default=3, ge=1)
     shuffle_questions: bool = Field(default=True)
     shuffle_answers: bool = Field(default=True)
-    show_correct_answers: bool = Field(default=True)
-    immediate_feedback: bool = Field(default=True)
 
 
 class QuizBase(BaseModel):
@@ -69,9 +80,9 @@ class QuizUpdate(BaseModel):
 
 class QuizInDB(QuizBase):
     """Schema for quiz in database."""
-    id: PydanticObjectId
-    lesson_id: PydanticObjectId
-    course_id: PydanticObjectId
+    id: PyObjectId
+    lesson_id: PyObjectId
+    course_id: PyObjectId
     questions: List[QuizQuestionBase]
     total_points: int
     is_active: bool = True
@@ -84,12 +95,11 @@ class QuizInDB(QuizBase):
 
 class QuizResponse(QuizBase):
     """Schema for returning quiz to students (questions without answers)."""
-    id: PydanticObjectId
-    lesson_id: PydanticObjectId
-    course_id: PydanticObjectId
+    id: PyObjectId
+    lesson_id: PyObjectId
+    course_id: PyObjectId
     questions: List[QuizQuestionResponse]
     total_points: int
-    is_active: bool = True
     created_at: datetime
     
     class Config:
@@ -100,6 +110,12 @@ class QuizAnswerSubmit(BaseModel):
     """Schema for submitting quiz answers."""
     answers: List[int] = Field(..., description="Array of selected answer indexes")
     time_taken: Optional[int] = Field(None, ge=0, description="Time taken in seconds")
+
+
+class QuizProgressSave(BaseModel):
+    """Schema for saving quiz progress (auto-save)."""
+    saved_answers: List[int] = Field(..., description="Current answers (may include -1 for unanswered)")
+    current_question_index: int = Field(..., ge=0, description="Current question index")
 
 
 class QuizAttemptResult(BaseModel):
@@ -116,15 +132,16 @@ class QuizAttemptResult(BaseModel):
 
 class QuizProgressResponse(BaseModel):
     """Schema for user's quiz progress."""
-    quiz_id: PydanticObjectId
-    lesson_id: PydanticObjectId
-    course_id: PydanticObjectId
+    quiz_id: PyObjectId
+    lesson_id: PyObjectId
+    course_id: PyObjectId
     attempts: List[QuizAttemptResult]
     best_score: int = Field(default=0, ge=0, le=100)
     total_attempts: int = Field(default=0, ge=0)
     is_passed: bool = Field(default=False)
     passed_at: Optional[datetime] = None
     can_retry: bool = Field(..., description="Whether user can retry the quiz")
+    saved_progress: Optional[dict] = Field(None, description="Saved progress for resume")
     
     class Config:
         json_schema_extra = {

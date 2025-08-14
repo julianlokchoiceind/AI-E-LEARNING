@@ -139,7 +139,7 @@ export const createLesson = async (data: LessonCreateData): Promise<StandardResp
     // Validate video URL if provided
     if (data.video?.url) {
       const videoUrl = data.video.url.trim();
-      const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+      const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|shorts\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
       const vimeoRegex = /(?:vimeo\.com\/)([0-9]+)/;
       
       if (!youtubeRegex.test(videoUrl) && !vimeoRegex.test(videoUrl)) {
@@ -178,7 +178,7 @@ export const updateLesson = async (lessonId: string, data: LessonUpdateData): Pr
     // Validate video URL if provided
     if (data.video?.url) {
       const videoUrl = data.video.url.trim();
-      const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+      const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|shorts\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
       const vimeoRegex = /(?:vimeo\.com\/)([0-9]+)/;
       
       if (!youtubeRegex.test(videoUrl) && !vimeoRegex.test(videoUrl)) {

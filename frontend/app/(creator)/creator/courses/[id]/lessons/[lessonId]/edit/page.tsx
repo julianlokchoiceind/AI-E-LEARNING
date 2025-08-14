@@ -13,8 +13,7 @@ import {
   BookOpen,
   Clock,
   Youtube,
-  ExternalLink,
-  Plus
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -38,6 +37,9 @@ import { EmptyResourceState } from '@/components/feature/EmptyResourceState';
 import { ResourceTypeModal } from '@/components/feature/ResourceTypeModal';
 import { ResourceForm } from '@/components/feature/ResourceForm';
 import { Modal } from '@/components/ui/Modal';
+import { CreateQuizModal } from '@/components/feature/CreateQuizModal';
+import { EditQuizModal } from '@/components/feature/EditQuizModal';
+import { QuizManager } from '@/components/feature/QuizManager';
 
 // Use LessonResource from types instead of duplicate interface
 
@@ -63,6 +65,11 @@ const LessonEditPage = () => {
   // Delete confirmation state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedResourceIndex, setSelectedResourceIndex] = useState<number | null>(null);
+  
+  // Quiz workflow state
+  const [showCreateQuizModal, setShowCreateQuizModal] = useState(false);
+  const [showEditQuizModal, setShowEditQuizModal] = useState(false);
+  const [editingQuizId, setEditingQuizId] = useState<string | null>(null);
 
   // React Query hooks  
   const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId) as {
@@ -143,7 +150,7 @@ const LessonEditPage = () => {
   const handleVideoUrlChange = (url: string) => {
     // Extract YouTube ID if YouTube URL
     let youtubeId = '';
-    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    const youtubeMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([^&\s]+)/);
     if (youtubeMatch) {
       youtubeId = youtubeMatch[1];
     }
@@ -215,6 +222,54 @@ const LessonEditPage = () => {
         }
       }
     );
+  };
+
+  // Quiz workflow handlers
+  const handleCreateQuiz = () => {
+    setShowCreateQuizModal(true);
+  };
+
+  const handleQuizCreated = () => {
+    // Quiz created successfully - update lesson data to trigger autosave
+    setLessonData(prev => {
+      if (!prev) return prev;
+      return { 
+        ...prev, 
+        has_quiz: true,
+        quiz_updated_at: new Date().toISOString()
+      };
+    });
+    setShowCreateQuizModal(false);
+  };
+
+  const handleQuizDeleted = () => {
+    // Quiz deleted successfully - update lesson data to trigger autosave
+    setLessonData(prev => {
+      if (!prev) return prev;
+      return { 
+        ...prev, 
+        has_quiz: false,
+        quiz_updated_at: new Date().toISOString()
+      };
+    });
+  };
+
+  const handleEditQuiz = (quizId: string) => {
+    setEditingQuizId(quizId);
+    setShowEditQuizModal(true);
+  };
+
+  const handleQuizUpdated = () => {
+    // Quiz updated successfully - trigger autosave by updating lesson data
+    setLessonData(prev => {
+      if (!prev) return prev;
+      return { 
+        ...prev,
+        quiz_updated_at: new Date().toISOString()
+      };
+    });
+    setShowEditQuizModal(false);
+    setEditingQuizId(null);
   };
 
   if (lessonLoading) {
@@ -569,15 +624,20 @@ const LessonEditPage = () => {
             </Card>
           )}
 
-          {/* Quiz Tab */}
+          {/* Quiz Tab - Self-contained pattern */}
           {activeTab === 'quiz' && (
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Quiz Settings</h2>
-              <div className="text-center py-12 text-gray-600">
-                <HelpCircle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p>Quiz builder coming soon!</p>
-                <p className="text-sm mt-2">You'll be able to create multiple choice questions for this lesson.</p>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Lesson Quiz</h2>
               </div>
+              
+              {/* QuizManager handles its own data fetching and empty state */}
+              <QuizManager 
+                lessonId={lessonId}
+                onCreateQuiz={handleCreateQuiz}
+                onEditQuiz={handleEditQuiz}
+                onQuizDeleted={handleQuizDeleted}
+              />
             </Card>
           )}
 
@@ -731,6 +791,28 @@ const LessonEditPage = () => {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Create Quiz Modal */}
+      <CreateQuizModal
+        isOpen={showCreateQuizModal}
+        onClose={() => setShowCreateQuizModal(false)}
+        lessonId={lessonId}
+        courseId={courseId}
+        onQuizCreated={handleQuizCreated}
+      />
+
+      {/* Edit Quiz Modal */}
+      {editingQuizId && (
+        <EditQuizModal
+          isOpen={showEditQuizModal}
+          onClose={() => {
+            setShowEditQuizModal(false);
+            setEditingQuizId(null);
+          }}
+          quizId={editingQuizId}
+          onQuizUpdated={handleQuizUpdated}
+        />
       )}
     </NavigationGuard>
   );

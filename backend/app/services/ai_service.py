@@ -410,7 +410,8 @@ class AIService:
         self,
         lesson_content: str,
         difficulty: str = "intermediate",
-        num_questions: int = 5
+        num_questions: int = 5,
+        include_true_false: bool = True
     ) -> List[GeneratedQuizQuestion]:
         """
         Generate quiz questions from lesson content using AI
@@ -419,20 +420,26 @@ class AIService:
             lesson_content: The lesson content/transcript
             difficulty: Question difficulty level
             num_questions: Number of questions to generate
+            include_true_false: Whether to include True/False questions
         
         Returns:
-            List of generated quiz questions
+            List of generated quiz questions (MC and T/F)
         """
         try:
+            # Decide mix of question types
+            num_mc = num_questions // 2 if include_true_false else num_questions
+            num_tf = num_questions - num_mc if include_true_false else 0
+            
             prompt = f"""
-            Generate {num_questions} multiple choice quiz questions based on this lesson content:
+            Generate {num_questions} quiz questions based on this lesson content:
             
             {lesson_content}
             
             Requirements:
             - Difficulty level: {difficulty}
-            - Each question should have 4 options (A, B, C, D)
-            - Include the correct answer index (0-3)
+            - Generate {num_mc} Multiple Choice questions (4 options each)
+            - Generate {num_tf} True/False questions
+            - Include the correct answer index (0-3 for MC, 0-1 for T/F)
             - Provide a brief explanation for the correct answer
             - Focus on key concepts and practical understanding
             
@@ -440,9 +447,17 @@ class AIService:
             [
                 {{
                     "question": "The question text",
+                    "type": "multiple_choice",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
                     "correct_answer": 0,
                     "explanation": "Why this answer is correct"
+                }},
+                {{
+                    "question": "This is a true/false statement",
+                    "type": "true_false",
+                    "options": ["True", "False"],
+                    "correct_answer": 0,
+                    "explanation": "Why this statement is true/false"
                 }}
             ]
             """
@@ -460,7 +475,7 @@ class AIService:
             return []
     
     def _parse_quiz_response(self, ai_response: str) -> List[GeneratedQuizQuestion]:
-        """Parse AI response into quiz question format"""
+        """Parse AI response into quiz question format (supports MC and T/F)"""
         questions = []
         try:
             # Try to parse JSON response from AI
@@ -474,30 +489,50 @@ class AIService:
                 if json_match:
                     parsed_questions = json.loads(json_match.group())
                 else:
-                    # Fallback to sample question
-                    parsed_questions = [{
-                        "question": "What is the main concept discussed in this lesson?",
-                        "options": [
-                            "Concept A",
-                            "Concept B", 
-                            "Concept C",
-                            "Concept D"
-                        ],
-                        "correct_answer": 0,
-                        "explanation": "The main concept is Concept A as discussed throughout the lesson."
-                    }]
+                    # Fallback to sample questions
+                    parsed_questions = [
+                        {
+                            "question": "What is the main concept discussed in this lesson?",
+                            "type": "multiple_choice",
+                            "options": ["Concept A", "Concept B", "Concept C", "Concept D"],
+                            "correct_answer": 0,
+                            "explanation": "The main concept is Concept A as discussed throughout the lesson."
+                        },
+                        {
+                            "question": "This lesson covered advanced topics.",
+                            "type": "true_false",
+                            "options": ["True", "False"],
+                            "correct_answer": 1,
+                            "explanation": "This lesson covered basic concepts, not advanced topics."
+                        }
+                    ]
             
             # Convert to GeneratedQuizQuestion objects
             for q in parsed_questions:
+                question_type = q.get('type', 'multiple_choice')
                 options = []
-                for i, opt in enumerate(q.get('options', [])):
-                    options.append(QuizOption(
-                        text=opt,
-                        is_correct=(i == q.get('correct_answer', 0))
-                    ))
+                
+                # Handle different question types
+                if question_type == 'true_false':
+                    # True/False question - ensure only 2 options
+                    tf_options = q.get('options', ['True', 'False'])[:2]
+                    for i, opt in enumerate(tf_options):
+                        options.append(QuizOption(
+                            text=opt,
+                            is_correct=(i == q.get('correct_answer', 0))
+                        ))
+                else:
+                    # Multiple Choice question - ensure 4 options
+                    mc_options = q.get('options', ['Option A', 'Option B', 'Option C', 'Option D'])
+                    for i, opt in enumerate(mc_options[:4]):
+                        options.append(QuizOption(
+                            text=opt,
+                            is_correct=(i == q.get('correct_answer', 0))
+                        ))
                 
                 question = GeneratedQuizQuestion(
                     question=q.get('question', 'Question text'),
+                    question_type=question_type,  # Add question type
                     options=options,
                     correct_answer_index=q.get('correct_answer', 0),
                     explanation=q.get('explanation', 'Explanation not provided'),

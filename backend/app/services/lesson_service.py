@@ -135,8 +135,7 @@ class LessonService:
                 "video": lesson.video.dict() if lesson.video else None,
                 "content": lesson.content,
                 "resources": lesson.resources or [],
-                "has_quiz": False,  # Default - will be updated when quiz system is implemented
-                "quiz_required": False,  # Default - will be updated when quiz system is implemented
+                "has_quiz": lesson.has_quiz,  # Include has_quiz field from model
                 "status": lesson.status,
                 "created_at": lesson.created_at,
                 "updated_at": lesson.updated_at
@@ -144,18 +143,30 @@ class LessonService:
             
             # Add progress data if user is authenticated
             if user_id:
-                # Check if previous lesson is completed (for sequential learning)
-                prev_completed = True
-                if i > 0:
-                    prev_lesson_progress = progress_map.get(str(lessons[i-1].id))
-                    prev_completed = prev_lesson_progress.video_progress.is_completed if prev_lesson_progress else False
+                # Check if lesson is unlocked based on unlock conditions
+                is_unlocked = True
+                
+                if i > 0 and lesson.unlock_conditions:
+                    # Check previous lesson completion
+                    if lesson.unlock_conditions.previous_lesson_id:
+                        prev_lesson_progress = progress_map.get(str(lesson.unlock_conditions.previous_lesson_id))
+                        if prev_lesson_progress:
+                            # Check video completion
+                            video_completed = prev_lesson_progress.video_progress.is_completed
+                            # Check quiz requirement if enabled
+                            quiz_passed = True
+                            if lesson.unlock_conditions.quiz_pass_required and prev_lesson_progress.quiz_progress:
+                                quiz_passed = prev_lesson_progress.quiz_progress.is_passed
+                            is_unlocked = video_completed and quiz_passed
+                        else:
+                            is_unlocked = False
                 
                 lesson_dict["progress"] = {
-                    "is_unlocked": i == 0 or prev_completed,
+                    "is_unlocked": is_unlocked,
                     "is_completed": lesson_progress.video_progress.is_completed if lesson_progress else False,
                     "watch_percentage": lesson_progress.video_progress.watch_percentage if lesson_progress else 0,
                     "current_position": lesson_progress.video_progress.current_position if lesson_progress else 0,
-                    "quiz_passed": lesson_progress.quiz_progress.is_passed if lesson_progress and lesson_dict["has_quiz"] else None
+                    "quiz_passed": lesson_progress.quiz_progress.is_passed if lesson_progress and lesson_progress.quiz_progress else None
                 }
             else:
                 # Default progress for non-authenticated users
@@ -284,6 +295,7 @@ class LessonService:
             "video": lesson.video.dict() if lesson.video else None,
             "content": lesson.content,
             "resources": lesson.resources or [],
+            "has_quiz": lesson.has_quiz,  # Include has_quiz field from model
             "unlock_conditions": lesson.unlock_conditions.dict() if lesson.unlock_conditions else {},
             "status": lesson.status,
             "created_at": lesson.created_at,
@@ -410,6 +422,10 @@ class LessonService:
             if field in update_data:
                 setattr(lesson, field, update_data[field])
         
+        # Update timestamp to reflect changes
+        from datetime import datetime
+        lesson.updated_at = datetime.utcnow()
+        
         await lesson.save()
         
         # Update chapter stats if needed
@@ -464,7 +480,40 @@ class LessonService:
             course.total_duration -= lesson.video.duration // 60
         await course.save()
         
-        # TODO: Delete associated progress records
+        # Delete associated progress records
+        from app.models.progress import Progress
+        from app.models.enrollment import Enrollment
+        
+        # Delete all progress records for this lesson
+        deleted_progress = await Progress.find({
+            "lesson_id": str(lesson.id)
+        }).delete()
+        
+        # Update enrollments if this was the current lesson
+        # Use batch update for better performance
+        update_result = await Enrollment.collection.update_many(
+            {
+                "course_id": str(course.id),
+                "progress.current_lesson_id": str(lesson.id)
+            },
+            {
+                "$set": {"progress.current_lesson_id": None}
+            }
+        )
+        
+        # If any enrollments were updated, recalculate course completion
+        if update_result.modified_count > 0:
+            # Get unique user IDs from affected enrollments for progress recalculation
+            affected_enrollments = await Enrollment.find({
+                "course_id": str(course.id)
+            }).to_list()
+            
+            from app.services.progress_service import progress_service
+            unique_user_ids = set(enrollment.user_id for enrollment in affected_enrollments)
+            
+            # Update progress for each affected user
+            for user_id in unique_user_ids:
+                await progress_service.calculate_course_completion(str(course.id), user_id)
         
         # Reorder remaining lessons
         remaining_lessons = await Lesson.find(

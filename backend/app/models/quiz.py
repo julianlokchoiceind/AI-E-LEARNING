@@ -11,8 +11,9 @@ from beanie import PydanticObjectId
 class QuizQuestion(BaseModel):
     """Individual quiz question within a quiz."""
     question: str = Field(..., min_length=1, max_length=1000)
-    options: List[str] = Field(..., min_items=4, max_items=4, description="Multiple choice options")
-    correct_answer: int = Field(..., ge=0, le=3, description="Index of correct answer (0-3)")
+    type: str = Field(default="multiple_choice", pattern="^(multiple_choice|true_false)$", description="Question type")
+    options: List[str] = Field(..., min_items=2, max_items=4, description="Answer options (2 for T/F, 4 for MC)")
+    correct_answer: int = Field(..., ge=0, le=3, description="Index of correct answer")
     explanation: Optional[str] = Field(None, max_length=2000, description="Explanation for the correct answer")
     points: int = Field(default=1, ge=1, description="Points for this question")
 
@@ -21,24 +22,9 @@ class QuizConfig(BaseModel):
     """Configuration settings for quiz behavior."""
     time_limit: Optional[int] = Field(None, ge=1, description="Time limit in minutes (None = no limit)")
     pass_percentage: int = Field(default=70, ge=0, le=100)
-    max_attempts: int = Field(default=3, ge=1, description="Maximum attempts allowed")
     shuffle_questions: bool = Field(default=True)
     shuffle_answers: bool = Field(default=True)
-    show_correct_answers: bool = Field(default=True)
-    immediate_feedback: bool = Field(default=True)
 
-
-class QuizAttempt(BaseModel):
-    """Record of a quiz attempt by a student."""
-    user_id: PydanticObjectId
-    attempt_number: int = Field(..., ge=1)
-    score: int = Field(..., ge=0, le=100, description="Score percentage (0-100)")
-    total_questions: int = Field(..., ge=1)
-    correct_answers: int = Field(..., ge=0)
-    time_taken: Optional[int] = Field(None, ge=0, description="Time taken in seconds")
-    passed: bool = Field(..., description="Whether the attempt passed")
-    answers: List[int] = Field(..., description="Array of selected answer indexes")
-    attempted_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class Quiz(Document):
@@ -59,11 +45,6 @@ class Quiz(Document):
     questions: List[QuizQuestion] = Field(..., min_items=1)
     total_points: int = Field(..., ge=1, description="Total points for the quiz")
     
-    # Attempt tracking
-    attempts: List[QuizAttempt] = Field(default_factory=list)
-    
-    # Status
-    is_active: bool = Field(default=True)
     
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -75,7 +56,7 @@ class Quiz(Document):
             "lesson_id",
             "course_id",
             [("lesson_id", 1)],  # One quiz per lesson
-            [("course_id", 1), ("is_active", 1)]
+            [("course_id", 1)]
         ]
     
     class Config:
@@ -88,11 +69,8 @@ class Quiz(Document):
                 "config": {
                     "time_limit": None,
                     "pass_percentage": 70,
-                    "max_attempts": 3,
                     "shuffle_questions": True,
-                    "shuffle_answers": True,
-                    "show_correct_answers": True,
-                    "immediate_feedback": True
+                    "shuffle_answers": True
                 },
                 "questions": [
                     {
@@ -108,15 +86,13 @@ class Quiz(Document):
                         "points": 1
                     }
                 ],
-                "total_points": 1,
-                "attempts": [],
-                "is_active": True
+                "total_points": 1
             }
         }
 
 
 class QuizProgress(Document):
-    """Separate document to track user quiz progress efficiently."""
+    """Simple document to track quiz completion status."""
     
     # Relationships
     user_id: PydanticObjectId = Field(..., description="User taking the quiz")
@@ -124,16 +100,19 @@ class QuizProgress(Document):
     lesson_id: PydanticObjectId = Field(..., description="Associated lesson")
     course_id: PydanticObjectId = Field(..., description="Associated course")
     
-    # Progress tracking
-    attempts: List[QuizAttempt] = Field(default_factory=list)
-    best_score: int = Field(default=0, ge=0, le=100)
-    total_attempts: int = Field(default=0, ge=0)
-    is_passed: bool = Field(default=False)
-    passed_at: Optional[datetime] = None
+    # Simple completion tracking
+    is_completed: bool = Field(default=False, description="Whether quiz has been completed")
+    score: Optional[int] = Field(None, ge=0, le=100, description="Final score percentage")
+    answers: Optional[List[int]] = Field(None, description="Selected answer indexes")
+    passed: Optional[bool] = Field(None, description="Whether the quiz was passed")
+    time_taken: Optional[int] = Field(None, ge=0, description="Time taken in seconds")
+    completed_at: Optional[datetime] = Field(None, description="When quiz was completed")
     
-    # Timestamps
-    first_attempt_at: Optional[datetime] = None
-    last_attempt_at: Optional[datetime] = None
+    # Auto-save fields for cross-device resume (Week 9 feature)
+    saved_answers: Optional[List[int]] = Field(None, description="Saved answers during quiz")
+    current_question_index: Optional[int] = Field(None, description="Current question index")
+    is_in_progress: bool = Field(default=False, description="Quiz in progress")
+    last_saved_at: Optional[datetime] = Field(None, description="Last auto-save time")
     
     class Settings:
         name = "quiz_progress"

@@ -61,7 +61,8 @@ def lesson_to_response(lesson_dict: dict) -> LessonResponse:
         unlock_conditions=lesson_dict.get("unlock_conditions"),  # Get from dict, can be None
         status=lesson_dict["status"],
         created_at=lesson_dict["created_at"],
-        updated_at=lesson_dict["updated_at"]
+        updated_at=lesson_dict["updated_at"],
+        has_quiz=lesson_dict.get("has_quiz", False)  # Include has_quiz field
     )
 
 

@@ -90,6 +90,33 @@ The documentation has been organized into focused modules for better readability
 - **MongoDB IDs:** Backend MUST convert `_id` to `id` for frontend
 - 🚀 **Learn Page:** Use consolidated `useLearnPage` hook instead of individual hooks
 
+### 📡 API Response Pattern
+**Decision Rule for API Responses:**
+- Pydantic validation error? → Use dictionary
+- Working endpoint? → Keep current
+- New endpoint? → Use dictionary (preferred)
+
+```python
+# ✅ PREFERRED: Dictionary approach
+return StandardResponse(
+    data={"id": str(obj.id), "name": obj.name},
+    message="Success"
+)
+
+# ✅ SAFE WRAPPER: Handle both patterns
+def safe_response(data):
+    if isinstance(data, BaseModel):
+        try:
+            return data.dict()
+        except:
+            return manual_convert(data)
+    return data
+```
+
+**Why:** Prevents Pydantic v2 errors, 30-50% faster, maintains compatibility.
+
+**DON'T:** Refactor all at once | **DO:** Fix errors with dictionary, keep working code
+
 For complete development guidelines and patterns, see [Technical Architecture](./docs/03_TECHNICAL_ARCHITECTURE.md).
 
 ## 📊 Project Status

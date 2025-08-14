@@ -25,16 +25,11 @@ export function useLessonQuizQuery(lessonId: string, enabled: boolean = true, pr
   return useApiQuery(
     ['lesson-quiz', lessonId, preview],
     async () => {
-      // In preview mode, return empty quiz data
-      if (preview) {
-        return { success: true, data: null, message: 'No quiz in preview mode' };
-      }
-      
       try {
         return await quizAPI.getLessonQuiz(lessonId, preview);
       } catch (error: any) {
-        // If quiz doesn't exist (404), that's okay - not all lessons have quizzes
-        if (error.statusCode === 404) {
+        // 404 is expected when lesson has no quiz - return null data
+        if (error.statusCode === 404 || error.status === 404) {
           return { success: true, data: null, message: 'No quiz for this lesson' };
         }
         throw error;
@@ -144,7 +139,7 @@ export function useQuizQuery(quizId: string, enabled: boolean = true) {
 /**
  * Create quiz for lesson (creator/admin only)
  */
-export function useCreateQuiz() {
+export function useCreateQuiz(options?: { onSuccess?: () => void }) {
   return useApiMutation(
     async (quizData: any) => {
       return quizAPI.createQuiz(quizData);
@@ -155,6 +150,7 @@ export function useCreateQuiz() {
         ['lesson-quiz'], // Refresh lesson quiz
         ['course-content'], // Refresh course content
       ],
+      onSuccess: options?.onSuccess,
     }
   );
 }
@@ -162,7 +158,7 @@ export function useCreateQuiz() {
 /**
  * Update quiz (creator/admin only)
  */
-export function useUpdateQuiz() {
+export function useUpdateQuiz(options?: { onSuccess?: () => void }) {
   return useApiMutation(
     async ({ quizId, data }: { quizId: string; data: any }) => {
       return quizAPI.updateQuiz(quizId, data);
@@ -172,6 +168,7 @@ export function useUpdateQuiz() {
         ['quiz'], // Refresh quiz details
         ['lesson-quiz'], // Refresh lesson quiz
       ],
+      onSuccess: options?.onSuccess,
     }
   );
 }
@@ -189,6 +186,44 @@ export function useDeleteQuiz() {
         ['lesson-quiz'], // Refresh lesson quiz
         ['course-content'], // Refresh course content
       ],
+    }
+  );
+}
+
+/**
+ * Save quiz progress (auto-save)
+ */
+export function useSaveQuizProgress() {
+  return useApiMutation(
+    async ({ quizId, savedAnswers, currentQuestionIndex }: { 
+      quizId: string; 
+      savedAnswers: number[]; 
+      currentQuestionIndex: number;
+    }) => {
+      return api.post<StandardResponse<any>>(`/quizzes/${quizId}/save-progress`, {
+        saved_answers: savedAnswers,
+        current_question_index: currentQuestionIndex
+      });
+    },
+    {
+      showToast: false, // Don't show toast for auto-save
+      invalidateQueries: [
+        ['quiz-progress'], // Refresh quiz progress
+      ],
+    }
+  );
+}
+
+/**
+ * Clear quiz progress after submission
+ */
+export function useClearQuizProgress() {
+  return useApiMutation(
+    async (quizId: string) => {
+      return api.delete<StandardResponse<any>>(`/quizzes/${quizId}/progress`);
+    },
+    {
+      showToast: false, // Silent cleanup
     }
   );
 }

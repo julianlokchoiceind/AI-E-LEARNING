@@ -108,7 +108,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
 
     // Validate video URL (optional)
     if (formData.video_url && formData.video_url.trim()) {
-      const urlPattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/|vimeo\.com\/)/i;
+      const urlPattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/|embed\/)|youtu\.be\/|vimeo\.com\/)/i;
       if (!urlPattern.test(formData.video_url.trim())) {
         newErrors.video_url = 'Please enter a valid YouTube or Vimeo URL';
       }

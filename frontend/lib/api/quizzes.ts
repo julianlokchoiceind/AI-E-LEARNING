@@ -13,11 +13,8 @@ export interface QuizQuestion {
 export interface QuizConfig {
   time_limit?: number | null;
   pass_percentage: number;
-  max_attempts: number;
   shuffle_questions: boolean;
   shuffle_answers: boolean;
-  show_correct_answers: boolean;
-  immediate_feedback: boolean;
 }
 
 export interface Quiz {
@@ -59,12 +56,11 @@ export interface QuizProgress {
   quiz_id: string;
   lesson_id: string;
   course_id: string;
-  attempts: QuizAttemptResult[];
-  best_score: number;
-  total_attempts: number;
-  is_passed: boolean;
-  passed_at?: string | null;
-  can_retry: boolean;
+  is_completed: boolean;
+  score?: number | null;
+  answers?: number[] | null;
+  passed?: boolean | null;
+  completed_at?: string | null;
 }
 
 export const quizAPI = {
@@ -79,10 +75,7 @@ export const quizAPI = {
     return apiClient.get<StandardResponse<Quiz>>(`/quizzes/${quizId}`);
   },
 
-  // Get user's quiz progress
-  getQuizProgress: async (quizId: string): Promise<StandardResponse<QuizProgress>> => {
-    return apiClient.get<StandardResponse<QuizProgress>>(`/quizzes/${quizId}/progress`);
-  },
+  // Note: Quiz progress is now embedded in quiz response - no separate endpoint needed
 
   // Submit quiz answers
   submitQuiz: async (
@@ -101,6 +94,7 @@ export const quizAPI = {
     config: QuizConfig;
     questions: {
       question: string;
+      type: 'multiple_choice' | 'true_false';  // ← CRITICAL: Include type field!
       options: string[];
       correct_answer: number;
       explanation?: string;
@@ -127,5 +121,23 @@ export const quizAPI = {
   // Delete quiz (for creators/admins)
   deleteQuiz: async (quizId: string): Promise<StandardResponse<any>> => {
     return apiClient.delete<StandardResponse<any>>(`/quizzes/${quizId}`);
+  },
+
+  // Auto-save progress (Week 9 feature)
+  saveProgress: async (quizId: string, savedAnswers: number[], currentIndex: number): Promise<StandardResponse<any>> => {
+    return apiClient.post<StandardResponse<any>>(`/quizzes/${quizId}/save-progress`, {
+      saved_answers: savedAnswers,
+      current_question_index: currentIndex
+    });
+  },
+
+  // Get saved progress for resume
+  getSavedProgress: async (quizId: string): Promise<StandardResponse<any>> => {
+    return apiClient.get<StandardResponse<any>>(`/quizzes/${quizId}/progress`);
+  },
+
+  // Clear progress after submit
+  clearProgress: async (quizId: string): Promise<StandardResponse<any>> => {
+    return apiClient.delete<StandardResponse<any>>(`/quizzes/${quizId}/progress`);
   },
 };

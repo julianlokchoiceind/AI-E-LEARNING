@@ -92,6 +92,7 @@ class LessonResponse(BaseModel):
     is_unlocked: Optional[bool] = None
     is_completed: Optional[bool] = None
     progress_percentage: Optional[int] = None
+    has_quiz: Optional[bool] = False  # Added field for quiz status
     
     class Config:
         populate_by_name = True

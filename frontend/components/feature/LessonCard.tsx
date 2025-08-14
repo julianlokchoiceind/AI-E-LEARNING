@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { PlayCircle, Lock, CheckCircle, FileQuestion, Eye, Edit, Trash2, GripVertical } from 'lucide-react';
+import { PlayCircle, Lock, CheckCircle, Eye, Edit, Trash2, GripVertical, Trophy, AlertCircle, FileQuestion } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+// Quiz status helper moved inline
 
 interface LessonCardProps {
   lesson: {
@@ -13,9 +14,22 @@ interface LessonCardProps {
     order: number;
     video_duration: number;
     has_quiz: boolean;
+    quiz_required?: boolean;
     is_free_preview?: boolean;
     is_completed?: boolean;
     is_locked?: boolean;
+    progress?: {
+      is_unlocked: boolean;
+      is_completed: boolean;
+      watch_percentage: number;
+      current_position: number;
+      quiz_passed?: boolean | null;
+    };
+    unlock_conditions?: {
+      previous_lesson_required?: boolean;
+      quiz_pass_required?: boolean;
+      minimum_watch_percentage?: number;
+    };
   };
   chapterId: string;
   isEnrolled: boolean;
@@ -26,6 +40,37 @@ interface LessonCardProps {
   onDelete?: (lessonId: string) => void;
   isDraggable?: boolean;
 }
+
+// Quiz status helper functions (inline to avoid unnecessary abstraction)
+type QuizStatus = 'passed' | 'required' | 'available' | 'locked' | 'not_available';
+
+const getQuizStatus = (
+  hasQuiz: boolean,
+  quizPassed?: boolean | null,
+  quizRequired?: boolean,
+  lessonLocked?: boolean
+): QuizStatus => {
+  if (!hasQuiz) return 'not_available';
+  if (lessonLocked) return 'locked';
+  if (quizPassed) return 'passed';
+  if (quizRequired) return 'required';
+  return 'available';
+};
+
+const getQuizBadgeProps = (status: QuizStatus) => {
+  switch (status) {
+    case 'passed':
+      return { variant: 'success' as const, icon: Trophy, text: 'Quiz Passed' };
+    case 'required':
+      return { variant: 'warning' as const, icon: AlertCircle, text: 'Quiz Required' };
+    case 'available':
+      return { variant: 'info' as const, icon: FileQuestion, text: 'Quiz Available' };
+    case 'locked':
+      return { variant: 'secondary' as const, icon: Lock, text: 'Quiz Locked' };
+    default:
+      return null;
+  }
+};
 
 const LessonCard: React.FC<LessonCardProps> = ({
   lesson,
@@ -72,7 +117,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
 
         {/* Lesson Status Icon */}
         <div className="flex-shrink-0">
-          {lesson.is_completed ? (
+          {lesson.is_completed && (!lesson.has_quiz || lesson.progress?.quiz_passed) ? (
             <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
               <CheckCircle className="w-5 h-5 text-white" />
             </div>
@@ -111,12 +156,28 @@ const LessonCard: React.FC<LessonCardProps> = ({
               <PlayCircle className="w-3 h-3" />
               <span>{formatDuration(lesson.video_duration)}</span>
             </div>
-            {lesson.has_quiz && (
-              <div className="flex items-center gap-1">
-                <FileQuestion className="w-3 h-3" />
-                <span>Quiz</span>
-              </div>
-            )}
+            {(() => {
+              const status = getQuizStatus(
+                lesson.has_quiz || false,
+                lesson.progress?.quiz_passed,
+                lesson.quiz_required || lesson.unlock_conditions?.quiz_pass_required,
+                isLocked
+              );
+              const badgeProps = getQuizBadgeProps(status);
+              
+              if (!badgeProps) return null;
+              
+              const Icon = badgeProps.icon;
+              return (
+                <Badge 
+                  variant={badgeProps.variant}
+                  size="sm"
+                  icon={<Icon className="w-3 h-3" />}
+                >
+                  {badgeProps.text}
+                </Badge>
+              );
+            })()}
             {lesson.is_completed && (
               <Badge variant="secondary" className="text-xs">
                 Completed

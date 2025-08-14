@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, CheckCircle, Clock, BookOpen, Info, VideoOff, Menu, PlayCircle } from 'lucide-react';
 import { VideoPlayer } from '@/components/feature/VideoPlayer';
 import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
-import { QuizComponent } from '@/components/feature/QuizComponent';
+import { StudentQuizPlayer } from '@/components/feature/StudentQuizPlayer';
 import { ResourceDisplay } from '@/components/feature/ResourceDisplay';
 import { MobileNavigationDrawer } from '@/components/feature/MobileNavigationDrawer';
 import { LessonBreadcrumbs } from '@/components/seo/Breadcrumbs';
@@ -279,13 +279,14 @@ const VideoSection = React.memo<VideoSectionProps>(({
 
 VideoSection.displayName = 'VideoSection';
 
-// Quiz section component (unchanged)
+// Quiz section component (updated for preview mode)
 interface QuizSectionProps {
   hasQuiz: boolean;
   showQuiz: boolean;
   videoProgress: number;
   isCompleted: boolean;
   lessonId: string;
+  isPreviewMode: boolean;
   handleQuizComplete: (passed: boolean) => void;
 }
 
@@ -295,9 +296,20 @@ const QuizSection = React.memo<QuizSectionProps>(({
   videoProgress,
   isCompleted,
   lessonId,
+  isPreviewMode,
   handleQuizComplete
 }) => {
-  if (!hasQuiz || (!showQuiz && (videoProgress < 95 || isCompleted))) {
+  // Don't show quiz section if lesson doesn't have quiz
+  if (!hasQuiz) {
+    return null;
+  }
+  
+  // Show quiz when:
+  // 1. Preview mode (always show)
+  // 2. showQuiz is true (manually triggered)
+  // 3. Video progress >= 95% (auto show after watching)
+  // Note: Keep showing even if lesson is completed so users can retry
+  if (!isPreviewMode && !showQuiz && videoProgress < 95) {
     return null;
   }
 
@@ -309,13 +321,14 @@ const QuizSection = React.memo<QuizSectionProps>(({
           Quiz - Test Your Knowledge
         </h2>
         <p className="text-xs md:text-sm text-gray-600 mt-1">
-          Complete this quiz to finish the lesson and unlock the next one.
+          Check your understanding immediately after learning.
         </p>
       </div>
       <div className="p-4 md:p-6">
-        <QuizComponent
+        <StudentQuizPlayer 
           lessonId={lessonId}
           onComplete={handleQuizComplete}
+          isPreviewMode={isPreviewMode}
         />
       </div>
     </section>
@@ -547,6 +560,12 @@ export default function OptimizedLessonPlayerPage() {
     }
   }, [lessonId, isPreviewMode, lesson]);
 
+  // Show quiz immediately in preview mode
+  useEffect(() => {
+    if (isPreviewMode && lesson?.has_quiz) {
+      setShowQuiz(true);
+    }
+  }, [isPreviewMode, lesson?.has_quiz]);
 
   // Auto-save progress every 10 seconds while playing
   useEffect(() => {
@@ -1060,6 +1079,7 @@ export default function OptimizedLessonPlayerPage() {
               videoProgress={actualVideoProgress}
               isCompleted={lesson.progress?.is_completed || false}
               lessonId={lessonId}
+              isPreviewMode={isPreviewMode}
               handleQuizComplete={handleQuizComplete}
             />
 

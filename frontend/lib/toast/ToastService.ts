@@ -31,12 +31,13 @@ export class ToastService {
       duration: 5000,
       style: {
         background: 'rgba(16, 185, 129, 0.1)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)', // Safari support
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)', // Safari support
         color: '#10b981',
-        border: '2px solid #10b981',
-        padding: '16px',
-        borderRadius: '8px',
+        border: '1px solid #10b981',
+        padding: '12px',
+        borderRadius: '6px',
+        fontSize: '13px',
       },
     });
     
@@ -69,12 +70,13 @@ export class ToastService {
       duration: 5000,
       style: {
         background: 'rgba(239, 68, 68, 0.1)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)', // Safari support
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)', // Safari support
         color: '#ef4444',
-        border: '2px solid #ef4444',
-        padding: '16px',
-        borderRadius: '8px',
+        border: '1px solid #ef4444',
+        padding: '12px',
+        borderRadius: '6px',
+        fontSize: '13px',
       },
     });
     
@@ -108,12 +110,13 @@ export class ToastService {
       icon: 'ℹ️',
       style: {
         background: 'rgba(59, 130, 246, 0.1)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)', // Safari support
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)', // Safari support
         color: '#3b82f6',
-        border: '2px solid #3b82f6',
-        padding: '16px',
-        borderRadius: '8px',
+        border: '1px solid #3b82f6',
+        padding: '12px',
+        borderRadius: '6px',
+        fontSize: '13px',
       },
     });
     
@@ -145,12 +148,13 @@ export class ToastService {
       id: toastId,
       style: {
         background: 'rgba(59, 130, 246, 0.1)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)', // Safari support
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)', // Safari support
         color: '#3b82f6',
-        border: '2px solid #3b82f6',
-        padding: '16px',
-        borderRadius: '8px',
+        border: '1px solid #3b82f6',
+        padding: '12px',
+        borderRadius: '6px',
+        fontSize: '13px',
       },
     });
     
@@ -176,6 +180,7 @@ export class ToastService {
           border: '2px solid #10b981',
           padding: '16px',
           borderRadius: '8px',
+          fontSize: '13px',
         },
       });
     } else {
@@ -189,6 +194,7 @@ export class ToastService {
           border: '2px solid #ef4444',
           padding: '16px',
           borderRadius: '8px',
+          fontSize: '13px',
         },
       });
     }
@@ -260,6 +266,7 @@ export class ToastService {
           border: '2px solid #3b82f6',
           padding: '16px',
           borderRadius: '8px',
+          fontSize: '13px',
         },
       },
       success: {
@@ -272,6 +279,7 @@ export class ToastService {
           border: '2px solid #10b981',
           padding: '16px',
           borderRadius: '8px',
+          fontSize: '13px',
         },
       },
       error: {
@@ -284,6 +292,7 @@ export class ToastService {
           border: '2px solid #ef4444',
           padding: '16px',
           borderRadius: '8px',
+          fontSize: '13px',
         },
       },
     });

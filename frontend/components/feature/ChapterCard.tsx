@@ -14,9 +14,22 @@ interface Lesson {
   order: number;
   video_duration: number;
   has_quiz: boolean;
+  quiz_required?: boolean;
   is_free_preview?: boolean;
   is_completed?: boolean;
   is_locked?: boolean;
+  progress?: {
+    is_unlocked: boolean;
+    is_completed: boolean;
+    watch_percentage: number;
+    current_position: number;
+    quiz_passed?: boolean | null;
+  };
+  unlock_conditions?: {
+    previous_lesson_required?: boolean;
+    quiz_pass_required?: boolean;
+    minimum_watch_percentage?: number;
+  };
 }
 
 interface ChapterCardProps {

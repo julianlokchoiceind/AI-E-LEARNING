@@ -50,6 +50,43 @@ class LearnService:
             
             if not course:
                 raise NotFoundError(f"Course {course_id} not found")
+            
+            # If lesson not found, try to find next available lesson for enrolled users
+            if not lesson and user_id:
+                # Check if user is enrolled
+                enrollment = await Enrollment.find_one({
+                    "user_id": user_id,
+                    "course_id": course_id,
+                    "is_active": True
+                })
+                
+                if enrollment:
+                    # User is enrolled, find next incomplete lesson
+                    next_lesson_id = await LearnService._find_first_incomplete_lesson(course_id, user_id)
+                    
+                    if next_lesson_id:
+                        # Found a lesson to redirect to
+                        lesson_obj_id = PydanticObjectId(next_lesson_id)
+                        lesson = await Lesson.get(lesson_obj_id)
+                        lesson_id = next_lesson_id  # Update lesson_id for rest of the flow
+                        print(f"Info: Redirected from deleted lesson to {next_lesson_id}")
+                    else:
+                        # No incomplete lessons found, get first lesson of course
+                        first_chapter = await Chapter.find_one(
+                            {"course_id": course_obj_id, "status": "published"},
+                            sort=[("order", 1)]
+                        )
+                        if first_chapter:
+                            first_lesson = await Lesson.find_one(
+                                {"chapter_id": first_chapter.id, "status": "published"},
+                                sort=[("order", 1)]
+                            )
+                            if first_lesson:
+                                lesson = first_lesson
+                                lesson_id = str(first_lesson.id)
+                                print(f"Info: Redirected to first lesson {lesson_id}")
+            
+            # If still no lesson found, raise error
             if not lesson:
                 raise NotFoundError(f"Lesson {lesson_id} not found")
             
@@ -446,8 +483,8 @@ class LearnService:
         else:
             lesson_dict["resources"] = []
         
-        # Set default quiz fields
-        lesson_dict["has_quiz"] = False
+        # Set quiz fields from lesson data
+        lesson_dict["has_quiz"] = lesson.has_quiz if hasattr(lesson, 'has_quiz') else False
         lesson_dict["quiz_required"] = False
         
         return LessonSchema(**lesson_dict)
@@ -577,20 +614,30 @@ class LearnService:
         Get the smart continue lesson ID.
         Returns the current lesson if not completed, otherwise finds the next incomplete lesson.
         Handles multi-chapter scenarios properly.
+        Validates lesson still exists to handle deleted lessons gracefully.
         """
-        # If has current_lesson_id, check if it's completed
+        # If has current_lesson_id, check if lesson still exists and is not completed
         if enrollment.progress.current_lesson_id:
-            # Check if current lesson is completed
-            progress = await Progress.find_one({
-                "lesson_id": enrollment.progress.current_lesson_id,
-                "user_id": user_id
-            })
-            
-            if not progress or not progress.is_completed:
-                # Current lesson not completed, continue with it
-                return enrollment.progress.current_lesson_id
+            # First verify the lesson still exists in database
+            try:
+                lesson_obj_id = PydanticObjectId(enrollment.progress.current_lesson_id)
+                lesson_exists = await Lesson.get(lesson_obj_id)
+                
+                if lesson_exists:
+                    # Lesson exists, check if it's completed
+                    progress = await Progress.find_one({
+                        "lesson_id": enrollment.progress.current_lesson_id,
+                        "user_id": user_id
+                    })
+                    
+                    if not progress or not progress.is_completed:
+                        # Current lesson exists and not completed, continue with it
+                        return enrollment.progress.current_lesson_id
+            except Exception as e:
+                # Invalid lesson ID or other error, fallback to finding next lesson
+                print(f"Warning: Current lesson {enrollment.progress.current_lesson_id} not found: {e}")
         
-        # Current lesson is completed or no current lesson, find next incomplete
+        # Current lesson is completed, deleted, or no current lesson - find next incomplete
         return await LearnService._find_first_incomplete_lesson(course_id, user_id)
     
     @staticmethod

@@ -66,6 +66,7 @@ class QuizOption(BaseModel):
 class GeneratedQuizQuestion(BaseModel):
     """Generated quiz question structure"""
     question: str = Field(..., min_length=10, max_length=500)
+    question_type: str = Field(default="multiple_choice", pattern="^(multiple_choice|true_false)$")
     options: List[QuizOption] = Field(..., min_items=2, max_items=6)
     correct_answer_index: int = Field(..., ge=0)
     explanation: str = Field(..., min_length=10, max_length=500)

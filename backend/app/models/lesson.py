@@ -62,6 +62,9 @@ class Lesson(Document):
     # Lesson status
     status: str = Field(default="draft", pattern="^(draft|published)$")
     
+    # Quiz flag
+    has_quiz: bool = Field(default=False, description="Whether this lesson has a quiz")
+    
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
