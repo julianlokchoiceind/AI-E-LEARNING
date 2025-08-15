@@ -211,96 +211,95 @@
 
 ---
 
-## 📋 **WEEK 11: MULTI-PAYMENT PROVIDERS & LOCALIZATION**
+## 📋 **WEEK 11: STRIPE PAYMENT & EMAIL AUTOMATION (SIMPLIFIED)**
 
-### **🎯 Week 11 Objective:** Integrate all payment providers and implement Vietnamese localization
+### **🎯 Week 11 Objective:** Finalize Stripe payment system and implement email automation
 
-### **Day 57 (Monday) - MoMo Integration**
-**Payment Specialist:**
-```
-☐ Implement MoMo payment integration (4 hours)
-☐ Create MoMo-specific payment flows (3 hours)
-☐ Test MoMo payment processing (1 hour)
-```
-
+### **Day 57 (Monday) - Stripe Payment Foundation**
 **Backend Developer:**
 ```
-☐ Create unified payment service layer (3 hours)
-☐ Implement payment method selection logic (2 hours)
-☐ Add payment retry mechanisms (2 hours)
-☐ Create payment analytics tracking (1 hour)
-```
-
-### **Day 58 (Tuesday) - ZaloPay Integration**
-**Payment Specialist:**
-```
-☐ Implement ZaloPay payment integration (4 hours)
-☐ Create ZaloPay webhook handlers (2 hours)
-☐ Test ZaloPay payment flows (2 hours)
+☐ Setup Stripe webhook endpoint properly with real secret (2 hours)
+☐ Test webhook processing with all payment events (2 hours)
+☐ Verify payment status updates in database (2 hours)
+☐ Fix any existing bugs in payment flow (2 hours)
 ```
 
 **Frontend Developer:**
 ```
-☐ Create unified payment selection interface (3 hours)
-☐ Implement payment method recommendations (2 hours)
-☐ Add payment status tracking UI (2 hours)
-☐ Create payment history with all providers (1 hour)
+☐ Test payment flow with all Stripe test cards (2 hours)
+☐ Verify error handling and retry mechanisms (2 hours)
+☐ Test payment success redirect and enrollment (2 hours)
+☐ Fix any UI bugs in checkout process (2 hours)
 ```
 
-### **Day 59 (Wednesday) - Vietnamese Localization**
-📋 **Reference:** [INTERNATIONALIZATION.md](./INTERNATIONALIZATION.md) - Section 3 (Content Translation)
-
-**Frontend Developer:**
-```
-☐ Set up i18n infrastructure (2 hours)
-☐ Create Vietnamese translation files (4 hours)
-☐ Implement language switching (1 hour)
-☐ Test Vietnamese UI layouts (1 hour)
-```
-
+### **Day 58 (Tuesday) - Subscription Management**
 **Backend Developer:**
 ```
-☐ Add Vietnamese language support to API responses (2 hours)
-☐ Implement localized email templates (3 hours)
-☐ Create Vietnamese course content support (2 hours)
-☐ Add currency formatting for VND (1 hour)
-```
-
-### **Day 60 (Thursday) - Email Automation System**
-📋 **Reference:** [TECHNICAL_ARCHITECTURE.md](./TECHNICAL_ARCHITECTURE.md) - Section 5 (Communication Systems)
-
-**Backend Developer:**
-```
-☐ Create comprehensive email service (3 hours)
-☐ Implement welcome email automation (2 hours)
-☐ Add course enrollment confirmations (1 hour)
-☐ Create payment receipt emails (1 hour)
-☐ Implement course completion emails (1 hour)
+☐ Test subscription creation and webhook processing (2 hours)
+☐ Verify subscription status updates in user model (2 hours)
+☐ Test subscription cancellation flow (2 hours)
+☐ Implement Pro access control logic (2 hours)
 ```
 
 **Frontend Developer:**
 ```
-☐ Create email template previews (2 hours)
-☐ Implement email preference settings (3 hours)
-☐ Add unsubscribe functionality (2 hours)
-☐ Create email analytics dashboard (1 hour)
+☐ Create simple subscription management UI (3 hours)
+☐ Add subscription status display in billing page (2 hours)
+☐ Implement cancel subscription functionality (2 hours)
+☐ Test subscription upgrade/downgrade flow (1 hour)
 ```
 
-### **Day 61 (Friday) - Payment System Testing**
+### **Day 59 (Wednesday) - Email Automation**
+**Backend Developer:**
+```
+☐ Test email service with Microsoft Graph API (2 hours)
+☐ Verify payment confirmation email sending (2 hours)
+☐ Test subscription-related email notifications (2 hours)
+☐ Implement email retry logic for failed sends (2 hours)
+```
+
+**Frontend Developer:**
+```
+☐ Create simple email preference settings (3 hours)
+☐ Implement unsubscribe functionality (2 hours)
+☐ Add email status indicators in user profile (2 hours)
+☐ Test email template display (1 hour)
+```
+
+### **Day 60 (Thursday) - Simple Enhancements**
+**Backend Developer:**
+```
+☐ Add basic payment analytics endpoints (2 hours)
+☐ Implement simple coupon validation (optional) (3 hours)
+☐ Create refund processing flow for admin (2 hours)
+☐ Add payment security audit (1 hour)
+```
+
+**Frontend Developer:**
+```
+☐ Create basic payment analytics display (3 hours)
+☐ Add simple coupon input field (optional) (2 hours)
+☐ Implement admin refund interface (2 hours)
+☐ Polish payment UI and error messages (1 hour)
+```
+
+### **Day 61 (Friday) - Production Readiness**
 **Entire Team:**
 ```
-☐ Test all 4 payment providers comprehensively (3 hours)
-☐ Test Vietnamese localization across platform (2 hours)
-☐ Verify email automation workflows (2 hours)
-☐ Week 11 retrospective and mid-phase review (1 hour)
+☐ End-to-end testing of complete payment flow (2 hours)
+☐ Load testing with 10-20 concurrent payments (2 hours)
+☐ Security audit and production configuration (2 hours)
+☐ Update documentation and switch to production keys (2 hours)
 ```
 
-**Week 11 Deliverables:**
-- ✅ All 3 payment providers integrated (Stripe, MoMo, ZaloPay)
-- ✅ Vietnamese localization complete
-- ✅ Comprehensive email automation system
-- ✅ Payment analytics and reporting
-- ✅ Multi-language support infrastructure
+**Week 11 Deliverables (Simplified):**
+- ✅ Stripe payment system fully working and tested
+- ✅ Email automation verified and operational
+- ✅ Subscription management complete
+- ✅ Basic payment analytics
+- ✅ Production-ready payment system
+- ❌ ~~MoMo/ZaloPay~~ (moved to future phase)
+- ❌ ~~Vietnamese localization~~ (moved to Phase 3/4)
 
 ---
 

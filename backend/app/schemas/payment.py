@@ -28,8 +28,8 @@ class PaymentStatus(str, Enum):
 class PaymentProvider(str, Enum):
     """Payment provider enumeration"""
     STRIPE = "stripe"
-    MOMO = "momo"
-    ZALOPAY = "zalopay"
+    # MOMO = "momo"       # Future implementation
+    # ZALOPAY = "zalopay"  # Future implementation
 
 
 class PaymentMethod(str, Enum):

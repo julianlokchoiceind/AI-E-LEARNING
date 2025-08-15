@@ -22,7 +22,7 @@ class Payment(Document):
     subscription_id: Optional[str] = Field(None, description="Stripe subscription ID")
     
     # Payment provider details
-    provider: str = Field(default="stripe", description="Payment provider: stripe, momo, zalopay")
+    provider: str = Field(default="stripe", description="Payment provider: stripe")
     provider_payment_id: Optional[str] = Field(None, description="Payment ID from provider")
     provider_customer_id: Optional[str] = Field(None, description="Customer ID from provider")
     
