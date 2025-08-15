@@ -30,7 +30,7 @@ class QuizQuestionBase(BaseModel):
     
     @validator('correct_answer')
     def validate_correct_answer(cls, v, values):
-        if 'type' in values and 'options' in values:
+        if v is not None and 'type' in values and 'options' in values:
             if values['type'] == 'true_false' and v > 1:
                 raise ValueError("True/False questions must have correct_answer as 0 or 1")
         return v

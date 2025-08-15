@@ -205,10 +205,10 @@ export const useAutosave = <T = any>(
         setLastSavedAt(new Date());
         pendingSaveRef.current = false;
         
-        // Reset to idle after 3 seconds
+        // Reset to idle after 2 seconds
         setTimeout(() => {
           setSaveStatus(prev => prev === 'saved' ? 'idle' : prev);
-        }, 3000);
+        }, 2000);
       } catch (err: any) {
         console.error('🔧 [DEBOUNCED SAVE DEBUG] Save failed:', err);
         
@@ -277,7 +277,7 @@ export const useAutosave = <T = any>(
       
       setTimeout(() => {
         setSaveStatus(prev => prev === 'saved' ? 'idle' : prev);
-      }, 3000);
+      }, 2000);
       
       return true;
     } catch (err: any) {

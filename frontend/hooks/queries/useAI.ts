@@ -106,6 +106,28 @@ export function useGenerateQuizMutation() {
   );
 }
 
+/**
+ * Generate quiz from transcript (with extended timeout for AI processing)
+ */
+export function useGenerateQuizFromTranscript() {
+  return useApiMutation(
+    async (params: { 
+      transcript: string; 
+      difficulty?: string 
+    }): Promise<StandardResponse<any>> => {
+      const response = await api.post('/ai/generate-quiz-from-transcript', params, { 
+        requireAuth: true,
+        timeout: 60000  // 1 minute timeout for AI generation
+      });
+      return response as StandardResponse<any>;
+    },
+    {
+      operationName: 'generate-quiz-from-transcript',
+      showToast: true  // Auto handle toast
+    }
+  );
+}
+
 // =============================================================================
 // MISSING FUNCTIONS - AI Chat functionality for useAIChat.ts
 // =============================================================================

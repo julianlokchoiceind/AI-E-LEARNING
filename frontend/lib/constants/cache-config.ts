@@ -94,11 +94,11 @@ export const CACHE_CONTEXTS = {
   LESSON_PREVIEW: CACHE_TIERS.STABLE,          // Lesson preview - stable content
   
   // Quiz Content
-  LESSON_QUIZ: CACHE_TIERS.STABLE,             // Quiz questions - rarely change
+  LESSON_QUIZ: CACHE_TIERS.FRESH,              // Quiz questions - short cache for immediate updates
   QUIZ_PROGRESS: CACHE_TIERS.FRESH,            // Quiz attempts and scores
-  QUIZ_CONTENT: CACHE_TIERS.STABLE,            // Quiz questions and config
+  QUIZ_CONTENT: CACHE_TIERS.FRESH,             // Quiz questions and config - short cache
   QUIZ_ATTEMPTS: CACHE_TIERS.MODERATE,         // Quiz attempt history
-  QUIZ_DETAILS: CACHE_TIERS.STABLE,            // Quiz admin details
+  QUIZ_DETAILS: CACHE_TIERS.FRESH,             // Quiz admin details - short cache
   
   // Static Content
   APP_CONFIGURATION: CACHE_TIERS.STABLE,       // Categories, settings, metadata

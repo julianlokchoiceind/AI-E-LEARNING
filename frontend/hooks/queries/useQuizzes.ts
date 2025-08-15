@@ -149,6 +149,8 @@ export function useCreateQuiz(options?: { onSuccess?: () => void }) {
       invalidateQueries: [
         ['lesson-quiz'], // Refresh lesson quiz
         ['course-content'], // Refresh course content
+        ['lesson'], // Refresh lesson data (has_quiz field)
+        ['lesson-details'], // Refresh lesson details
       ],
       onSuccess: options?.onSuccess,
     }
@@ -167,6 +169,9 @@ export function useUpdateQuiz(options?: { onSuccess?: () => void }) {
       invalidateQueries: [
         ['quiz'], // Refresh quiz details
         ['lesson-quiz'], // Refresh lesson quiz
+        ['course-content'], // Refresh course content
+        ['lesson'], // Refresh lesson data (has_quiz field)
+        ['lesson-details'], // Refresh lesson details
       ],
       onSuccess: options?.onSuccess,
     }
@@ -185,6 +190,8 @@ export function useDeleteQuiz() {
       invalidateQueries: [
         ['lesson-quiz'], // Refresh lesson quiz
         ['course-content'], // Refresh course content
+        ['lesson'], // Refresh lesson data (has_quiz field)
+        ['lesson-details'], // Refresh lesson details
       ],
     }
   );

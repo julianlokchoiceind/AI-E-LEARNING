@@ -10,7 +10,7 @@ interface RequestOptions extends RequestInit {
 
 class ApiClient {
   private baseUrl: string;
-  private defaultTimeout: number = 10000; // 10 seconds timeout for course operations
+  private defaultTimeout: number = 15000; // 15 seconds timeout for course operations
 
   constructor(baseUrl?: string) {
     // Use the provided baseUrl or fall back to API_ENDPOINTS.BASE_URL

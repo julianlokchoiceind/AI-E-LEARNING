@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, HelpCircle } from 'lucide-react';
+import { Plus, Trash2, HelpCircle, Sparkles } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
 import { ButtonSkeleton, LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useQuizQuery, useUpdateQuiz } from '@/hooks/queries/useQuizzes';
+import { useGenerateQuizFromTranscript } from '@/hooks/queries/useAI';
 import { ToastService } from '@/lib/toast/ToastService';
+import { Lesson } from '@/lib/types/course';
 
 interface QuizQuestion {
   question: string;
-  type: 'multiple_choice' | 'true_false';
+  type: 'multiple_choice' | 'true_false' | 'fill_blank';
   options: string[];
   correct_answer: number;
   explanation?: string;
@@ -20,6 +22,7 @@ interface EditQuizModalProps {
   isOpen: boolean;
   onClose: () => void;
   quizId: string;
+  lessonData?: Lesson;
   onQuizUpdated: () => void;
 }
 
@@ -37,6 +40,7 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
   isOpen,
   onClose,
   quizId,
+  lessonData,
   onQuizUpdated
 }) => {
   const [formData, setFormData] = useState<QuizFormData>({
@@ -50,10 +54,12 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isGenerating, setIsGenerating] = useState(false);
   
   // Fetch existing quiz data
   const { data: quizResponse, loading: fetchLoading } = useQuizQuery(quizId, isOpen);
   const { mutate: updateQuizMutation, loading } = useUpdateQuiz();
+  const { mutate: generateFromTranscript } = useGenerateQuizFromTranscript();
 
   // Load quiz data when modal opens
   useEffect(() => {
@@ -131,6 +137,33 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
       const newQuestions = formData.questions.filter((_, i) => i !== index);
       setFormData(prev => ({ ...prev, questions: newQuestions }));
     }
+  };
+
+  const handleRegenerateQuiz = () => {
+    // Start generating without clearing questions (so button stays visible)
+    setIsGenerating(true);
+    
+    generateFromTranscript(
+      {
+        transcript: lessonData?.video?.transcript || '',
+        difficulty: 'intermediate'
+      },
+      {
+        onSuccess: (response) => {
+          if (response.success && response.data.questions) {
+            // Replace questions with new ones only on success
+            setFormData(prev => ({
+              ...prev,
+              questions: response.data.questions
+            }));
+          }
+          setIsGenerating(false);
+        },
+        onError: () => {
+          setIsGenerating(false);
+        }
+      }
+    );
   };
 
   const validateForm = () => {
@@ -292,16 +325,39 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
           <div>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">Questions</h3>
-              <Button 
-                type="button"
-                variant="outline" 
-                size="sm"
-                onClick={addQuestion}
-                disabled={loading}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Question
-              </Button>
+              <div className="flex gap-2">
+                {formData.questions.length > 0 && (
+                  <Button
+                    type="button"
+                    onClick={handleRegenerateQuiz}
+                    disabled={isGenerating}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <LoadingSpinner className="w-4 h-4 mr-2" />
+                        Regenerating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Regenerate
+                      </>
+                    )}
+                  </Button>
+                )}
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  size="sm"
+                  onClick={addQuestion}
+                  disabled={loading}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Question
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-6">

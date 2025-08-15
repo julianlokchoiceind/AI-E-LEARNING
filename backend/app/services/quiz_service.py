@@ -97,12 +97,14 @@ class QuizService:
             for q in questions:
                 if isinstance(q, dict):
                     question_text = q["question"]
+                    question_type = q["type"]
                     options = q["options"].copy()
                     points = q["points"]
                     correct_answer = q["correct_answer"]
                     explanation = q.get("explanation")
                 else:
                     question_text = q.question
+                    question_type = q.type
                     options = q.options.copy()
                     points = q.points
                     correct_answer = q.correct_answer
@@ -111,6 +113,7 @@ class QuizService:
                 student_questions.append(
                     QuizQuestionResponse(
                         question=question_text,
+                        type=question_type,  # Include type for Pydantic validation
                         options=options,
                         points=points,
                         correct_answer=correct_answer,  # Include for review
@@ -127,10 +130,12 @@ class QuizService:
             for q in questions:
                 if isinstance(q, dict):
                     question_text = q["question"]
+                    question_type = q["type"]
                     options = q["options"].copy()
                     points = q["points"]
                 else:
                     question_text = q.question
+                    question_type = q.type
                     options = q.options.copy()
                     points = q.points
                 
@@ -141,6 +146,7 @@ class QuizService:
                 student_questions.append(
                     QuizQuestionResponse(
                         question=question_text,
+                        type=question_type,  # Include type for Pydantic validation
                         options=options,
                         points=points,
                         correct_answer=None,  # Hide correct answer

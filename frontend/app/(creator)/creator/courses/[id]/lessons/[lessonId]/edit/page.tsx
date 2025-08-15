@@ -799,6 +799,7 @@ const LessonEditPage = () => {
         onClose={() => setShowCreateQuizModal(false)}
         lessonId={lessonId}
         courseId={courseId}
+        lessonData={lessonData}  // ADD this line
         onQuizCreated={handleQuizCreated}
       />
 
@@ -811,6 +812,7 @@ const LessonEditPage = () => {
             setEditingQuizId(null);
           }}
           quizId={editingQuizId}
+          lessonData={lessonData}
           onQuizUpdated={handleQuizUpdated}
         />
       )}

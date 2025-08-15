@@ -35,40 +35,56 @@ class AIService:
         self.settings = get_settings()
         self.anthropic_client = None
         self.agent = None
+        self.gemini_model = None
+        self.use_gemini = False  # Flag to track which AI to use
         self.rate_limits = {}  # Track usage per user
         self.conversation_history = {}  # Store conversation context
         self.response_cache = {}  # Cache for common responses
         self._initialize_ai()
     
     def _initialize_ai(self):
-        """Initialize PydanticAI agent with Claude 3.5 Sonnet"""
+        """Initialize AI service with Anthropic first, Gemini fallback"""
         try:
-            # Initialize Anthropic client
+            # Try Anthropic first
             api_key = self.settings.anthropic_api_key
-            if not api_key:
-                logger.error("ANTHROPIC_API_KEY not found in environment")
-                raise ValueError("ANTHROPIC_API_KEY is required")
-            
-            # Set the API key as environment variable for PydanticAI
-            os.environ['ANTHROPIC_API_KEY'] = api_key
-            
-            self.anthropic_client = Anthropic(api_key=api_key)
-            
-            # Initialize PydanticAI Agent with Claude 3.5 Sonnet
-            model = AnthropicModel('claude-3-5-sonnet-20240620')
-            
-            # Create agent with system prompt for educational assistant
-            self.agent = Agent(
-                model=model,
-                system_prompt=self._get_system_prompt(),
-                retries=2
-            )
-            
-            # PydanticAI agent initialized successfully
+            if api_key:
+                # Set the API key as environment variable for PydanticAI
+                os.environ['ANTHROPIC_API_KEY'] = api_key
+                
+                self.anthropic_client = Anthropic(api_key=api_key)
+                
+                # Initialize PydanticAI Agent with Claude 3.5 Sonnet
+                model = AnthropicModel('claude-3-5-sonnet-20240620')
+                
+                # Create agent with system prompt for educational assistant
+                self.agent = Agent(
+                    model=model,
+                    system_prompt=self._get_system_prompt(),
+                    retries=2
+                )
+                
+                logger.info("Anthropic Claude initialized successfully")
+                return
             
         except Exception as e:
-            logger.error(f"Failed to initialize AI service: {str(e)}")
-            raise
+            logger.warning(f"Anthropic initialization failed: {str(e)}")
+        
+        # Fallback to Gemini
+        try:
+            gemini_key = self.settings.gemini_api_key
+            if gemini_key:
+                import google.generativeai as genai
+                genai.configure(api_key=gemini_key)
+                self.gemini_model = genai.GenerativeModel(self.settings.gemini_model)
+                self.use_gemini = True
+                logger.info("Gemini fallback initialized successfully")
+                return
+                
+        except Exception as e:
+            logger.error(f"Gemini fallback failed: {str(e)}")
+        
+        # Both failed
+        raise ValueError("Both Anthropic and Gemini AI services failed to initialize")
     
     def _get_system_prompt(self) -> str:
         """Get the system prompt for the AI Study Buddy"""
@@ -130,20 +146,27 @@ class AIService:
                 await self._track_usage(user_id)
                 return cached_response
             
-            # Get AI response using PydanticAI
-            result = await self.agent.run(contextual_prompt)
+            # Get AI response using appropriate service
+            if self.use_gemini:
+                # Gemini response
+                response = self.gemini_model.generate_content(contextual_prompt)
+                result_data = response.text
+            else:
+                # Anthropic response
+                result = await self.agent.run(contextual_prompt)
+                result_data = result.data
             
             # Store conversation in history
-            await self._store_conversation(user_id, message, result.data, context)
+            await self._store_conversation(user_id, message, result_data, context)
             
             # Track usage
             await self._track_usage(user_id)
             
             response_data = {
-                "response": result.data,
+                "response": result_data,
                 "context": context,
                 "timestamp": datetime.utcnow().isoformat(),
-                "model": "claude-3-5-sonnet-20240620"
+                "model": self.settings.gemini_model if self.use_gemini else self.settings.anthropic_model
             }
             
             # Cache common responses
@@ -410,63 +433,120 @@ class AIService:
         self,
         lesson_content: str,
         difficulty: str = "intermediate",
-        num_questions: int = 5,
+        num_questions: int = None,  # None = adaptive mode
         include_true_false: bool = True
     ) -> List[GeneratedQuizQuestion]:
         """
-        Generate quiz questions from lesson content using AI
+        Smart quiz generation - FAST single AI call
         
         Args:
             lesson_content: The lesson content/transcript
             difficulty: Question difficulty level
-            num_questions: Number of questions to generate
+            num_questions: Number of questions (None = AI decides based on content)
             include_true_false: Whether to include True/False questions
         
         Returns:
             List of generated quiz questions (MC and T/F)
         """
         try:
-            # Decide mix of question types
-            num_mc = num_questions // 2 if include_true_false else num_questions
-            num_tf = num_questions - num_mc if include_true_false else 0
+            # Adaptive vs Fixed mode
+            if num_questions is None:
+                # ADAPTIVE MODE - AI decides based on content
+                prompt = f"""
+                Generate quiz questions from this transcript.
+                
+                RULES:
+                - Analyze content and generate 2-10 questions based on richness
+                - Simple content: 2-3 questions
+                - Medium content: 4-5 questions  
+                - Rich content: 6-10 questions
+                - Mix multiple choice and true/false
+                - Each tests different concept
+                
+                Difficulty: {difficulty}
+                
+                Transcript: {lesson_content}
+                
+                Return JSON array only:
+                [
+                    {{
+                        "question": "text",
+                        "type": "multiple_choice",
+                        "options": ["A","B","C","D"],
+                        "correct_answer": 0,
+                        "explanation": "explanation"
+                    }}
+                ]
+                """
+            else:
+                # FIXED MODE - existing logic for manual creation
+                num_mc = num_questions // 2 if include_true_false else num_questions
+                num_tf = num_questions - num_mc if include_true_false else 0
+                
+                prompt = f"""
+                Generate exactly {num_questions} quiz questions based on this lesson content:
+                
+                {lesson_content}
+                
+                Requirements:
+                - Difficulty level: {difficulty}
+                - Generate {num_mc} Multiple Choice questions (4 options each)
+                - Generate {num_tf} True/False questions
+                - Include the correct answer index (0-3 for MC, 0-1 for T/F)
+                - Provide a brief explanation for the correct answer
+                - Focus on key concepts and practical understanding
+                
+                Return ONLY a JSON array with this exact format:
+                [
+                    {{
+                        "question": "The question text",
+                        "type": "multiple_choice",
+                        "options": ["Option A", "Option B", "Option C", "Option D"],
+                        "correct_answer": 0,
+                        "explanation": "Why this answer is correct"
+                    }},
+                    {{
+                        "question": "This is a true/false statement",
+                        "type": "true_false",
+                        "options": ["True", "False"],
+                        "correct_answer": 0,
+                        "explanation": "Why this statement is true/false"
+                    }}
+                ]
+                """
             
-            prompt = f"""
-            Generate {num_questions} quiz questions based on this lesson content:
+            # Use appropriate AI service with fallback
+            result_data = None
             
-            {lesson_content}
-            
-            Requirements:
-            - Difficulty level: {difficulty}
-            - Generate {num_mc} Multiple Choice questions (4 options each)
-            - Generate {num_tf} True/False questions
-            - Include the correct answer index (0-3 for MC, 0-1 for T/F)
-            - Provide a brief explanation for the correct answer
-            - Focus on key concepts and practical understanding
-            
-            Return ONLY a JSON array with this exact format:
-            [
-                {{
-                    "question": "The question text",
-                    "type": "multiple_choice",
-                    "options": ["Option A", "Option B", "Option C", "Option D"],
-                    "correct_answer": 0,
-                    "explanation": "Why this answer is correct"
-                }},
-                {{
-                    "question": "This is a true/false statement",
-                    "type": "true_false",
-                    "options": ["True", "False"],
-                    "correct_answer": 0,
-                    "explanation": "Why this statement is true/false"
-                }}
-            ]
-            """
-            
-            result = await self.agent.run(prompt)
+            if self.use_gemini:
+                # Gemini generation
+                response = self.gemini_model.generate_content(prompt)
+                result_data = response.text
+            else:
+                # Try Anthropic first, fallback to Gemini on failure
+                try:
+                    result = await self.agent.run(prompt)
+                    result_data = result.data
+                except Exception as anthropic_error:
+                    logger.warning(f"Anthropic failed, trying Gemini fallback: {str(anthropic_error)}")
+                    
+                    # Fallback to Gemini
+                    try:
+                        if self.settings.gemini_api_key:
+                            import google.generativeai as genai
+                            genai.configure(api_key=self.settings.gemini_api_key)
+                            gemini_model = genai.GenerativeModel(self.settings.gemini_model)
+                            response = gemini_model.generate_content(prompt)
+                            result_data = response.text
+                            logger.info("Successfully used Gemini fallback for quiz generation")
+                        else:
+                            raise Exception("Both Anthropic and Gemini are unavailable")
+                    except Exception as gemini_error:
+                        logger.error(f"Gemini fallback also failed: {str(gemini_error)}")
+                        raise Exception("Content insufficient for meaningful quiz generation")
             
             # Parse the AI response and format as quiz questions
-            # This would need additional parsing logic based on AI response format
-            questions = self._parse_quiz_response(result.data)
+            questions = self._parse_quiz_response(result_data)
             
             return questions
             
@@ -669,11 +749,19 @@ class AIService:
         """Check AI service health"""
         try:
             # Simple test query
-            result = await self.agent.run("Hello, are you working?")
+            if self.use_gemini:
+                response = self.gemini_model.generate_content("Hello, are you working?")
+                result_data = response.text
+                model_name = self.settings.gemini_model
+            else:
+                result = await self.agent.run("Hello, are you working?")
+                result_data = result.data
+                model_name = self.settings.anthropic_model
+                
             return {
                 "status": "healthy",
-                "model": "claude-3-5-sonnet-20240620",
-                "response_received": bool(result.data),
+                "model": model_name,
+                "response_received": bool(result_data),
                 "timestamp": datetime.utcnow().isoformat()
             }
         except Exception as e:

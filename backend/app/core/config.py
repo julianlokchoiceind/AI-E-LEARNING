@@ -63,6 +63,10 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str
     ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20240620"
     
+    # Gemini Fallback
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    
     # AI Settings
     @property
     def anthropic_api_key(self) -> str:
@@ -71,6 +75,14 @@ class Settings(BaseSettings):
     @property
     def anthropic_model(self) -> str:
         return self.ANTHROPIC_MODEL
+    
+    @property
+    def gemini_api_key(self) -> Optional[str]:
+        return self.GEMINI_API_KEY
+    
+    @property 
+    def gemini_model(self) -> str:
+        return self.GEMINI_MODEL
     
     @property
     def debug(self) -> bool:

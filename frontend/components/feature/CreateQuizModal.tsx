@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, HelpCircle } from 'lucide-react';
+import { Plus, Trash2, HelpCircle, Sparkles } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
-import { ButtonSkeleton } from '@/components/ui/LoadingStates';
+import { ButtonSkeleton, LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useCreateQuiz } from '@/hooks/queries/useQuizzes';
+import { useGenerateQuizFromTranscript } from '@/hooks/queries/useAI';
 import { ToastService } from '@/lib/toast/ToastService';
+import { Lesson } from '@/lib/types/course';
 
 interface QuizQuestion {
   question: string;
-  type: 'multiple_choice' | 'true_false';
+  type: 'multiple_choice' | 'true_false' | 'fill_blank';
   options: string[];
   correct_answer: number;
   explanation?: string;
@@ -21,6 +23,7 @@ interface CreateQuizModalProps {
   onClose: () => void;
   lessonId: string;
   courseId: string;
+  lessonData?: Lesson;  // ADD
   onQuizCreated: () => void;
 }
 
@@ -39,21 +42,13 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
   onClose,
   lessonId,
   courseId,
+  lessonData,  // ADD
   onQuizCreated
 }) => {
   const [formData, setFormData] = useState<QuizFormData>({
     title: '',
     description: '',
-    questions: [
-      {
-        question: '',
-        type: 'multiple_choice',
-        options: ['', '', '', ''],
-        correct_answer: 0,
-        explanation: '',
-        points: 1
-      }
-    ],
+    questions: [], // Start empty to show Generate button
     pass_percentage: 70,
     time_limit: null,
     shuffle_questions: true,
@@ -61,9 +56,11 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
   });
 
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [isGenerating, setIsGenerating] = useState(false);
   
-  // React Query mutation hook
+  // React Query mutation hooks
   const { mutate: createQuizMutation, loading } = useCreateQuiz();
+  const { mutate: generateFromTranscript } = useGenerateQuizFromTranscript();
 
   const handleInputChange = (field: keyof QuizFormData, value: any) => {
     setFormData(prev => ({
@@ -89,6 +86,65 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
     const newQuestions = [...formData.questions];
     newQuestions[questionIndex].options[optionIndex] = value;
     setFormData(prev => ({ ...prev, questions: newQuestions }));
+  };
+
+  const handleGenerateFromTranscript = () => {
+    setIsGenerating(true);
+    
+    generateFromTranscript(
+      {
+        transcript: lessonData?.video?.transcript || '',  // Send whatever we have
+        difficulty: 'intermediate'
+      },
+      {
+        onSuccess: (response) => {
+          // Fill form with generated questions
+          if (response.success && response.data.questions) {
+            setFormData({
+              ...formData,
+              questions: response.data.questions
+            });
+          }
+          setIsGenerating(false);
+          // Toast is handled automatically by useApiMutation
+        },
+        onError: () => {
+          setIsGenerating(false);
+        }
+      }
+    );
+  };
+
+  const handleRegenerateQuiz = () => {
+    // Clear all existing questions first
+    setFormData(prev => ({
+      ...prev,
+      questions: []
+    }));
+    
+    // Then generate new ones
+    setIsGenerating(true);
+    
+    generateFromTranscript(
+      {
+        transcript: lessonData?.video?.transcript || '',
+        difficulty: 'intermediate'
+      },
+      {
+        onSuccess: (response) => {
+          if (response.success && response.data.questions) {
+            setFormData(prev => ({
+              ...prev,
+              questions: response.data.questions
+            }));
+          }
+          setIsGenerating(false);
+        },
+        onError: () => {
+          setIsGenerating(false);
+        }
+      }
+    );
   };
 
   const addQuestion = () => {
@@ -146,6 +202,10 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
     }
 
     // Validate questions
+    if (formData.questions.length === 0) {
+      newErrors.questions = 'At least one question is required';
+    }
+    
     formData.questions.forEach((question, index) => {
       if (!question.question.trim()) {
         newErrors[`question_${index}`] = `Question ${index + 1} text is required`;
@@ -318,16 +378,59 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium">Questions</h3>
-                <Button 
-                  type="button"
-                  variant="outline" 
-                  size="sm"
-                  onClick={addQuestion}
-                  disabled={loading}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Question
-                </Button>
+                <div className="flex gap-2">
+                  {formData.questions.length === 0 ? (
+                    <Button
+                      type="button"
+                      onClick={handleGenerateFromTranscript}
+                      disabled={isGenerating}
+                      variant="primary"
+                      size="sm"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <LoadingSpinner className="w-4 h-4 mr-2" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Generate
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={handleRegenerateQuiz}
+                      disabled={isGenerating}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <LoadingSpinner className="w-4 h-4 mr-2" />
+                          Regenerating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Regenerate
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    size="sm"
+                    onClick={addQuestion}
+                    disabled={loading}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Question
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-6">
@@ -502,6 +605,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                   </div>
                 ))}
               </div>
+              {errors.questions && <p className="text-red-500 text-sm mt-2">{errors.questions}</p>}
             </div>
 
             {/* Quiz Settings */}

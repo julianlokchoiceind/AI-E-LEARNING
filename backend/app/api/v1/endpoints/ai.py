@@ -281,6 +281,83 @@ async def generate_quiz_questions(
         )
 
 
+@router.post("/generate-quiz-from-transcript", 
+             response_model=StandardResponse[dict],
+             dependencies=[Depends(get_current_user)])
+async def generate_quiz_from_transcript(
+    request: dict,
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """Generate quiz with AI smart content analysis"""
+    
+    # Permission check FIRST (fail fast)
+    if current_user.role not in ["creator", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only content creators and admins can generate quiz"
+        )
+    
+    # Get transcript
+    transcript = request.get("transcript", "").strip()
+    difficulty = request.get("difficulty", "intermediate")
+    
+    # BACKEND validates and returns appropriate message
+    if not transcript:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please enter transcript in Video tab first"
+        )
+    
+    if len(transcript) < 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Transcript too short. Please provide more content"
+        )
+    
+    try:
+        # ONE AI call - smart adaptive generation
+        questions = await ai_service.generate_quiz_questions(
+            lesson_content=transcript[:10000],  # Limit for AI performance
+            difficulty=difficulty,
+            num_questions=None,  # None = AI decides based on content
+            include_true_false=True
+        )
+        
+        if not questions:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Content insufficient for meaningful quiz generation"
+            )
+        
+        # Format for frontend (fast list comprehension)
+        formatted_questions = [
+            {
+                "question": q.question,
+                "type": q.question_type,
+                "options": [opt.text for opt in q.options],
+                "correct_answer": q.correct_answer_index,
+                "explanation": q.explanation,
+                "points": q.points
+            }
+            for q in questions
+        ]
+        
+        return StandardResponse(
+            success=True,
+            data={"questions": formatted_questions},
+            message="Quiz generated successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Quiz generation from transcript error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate quiz. Please try again"
+        )
+
+
 @router.get("/health", response_model=StandardResponse[AIHealthCheckResponse])
 async def ai_health_check() -> StandardResponse[AIHealthCheckResponse]:
     """
