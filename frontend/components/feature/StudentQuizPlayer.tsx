@@ -44,7 +44,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
   // Auto-resume quiz if progress exists (Smart Backend handles logic)
   useEffect(() => {
     const checkAndAutoResume = async () => {
-      if (!quiz?.id || isPreviewMode) {
+      if (!quiz?.id || isPreviewMode || (quiz as any)?.is_completed) {
         return;
       }
       
@@ -73,7 +73,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
     };
     
     checkAndAutoResume();
-  }, [quiz?.id, isPreviewMode, quiz?.config?.time_limit]);
+  }, [quiz?.id, isPreviewMode, (quiz as any)?.is_completed, quiz?.config?.time_limit]);
 
   // Auto-save when question index changes (navigation)
   useEffect(() => {
@@ -273,7 +273,8 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
   // Simple logic: Show results if completed, otherwise show quiz
   if (!quizStarted) {
     // Case 1: Quiz already completed - show results and review
-    if (quizCompleted && score !== null) {
+    // Check both backend data and local state for optimal experience
+    if (((quiz as any)?.is_completed || quizCompleted) && ((quiz as any)?.score !== undefined || score !== null)) {
       return (
         <div className="space-y-6">
           {/* Score Display */}
@@ -282,11 +283,11 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
               <h3 className="text-xl font-semibold mb-2">{quiz.title}</h3>
               
               <div className="text-4xl font-bold my-4 text-blue-600">
-                {score}%
+                {(quiz as any)?.score !== undefined ? (quiz as any).score : score}%
               </div>
               
               <p className="text-gray-600 mb-4">
-                {score >= (quiz.config?.pass_percentage || 70) ? 'You passed!' : `Need ${quiz.config?.pass_percentage}% to pass`}
+                {((quiz as any)?.score !== undefined ? (quiz as any).score : score) >= (quiz.config?.pass_percentage || 70) ? 'You passed!' : `Need ${quiz.config?.pass_percentage}% to pass`}
               </p>
               
               <div className="text-gray-500 text-sm">
@@ -296,7 +297,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
           </Card>
 
           {/* Review Answers - Always visible when completed */}
-          {quizResult && quizResult.questions_feedback && (
+          {((quiz as any)?.is_completed && quiz?.questions && (quiz as any)?.answers) && (
             <div className="space-y-4">
               <button
                 onClick={() => setIsReviewExpanded(!isReviewExpanded)}
@@ -323,9 +324,8 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
                 {/* Current Review Question */}
                 {(() => {
                   const question = quiz.questions?.[currentReviewIndex];
-                  const feedback = quizResult.questions_feedback?.[currentReviewIndex];
-                  const studentAnswer = feedback?.selected_answer;
-                  const isCorrect = feedback?.is_correct || false;
+                  const studentAnswer = (quiz as any)?.answers?.[currentReviewIndex];
+                  const isCorrect = studentAnswer === question?.correct_answer;
                   
                   if (!question) return null;
                   

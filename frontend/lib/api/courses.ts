@@ -63,6 +63,8 @@ export interface CourseDetailData extends CourseResponse {
   slug: string;
   language: string;
   progress_percentage?: number;
+  current_lesson_id?: string;
+  continue_lesson_id?: string;
 }
 
 interface CreateCourseData {

@@ -58,7 +58,7 @@ const CreatorAnalyticsPage = () => {
     
     // Revenue by course using payment trends data
     const revenueByCoursе = paymentTrends?.data?.top_courses 
-      ? paymentTrends.data.top_courses.slice(0, 5).map(c => ({
+      ? paymentTrends.data.top_courses.slice(0, 5).map((c: any) => ({
           name: c.course_title.length > 20 ? c.course_title.substring(0, 20) + '...' : c.course_title,
           value: c.total_revenue
         }))
@@ -236,7 +236,7 @@ const CreatorAnalyticsPage = () => {
               <Card className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Top Revenue Courses</h2>
                 <div className="space-y-3">
-                  {analytics.revenueByCoursе.map((course, index) => (
+                  {analytics.revenueByCoursе.map((course: any, index: number) => (
                     <div key={index} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-semibold">
@@ -284,7 +284,7 @@ const CreatorAnalyticsPage = () => {
             <div className="space-y-4">
               {/* Simple line chart representation */}
               <div className="grid grid-cols-7 gap-2 text-xs">
-                {analytics.dailyRevenue.slice(-7).map((day, index) => (
+                {analytics.dailyRevenue.slice(-7).map((day: any, index: number) => (
                   <div key={index} className="text-center">
                     <div className="text-gray-500 mb-1">
                       {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
@@ -309,19 +309,19 @@ const CreatorAnalyticsPage = () => {
                 <div className="text-center">
                   <div className="text-sm text-gray-600">Total (30 days)</div>
                   <div className="text-lg font-semibold">
-                    {formatCurrency(analytics.dailyRevenue.reduce((sum, day) => sum + day.total_revenue, 0))}
+                    {formatCurrency(analytics.dailyRevenue.reduce((sum: number, day: any) => sum + day.total_revenue, 0))}
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="text-sm text-gray-600">Total Payments</div>
                   <div className="text-lg font-semibold">
-                    {analytics.dailyRevenue.reduce((sum, day) => sum + day.payment_count, 0)}
+                    {analytics.dailyRevenue.reduce((sum: number, day: any) => sum + day.payment_count, 0)}
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="text-sm text-gray-600">Avg Success Rate</div>
                   <div className="text-lg font-semibold text-green-600">
-                    {(analytics.dailyRevenue.reduce((sum, day) => sum + day.success_rate, 0) / analytics.dailyRevenue.length).toFixed(1)}%
+                    {(analytics.dailyRevenue.reduce((sum: number, day: any) => sum + day.success_rate, 0) / analytics.dailyRevenue.length).toFixed(1)}%
                   </div>
                 </div>
               </div>

@@ -220,7 +220,7 @@ export default function AdminPaymentsPage() {
                   <div key={status} className="flex items-center justify-between">
                     <span className="text-gray-700 capitalize">{status}</span>
                     <span className="font-semibold">
-                      {count} payments
+                      {String(count)} payments
                     </span>
                   </div>
                 ))}
@@ -234,7 +234,7 @@ export default function AdminPaymentsPage() {
         <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Revenue Trends (Last 7 Days)</h2>
             <div className="grid grid-cols-7 gap-2 text-xs">
-              {trendsData.daily_revenue.slice(-7).map((day, index) => (
+              {trendsData.daily_revenue.slice(-7).map((day: any, index: number) => (
                 <div key={index} className="text-center">
                   <div className="text-gray-500 mb-1">
                     {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}

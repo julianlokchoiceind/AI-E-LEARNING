@@ -398,7 +398,7 @@ class CourseService:
             elif user.role == "admin":
                 # Admin has access to all courses
                 access_info = {"has_access": True, "is_enrolled": True}
-            elif user.subscription and user.subscription.get("type") == "pro":
+            elif user.subscription and hasattr(user.subscription, 'type') and user.subscription.type == "pro":
                 # Pro subscription
                 access_info = {"has_access": True, "is_enrolled": True}
             else:
