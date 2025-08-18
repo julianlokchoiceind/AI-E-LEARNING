@@ -33,6 +33,7 @@ import {
   useLessonQuery,
   useUpdateLesson 
 } from '@/hooks/queries/useLessons';
+import { useChapterQuery } from '@/hooks/queries/useChapters';
 import { useDeleteLessonResource } from '@/hooks/queries/useLessonResources';
 import { useQueryClient } from '@tanstack/react-query';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
@@ -84,6 +85,9 @@ const LessonEditPage = () => {
   const { mutateAsync: updateLessonAction } = useUpdateLesson(true); // silent autosave
   const { mutateAsync: manualSaveLessonAction } = useUpdateLesson(false); // manual save with toast
   const { mutate: deleteResource } = useDeleteLessonResource();
+  
+  // Fetch chapter data for Quick Stats display (leverages React Query cache)
+  const { data: chapterResponse } = useChapterQuery(lessonData?.chapter_id || '');
 
   // Initialize lesson data
   useEffect(() => {
@@ -588,7 +592,7 @@ const LessonEditPage = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Chapter</span>
-                      <span>{lessonData.chapter_id}</span>
+                      <span>{chapterResponse?.data?.title || lessonData.chapter_id}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Order</span>

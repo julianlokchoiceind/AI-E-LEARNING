@@ -195,6 +195,7 @@ const CourseBuilderPage = () => {
         description: chapterToEdit.description || '',
         order: chapterToEdit.order,
         course_id: chapterToEdit.course_id,
+        course_name: courseData?.title,
         status: chapterToEdit.status || 'draft'
       });
       setIsEditChapterModalOpen(true);
@@ -255,6 +256,8 @@ const CourseBuilderPage = () => {
         id: lessonToEdit.id,
         chapter_id: chapterOfLesson.id,
         course_id: courseId,
+        course_name: courseData?.title,
+        chapter_name: chapterOfLesson?.title,
         title: lessonToEdit.title,
         description: lessonToEdit.description,
         order: lessonToEdit.order,

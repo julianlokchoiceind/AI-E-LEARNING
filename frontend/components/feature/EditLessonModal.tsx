@@ -13,6 +13,8 @@ export interface LessonEditData {
   id: string;
   chapter_id: string;
   course_id: string;
+  course_name?: string;
+  chapter_name?: string;
   title: string;
   description?: string;
   order: number;
@@ -273,8 +275,8 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
             {/* Lesson Info */}
             <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-600">
               <p><strong>Lesson Order:</strong> {lesson.order}</p>
-              <p><strong>Chapter ID:</strong> {lesson.chapter_id}</p>
-              <p><strong>Course ID:</strong> {lesson.course_id}</p>
+              <p><strong>Chapter:</strong> {lesson.chapter_name || lesson.chapter_id}</p>
+              <p><strong>Course:</strong> {lesson.course_name || lesson.course_id}</p>
             </div>
 
             {/* Lesson Title */}

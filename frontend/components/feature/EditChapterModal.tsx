@@ -12,6 +12,7 @@ export interface ChapterEditData {
   description?: string;
   order: number;
   course_id: string;
+  course_name?: string;
   status?: string;
 }
 
@@ -182,7 +183,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
             {/* Chapter Info */}
             <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-600">
               <p><strong>Chapter Order:</strong> {chapter.order}</p>
-              <p><strong>Course ID:</strong> {chapter.course_id}</p>
+              <p><strong>Course:</strong> {chapter.course_name || chapter.course_id}</p>
             </div>
 
             {/* Chapter Title */}
