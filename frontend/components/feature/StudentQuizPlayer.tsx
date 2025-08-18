@@ -44,7 +44,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
   // Auto-resume quiz if progress exists (Smart Backend handles logic)
   useEffect(() => {
     const checkAndAutoResume = async () => {
-      if (!quiz?.id || isPreviewMode || quiz.is_completed) {
+      if (!quiz?.id || isPreviewMode) {
         return;
       }
       
@@ -53,8 +53,8 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
         
         if (response.success && response.data?.has_saved_progress) {
           // Auto-resume - no UI prompt needed!
-          const savedAnswers = {};
-          response.data.saved_answers?.forEach((answer, index) => {
+          const savedAnswers: Record<number, string | boolean> = {};
+          response.data.saved_answers?.forEach((answer: any, index: number) => {
             if (answer !== -1) savedAnswers[index] = answer;
           });
           
@@ -73,14 +73,18 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
     };
     
     checkAndAutoResume();
-  }, [quiz?.id, isPreviewMode, quiz?.is_completed, quiz?.config?.time_limit]);
+  }, [quiz?.id, isPreviewMode, quiz?.config?.time_limit]);
 
   // Auto-save when question index changes (navigation)
   useEffect(() => {
     if (!isPreviewMode && quiz?.id && quizStarted) {
-      const answersArray = quiz.questions?.map((_, index) => 
-        selectedAnswers[index] !== undefined ? selectedAnswers[index] : -1
-      ) || [];
+      const answersArray = quiz.questions?.map((_, index) => {
+        const answer = selectedAnswers[index];
+        if (answer === undefined) return -1;
+        if (typeof answer === 'boolean') return answer ? 1 : 0;
+        if (typeof answer === 'string') return parseInt(answer, 10) || -1;
+        return answer;
+      }) || [];
       
       const timer = setTimeout(() => {
         quizAPI.saveProgress(quiz.id, answersArray, currentQuestionIndex)
@@ -125,9 +129,13 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
     
     // Auto-save progress (debounced - Smart Backend handles storage)
     if (!isPreviewMode && quiz?.id && quizStarted) {
-      const answersArray = quiz.questions?.map((_, index) => 
-        newAnswers[index] !== undefined ? newAnswers[index] : -1
-      ) || [];
+      const answersArray = quiz.questions?.map((_, index) => {
+        const answer = newAnswers[index];
+        if (answer === undefined) return -1;
+        if (typeof answer === 'boolean') return answer ? 1 : 0;
+        if (typeof answer === 'string') return parseInt(answer, 10) || -1;
+        return answer;
+      }) || [];
       
       setTimeout(async () => {
         try {
@@ -218,13 +226,17 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
             if (response.success) {
               // Clear auto-save progress (Smart Backend cleanup)
               try {
-                await quizAPI.clearProgress(quiz?.id);
+                if (quiz?.id) {
+                  await quizAPI.clearProgress(quiz.id);
+                }
               } catch (error) {
                 // Silent fail
               }
               
               // After successful submission, reload to show the completed quiz state with review
-              onComplete?.(response.data.passed);
+              if (response.data) {
+                onComplete?.(response.data.passed);
+              }
               window.location.reload();
             }
           }
@@ -261,7 +273,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
   // Simple logic: Show results if completed, otherwise show quiz
   if (!quizStarted) {
     // Case 1: Quiz already completed - show results and review
-    if (quiz.is_completed && quiz.score !== undefined) {
+    if (quizCompleted && score !== null) {
       return (
         <div className="space-y-6">
           {/* Score Display */}
@@ -270,11 +282,11 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
               <h3 className="text-xl font-semibold mb-2">{quiz.title}</h3>
               
               <div className="text-4xl font-bold my-4 text-blue-600">
-                {quiz.score}%
+                {score}%
               </div>
               
               <p className="text-gray-600 mb-4">
-                {quiz.passed ? 'You passed!' : `Need ${quiz.config?.pass_percentage}% to pass`}
+                {score >= (quiz.config?.pass_percentage || 70) ? 'You passed!' : `Need ${quiz.config?.pass_percentage}% to pass`}
               </p>
               
               <div className="text-gray-500 text-sm">
@@ -284,7 +296,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
           </Card>
 
           {/* Review Answers - Always visible when completed */}
-          {quiz.answers && quiz.answers.length > 0 && (
+          {quizResult && quizResult.questions_feedback && (
             <div className="space-y-4">
               <button
                 onClick={() => setIsReviewExpanded(!isReviewExpanded)}
@@ -311,8 +323,9 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
                 {/* Current Review Question */}
                 {(() => {
                   const question = quiz.questions?.[currentReviewIndex];
-                  const studentAnswer = quiz.answers?.[currentReviewIndex];
-                  const isCorrect = studentAnswer === question?.correct_answer;
+                  const feedback = quizResult.questions_feedback?.[currentReviewIndex];
+                  const studentAnswer = feedback?.selected_answer;
+                  const isCorrect = feedback?.is_correct || false;
                   
                   if (!question) return null;
                   
@@ -455,7 +468,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
         )}
       </div>
 
-      <ProgressBar progress={progress} className="mb-4" />
+      <ProgressBar value={progress} className="mb-4" />
 
       {/* Question Card */}
       <Card className="p-6">
@@ -465,9 +478,9 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
           {currentQuestion?.type === 'true_false' ? (
             <>
               <button
-                onClick={() => handleAnswerSelect(0)}
+                onClick={() => handleAnswerSelect(true)}
                 className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                  selectedAnswers[currentQuestionIndex] === 0
+                  selectedAnswers[currentQuestionIndex] === true
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
@@ -475,9 +488,9 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
                 True
               </button>
               <button
-                onClick={() => handleAnswerSelect(1)}
+                onClick={() => handleAnswerSelect(false)}
                 className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                  selectedAnswers[currentQuestionIndex] === 1
+                  selectedAnswers[currentQuestionIndex] === false
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
@@ -489,9 +502,9 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
             currentQuestion?.options?.map((option: string, index: number) => (
               <button
                 key={index}
-                onClick={() => handleAnswerSelect(index)}
+                onClick={() => handleAnswerSelect(index.toString())}
                 className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                  selectedAnswers[currentQuestionIndex] === index
+                  selectedAnswers[currentQuestionIndex] === index.toString()
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}

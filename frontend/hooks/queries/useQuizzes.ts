@@ -50,7 +50,7 @@ export function useQuizProgressQuery(quizId: string, enabled: boolean = true) {
   return useApiQuery(
     ['quiz-progress', quizId],
     async () => {
-      return quizAPI.getQuizProgress(quizId);
+      return quizAPI.getSavedProgress(quizId);
     },
     {
       enabled: enabled && !!quizId,
@@ -111,7 +111,7 @@ export function useQuizAttemptsQuery(quizId: string, enabled: boolean = true) {
   return useApiQuery(
     ['quiz-attempts', quizId],
     async () => {
-      return quizAPI.getQuizProgress(quizId);
+      return quizAPI.getSavedProgress(quizId);
     },
     {
       enabled: enabled && !!quizId,

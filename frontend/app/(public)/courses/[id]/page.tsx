@@ -129,11 +129,9 @@ const CourseDetailPage = () => {
             if (error.message?.includes('already enrolled')) {
               ToastService.success('Already enrolled, redirecting...');
               
-              // Use 3-level fallback: continue_lesson_id → current_lesson_id → first lesson
+              // Use 2-level fallback: continue_lesson_id → first lesson
               if (course?.continue_lesson_id) {
                 router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
-              } else if (course?.current_lesson_id) {
-                router.push(`/learn/${courseId}/${course.current_lesson_id}`);
               } else {
                 // Fallback to first lesson
                 const firstLesson = chapters[0]?.lessons?.[0];
@@ -338,13 +336,6 @@ const CourseDetailPage = () => {
                         } else {
                           router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
                         }
-                      } else if (course.current_lesson_id) {
-                        // Navigate to current lesson (last lesson for completed courses)
-                        if (isCreatorOrAdmin) {
-                          router.push(`/learn/${courseId}/${course.current_lesson_id}?preview=true`);
-                        } else {
-                          router.push(`/learn/${courseId}/${course.current_lesson_id}`);
-                        }
                       } else {
                         // Fallback to first lesson
                         if (!chapters || chapters.length === 0) {
@@ -370,7 +361,7 @@ const CourseDetailPage = () => {
                   >
                     {course.progress_percentage && course.progress_percentage >= 95
                       ? 'Review Course'
-                      : course.continue_lesson_id || course.current_lesson_id || (course.progress_percentage && course.progress_percentage > 0)
+                      : course.continue_lesson_id || (course.progress_percentage && course.progress_percentage > 0)
                       ? 'Continue Learning'
                       : 'Start Learning'}
                   </Button>

@@ -196,6 +196,37 @@ export const cancelSubscription = async (
 };
 
 /**
+ * Get admin payment history with user details (Admin only)
+ * Updated for unified pagination pattern
+ */
+export const getAdminPaymentHistory = async (
+  page: number = 1,
+  per_page: number = 20,
+  status?: string,
+  type?: string
+): Promise<StandardResponse<any>> => {
+  try {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      per_page: per_page.toString(),
+    });
+    
+    if (status) params.append('status', status);
+    if (type) params.append('type', type);
+    
+    const response = await api.get<StandardResponse<any>>(
+      `/payments/admin/history?${params.toString()}`,
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Get admin payment history failed:', error);
+    throw error;
+  }
+};
+
+/**
  * Get subscription status
  */
 export const getSubscriptionStatus = async (): Promise<StandardResponse<SubscriptionStatusResponse>> => {
@@ -282,3 +313,80 @@ export const getPaymentStatusColor = (status: PaymentStatus): string => {
       return 'bg-gray-100 text-gray-800';
   }
 };
+
+// Payment Analytics Interfaces
+export interface PaymentAnalyticsSummary {
+  revenue: {
+    total: number;
+    this_month: number;
+    average_payment: number;
+  };
+  payments: {
+    total_count: number;
+    by_status: Record<string, number>;
+    by_type: {
+      course_purchases: number;
+      subscriptions: number;
+    };
+  };
+  subscriptions: {
+    active_count: number;
+  };
+  period: {
+    from: string;
+    to: string;
+  };
+}
+
+export interface PaymentAnalyticsTrends {
+  period: {
+    from: string;
+    to: string;
+    days: number;
+  };
+  daily_revenue: Array<{
+    date: string;
+    total_revenue: number;
+    payment_count: number;
+    success_rate: number;
+  }>;
+  top_courses: Array<{
+    course_id: string;
+    course_title: string;
+    total_revenue: number;
+    payment_count: number;
+  }>;
+  payment_methods: Array<{
+    method: string;
+    count: number;
+    percentage: number;
+  }>;
+  success_metrics: {
+    overall_success_rate: number;
+    completion_rate: number;
+    refund_rate: number;
+  };
+}
+
+/**
+ * Get payment analytics dashboard (optimized combined endpoint)
+ * Replaces getPaymentAnalyticsSummary and getPaymentAnalyticsTrends
+ */
+export const getPaymentAnalyticsDashboard = async (
+  include: 'all' | 'summary' | 'trends' = 'all',
+  days: number = 30
+): Promise<StandardResponse<any>> => {
+  try {
+    const response = await api.get<StandardResponse<any>>(
+      `/payments/analytics/dashboard?include=${include}&days=${days}`,
+      { requireAuth: true }
+    );
+    
+    return response;
+  } catch (error) {
+    console.error('Get payment analytics dashboard failed:', error);
+    throw error;
+  }
+};
+
+// OLD FUNCTIONS REMOVED - Use getPaymentAnalyticsDashboard only

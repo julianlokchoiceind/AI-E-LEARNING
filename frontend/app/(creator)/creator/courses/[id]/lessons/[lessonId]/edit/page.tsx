@@ -13,7 +13,8 @@ import {
   BookOpen,
   Clock,
   Youtube,
-  ExternalLink
+  ExternalLink,
+  Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';

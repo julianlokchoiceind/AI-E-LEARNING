@@ -9,6 +9,8 @@ import {
   cancelSubscription,
   createSubscription,
   createCoursePayment,
+  getPaymentAnalyticsDashboard,
+  getAdminPaymentHistory,
   SubscriptionType
 } from '@/lib/api/payments';
 
@@ -78,6 +80,8 @@ export function useCancelSubscription() {
       invalidateQueries: [
         ['subscription-status'], // Refresh subscription status
         ['payment-history'], // Refresh payment history
+        ['payment-analytics-dashboard'], // Refresh payment analytics
+        ['admin-payment-history'], // Refresh admin payment history
       ],
       operationName: 'cancel-subscription', // Unique operation ID for toast deduplication
     }
@@ -95,6 +99,8 @@ export function useCreateSubscription() {
       invalidateQueries: [
         ['subscription-status'], // Refresh subscription status
         ['payment-history'], // Refresh payment history
+        ['payment-analytics-dashboard'], // Refresh payment analytics
+        ['admin-payment-history'], // Refresh admin payment history
       ],
       operationName: 'create-subscription', // Unique operation ID for toast deduplication
     }
@@ -111,6 +117,8 @@ export function useCreateCoursePayment() {
     {
       invalidateQueries: [
         ['payment-history'], // Refresh payment history
+        ['payment-analytics-dashboard'], // Refresh payment analytics
+        ['admin-payment-history'], // Refresh admin payment history
       ],
       operationName: 'create-course-payment', // Unique operation ID for toast deduplication
     }
@@ -131,5 +139,82 @@ export function useSubscriptionManagement() {
     cancelSubscription: cancelMutation.mutate,
     canceling: cancelMutation.loading,
     refetch: subscriptionQuery.execute,
+  };
+}
+
+// OLD HOOKS COMPLETELY REMOVED - Only using optimized dashboard endpoint
+
+/**
+ * Hook for fetching admin payment history with user details
+ * Admin-only hook that shows all payments across platform
+ * Updated for unified pagination pattern
+ */
+export function useAdminPaymentHistoryQuery(
+  page: number = 1,
+  per_page: number = 20,
+  status?: string,
+  type?: string,
+  enabled: boolean = true
+) {
+  return useApiQuery(
+    ['admin-payment-history', { page, per_page, status, type }],
+    () => getAdminPaymentHistory(page, per_page, status, type),
+    {
+      enabled,
+      ...getCacheConfig('PAYMENT_ANALYTICS_SUMMARY') // Use same cache as other admin analytics
+    }
+  );
+}
+
+/**
+ * OPTIMIZED: Single hook for payment analytics dashboard
+ * Uses combined endpoint to reduce API calls from 2 to 1
+ */
+export function usePaymentAnalyticsDashboardQuery(days: number = 30, enabled: boolean = true) {
+  return useApiQuery(
+    ['payment-analytics-dashboard', { days }],
+    () => getPaymentAnalyticsDashboard('all', days),
+    {
+      enabled,
+      ...getCacheConfig('PAYMENT_ANALYTICS_SUMMARY') // Use moderate cache
+    }
+  );
+}
+
+/**
+ * OPTIMIZED: Combined hook for payment analytics dashboard  
+ * Uses SINGLE endpoint instead of 2 separate calls
+ * PERFORMANCE: 50% reduction in API calls
+ */
+export function usePaymentAnalyticsQuery(days: number = 30, enabled: boolean = true) {
+  const dashboardQuery = usePaymentAnalyticsDashboardQuery(days, enabled);
+
+  return {
+    // Data - extract from combined response
+    summary: dashboardQuery.data?.data?.summary ? {
+      data: dashboardQuery.data.data.summary,
+      success: dashboardQuery.data.success,
+      message: dashboardQuery.data.message
+    } : undefined,
+    trends: dashboardQuery.data?.data?.trends ? {
+      data: dashboardQuery.data.data.trends,
+      success: dashboardQuery.data.success,
+      message: dashboardQuery.data.message
+    } : undefined,
+    
+    // Loading states - single loading state (optimized)
+    summaryLoading: dashboardQuery.loading,
+    trendsLoading: dashboardQuery.loading,
+    loading: dashboardQuery.loading,
+    
+    // Error states - single error state (optimized)
+    summaryError: dashboardQuery.error,
+    trendsError: dashboardQuery.error,
+    error: dashboardQuery.error,
+    
+    // Refetch functions - single refetch (optimized)
+    refetchSummary: dashboardQuery.execute,
+    refetchTrends: dashboardQuery.execute,
+    refetchAll: dashboardQuery.execute
   };
 }

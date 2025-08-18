@@ -61,34 +61,38 @@ class PaymentService:
                 )
             
             # Check if course is free
-            if course.pricing.get("is_free", False):
+            is_free = course.pricing.get("is_free") if hasattr(course.pricing, 'get') else getattr(course.pricing, 'is_free', False)
+            if is_free:
                 raise HTTPException(
                     status_code=400,
                     detail="Cannot purchase a free course"
                 )
             
             # Create or retrieve Stripe customer
-            if not user.subscription or not user.subscription.get("stripe_customer_id"):
+            if not user.subscription or not user.subscription.stripe_customer_id:
                 customer = stripe.Customer.create(
                     email=user.email,
                     name=user.name,
                     metadata={"user_id": str(user.id)}
                 )
                 
-                # Update user with Stripe customer ID
+                # Update user with Stripe customer ID using Pydantic model
                 if not user.subscription:
-                    user.subscription = {}
-                user.subscription["stripe_customer_id"] = customer.id
+                    from app.models.user import Subscription
+                    user.subscription = Subscription()
+                user.subscription.stripe_customer_id = customer.id
                 await user.save()
             else:
-                customer = stripe.Customer.retrieve(user.subscription["stripe_customer_id"])
+                customer = stripe.Customer.retrieve(user.subscription.stripe_customer_id)
             
             # Create payment intent
-            amount = int(course.pricing.get("price", 0) * 100)  # Convert to cents
+            price = course.pricing.get("price") if hasattr(course.pricing, 'get') else getattr(course.pricing, 'price', 0)
+            currency = course.pricing.get("currency") if hasattr(course.pricing, 'get') else getattr(course.pricing, 'currency', "USD")
+            amount = int(float(price) * 100)  # Convert to cents
             
             payment_intent = stripe.PaymentIntent.create(
                 amount=amount,
-                currency=course.pricing.get("currency", "USD").lower(),
+                currency=currency.lower(),
                 customer=customer.id,
                 payment_method=payment_method_id,
                 metadata={
@@ -103,8 +107,8 @@ class PaymentService:
             payment = Payment(
                 user_id=user.id,
                 type=PaymentType.COURSE_PURCHASE,
-                amount=course.pricing.get("price", 0),
-                currency=course.pricing.get("currency", "USD"),
+                amount=price,
+                currency=currency,
                 status=PaymentStatus.PENDING,
                 provider=PaymentProvider.STRIPE,
                 provider_payment_id=payment_intent.id,
@@ -120,8 +124,8 @@ class PaymentService:
             return {
                 "client_secret": payment_intent.client_secret,
                 "payment_intent_id": payment_intent.id,
-                "amount": course.pricing.get("price", 0),
-                "currency": course.pricing.get("currency", "USD")
+                "amount": price,
+                "currency": currency
             }
             
         except stripe.error.StripeError as e:
@@ -200,7 +204,7 @@ class PaymentService:
         """
         try:
             # Create or retrieve Stripe customer
-            if not user.subscription or not user.subscription.get("stripe_customer_id"):
+            if not user.subscription or not user.subscription.stripe_customer_id:
                 customer = stripe.Customer.create(
                     email=user.email,
                     name=user.name,
@@ -210,7 +214,7 @@ class PaymentService:
                 )
                 customer_id = customer.id
             else:
-                customer_id = user.subscription["stripe_customer_id"]
+                customer_id = user.subscription.stripe_customer_id
                 # Attach payment method to existing customer
                 stripe.PaymentMethod.attach(payment_method_id, customer=customer_id)
                 stripe.Customer.modify(
@@ -232,16 +236,17 @@ class PaymentService:
                 }
             )
             
-            # Update user subscription status
-            user.subscription = {
-                "type": SubscriptionType.PRO,
-                "status": SubscriptionStatus.ACTIVE,
-                "stripe_customer_id": customer_id,
-                "stripe_subscription_id": subscription.id,
-                "current_period_start": datetime.fromtimestamp(subscription.current_period_start),
-                "current_period_end": datetime.fromtimestamp(subscription.current_period_end),
-                "cancel_at_period_end": False
-            }
+            # Update user subscription status using Pydantic model
+            from app.models.user import Subscription
+            user.subscription = Subscription(
+                type=SubscriptionType.PRO,
+                status=SubscriptionStatus.ACTIVE,
+                stripe_customer_id=customer_id,
+                stripe_subscription_id=subscription.id,
+                current_period_start=datetime.fromtimestamp(subscription.current_period_start),
+                current_period_end=datetime.fromtimestamp(subscription.current_period_end),
+                cancel_at_period_end=False
+            )
             await user.save()
             
             # Create payment record
@@ -308,13 +313,26 @@ class PaymentService:
         4. Send cancellation email
         """
         try:
-            if not user.subscription or not user.subscription.get("stripe_subscription_id"):
+            # Safe subscription check
+            has_subscription_id = False
+            if user.subscription:
+                try:
+                    subscription_id = user.subscription.get("stripe_subscription_id") if hasattr(user.subscription, 'get') else getattr(user.subscription, 'stripe_subscription_id', None)
+                    has_subscription_id = bool(subscription_id)
+                except:
+                    has_subscription_id = False
+            
+            if not has_subscription_id:
                 raise HTTPException(
                     status_code=400,
                     detail="No active subscription found"
                 )
             
-            subscription_id = user.subscription["stripe_subscription_id"]
+            # Get subscription_id safely
+            if hasattr(user.subscription, 'get'):
+                subscription_id = user.subscription.get("stripe_subscription_id")
+            else:
+                subscription_id = getattr(user.subscription, 'stripe_subscription_id', None)
             
             if cancel_at_period_end:
                 # Cancel at end of billing period
@@ -335,13 +353,21 @@ class PaymentService:
             await EmailService.send_subscription_cancellation(
                 user.email,
                 user.name,
-                user.subscription.get("current_period_end")
+                getattr(user.subscription, 'current_period_end', None) if not hasattr(user.subscription, 'get') else user.subscription.get("current_period_end")
             )
+            
+            # Safe period_end extraction
+            period_end = None
+            if user.subscription:
+                try:
+                    period_end = user.subscription.get("current_period_end") if hasattr(user.subscription, 'get') else getattr(user.subscription, 'current_period_end', None)
+                except:
+                    period_end = None
             
             return {
                 "message": "Subscription cancelled successfully",
                 "cancel_at_period_end": cancel_at_period_end,
-                "current_period_end": user.subscription.get("current_period_end")
+                "current_period_end": period_end
             }
             
         except stripe.error.StripeError as e:
@@ -370,10 +396,31 @@ class PaymentService:
             # Calculate total amount
             total_amount = sum(p.amount for p in payments if p.status == PaymentStatus.COMPLETED)
             
+            # Convert payments to dictionaries with string IDs (CLAUDE.md requirement)
+            payment_dicts = []
+            for payment in payments:
+                payment_dict = {
+                    "id": str(payment.id),
+                    "user_id": str(payment.user_id),
+                    "type": payment.type,
+                    "amount": payment.amount,
+                    "currency": payment.currency,
+                    "status": payment.status,
+                    "provider": payment.provider,
+                    "provider_payment_id": payment.provider_payment_id,
+                    "course_id": str(payment.course_id) if payment.course_id else None,
+                    "subscription_id": payment.subscription_id,
+                    "metadata": payment.metadata,
+                    "paid_at": payment.paid_at.isoformat() if payment.paid_at else None,
+                    "created_at": payment.created_at.isoformat()
+                }
+                payment_dicts.append(payment_dict)
+            
+            # Use dictionary response (CLAUDE.md preference) 
             return {
-                "payments": payments,
+                "payments": payment_dicts,
                 "total_count": total_count,
-                "total_amount": total_amount
+                "total_amount": round(total_amount, 2)
             }
             
         except Exception as e:

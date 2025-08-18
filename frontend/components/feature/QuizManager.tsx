@@ -91,11 +91,6 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
       variant: 'success' as const
     });
     
-    badges.push({ 
-      label: `${quiz.config.max_attempts} attempts`, 
-      icon: <RotateCcw className="w-3 h-3" />,
-      variant: 'secondary' as const
-    });
 
     return badges;
   };
@@ -278,10 +273,6 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
                 <div className="flex justify-between">
                   <span className="text-gray-600">Pass Percentage:</span>
                   <span className="font-medium">{quiz.config?.pass_percentage}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Max Attempts:</span>
-                  <span className="font-medium">{quiz.config?.max_attempts}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Time Limit:</span>

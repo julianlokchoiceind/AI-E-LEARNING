@@ -128,6 +128,8 @@ export const CACHE_CONTEXTS = {
   // Payments & Subscriptions
   SUBSCRIPTION_STATUS: CACHE_TIERS.FRESH,       // Current subscription
   PAYMENT_HISTORY: CACHE_TIERS.MODERATE,        // Payment transaction history
+  PAYMENT_ANALYTICS_SUMMARY: CACHE_TIERS.FRESH,     // Payment analytics summary - FRESH for quick updates
+  PAYMENT_ANALYTICS_TRENDS: CACHE_TIERS.FRESH,      // Payment analytics trends - FRESH for quick updates
   
   // Support System
   SUPPORT_TICKETS: CACHE_TIERS.REALTIME,        // Support tickets list - REALTIME for CRUD

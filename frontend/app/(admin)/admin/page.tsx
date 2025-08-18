@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 import { useAdminOverviewQuery } from '@/hooks/queries/useAdminStats';
+import { usePaymentAnalyticsQuery } from '@/hooks/queries/usePayments';
 import { ToastService } from '@/lib/toast/ToastService';
 import { 
   Users, 
@@ -38,6 +39,10 @@ interface DashboardStats {
     subscription_revenue: number;
     course_sales_revenue: number;
     growth_percentage: number;
+    // NEW: Additional payment analytics
+    total_all_time: number;
+    average_payment: number;
+    success_rate: number;
   };
   system: {
     active_sessions: number;
@@ -58,6 +63,15 @@ export default function AdminDashboard() {
     error,
     refetchAll
   } = useAdminOverviewQuery({ period: 'month' });
+
+  // NEW: Real payment analytics for admin
+  const {
+    summary: paymentSummary,
+    trends: paymentTrends,
+    loading: analyticsLoading,
+    error: analyticsError,
+    refetchAll: refetchAnalytics
+  } = usePaymentAnalyticsQuery(30, true); // Always enabled for admin
 
   // Transform API data to component format using memoization
   const stats = useMemo(() => {
@@ -82,10 +96,15 @@ export default function AdminDashboard() {
         total_enrollments: adminStats?.total_enrollments || 0
       },
       revenue: {
-        total_monthly: revenue?.total_monthly || adminStats?.revenue_this_month || 0,
-        subscription_revenue: revenue?.subscription_revenue || 0,
-        course_sales_revenue: revenue?.course_sales || adminStats?.revenue_this_month || 0,
-        growth_percentage: revenue?.growth_percentage || 0
+        // Use REAL payment analytics data when available
+        total_monthly: paymentSummary?.data?.revenue?.this_month || revenue?.total_monthly || adminStats?.revenue_this_month || 0,
+        subscription_revenue: paymentSummary?.data?.payments?.by_type?.subscriptions || revenue?.subscription_revenue || 0,
+        course_sales_revenue: paymentSummary?.data?.payments?.by_type?.course_purchases || revenue?.course_sales || adminStats?.revenue_this_month || 0,
+        growth_percentage: revenue?.growth_percentage || 0,
+        // NEW: Additional payment metrics
+        total_all_time: paymentSummary?.data?.revenue?.total || 0,
+        average_payment: paymentSummary?.data?.revenue?.average_payment || 0,
+        success_rate: paymentTrends?.data?.success_metrics?.overall_success_rate || 100
       },
       system: {
         active_sessions: adminStats?.active_users_today || 0,
@@ -96,23 +115,31 @@ export default function AdminDashboard() {
     };
 
     return transformedStats;
-  }, [dashboardData, revenueData, userGrowthData, systemHealth]);
+  }, [dashboardData, revenueData, userGrowthData, systemHealth, paymentSummary, paymentTrends]);
 
   const handleRefresh = async () => {
     try {
-      await refetchAll();
+      await Promise.all([
+        refetchAll(),
+        refetchAnalytics()
+      ]);
       ToastService.success('Dashboard data refreshed successfully');
     } catch (error) {
       ToastService.error('Failed to refresh dashboard data');
     }
   };
 
-  if (loading) {
+  if (loading || analyticsLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <LoadingSpinner size="lg" message="Loading admin dashboard..." />
       </div>
     );
+  }
+
+  // Show warning if analytics failed but continue with existing data
+  if (analyticsError) {
+    console.warn('Payment analytics failed, using fallback data:', analyticsError);
   }
 
   if (error) {
@@ -186,7 +213,7 @@ export default function AdminDashboard() {
           </div>
         </Card>
 
-        {/* Monthly Revenue */}
+        {/* Monthly Revenue - NOW WITH REAL PAYMENT DATA */}
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -195,7 +222,7 @@ export default function AdminDashboard() {
                 ${stats?.revenue.total_monthly.toLocaleString() || '0'}
               </p>
               <p className="text-sm text-green-600">
-                +{stats?.revenue.growth_percentage || 0}% growth
+                {stats?.revenue.success_rate.toFixed(1) || 100}% success rate
               </p>
             </div>
             <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -316,27 +343,33 @@ export default function AdminDashboard() {
 
       {/* Recent Activity & Revenue Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Breakdown */}
+        {/* Revenue Breakdown - NOW WITH REAL PAYMENT DATA */}
         <Card className="p-6">
           <h2 className="text-lg font-semibold mb-4">Revenue Breakdown</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-gray-700">Subscription Revenue</span>
+              <span className="text-gray-700">Course Purchases</span>
               <span className="font-semibold">
-                ${stats?.revenue.subscription_revenue.toLocaleString() || '0'}
+                {stats?.revenue.course_sales_revenue || '0'} payments
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-700">Course Sales</span>
+              <span className="text-gray-700">Subscriptions</span>
               <span className="font-semibold">
-                ${stats?.revenue.course_sales_revenue.toLocaleString() || '0'}
+                {stats?.revenue.subscription_revenue || '0'} payments
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700">Average Payment</span>
+              <span className="font-semibold">
+                ${stats?.revenue.average_payment.toLocaleString() || '0'}
               </span>
             </div>
             <div className="border-t pt-2">
               <div className="flex items-center justify-between">
-                <span className="text-gray-900 font-medium">Total Monthly</span>
+                <span className="text-gray-900 font-medium">Total All Time</span>
                 <span className="text-lg font-bold text-green-600">
-                  ${stats?.revenue.total_monthly.toLocaleString() || '0'}
+                  ${stats?.revenue.total_all_time.toLocaleString() || '0'}
                 </span>
               </div>
             </div>

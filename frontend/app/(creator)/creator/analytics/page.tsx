@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { useCreatorCoursesQuery } from '@/hooks/queries/useCourses';
+import { usePaymentAnalyticsQuery } from '@/hooks/queries/usePayments';
 import { formatCurrency, formatDate } from '@/lib/utils/formatters';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 
@@ -24,31 +25,53 @@ const CreatorAnalyticsPage = () => {
     execute: refetchCourses
   } = useCreatorCoursesQuery({}, !!user);
 
+  // NEW: Use Payment Analytics for real revenue data
+  const {
+    summary: paymentSummary,
+    trends: paymentTrends,
+    loading: analyticsLoading,
+    error: analyticsError,
+    refetchAll: refetchAnalytics
+  } = usePaymentAnalyticsQuery(30, !!user && user.role === 'creator');
+
   // Extract real courses data and calculate statistics
   const courses = coursesResponse?.data?.courses || [];
   
-  // Calculate real analytics from courses data
+  // NEW: Calculate analytics combining real payment data + course data
   const analytics = React.useMemo(() => {
-    if (!courses.length) return null;
+    if (!courses.length && !paymentSummary?.data) return null;
     
     const published = courses.filter(c => c.status === 'published');
-    const totalRevenue = courses.reduce((sum, c) => sum + (c.stats?.total_revenue || 0), 0);
+    
+    // Use REAL payment data for revenue
+    const realRevenue = paymentSummary?.data?.revenue || {
+      total: 0,
+      this_month: 0,
+      average_payment: 0
+    };
+    
+    // Course stats for enrollment/rating data
     const totalStudents = courses.reduce((sum, c) => sum + (c.stats?.total_enrollments || 0), 0);
     const totalReviews = courses.reduce((sum, c) => sum + (c.stats?.total_reviews || 0), 0);
     const avgRating = courses.length > 0 ? 
       courses.reduce((sum, c) => sum + (c.stats?.average_rating || 0), 0) / courses.length : 0;
     
-    // Revenue by course for chart
-    const revenueByCoursе = courses
-      .filter(c => c.stats?.total_revenue > 0)
-      .map(c => ({
-        name: c.title.length > 20 ? c.title.substring(0, 20) + '...' : c.title,
-        value: c.stats?.total_revenue || 0
-      }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
+    // Revenue by course using payment trends data
+    const revenueByCoursе = paymentTrends?.data?.top_courses 
+      ? paymentTrends.data.top_courses.slice(0, 5).map(c => ({
+          name: c.course_title.length > 20 ? c.course_title.substring(0, 20) + '...' : c.course_title,
+          value: c.total_revenue
+        }))
+      : courses
+          .filter(c => c.stats?.total_revenue > 0)
+          .map(c => ({
+            name: c.title.length > 20 ? c.title.substring(0, 20) + '...' : c.title,
+            value: c.stats?.total_revenue || 0
+          }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 5);
     
-    // Students by course for chart
+    // Students by course (still from course stats)
     const studentsByCourse = courses
       .filter(c => c.stats?.total_enrollments > 0)
       .map(c => ({
@@ -57,18 +80,26 @@ const CreatorAnalyticsPage = () => {
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
+
+    // Daily revenue trends for chart
+    const dailyRevenue = paymentTrends?.data?.daily_revenue || [];
     
     return {
       overview: {
         total_courses: courses.length,
         published_courses: published.length,
-        total_revenue: totalRevenue,
+        total_revenue: realRevenue.total, // REAL payment data
+        this_month_revenue: realRevenue.this_month, // NEW: this month revenue
+        average_payment: realRevenue.average_payment, // NEW: average payment
         total_students: totalStudents,
         average_rating: avgRating,
-        total_reviews: totalReviews
+        total_reviews: totalReviews,
+        total_payments: paymentSummary?.data?.payments?.total_count || 0, // NEW
+        success_rate: paymentTrends?.data?.success_metrics?.overall_success_rate || 100 // NEW
       },
       revenueByCoursе,
       studentsByCourse,
+      dailyRevenue, // NEW: 30-day revenue trends
       courseDetails: courses.map(c => ({
         id: c.id,
         title: c.title,
@@ -80,7 +111,7 @@ const CreatorAnalyticsPage = () => {
         updated: c.updated_at
       }))
     };
-  }, [courses]);
+  }, [courses, paymentSummary, paymentTrends]);
 
   useEffect(() => {
     if (user?.role !== 'creator' && user?.role !== 'admin') {
@@ -90,12 +121,17 @@ const CreatorAnalyticsPage = () => {
     }
   }, [user, router]);
 
-  if (coursesLoading) {
+  if (coursesLoading || analyticsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" message="Loading analytics..." />
       </div>
     );
+  }
+
+  // Show error if analytics failed but continue with course data
+  if (analyticsError) {
+    console.warn('Payment analytics failed, using course data only:', analyticsError);
   }
 
   if (!analytics || courses.length === 0) {
@@ -137,15 +173,15 @@ const CreatorAnalyticsPage = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Overview Stats */}
+        {/* Overview Stats - NOW WITH REAL PAYMENT DATA */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-sm text-gray-600">Total Revenue</p>
                 <p className="text-2xl font-bold">{formatCurrency(analytics.overview.total_revenue)}</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  All time earnings
+                <p className="text-sm text-green-600 mt-1">
+                  +{formatCurrency(analytics.overview.this_month_revenue)} this month
                 </p>
               </div>
               <DollarSign className="w-8 h-8 text-green-500" />
@@ -155,39 +191,39 @@ const CreatorAnalyticsPage = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
+                <p className="text-sm text-gray-600">Total Payments</p>
+                <p className="text-2xl font-bold">{analytics.overview.total_payments}</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Avg: {formatCurrency(analytics.overview.average_payment)}
+                </p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-blue-500" />
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-sm text-gray-600">Success Rate</p>
+                <p className="text-2xl font-bold">{analytics.overview.success_rate.toFixed(1)}%</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Payment success rate
+                </p>
+              </div>
+              <Award className="w-8 h-8 text-green-500" />
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
                 <p className="text-sm text-gray-600">Total Students</p>
                 <p className="text-2xl font-bold">{analytics.overview.total_students}</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Across all courses
+                  {analytics.overview.published_courses} courses
                 </p>
               </div>
-              <Users className="w-8 h-8 text-blue-500" />
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm text-gray-600">Published Courses</p>
-                <p className="text-2xl font-bold">{analytics.overview.published_courses}</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Out of {analytics.overview.total_courses} total
-                </p>
-              </div>
-              <BookOpen className="w-8 h-8 text-indigo-500" />
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm text-gray-600">Average Rating</p>
-                <p className="text-2xl font-bold">{analytics.overview.average_rating.toFixed(1)} ⭐</p>
-                <p className="text-sm text-gray-500 mt-1">
-                  {analytics.overview.total_reviews} reviews
-                </p>
-              </div>
-              <Award className="w-8 h-8 text-yellow-500" />
+              <Users className="w-8 h-8 text-indigo-500" />
             </div>
           </Card>
         </div>
@@ -239,6 +275,58 @@ const CreatorAnalyticsPage = () => {
               </Card>
             )}
           </div>
+        )}
+
+        {/* NEW: Revenue Trends Chart (30 days) */}
+        {analytics.dailyRevenue && analytics.dailyRevenue.length > 0 && (
+          <Card className="p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4">Revenue Trends (Last 30 Days)</h2>
+            <div className="space-y-4">
+              {/* Simple line chart representation */}
+              <div className="grid grid-cols-7 gap-2 text-xs">
+                {analytics.dailyRevenue.slice(-7).map((day, index) => (
+                  <div key={index} className="text-center">
+                    <div className="text-gray-500 mb-1">
+                      {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                    </div>
+                    <div className="bg-blue-100 rounded p-2">
+                      <div className="font-semibold text-blue-600">
+                        {formatCurrency(day.total_revenue)}
+                      </div>
+                      <div className="text-gray-500 text-xs">
+                        {day.payment_count} payments
+                      </div>
+                      <div className="text-green-600 text-xs">
+                        {day.success_rate.toFixed(1)}% success
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Summary stats */}
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                <div className="text-center">
+                  <div className="text-sm text-gray-600">Total (30 days)</div>
+                  <div className="text-lg font-semibold">
+                    {formatCurrency(analytics.dailyRevenue.reduce((sum, day) => sum + day.total_revenue, 0))}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm text-gray-600">Total Payments</div>
+                  <div className="text-lg font-semibold">
+                    {analytics.dailyRevenue.reduce((sum, day) => sum + day.payment_count, 0)}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm text-gray-600">Avg Success Rate</div>
+                  <div className="text-lg font-semibold text-green-600">
+                    {(analytics.dailyRevenue.reduce((sum, day) => sum + day.success_rate, 0) / analytics.dailyRevenue.length).toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
         )}
 
         {/* Course Details Table */}
