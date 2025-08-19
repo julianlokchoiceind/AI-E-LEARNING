@@ -62,6 +62,13 @@ export const AnalyticsChart: React.FC<ChartProps> = ({
         );
       
       case 'pie':
+        // Custom label function to avoid overlapping text
+        const renderLabel = (entry: any) => {
+          // Only show label if value > 0 to avoid overlap
+          if (entry.value === 0) return null;
+          return `${entry.name}: ${entry.value}`;
+        };
+
         return (
           <ResponsiveContainer width="100%" height={height}>
             <PieChart>
@@ -70,7 +77,7 @@ export const AnalyticsChart: React.FC<ChartProps> = ({
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={(entry) => `${entry.name}: ${entry.value}`}
+                label={renderLabel}
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey={dataKey}
@@ -80,6 +87,7 @@ export const AnalyticsChart: React.FC<ChartProps> = ({
                 ))}
               </Pie>
               <Tooltip />
+              <Legend />
             </PieChart>
           </ResponsiveContainer>
         );

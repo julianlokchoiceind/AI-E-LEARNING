@@ -46,11 +46,13 @@ const navigationItems = [
     href: '/admin/analytics',
     icon: BarChart3,
   },
-  {
-    name: 'Content Moderation',
-    href: '/admin/moderation',
-    icon: Shield,
-  },
+  // TODO: Implement Content Moderation when user base reaches 500+ active users
+  // Currently not implemented - would show 404 if enabled
+  // {
+  //   name: 'Content Moderation',
+  //   href: '/admin/moderation',
+  //   icon: Shield,
+  // },
   {
     name: 'Support Tickets',
     href: '/admin/support',
