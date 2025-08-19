@@ -603,6 +603,152 @@ class EmailService:
             subject=email_subject,
             html_content=html_content
         )
+    
+    async def send_support_ticket_notification(
+        self,
+        ticket_id: str,
+        user_name: str,
+        user_email: str,
+        ticket_title: str,
+        ticket_description: str,
+        ticket_category: str,
+        ticket_priority: str
+    ) -> bool:
+        """
+        Send new support ticket notification to support team.
+        
+        Args:
+            ticket_id: Support ticket ID
+            user_name: Name of user who created ticket
+            user_email: Email of user who created ticket  
+            ticket_title: Ticket title
+            ticket_description: Ticket description
+            ticket_category: Ticket category
+            ticket_priority: Ticket priority
+            
+        Returns:
+            bool: True if email sent successfully
+        """
+        admin_email = "julian.lok88@icloud.com"  # Support team email
+        subject = f"🎫 New Support Ticket #{ticket_id[:8]} - {ticket_priority.title()} Priority"
+        
+        # Priority color mapping
+        priority_colors = {
+            "low": "#10B981",      # Green
+            "medium": "#F59E0B",   # Yellow  
+            "high": "#EF4444",     # Red
+            "urgent": "#DC2626"    # Dark Red
+        }
+        
+        priority_color = priority_colors.get(ticket_priority.lower(), "#6B7280")
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>🎫 New Support Ticket Created</h2>
+            
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid {priority_color};">
+                <h3 style="margin: 0 0 15px 0; color: #1e40af;">Ticket #{ticket_id[:8]}</h3>
+                <p><strong>Title:</strong> {ticket_title}</p>
+                <p><strong>Category:</strong> {ticket_category.title()}</p>
+                <p><strong>Priority:</strong> <span style="color: {priority_color}; font-weight: bold;">{ticket_priority.title()}</span></p>
+                <p><strong>From:</strong> {user_name} ({user_email})</p>
+            </div>
+            
+            <div style="background-color: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin: 0 0 15px 0; color: #1e40af;">Description</h3>
+                <p style="white-space: pre-line; line-height: 1.6;">{ticket_description}</p>
+            </div>
+            
+            <div style="margin: 30px 0;">
+                <a href="{settings.FRONTEND_URL}/admin/support/{ticket_id}" 
+                   style="background-color: #4F46E5; color: white; padding: 12px 24px; 
+                          text-decoration: none; border-radius: 6px; display: inline-block;">
+                    View & Respond to Ticket
+                </a>
+            </div>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e5e5;">
+            <p style="color: #666; font-size: 14px;">
+                This is an automated notification from AI E-Learning Platform.<br>
+                Please respond to the ticket within 24 hours for optimal customer satisfaction.
+            </p>
+        </div>
+        """
+        
+        return await self.send_email(
+            to_email=admin_email,
+            subject=subject,
+            html_content=html_content
+        )
+    
+    async def send_support_ticket_reply_notification(
+        self,
+        ticket_id: str,
+        ticket_title: str,
+        user_name: str,
+        user_email: str,
+        reply_message: str,
+        sender_name: str,
+        sender_role: str
+    ) -> bool:
+        """
+        Send notification to user when support team replies to ticket.
+        
+        Args:
+            ticket_id: Support ticket ID
+            ticket_title: Ticket title
+            user_name: Name of ticket owner
+            user_email: Email of ticket owner
+            reply_message: The reply message content
+            sender_name: Name of person who replied
+            sender_role: Role of person who replied (admin, creator)
+            
+        Returns:
+            bool: True if email sent successfully
+        """
+        subject = f"💬 Reply to your support ticket #{ticket_id[:8]}"
+        
+        # Clean up reply message (remove markdown and attachments)
+        clean_message = reply_message.replace("**", "").replace("📎 Uploaded attachment:", "📎 Attachment:")
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>💬 New Reply to Your Support Ticket</h2>
+            <p>Hi {user_name},</p>
+            <p>Our support team has replied to your ticket:</p>
+            
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin: 0 0 10px 0; color: #1e40af;">Ticket #{ticket_id[:8]}: {ticket_title}</h3>
+                <p style="margin: 5px 0; color: #6b7280; font-size: 14px;">
+                    Reply from {sender_name} ({sender_role.title()})
+                </p>
+            </div>
+            
+            <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0ea5e9;">
+                <p style="margin: 0; white-space: pre-line; line-height: 1.6;">{clean_message}</p>
+            </div>
+            
+            <div style="margin: 30px 0;">
+                <a href="{settings.FRONTEND_URL}/support/{ticket_id}" 
+                   style="background-color: #10B981; color: white; padding: 12px 24px; 
+                          text-decoration: none; border-radius: 6px; display: inline-block;">
+                    View Full Conversation
+                </a>
+            </div>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e5e5;">
+            <p style="color: #666; font-size: 14px;">
+                Need more help? Simply reply to this ticket and we'll be happy to assist you further.<br>
+                The AI E-Learning Support Team
+            </p>
+        </div>
+        """
+        
+        return await self.send_email(
+            to_email=user_email,
+            subject=subject,
+            html_content=html_content
+        )
 
 
 # Create a singleton instance

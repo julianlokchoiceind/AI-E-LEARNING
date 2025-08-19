@@ -111,13 +111,13 @@ export interface TicketStats {
 }
 
 export const TICKET_CATEGORIES = [
-  { value: 'technical', label: 'Technical Issue', icon: '🔧' },
-  { value: 'billing', label: 'Billing & Payment', icon: '💳' },
-  { value: 'course_content', label: 'Course Content', icon: '📚' },
-  { value: 'account', label: 'Account & Profile', icon: '👤' },
-  { value: 'feature_request', label: 'Feature Request', icon: '✨' },
-  { value: 'bug_report', label: 'Bug Report', icon: '🐛' },
-  { value: 'other', label: 'Other', icon: '📝' },
+  { value: 'technical', label: 'Technical Issue' },
+  { value: 'billing', label: 'Billing & Payment' },
+  { value: 'course_content', label: 'Course Content' },
+  { value: 'account', label: 'Account & Profile' },
+  { value: 'feature_request', label: 'Feature Request' },
+  { value: 'bug_report', label: 'Bug Report' },
+  { value: 'other', label: 'Other' },
 ] as const;
 
 export const TICKET_PRIORITIES = [

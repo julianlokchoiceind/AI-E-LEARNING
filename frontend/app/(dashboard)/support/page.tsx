@@ -188,7 +188,6 @@ export default function SupportPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="text-2xl">{categoryInfo?.icon}</span>
                         <h3 className="text-lg font-semibold text-gray-900">
                           {ticket.title}
                         </h3>

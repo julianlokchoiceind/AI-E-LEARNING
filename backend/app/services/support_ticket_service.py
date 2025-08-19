@@ -4,6 +4,7 @@ Support Ticket service for business logic
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict
 from beanie import PydanticObjectId
+from bson import ObjectId
 
 from app.models.support_ticket import SupportTicket, TicketMessage, TicketStatus, TicketPriority
 from app.models.user import User
@@ -90,9 +91,56 @@ class SupportTicketService:
         
         messages = await TicketMessage.find(message_filter).sort("created_at").to_list()
         
+        # Convert ticket to dict manually to avoid ObjectId issues
+        ticket_dict = {
+            "id": str(ticket.id),
+            "user_id": ticket.user_id,
+            "user_email": ticket.user_email,
+            "user_name": ticket.user_name,
+            "title": ticket.title,
+            "description": ticket.description,
+            "category": ticket.category.value if hasattr(ticket.category, 'value') else ticket.category,
+            "priority": ticket.priority.value if hasattr(ticket.priority, 'value') else ticket.priority,
+            "status": ticket.status.value if hasattr(ticket.status, 'value') else ticket.status,
+            "assigned_to": ticket.assigned_to,
+            "assigned_to_name": ticket.assigned_to_name if hasattr(ticket, 'assigned_to_name') else None,
+            "assigned_at": ticket.assigned_at.isoformat() if hasattr(ticket, 'assigned_at') and ticket.assigned_at else None,
+            "tags": ticket.tags,
+            "related_course_id": ticket.related_course_id,
+            "related_order_id": ticket.related_order_id,
+            "first_response_at": ticket.first_response_at.isoformat() if ticket.first_response_at else None,
+            "resolved_at": ticket.resolved_at.isoformat() if ticket.resolved_at else None,
+            "closed_at": ticket.closed_at.isoformat() if ticket.closed_at else None,
+            "resolution_note": ticket.resolution_note,
+            "response_count": ticket.response_count,
+            "last_user_message_at": ticket.last_user_message_at.isoformat() if ticket.last_user_message_at else None,
+            "last_support_message_at": ticket.last_support_message_at.isoformat() if ticket.last_support_message_at else None,
+            "satisfaction_rating": ticket.satisfaction_rating,
+            "satisfaction_comment": ticket.satisfaction_comment,
+            "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
+            "updated_at": ticket.updated_at.isoformat() if ticket.updated_at else None
+        }
+        
+        # Convert messages to dict manually to avoid ObjectId issues
+        messages_dict = []
+        for msg in messages:
+            msg_dict = {
+                "id": str(msg.id),
+                "ticket_id": msg.ticket_id,
+                "sender_id": msg.sender_id,
+                "sender_name": msg.sender_name,
+                "sender_role": msg.sender_role,
+                "message": msg.message,
+                "attachments": msg.attachments,
+                "is_internal_note": msg.is_internal_note,
+                "created_at": msg.created_at.isoformat() if msg.created_at else None,
+                "updated_at": msg.updated_at.isoformat() if msg.updated_at else None
+            }
+            messages_dict.append(msg_dict)
+        
         return {
-            **ticket.dict(),
-            "messages": [msg.dict() for msg in messages]
+            **ticket_dict,
+            "messages": messages_dict
         }
 
     async def search_tickets(
@@ -365,10 +413,20 @@ class SupportTicketService:
 
     async def _notify_support_team(self, ticket: SupportTicket):
         """Send notification to support team about new ticket"""
-        # TODO: Implement support team notification
-        # For now, we could send to admin email or use a support queue
-        # Example: await email_service.send_support_ticket_notification(...)
-        pass
+        try:
+            await email_service.send_support_ticket_notification(
+                ticket_id=str(ticket.id),
+                user_name=ticket.user_name,
+                user_email=ticket.user_email,
+                ticket_title=ticket.title,
+                ticket_description=ticket.description,
+                ticket_category=ticket.category.value if hasattr(ticket.category, 'value') else ticket.category,
+                ticket_priority=ticket.priority.value if hasattr(ticket.priority, 'value') else ticket.priority
+            )
+        except Exception as e:
+            # Log error but don't fail the ticket creation
+            print(f"Failed to send support team notification: {str(e)}")
+            pass
 
     async def _notify_ticket_update(self, ticket: SupportTicket, updated_by: User):
         """Send notification about ticket update"""
@@ -379,10 +437,149 @@ class SupportTicketService:
 
     async def _notify_new_message(self, ticket: SupportTicket, message: TicketMessage, sender: User):
         """Send notification about new message"""
-        # Notify the other party
-        if sender.role in ["admin", "creator"]:
-            # Notify user
+        try:
+            # Notify the other party
+            if sender.role in ["admin", "creator"]:
+                # Notify user about support reply
+                if message.is_internal_note:
+                    return  # Don't notify users about internal notes
+                
+                await email_service.send_support_ticket_reply_notification(
+                    ticket_id=str(ticket.id),
+                    ticket_title=ticket.title,
+                    user_name=ticket.user_name,
+                    user_email=ticket.user_email,
+                    reply_message=message.message,
+                    sender_name=sender.name or sender.email,
+                    sender_role=sender.role
+                )
+            else:
+                # User replied, notify support team (could implement later if needed)
+                # For now, support team can check dashboard regularly
+                pass
+                
+        except Exception as e:
+            # Log error but don't fail the message creation
+            print(f"Failed to send message notification: {str(e)}")
             pass
+
+    async def add_attachment(
+        self, 
+        ticket_id: str, 
+        attachment_url: str, 
+        filename: str,
+        file_size: int,
+        current_user: User
+    ) -> Optional[TicketMessage]:
+        """
+        Add attachment to support ticket by creating a system message.
+        
+        Args:
+            ticket_id: ID of the ticket
+            attachment_url: URL of the uploaded file
+            filename: Original filename
+            file_size: File size in bytes
+            current_user: User uploading the attachment
+            
+        Returns:
+            TicketMessage with attachment or None if ticket not found/access denied
+        """
+        # Get ticket with access control
+        ticket = await self.get_ticket(ticket_id, current_user)
+        if not ticket:
+            return None
+        
+        # Format file size for display
+        if file_size < 1024:
+            size_str = f"{file_size} bytes"
+        elif file_size < 1024 * 1024:
+            size_str = f"{file_size / 1024:.1f} KB"
         else:
-            # Notify support team
-            pass
+            size_str = f"{file_size / (1024 * 1024):.1f} MB"
+        
+        # Create system message with attachment
+        message_data = TicketMessage(
+            ticket_id=ticket_id,
+            sender_id=str(current_user.id),
+            sender_name=current_user.name or current_user.email,
+            sender_role=current_user.role,
+            message=f"📎 Uploaded attachment: **{filename}** ({size_str})",
+            attachments=[attachment_url],
+            is_internal_note=False
+        )
+        
+        # Save the message
+        await message_data.save()
+        
+        # Update ticket timestamps and response count
+        ticket.response_count += 1
+        ticket.last_user_message_at = datetime.utcnow()
+        ticket.update_timestamps()
+        await ticket.save()
+        
+        # Send notifications (will be implemented in Phase 2)
+        await self._notify_new_message(ticket, message_data, current_user)
+        
+        return message_data
+    
+    async def close_ticket(self, ticket_id: str, current_user: User) -> Optional[SupportTicket]:
+        """
+        Close a support ticket (admin/creator only).
+        
+        Args:
+            ticket_id: ID of the ticket to close
+            current_user: User performing the action (must be admin/creator)
+            
+        Returns:
+            Updated SupportTicket or None if not found/access denied
+        """
+        # Only admin/creator can close tickets
+        if current_user.role not in ["admin", "creator"]:
+            return None
+            
+        # Get ticket
+        ticket = await self.get_ticket(ticket_id, current_user)
+        if not ticket:
+            return None
+        
+        # Update ticket status to closed
+        ticket.status = TicketStatus.CLOSED
+        ticket.closed_at = datetime.utcnow()
+        ticket.resolved_at = ticket.resolved_at or datetime.utcnow()  # Set resolved if not already
+        ticket.update_timestamps()
+        
+        await ticket.save()
+        return ticket
+    
+    async def reopen_ticket(self, ticket_id: str, current_user: User) -> Optional[SupportTicket]:
+        """
+        Reopen a closed support ticket (admin/creator only).
+        
+        Args:
+            ticket_id: ID of the ticket to reopen
+            current_user: User performing the action (must be admin/creator)
+            
+        Returns:
+            Updated SupportTicket or None if not found/access denied
+        """
+        # Only admin/creator can reopen tickets
+        if current_user.role not in ["admin", "creator"]:
+            return None
+            
+        # Get ticket
+        ticket = await self.get_ticket(ticket_id, current_user)
+        if not ticket:
+            return None
+        
+        # Only reopen closed tickets
+        if ticket.status != TicketStatus.CLOSED:
+            return None
+        
+        # Update ticket status to open
+        ticket.status = TicketStatus.OPEN
+        ticket.closed_at = None
+        ticket.resolved_at = None  # Clear resolved timestamp when reopening
+        ticket.update_timestamps()
+        
+        await ticket.save()
+        return ticket

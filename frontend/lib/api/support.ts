@@ -29,7 +29,7 @@ export const supportAPI = {
    */
   async getTickets(params?: TicketSearchParams): Promise<StandardResponse<{
     items: SupportTicket[];
-    total_count: number;
+    total: number;
     total_pages: number;
     page: number;
     per_page: number;
@@ -46,7 +46,7 @@ export const supportAPI = {
 
     return apiClient.get<StandardResponse<{
       items: SupportTicket[];
-      total_count: number;
+      total: number;
       total_pages: number;
       page: number;
       per_page: number;
@@ -117,7 +117,7 @@ export const supportAPI = {
   },
 
   /**
-   * Submit contact form
+   * Submit contact form (public, no auth required)
    */
   async submitContact(data: {
     name: string;
@@ -125,7 +125,7 @@ export const supportAPI = {
     subject: string;
     message: string;
   }): Promise<StandardResponse<any>> {
-    return apiClient.post<StandardResponse<any>>('/support/contact', data);
+    return apiClient.post<StandardResponse<any>>('/contact', data);
   },
 
   /**
@@ -141,7 +141,7 @@ export const supportAPI = {
    */
   async getAllTickets(params?: TicketSearchParams): Promise<StandardResponse<{
     items: SupportTicket[];
-    total_count: number;
+    total: number;
     total_pages: number;
     page: number;
     per_page: number;
@@ -158,7 +158,7 @@ export const supportAPI = {
 
     return apiClient.get<StandardResponse<{
       items: SupportTicket[];
-      total_count: number;
+      total: number;
       total_pages: number;
       page: number;
       per_page: number;

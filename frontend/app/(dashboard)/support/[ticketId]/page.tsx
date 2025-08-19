@@ -169,7 +169,6 @@ export default function TicketDetailPage() {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-3xl">{categoryInfo?.icon}</span>
               <h1 className="text-2xl font-bold text-gray-900">{ticket.title}</h1>
             </div>
             

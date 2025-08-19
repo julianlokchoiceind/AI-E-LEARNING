@@ -7,6 +7,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigationTranslations } from '@/lib/i18n/hooks'
 import { LanguageSwitcherCompact } from '@/components/ui/LanguageSwitcher'
 import { useLocalizedRouter } from '@/lib/i18n/context'
+import { Badge } from '@/components/ui/Badge'
+import { useSupportNotifications } from '@/hooks/useSupportNotifications'
 
 export function Header() {
   const { user, isAuthenticated, logout, loading } = useAuth()
@@ -15,6 +17,9 @@ export function Header() {
   const { navItems, t } = useNavigationTranslations()
   const router = useLocalizedRouter()
   const userMenuRef = useRef<HTMLDivElement>(null)
+  
+  // Support notifications polling every 30 seconds
+  const { unreadCount } = useSupportNotifications()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -73,9 +78,21 @@ export function Header() {
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center text-sm text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
+                  className="flex items-center text-sm text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors relative"
                 >
-                  <User className="h-5 w-5 mr-1" />
+                  <div className="relative">
+                    <User className="h-5 w-5 mr-1" />
+                    {/* Support notification badge */}
+                    {unreadCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        size="sm" 
+                        className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs min-w-[16px]"
+                      >
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </Badge>
+                    )}
+                  </div>
                   <span>{user?.name || user?.email || 'User'}</span>
                   <ChevronDown className={`h-4 w-4 ml-1 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -130,11 +147,23 @@ export function Header() {
                         router.push('/support')
                         setUserMenuOpen(false)
                       }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 relative"
                     >
-                      <svg className="h-4 w-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
+                      <div className="relative mr-3">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        {/* Support notification badge */}
+                        {unreadCount > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            size="sm" 
+                            className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs min-w-[16px]"
+                          >
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </Badge>
+                        )}
+                      </div>
                       {t('nav.support')}
                     </button>
                     <div className="border-t border-gray-200 my-1"></div>
@@ -273,9 +302,19 @@ export function Header() {
                   </button>
                   <button
                     onClick={() => router.push('/support')}
-                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                    className="flex items-center w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                   >
-                    {t('nav.support')}
+                    <span className="flex-1">{t('nav.support')}</span>
+                    {/* Support notification badge for mobile */}
+                    {unreadCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        size="sm" 
+                        className="h-4 w-4 p-0 flex items-center justify-center text-xs min-w-[16px]"
+                      >
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </Badge>
+                    )}
                   </button>
                   <button
                     onClick={() => router.push('/billing')}

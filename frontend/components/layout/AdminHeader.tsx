@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { useRouter } from 'next/navigation';
+import { useSupportNotifications } from '@/hooks/useSupportNotifications';
 import { 
-  Bell, 
   Search, 
   Menu, 
   LogOut, 
@@ -14,33 +15,43 @@ import {
   ChevronDown,
   Home,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Bell
 } from 'lucide-react';
 
 export function AdminHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [notifications] = useState([
-    {
-      id: 1,
-      type: 'warning',
-      message: 'New course pending approval',
-      time: '5 minutes ago'
-    },
-    {
-      id: 2,
-      type: 'success',
-      message: 'Payment webhook processed successfully',
-      time: '10 minutes ago'
-    },
-    {
-      id: 3,
-      type: 'info',
-      message: 'New user registration: john@example.com',
-      time: '15 minutes ago'
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  
+  // Get support ticket notifications for admin
+  const { unreadCount, tickets } = useSupportNotifications();
+  
+  // Get recent unread tickets for notification dropdown  
+  const recentTickets = (tickets || []).slice(0, 5); // Show last 5 unread tickets
+  
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showNotifications || showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
     }
-  ]);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications, showUserMenu]);
 
   const handleLogout = async () => {
     await logout();
@@ -86,20 +97,98 @@ export function AdminHeader() {
           </div>
         </div>
 
-        {/* Notifications */}
-        <div className="relative">
-          <Button variant="ghost" size="sm" className="relative">
+        {/* Support Notifications */}
+        <div className="relative" ref={notificationsRef}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="relative"
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
             <Bell className="h-5 w-5 text-gray-600" />
-            {notifications.length > 0 && (
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                {notifications.length}
-              </span>
+            {unreadCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                size="sm" 
+                className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs min-w-[16px]"
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Badge>
             )}
           </Button>
+          
+          {/* Notifications Dropdown */}
+          {showNotifications && (
+            <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+              <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-900">Support Notifications</h3>
+                {unreadCount > 0 && (
+                  <Badge variant="destructive" size="sm">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="max-h-80 overflow-y-auto">
+                {recentTickets.length > 0 ? (
+                  <div className="py-2">
+                    {recentTickets.map((ticket: any) => (
+                      <button
+                        key={ticket.id}
+                        onClick={() => {
+                          router.push(`/admin/support`);
+                          setShowNotifications(false);
+                        }}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {ticket.title}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              From: {ticket.user_name} • {ticket.category}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {new Date(ticket.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Badge variant="outline" size="sm">
+                            {ticket.priority}
+                          </Badge>
+                        </div>
+                      </button>
+                    ))}
+                    
+                    <div className="px-4 py-3 border-t border-gray-200">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          router.push('/admin/support');
+                          setShowNotifications(false);
+                        }}
+                        className="w-full"
+                      >
+                        View All Support Tickets
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="px-4 py-8 text-center text-gray-500">
+                    <Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No new support tickets</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
+        
 
         {/* User Menu */}
-        <div className="relative">
+        <div className="relative" ref={userMenuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900 focus:outline-none"
