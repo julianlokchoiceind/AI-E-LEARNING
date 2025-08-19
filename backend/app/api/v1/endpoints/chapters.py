@@ -306,6 +306,7 @@ async def get_course_chapters_with_lessons(
                     },
                     "has_quiz": lesson["has_quiz"],
                     "status": lesson.get("status", "draft"),  # Include lesson status
+                    "content": lesson.get("content", ""),
                     "is_free_preview": False,  # Default value
                     "is_completed": False,  # Will be populated based on user progress
                     "is_locked": False,  # Will be calculated based on sequential learning

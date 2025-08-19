@@ -296,7 +296,8 @@ class ChapterService:
                     "video_url": lesson.video.url if lesson.video and lesson.video.url else "",
                     "youtube_id": lesson.video.youtube_id if lesson.video and lesson.video.youtube_id else "",
                     "has_quiz": False,  # Default - will be updated when quiz system is implemented
-                    "status": lesson.status
+                    "status": lesson.status,
+                    "content": lesson.content or ""
                 }
                 chapter_dict["lessons"].append(lesson_dict)
             
