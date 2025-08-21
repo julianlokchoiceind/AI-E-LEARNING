@@ -1,104 +1,54 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { getCacheConfig } from '@/lib/constants/cache-config';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { apiClient } from '@/lib/api/api-client';
-
-interface NotificationData {
-  unreadCount: number;
-  lastChecked: Date;
-}
+import { supportAPI } from '@/lib/api/support';
+import { useEffect } from 'react';
 
 /**
- * Hook for polling support ticket notifications every 30 seconds.
- * Returns unread ticket count for displaying notification badge.
+ * Hook for support ticket notifications using React Query.
+ * Uses existing codebase patterns with shared cache and automatic invalidation.
+ * Backend calculates everything using MongoDB aggregation (smart backend).
  */
 export function useSupportNotifications() {
+  const queryClient = useQueryClient();
   const { isAuthenticated, user } = useAuth();
-  const [data, setData] = useState<NotificationData>({
-    unreadCount: 0,
-    lastChecked: new Date()
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
+  // Use existing useApiQuery pattern from codebase
+  const { data, loading, error, refetch } = useApiQuery(
+    ['support-notifications'],  // Simple key like other support queries
+    () => supportAPI.getNotifications(),
+    {
+      ...getCacheConfig('SUPPORT_NOTIFICATIONS'), // Use existing cache config (REALTIME)
+      enabled: isAuthenticated && !!user,
+    }
+  );
 
-  const fetchUnreadCount = useCallback(async () => {
+  // Manual polling for cross-session real-time updates (like old implementation)
+  useEffect(() => {
     if (!isAuthenticated || !user) {
       return;
     }
 
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Use existing support tickets endpoint to get user's open tickets
-      const response = await apiClient.get('/support/tickets', {
-        params: {
-          status: 'open', // Only get unresolved tickets
-          per_page: 50, // Get more tickets to properly count unread ones
-          page: 1
-        }
-      });
-
-      if (response.data?.success) {
-        const ticketsData = response.data.data;
-        // Count tickets that haven't been responded to by support yet
-        // or tickets where user's last message is newer than support's last message
-        const tickets = ticketsData?.items || []; // Use 'items' from pagination response
-        const unreadCount = tickets.filter((ticket: any) => {
-          // New ticket with no responses from support
-          if (ticket.response_count === 0) return true;
-          
-          // Ticket where user messaged after support's last response
-          if (ticket.last_user_message_at && ticket.last_support_message_at) {
-            return new Date(ticket.last_user_message_at) > new Date(ticket.last_support_message_at);
-          }
-          
-          // Ticket with user messages but no support response
-          return ticket.last_user_message_at && !ticket.last_support_message_at;
-        }).length;
-
-        setData({
-          unreadCount,
-          lastChecked: new Date()
-        });
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch support notifications:', err);
-      setError(err.message || 'Failed to fetch notifications');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated, user]);
-
-  // Poll every 30 seconds as specified in the plan
-  useEffect(() => {
-    if (!isAuthenticated) {
-      return;
-    }
-
-    // Fetch immediately on mount
-    fetchUnreadCount();
-
-    // Set up polling interval (30 seconds)
     const interval = setInterval(() => {
-      fetchUnreadCount();
-    }, 30 * 1000); // 30 seconds
+      refetch();
+    }, 5000); // Poll every 5 seconds
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, [isAuthenticated, fetchUnreadCount]);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user, refetch]);
 
-  // Manually refresh notifications (can be called when user creates new ticket)
-  const refresh = useCallback(() => {
-    fetchUnreadCount();
-  }, [fetchUnreadCount]);
+  // Global refresh function using existing pattern
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['support-notifications'] });
+  };
 
   return {
-    unreadCount: data.unreadCount,
-    lastChecked: data.lastChecked,
-    isLoading,
+    unreadCount: data?.data?.count || 0,
+    recentTickets: data?.data?.recent_tickets || [],
+    lastChecked: new Date(), // For backward compatibility
+    isLoading: loading,
     error,
     refresh
   };

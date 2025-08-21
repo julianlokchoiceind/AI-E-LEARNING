@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Search,
   Filter,
@@ -10,15 +11,16 @@ import {
   MessageCircle,
   TrendingUp,
   Users,
-  BarChart3
+  BarChart3,
+  RefreshCw
 } from 'lucide-react';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { LoadingSpinner, EmptyState, SupportTicketsTableSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, AdSupportTableSkeleton } from '@/components/ui/LoadingStates';
 import { 
-  useSupportTicketsQuery, 
+  useAdminSupportTicketsQuery, 
   useSupportStatsQuery, 
   useUpdateSupportTicket 
 } from '@/hooks/queries/useSupport';
@@ -34,6 +36,8 @@ import {
 import { Pagination } from '@/components/ui/Pagination';
 
 export default function AdminSupportPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     status: '',
@@ -42,15 +46,24 @@ export default function AdminSupportPage() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+
+  // Handle URL parameters - set filters from URL on mount
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    if (statusParam) {
+      setFilters(prev => ({ ...prev, status: statusParam }));
+    }
+  }, [searchParams]);
   
   // React Query hooks for data fetching
   const { 
     data: ticketsResponse, 
-    loading: ticketsLoading,
+    loading: isInitialLoading,
+    query: { isFetching, isRefetching },
     error: ticketsError 
-  } = useSupportTicketsQuery({
+  } = useAdminSupportTicketsQuery({
     search: searchQuery,
-    status: filters.status as any || undefined,
+    status: filters.status as any || undefined,  // Send "unread" as status, backend will handle it
     priority: filters.priority as any || undefined,
     category: filters.category as any || undefined,
     page: currentPage,
@@ -65,65 +78,75 @@ export default function AdminSupportPage() {
 
   const updateTicketMutation = useUpdateSupportTicket();
 
-  const tickets = ticketsResponse?.data?.items || [];
-  const totalPages = ticketsResponse?.data?.total_pages || 1;
-  const totalItems = ticketsResponse?.data?.total || 0;
-  const stats = statsResponse?.data;
+  // Memoized computed values for better performance
+  const computedValues = useMemo(() => {
+    // Smart loading states: Only show spinner on initial load, not background refetch
+    const showLoadingSpinner = isInitialLoading && !ticketsResponse;
+    const showBackgroundUpdate = (isFetching || isRefetching) && ticketsResponse;
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log('🎫 Debug - Tickets Response FULL:', JSON.stringify(ticketsResponse, null, 2));
-    console.log('🎫 Debug - Tickets Array:', tickets);
-    console.log('🎫 Debug - Total Items:', totalItems);
-    console.log('🎫 Debug - Tickets Length:', tickets.length);
-    console.log('🎫 Debug - ticketsResponse?.data:', ticketsResponse?.data);
-    if (ticketsResponse?.data) {
-      console.log('🎫 Debug - Response Keys:', Object.keys(ticketsResponse.data));
-    }
-    console.log('🎫 Debug - Tickets Loading:', ticketsLoading);
-    console.log('🎫 Debug - Tickets Error:', ticketsError);
-    console.log('🔍 Debug - Stats Response:', statsResponse);
-    console.log('🔍 Debug - Stats Data:', stats);
-    console.log('🔍 Debug - Stats Loading:', statsLoading);
-    console.log('🔍 Debug - Stats Error:', statsError);
-  }, [ticketsResponse, tickets, totalItems, ticketsLoading, ticketsError, statsResponse, stats, statsLoading, statsError]);
+    const tickets = ticketsResponse?.data?.items || [];
+    const totalPages = ticketsResponse?.data?.total_pages || 1;
+    const totalItems = ticketsResponse?.data?.total || 0;
+    const stats = statsResponse?.data;
 
-  const handleQuickUpdate = async (ticketId: string, update: TicketUpdateData) => {
+    return {
+      showLoadingSpinner,
+      showBackgroundUpdate,
+      tickets,
+      totalPages,
+      totalItems,
+      stats
+    };
+  }, [ticketsResponse, statsResponse, isInitialLoading, isFetching, isRefetching]);
+
+  // Optimized callback handlers with useCallback
+  const handleQuickUpdate = useCallback(async (ticketId: string, update: TicketUpdateData) => {
     try {
       await updateTicketMutation.mutateAsync({ ticketId, data: update as any });
       ToastService.success('Ticket updated successfully');
     } catch (error: any) {
       ToastService.error(error.message || 'Something went wrong');
     }
-  };
+  }, [updateTicketMutation]);
 
-  const formatDate = (date: string) => {
+  const formatDate = useCallback((date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
+  }, []);
 
-  // Safe stat getters with fallbacks
-  const getTotalTickets = () => stats?.total_tickets ?? 0;
-  const getOpenTickets = () => stats?.open_tickets ?? 0;
-  const getAvgResponseTime = () => {
-    if (stats?.avg_response_time_hours && stats.avg_response_time_hours > 0) {
-      return `${stats.avg_response_time_hours.toFixed(1)}h`;
+  // Memoized stat getters with fallbacks
+  const statGetters = useMemo(() => ({
+    getTotalTickets: () => computedValues.stats?.total_tickets ?? 0,
+    getOpenTickets: () => computedValues.stats?.open_tickets ?? 0,
+    getAvgResponseTime: () => {
+      if (computedValues.stats?.avg_response_time_hours && computedValues.stats.avg_response_time_hours > 0) {
+        return `${computedValues.stats.avg_response_time_hours.toFixed(1)}h`;
+      }
+      return '< 1h';
+    },
+    getSatisfactionRating: () => {
+      if (computedValues.stats?.satisfaction_avg && computedValues.stats.satisfaction_avg > 0) {
+        return `${computedValues.stats.satisfaction_avg.toFixed(1)}/5`;
+      }
+      return 'No Reviews';
     }
-    return '< 1h';
-  };
-  const getSatisfactionRating = () => {
-    if (stats?.satisfaction_avg && stats.satisfaction_avg > 0) {
-      return `${stats.satisfaction_avg.toFixed(1)}/5`;
-    }
-    return 'No Reviews';
-  };
+  }), [computedValues.stats]);
+
+  // Memoized category lookup for better performance
+  const categoryMap = useMemo(() => {
+    const map: Record<string, any> = {};
+    TICKET_CATEGORIES.forEach(category => {
+      map[category.value] = category;
+    });
+    return map;
+  }, []);
 
   // Filter change handlers - reset to page 1 when filters change
-  const handleFilterChange = (newValue: string, filterType: 'search' | 'status' | 'priority' | 'category') => {
+  const handleFilterChange = useCallback((newValue: string, filterType: 'search' | 'status' | 'priority' | 'category') => {
     setCurrentPage(1); // Reset to first page when filters change
     
     switch (filterType) {
@@ -131,20 +154,20 @@ export default function AdminSupportPage() {
         setSearchQuery(newValue);
         break;
       case 'status':
-        setFilters({ ...filters, status: newValue });
+        setFilters(prev => ({ ...prev, status: newValue }));
         break;
       case 'priority':
-        setFilters({ ...filters, priority: newValue });
+        setFilters(prev => ({ ...prev, priority: newValue }));
         break;
       case 'category':
-        setFilters({ ...filters, category: newValue });
+        setFilters(prev => ({ ...prev, category: newValue }));
         break;
     }
-  };
+  }, []);
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -163,7 +186,7 @@ export default function AdminSupportPage() {
             <BarChart3 className="h-8 w-8 text-blue-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {statsLoading ? '...' : getTotalTickets()}
+                {statsLoading ? '...' : statGetters.getTotalTickets()}
               </p>
               <p className="text-sm text-gray-600">Total Tickets</p>
             </div>
@@ -175,7 +198,7 @@ export default function AdminSupportPage() {
             <AlertCircle className="h-8 w-8 text-yellow-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {statsLoading ? '...' : getOpenTickets()}
+                {statsLoading ? '...' : statGetters.getOpenTickets()}
               </p>
               <p className="text-sm text-gray-600">Open Tickets</p>
             </div>
@@ -187,7 +210,7 @@ export default function AdminSupportPage() {
             <Clock className="h-8 w-8 text-purple-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {statsLoading ? '...' : getAvgResponseTime()}
+                {statsLoading ? '...' : statGetters.getAvgResponseTime()}
               </p>
               <p className="text-sm text-gray-600">Avg Response Time</p>
             </div>
@@ -199,7 +222,7 @@ export default function AdminSupportPage() {
             <TrendingUp className="h-8 w-8 text-green-500 mr-3" />
             <div>
               <p className="text-2xl font-bold">
-                {statsLoading ? '...' : getSatisfactionRating()}
+                {statsLoading ? '...' : statGetters.getSatisfactionRating()}
               </p>
               <p className="text-sm text-gray-600">Satisfaction</p>
             </div>
@@ -234,7 +257,7 @@ export default function AdminSupportPage() {
             />
           </div>
           
-          {/* Status Filter */}
+          {/* Status Filter - NOW INCLUDES UNREAD */}
           <select
             value={filters.status}
             onChange={(e) => handleFilterChange(e.target.value, 'status')}
@@ -281,14 +304,22 @@ export default function AdminSupportPage() {
       {/* Tickets Table */}
       <Card className="overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">
-            Tickets ({totalItems})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">
+              Tickets ({computedValues.totalItems})
+            </h2>
+            {computedValues.showBackgroundUpdate && (
+              <div className="flex items-center text-sm text-blue-600">
+                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                Refreshing...
+              </div>
+            )}
+          </div>
         </div>
 
-        {ticketsLoading ? (
-          <SupportTicketsTableSkeleton />
-        ) : tickets.length === 0 ? (
+        {computedValues.showLoadingSpinner ? (
+          <AdSupportTableSkeleton />
+        ) : computedValues.tickets.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             <EmptyState
               title="No tickets found"
@@ -318,19 +349,29 @@ export default function AdminSupportPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {tickets.map((ticket: any) => {
-                  const categoryInfo = TICKET_CATEGORIES.find(c => c.value === ticket.category);
+                {computedValues.tickets.map((ticket: any, index: number) => {
+                  // Use is_unread computed at DB level - much more efficient
+                  const isUnread = ticket.is_unread === true;
                   
                   return (
-                    <tr key={ticket.id} className="hover:bg-gray-50">
+                    <tr 
+                      key={ticket.id} 
+                      className={`hover:bg-gray-50 cursor-pointer ${isUnread ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`}
+                      onClick={() => router.push(`/admin/support/${ticket.id}`)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {ticket.title}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            #{ticket.id.slice(-8)}
-                          </p>
+                        <div className="flex items-center">
+                          {isUnread && (
+                            <div className="w-3 h-3 bg-blue-500 rounded-full mr-3 animate-pulse" title="New messages"></div>
+                          )}
+                          <div>
+                            <p className={`font-medium text-gray-900 ${isUnread ? 'font-bold' : ''}`}>
+                              {ticket.title}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              #{ticket.id.slice(-8)}
+                            </p>
+                          </div>
                         </div>
                       </td>
                       
@@ -343,7 +384,7 @@ export default function AdminSupportPage() {
                       
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <span className="text-sm">
-                          {categoryInfo?.label}
+                          {categoryMap[ticket.category]?.label}
                         </span>
                       </td>
                       
@@ -353,6 +394,7 @@ export default function AdminSupportPage() {
                           onChange={(e) => handleQuickUpdate(ticket.id, { 
                             priority: e.target.value as any 
                           })}
+                          onClick={(e) => e.stopPropagation()}
                           className="text-sm border rounded px-2 py-1"
                         >
                           {TICKET_PRIORITIES.map(p => (
@@ -369,6 +411,7 @@ export default function AdminSupportPage() {
                           onChange={(e) => handleQuickUpdate(ticket.id, { 
                             status: e.target.value as any 
                           })}
+                          onClick={(e) => e.stopPropagation()}
                           className="text-sm border rounded px-2 py-1"
                         >
                           {TICKET_STATUSES.map(s => (
@@ -386,7 +429,10 @@ export default function AdminSupportPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Button
                           size="sm"
-                          onClick={() => window.location.href = `/support/${ticket.id}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/admin/support/${ticket.id}`);
+                          }}
                         >
                           View
                         </Button>
@@ -400,15 +446,15 @@ export default function AdminSupportPage() {
         )}
 
         {/* Table Footer with Pagination */}
-        {totalPages > 1 && (
+        {computedValues.totalPages > 1 && (
           <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
             <Pagination
               currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
+              totalPages={computedValues.totalPages}
+              totalItems={computedValues.totalItems}
               itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}
-              loading={ticketsLoading}
+              loading={isInitialLoading}
               showInfo={true}
               className="flex justify-center"
             />
@@ -417,7 +463,7 @@ export default function AdminSupportPage() {
       </Card>
 
       {/* Category Distribution */}
-      {stats && stats.tickets_by_category && Object.keys(stats.tickets_by_category).length > 0 && (
+      {computedValues.stats && computedValues.stats.tickets_by_category && Object.keys(computedValues.stats.tickets_by_category).length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -425,7 +471,7 @@ export default function AdminSupportPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {Object.entries(stats.tickets_by_category).map(([category, count]) => {
+                {Object.entries(computedValues.stats.tickets_by_category).map(([category, count]) => {
                   const catInfo = TICKET_CATEGORIES.find(c => c.value === category);
                   return (
                     <div key={category} className="flex items-center justify-between">
@@ -446,7 +492,7 @@ export default function AdminSupportPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {Object.entries(stats.tickets_by_priority || {}).map(([priority, count]) => {
+                {Object.entries(computedValues.stats?.tickets_by_priority || {}).map(([priority, count]) => {
                   const priInfo = TICKET_PRIORITIES.find(p => p.value === priority);
                   return (
                     <div key={priority} className="flex items-center justify-between">

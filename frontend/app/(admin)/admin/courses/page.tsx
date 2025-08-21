@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import DeleteCourseModal, { CourseDeleteData } from '@/components/feature/DeleteCourseModal';
-import { LoadingSpinner, EmptyState, CourseListSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, AdCoursesTableSkeleton } from '@/components/ui/LoadingStates';
 import { StandardResponse } from '@/lib/types/api';
 import { 
   useAdminCoursesQuery, 
@@ -274,6 +274,7 @@ export default function CourseApproval() {
       case 'review':
         return <Badge variant="warning">Pending Review</Badge>;
       case 'rejected':
+      case 'archived':
         return <Badge variant="destructive">Rejected</Badge>;
       case 'draft':
         return <Badge status="draft" />;
@@ -396,7 +397,7 @@ export default function CourseApproval() {
             <option value="">All Status</option>
             <option value="review">Pending Review</option>
             <option value="published">Published</option>
-            <option value="rejected">Rejected</option>
+            <option value="archived">Rejected</option>
             <option value="draft">Draft</option>
           </select>
 
@@ -475,7 +476,7 @@ export default function CourseApproval() {
         </div>
 
         {showLoadingSpinner ? (
-          <CourseListSkeleton rows={6} />
+          <AdCoursesTableSkeleton rows={6} />
         ) : filteredCourses.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             <EmptyState

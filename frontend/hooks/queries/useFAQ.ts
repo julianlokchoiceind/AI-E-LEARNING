@@ -48,7 +48,10 @@ export function useAdminFAQsQuery(filters: FAQFilters = {}) {
   return useApiQuery(
     ['admin-faqs', { search, category, published, page, limit }],
     () => getAdminFAQs({ q: search, category, is_published: published, page, per_page: limit }),
-    getCacheConfig('FAQ_CONTENT') // 30s fresh - FAQ content management
+    {
+      ...getCacheConfig('FAQ_CONTENT'), // 30s fresh - FAQ content management
+      keepPreviousData: true, // Smooth filter transitions
+    }
   );
 }
 

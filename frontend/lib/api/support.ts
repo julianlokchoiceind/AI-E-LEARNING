@@ -136,34 +136,6 @@ export const supportAPI = {
     return apiClient.get<StandardResponse<any>>(`/support/knowledge-base${params}`);
   },
 
-  /**
-   * Admin: Get all tickets
-   */
-  async getAllTickets(params?: TicketSearchParams): Promise<StandardResponse<{
-    items: SupportTicket[];
-    total: number;
-    total_pages: number;
-    page: number;
-    per_page: number;
-  }>> {
-    const queryParams = new URLSearchParams();
-    
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, String(value));
-        }
-      });
-    }
-
-    return apiClient.get<StandardResponse<{
-      items: SupportTicket[];
-      total: number;
-      total_pages: number;
-      page: number;
-      per_page: number;
-    }>>(`/support/admin/tickets?${queryParams.toString()}`);
-  },
 
   /**
    * Admin: Assign ticket to agent
@@ -184,5 +156,35 @@ export const supportAPI = {
     return apiClient.post<StandardResponse<SupportTicket>>(`/support/admin/tickets/${ticketId}/priority`, {
       priority
     });
+  },
+
+  /**
+   * Get support notifications: unread count and recent tickets
+   */
+  async getNotifications(): Promise<StandardResponse<{
+    count: number;
+    recent_tickets: SupportTicket[];
+  }>> {
+    return apiClient.get<StandardResponse<{
+      count: number;
+      recent_tickets: SupportTicket[];
+    }>>('/support/notifications');
+  },
+
+  /**
+   * Mark ticket as viewed (updates viewed timestamps for notifications)
+   */
+  async markTicketViewed(ticketId: string): Promise<StandardResponse<{
+    viewed_by_admin_at?: string;
+    last_admin_view_at?: string;
+    viewed_by_user_at?: string;
+    last_user_view_at?: string;
+  }>> {
+    return apiClient.patch<StandardResponse<{
+      viewed_by_admin_at?: string;
+      last_admin_view_at?: string;
+      viewed_by_user_at?: string;
+      last_user_view_at?: string;
+    }>>(`/support/tickets/${ticketId}/view`, {});
   },
 };

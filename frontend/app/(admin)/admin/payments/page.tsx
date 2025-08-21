@@ -4,25 +4,21 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { AdminPaymentHistory } from '@/components/ui/AdminPaymentHistory';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, AdPaymentsTableSkeleton } from '@/components/ui/LoadingStates';
 import { Pagination } from '@/components/ui/Pagination';
 import { useAuth } from '@/hooks/useAuth';
 import { usePaymentAnalyticsQuery, useAdminPaymentHistoryQuery } from '@/hooks/queries/usePayments';
 import { ToastService } from '@/lib/toast/ToastService';
-import { formatCurrency, formatDate } from '@/lib/utils/formatters';
+import { formatCurrency } from '@/lib/utils/formatters';
 import { 
   DollarSign, 
-  TrendingUp, 
   Users, 
   CreditCard,
   Download,
-  Filter,
   Search,
-  ArrowLeft,
-  AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  RefreshCw
 } from 'lucide-react';
 
 export default function AdminPaymentsPage() {
@@ -46,7 +42,8 @@ export default function AdminPaymentsPage() {
   // Admin payment history with user details - updated for unified pagination
   const {
     data: adminPaymentHistoryResponse,
-    loading: historyLoading,
+    loading: isInitialLoading,
+    query: { isFetching, isRefetching },
     execute: refetchHistory
   } = useAdminPaymentHistoryQuery(
     currentPage, 
@@ -55,6 +52,10 @@ export default function AdminPaymentsPage() {
     typeFilter !== 'all' ? typeFilter : undefined, 
     !!user
   );
+
+  // Smart loading states: Only show spinner on initial load, not background refetch
+  const showLoadingSpinner = isInitialLoading && !adminPaymentHistoryResponse;
+  const showBackgroundUpdate = (isFetching || isRefetching) && adminPaymentHistoryResponse;
 
   useEffect(() => {
     if (user?.role !== 'admin') {
@@ -81,13 +82,6 @@ export default function AdminPaymentsPage() {
     ToastService.info('CSV export functionality coming soon');
   };
 
-  if (analyticsLoading || historyLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" message="Loading payment analytics..." />
-      </div>
-    );
-  }
 
   if (analyticsError) {
     console.warn('Payment analytics error:', analyticsError);
@@ -256,51 +250,90 @@ export default function AdminPaymentsPage() {
         </Card>
       )}
 
-      {/* Payment History */}
+      {/* Filters - Thống nhất với các modules khác */}
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Recent Payments</h2>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search payments..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm"
-                value={searchQuery}
-                onChange={(e) => {
-                  setCurrentPage(1); // Reset to first page when search changes
-                  setSearchQuery(e.target.value);
-                }}
-              />
-            </div>
-            <select
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              value={statusFilter}
+        <div className="flex items-center gap-4">
+          <div className="flex-1 relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search payments..."
+              className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              value={searchQuery}
               onChange={(e) => {
-                setCurrentPage(1); // Reset to first page when filter changes
-                setStatusFilter(e.target.value);
+                setCurrentPage(1); // Reset to first page when search changes
+                setSearchQuery(e.target.value);
               }}
-            >
-              <option value="all">All Status</option>
-              <option value="completed">Completed</option>
-              <option value="pending">Pending</option>
-              <option value="failed">Failed</option>
-              <option value="refunded">Refunded</option>
-            </select>
+            />
+          </div>
+          <select
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            value={statusFilter}
+            onChange={(e) => {
+              setCurrentPage(1); // Reset to first page when filter changes
+              setStatusFilter(e.target.value);
+            }}
+          >
+            <option value="all">All Status</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+            <option value="refunded">Refunded</option>
+          </select>
+          <select
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            value={typeFilter}
+            onChange={(e) => {
+              setCurrentPage(1); // Reset to first page when filter changes  
+              setTypeFilter(e.target.value);
+            }}
+          >
+            <option value="all">All Types</option>
+            <option value="course_purchase">Course Purchase</option>
+            <option value="subscription">Subscription</option>
+          </select>
+        </div>
+      </Card>
+
+      {/* Payment History Table - Thống nhất layout với modules khác */}
+      <Card className="overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">
+              Payments ({totalItems})
+            </h2>
+            {showBackgroundUpdate && (
+              <div className="flex items-center text-sm text-blue-600">
+                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                Refreshing...
+              </div>
+            )}
           </div>
         </div>
         
-        {paymentHistory.length > 0 ? (
+        {showLoadingSpinner ? (
+          <AdPaymentsTableSkeleton rows={6} />
+        ) : paymentHistory.length > 0 ? (
           <AdminPaymentHistory payments={paymentHistory} />
         ) : (
-          <EmptyState
-            title="No payments found"
-            description="No payment transactions match your criteria"
-          />
+          <div className="flex justify-center items-center h-64">
+            <EmptyState
+              title="No payments found"
+              description="No payment transactions match your current search and filter criteria"
+              action={searchQuery || statusFilter !== 'all' || typeFilter !== 'all' ? {
+                label: 'Clear Filters',
+                onClick: () => {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                  setTypeFilter('all');
+                  setCurrentPage(1);
+                }
+              } : undefined}
+            />
+          </div>
         )}
 
-        {/* Payment History Pagination */}
+        {/* Table Footer with Pagination - Thống nhất với modules khác */}
         {totalPages > 1 && (
           <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
             <Pagination
@@ -309,7 +342,7 @@ export default function AdminPaymentsPage() {
               totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               onPageChange={(page) => setCurrentPage(page)}
-              loading={historyLoading}
+              loading={isFetching}
               showInfo={true}
               className="flex justify-center"
             />

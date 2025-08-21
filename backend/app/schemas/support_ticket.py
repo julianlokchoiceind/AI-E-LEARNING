@@ -111,8 +111,13 @@ class SupportTicket(BaseModel):
     response_count: int
     last_user_message_at: Optional[datetime]
     last_support_message_at: Optional[datetime]
-    satisfaction_rating: Optional[int]
+    satisfaction_rating: Optional[float]
     satisfaction_comment: Optional[str]
+    viewed_by_admin_at: Optional[datetime]
+    last_admin_view_at: Optional[datetime]
+    viewed_by_user_at: Optional[datetime]
+    last_user_view_at: Optional[datetime]
+    is_unread: bool = Field(description="Whether this ticket is unread by admin (computed field)")
     created_at: datetime
     updated_at: datetime
 

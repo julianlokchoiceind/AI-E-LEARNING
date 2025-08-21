@@ -28,10 +28,7 @@ export function AdminHeader() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   
   // Get support ticket notifications for admin
-  const { unreadCount, tickets } = useSupportNotifications();
-  
-  // Get recent unread tickets for notification dropdown  
-  const recentTickets = (tickets || []).slice(0, 5); // Show last 5 unread tickets
+  const { unreadCount, recentTickets } = useSupportNotifications();
   
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -89,13 +86,6 @@ export function AdminHeader() {
 
       {/* Right Section */}
       <div className="flex items-center space-x-4">
-        {/* System Status */}
-        <div className="hidden md:flex items-center space-x-2 text-sm">
-          <div className="flex items-center text-green-600">
-            <CheckCircle className="h-4 w-4 mr-1" />
-            <span>System Healthy</span>
-          </div>
-        </div>
 
         {/* Support Notifications */}
         <div className="relative" ref={notificationsRef}>
@@ -105,16 +95,16 @@ export function AdminHeader() {
             className="relative"
             onClick={() => setShowNotifications(!showNotifications)}
           >
-            <Bell className="h-5 w-5 text-gray-600" />
-            {unreadCount > 0 && (
-              <Badge 
-                variant="destructive" 
-                size="sm" 
-                className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs min-w-[16px]"
-              >
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </Badge>
-            )}
+            <div className="relative inline-block">
+              <Bell className="h-5 w-5 text-gray-600" />
+              {unreadCount > 0 && (
+                <div className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-red-500 rounded-full flex items-center justify-center border-[1.5px] border-white shadow-sm px-0.5 transform translate-x-1/4 -translate-y-1/4">
+                  <span className="text-[9px] font-bold text-white leading-none">
+                    {unreadCount}
+                  </span>
+                </div>
+              )}
+            </div>
           </Button>
           
           {/* Notifications Dropdown */}
@@ -136,10 +126,10 @@ export function AdminHeader() {
                       <button
                         key={ticket.id}
                         onClick={() => {
-                          router.push(`/admin/support`);
+                          router.push(`/admin/support/${ticket.id}`);
                           setShowNotifications(false);
                         }}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 cursor-pointer transition-colors duration-150"
                       >
                         <div className="flex items-start space-x-3">
                           <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -166,12 +156,12 @@ export function AdminHeader() {
                         size="sm"
                         variant="outline"
                         onClick={() => {
-                          router.push('/admin/support');
+                          router.push('/admin/support?status=unread');  // Navigate with unread status filter
                           setShowNotifications(false);
                         }}
-                        className="w-full"
+                        className="w-full cursor-pointer"
                       >
-                        View All Support Tickets
+                        View All Unread Tickets
                       </Button>
                     </div>
                   </div>

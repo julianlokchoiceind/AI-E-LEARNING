@@ -103,13 +103,18 @@ export const TableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
 /**
  * Specialized skeleton for admin course management table
  * Matches the exact structure of admin/courses/page.tsx table
+ * 7 columns: Checkbox | Course | Creator | Status | Content | Pricing | Actions
  */
-export const CourseListSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
+export const AdCoursesTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
+            {/* Checkbox column */}
+            <th className="px-4 py-3">
+              <Skeleton className="h-4 w-4" />
+            </th>
             <th className="px-6 py-3 text-left">
               <Skeleton className="h-4 w-16" />
             </th>
@@ -133,6 +138,10 @@ export const CourseListSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) =>
         <tbody className="bg-white divide-y divide-gray-200">
           {Array.from({ length: rows }).map((_, index) => (
             <tr key={index} className="hover:bg-gray-50">
+              {/* Checkbox */}
+              <td className="px-4 py-4">
+                <Skeleton className="h-4 w-4" />
+              </td>
               {/* Course column with thumbnail */}
               <td className="px-6 py-4">
                 <div className="flex items-center">
@@ -183,13 +192,18 @@ export const CourseListSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) =>
 /**
  * Specialized skeleton for admin user management table
  * Matches the exact structure of admin/users/page.tsx table
+ * 7 columns: Checkbox | User | Role | Status | Courses | Last Login | Actions
  */
-export const UserListSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
+export const AdUsersTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
+            {/* Checkbox column */}
+            <th className="px-4 py-3">
+              <Skeleton className="h-4 w-4" />
+            </th>
             <th className="px-6 py-3 text-left">
               <Skeleton className="h-4 w-8" />
             </th>
@@ -213,6 +227,10 @@ export const UserListSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
         <tbody className="bg-white divide-y divide-gray-200">
           {Array.from({ length: rows }).map((_, index) => (
             <tr key={index} className="hover:bg-gray-50">
+              {/* Checkbox */}
+              <td className="px-4 py-4">
+                <Skeleton className="h-4 w-4" />
+              </td>
               {/* User column with avatar */}
               <td className="px-6 py-4">
                 <div className="flex items-center">
@@ -609,11 +627,12 @@ export const FAQListSkeleton: React.FC<{ faqs?: number }> = ({ faqs = 8 }) => {
 };
 
 /**
- * AdminFAQTableSkeleton - Specialized skeleton for admin FAQ management
+ * AdFAQTableSkeleton - Specialized skeleton for admin FAQ management
  * Matches the exact structure of /app/(admin)/admin/faq/page.tsx
  * Includes table with checkboxes, filters, bulk actions, and modal support
+ * 7 columns: Checkbox | Question | Category | Priority | Views | Status | Actions
  */
-export const AdminFAQTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 8 }) => {
+export const AdFAQTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 8 }) => {
   return (
     <div className="p-6">
       {/* Header */}
@@ -727,194 +746,77 @@ export const AdminFAQTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 8 })
 };
 
 /**
- * CreatorCoursesTableSkeleton - Specialized skeleton for creator course management
- * Matches the exact structure of /app/(creator)/creator/courses/page.tsx
- * Includes checkboxes, course thumbnails, stats, ratings, and action buttons
+ * AdPaymentsTableSkeleton - Specialized skeleton for admin payment management
+ * Matches the exact structure of AdminPaymentHistory.tsx component
+ * 6 columns: Date | User | Description | Amount | Status | Actions
  */
-export const CreatorCoursesTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 8 }) => {
+export const AdPaymentsTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 6 }) => {
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-4" />
-              </th>
-              <th className="p-4 text-left">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left">
+              <Skeleton className="h-4 w-8" />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton className="h-4 w-8" />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton className="h-4 w-20" />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton className="h-4 w-12" />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton className="h-4 w-12" />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton className="h-4 w-14" />
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {Array.from({ length: rows }).map((_, index) => (
+            <tr key={index} className="hover:bg-gray-50">
+              {/* Date */}
+              <td className="px-6 py-4">
+                <Skeleton className="h-4 w-20" />
+              </td>
+              {/* User */}
+              <td className="px-6 py-4">
+                <div>
+                  <Skeleton className="h-4 w-24 mb-1" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              </td>
+              {/* Description */}
+              <td className="px-6 py-4">
+                <div>
+                  <Skeleton className="h-4 w-32 mb-1" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              </td>
+              {/* Amount */}
+              <td className="px-6 py-4">
                 <Skeleton className="h-4 w-16" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-12" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-16" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-14" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-12" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-14" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-14" />
-              </th>
+              </td>
+              {/* Status */}
+              <td className="px-6 py-4">
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </td>
+              {/* Actions */}
+              <td className="px-6 py-4">
+                <Skeleton className="h-4 w-20" />
+              </td>
             </tr>
-          </thead>
-          <tbody className="divide-y">
-            {Array.from({ length: rows }).map((_, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                {/* Checkbox */}
-                <td className="p-4">
-                  <Skeleton className="h-4 w-4" />
-                </td>
-                {/* Course with thumbnail */}
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-12 w-16 rounded-lg" />
-                    <div className="min-w-0 flex-1">
-                      <Skeleton className="h-4 w-40 mb-1" />
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-3 w-16" />
-                        <Skeleton className="h-3 w-20" />
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                {/* Status */}
-                <td className="p-4">
-                  <Skeleton className="h-6 w-16 rounded-full" />
-                </td>
-                {/* Students */}
-                <td className="p-4">
-                  <Skeleton className="h-4 w-12 mb-1" />
-                  <Skeleton className="h-3 w-16" />
-                </td>
-                {/* Revenue */}
-                <td className="p-4">
-                  <Skeleton className="h-4 w-16 mb-1" />
-                  <Skeleton className="h-3 w-12" />
-                </td>
-                {/* Rating */}
-                <td className="p-4">
-                  <div className="flex items-center gap-1 mb-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Skeleton key={i} className="h-4 w-4" />
-                    ))}
-                  </div>
-                  <Skeleton className="h-3 w-16" />
-                </td>
-                {/* Updated */}
-                <td className="p-4">
-                  <Skeleton className="h-4 w-20" />
-                </td>
-                {/* Actions */}
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-8 w-8 rounded" />
-                    <Skeleton className="h-8 w-8 rounded" />
-                    <Skeleton className="h-8 w-8 rounded" />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
 
-/**
- * SupportTicketsTableSkeleton - Specialized skeleton for admin support tickets
- * Matches the exact structure of /app/(admin)/admin/support/page.tsx
- * Includes ticket info, user details, priority/status dropdowns, and actions
- */
-export const SupportTicketsTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 10 }) => {
-  return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-12" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-8" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-16" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-12" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-12" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-14" />
-              </th>
-              <th className="p-4 text-left">
-                <Skeleton className="h-4 w-14" />
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {Array.from({ length: rows }).map((_, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                {/* Ticket */}
-                <td className="p-4">
-                  <div>
-                    <Skeleton className="h-4 w-48 mb-1" />
-                    <Skeleton className="h-3 w-16" />
-                  </div>
-                </td>
-                {/* User */}
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                    <div>
-                      <Skeleton className="h-4 w-24 mb-1" />
-                      <Skeleton className="h-3 w-32" />
-                    </div>
-                  </div>
-                </td>
-                {/* Category */}
-                <td className="p-4">
-                  <div className="flex items-center gap-1">
-                    <Skeleton className="h-4 w-4" />
-                    <Skeleton className="h-4 w-16" />
-                  </div>
-                </td>
-                {/* Priority */}
-                <td className="p-4">
-                  <Skeleton className="h-8 w-20 rounded" />
-                </td>
-                {/* Status */}
-                <td className="p-4">
-                  <Skeleton className="h-8 w-24 rounded" />
-                </td>
-                {/* Created */}
-                <td className="p-4">
-                  <Skeleton className="h-4 w-20 mb-1" />
-                  <Skeleton className="h-3 w-16" />
-                </td>
-                {/* Actions */}
-                <td className="p-4">
-                  <Skeleton className="h-8 w-16 rounded" />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
 
 /**
  * CertificatesGridSkeleton - Specialized skeleton for user certificates page
@@ -997,6 +899,76 @@ export const CertificatesGridSkeleton: React.FC<{ certificates?: number }> = ({ 
           ))}
         </div>
       </div>
+    </div>
+  );
+};
+
+/**
+ * Admin Support Table Skeleton - 7 columns (Ticket | User | Category | Priority | Status | Created | Actions)
+ */
+export const AdSupportTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
+  return (
+    <div className="overflow-hidden">
+      {/* Table Header */}
+      <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </div>
+      
+      {/* Table Body */}
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3"><Skeleton className="h-3 w-12" /></th>
+            <th className="px-6 py-3"><Skeleton className="h-3 w-8" /></th>
+            <th className="px-6 py-3"><Skeleton className="h-3 w-16" /></th>
+            <th className="px-6 py-3"><Skeleton className="h-3 w-12" /></th>
+            <th className="px-6 py-3"><Skeleton className="h-3 w-12" /></th>
+            <th className="px-6 py-3"><Skeleton className="h-3 w-14" /></th>
+            <th className="px-6 py-3"><Skeleton className="h-3 w-14" /></th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {Array.from({ length: rows }).map((_, index) => (
+            <tr key={index} className="hover:bg-gray-50">
+              {/* Ticket */}
+              <td className="px-6 py-4">
+                <Skeleton className="h-4 w-40 mb-1" />
+                <Skeleton className="h-3 w-32" />
+              </td>
+              {/* User */}
+              <td className="px-6 py-4">
+                <Skeleton className="h-4 w-24 mb-1" />
+                <Skeleton className="h-3 w-32" />
+              </td>
+              {/* Category */}
+              <td className="px-6 py-4">
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </td>
+              {/* Priority */}
+              <td className="px-6 py-4">
+                <Skeleton className="h-6 w-16 rounded-full" />
+              </td>
+              {/* Status */}
+              <td className="px-6 py-4">
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </td>
+              {/* Created */}
+              <td className="px-6 py-4">
+                <Skeleton className="h-4 w-20" />
+              </td>
+              {/* Actions */}
+              <td className="px-6 py-4">
+                <div className="flex items-center space-x-2">
+                  <Skeleton className="h-8 w-16 rounded" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

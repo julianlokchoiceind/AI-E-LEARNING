@@ -137,6 +137,7 @@ export const CACHE_CONTEXTS = {
   SUPPORT_TICKET_DETAILS: CACHE_TIERS.REALTIME, // Individual ticket details - REALTIME for CRUD
   SUPPORT_CATEGORIES: CACHE_TIERS.STABLE,       // Support categories
   USER_SUPPORT_TICKETS: CACHE_TIERS.REALTIME,   // User's tickets - REALTIME for CRUD
+  SUPPORT_NOTIFICATIONS: CACHE_TIERS.REALTIME,  // Badge count and recent tickets - REALTIME for immediate updates
   
   // Student Dashboard
   STUDENT_DASHBOARD: CACHE_TIERS.REALTIME,     // Student dashboard data - REALTIME for instant streak updates
@@ -176,7 +177,7 @@ export type CacheContext = keyof typeof CACHE_CONTEXTS;
 /**
  * Cache Configuration Summary
  * 
- * REALTIME (0s):     Admin operations, content creation, CRUD operations (courses, chapters, lessons, FAQs, support)
+ * REALTIME (0s):     Admin operations, content creation, CRUD operations (courses, chapters, lessons, FAQs, support), notifications
  * FRESH (30s):       Progress tracking, quiz attempts, subscriptions, dashboards
  * MODERATE (2min):   User profiles, analytics, payment history, statistics
  * STABLE (10min):    Static config, recommendations, quiz questions, categories

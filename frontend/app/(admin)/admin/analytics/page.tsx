@@ -148,7 +148,7 @@ export default function AdminAnalyticsPage() {
           {/* Time Range Selector */}
           <div className="flex bg-gray-100 rounded-lg p-1">
             <Button
-              variant={timeRange === '7days' ? 'default' : 'ghost'}
+              variant={timeRange === '7days' ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => setTimeRange('7days')}
             >
@@ -156,14 +156,14 @@ export default function AdminAnalyticsPage() {
               7 Days
             </Button>
             <Button
-              variant={timeRange === '30days' ? 'default' : 'ghost'}
+              variant={timeRange === '30days' ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => setTimeRange('30days')}
             >
               30 Days
             </Button>
             <Button
-              variant={timeRange === '90days' ? 'default' : 'ghost'}
+              variant={timeRange === '90days' ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => setTimeRange('90days')}
             >

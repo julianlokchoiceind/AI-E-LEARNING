@@ -9,7 +9,8 @@ import {
   Eye,
   EyeOff,
   ChevronDown,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -17,7 +18,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
-import { LoadingSpinner, EmptyState, AdminFAQTableSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, AdFAQTableSkeleton } from '@/components/ui/LoadingStates';
 import { 
   useAdminFAQsQuery,
   useCreateFAQ,
@@ -54,7 +55,12 @@ export default function AdminFAQPage() {
   });
   
   // React Query hooks for FAQ management
-  const { data: faqsData, loading, execute: refetchFAQs } = useAdminFAQsQuery({
+  const { 
+    data: faqsData, 
+    loading: isInitialLoading, 
+    query: { isFetching, isRefetching },
+    execute: refetchFAQs 
+  } = useAdminFAQsQuery({
     search: searchQuery,
     category: selectedCategory,
     page: currentPage,
@@ -72,6 +78,10 @@ export default function AdminFAQPage() {
   
   // Combined loading state for actions
   const actionLoading = createLoading || updateLoading || deleteLoading || bulkLoading;
+  
+  // Smart loading states: Only show spinner on initial load, not background refetch
+  const showLoadingSpinner = isInitialLoading && !faqsData;
+  const showBackgroundUpdate = (isFetching || isRefetching) && faqsData;
   
   // Extract FAQs and pagination data from React Query response
   // Backend now handles _id to id conversion (smart backend pattern)
@@ -318,13 +328,21 @@ export default function AdminFAQPage() {
       {/* FAQ Table */}
       <Card className="overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">
-            FAQs ({totalItems})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">
+              FAQs ({totalItems})
+            </h2>
+            {showBackgroundUpdate && (
+              <div className="flex items-center text-sm text-blue-600">
+                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                Refreshing...
+              </div>
+            )}
+          </div>
         </div>
 
-        {loading ? (
-          <AdminFAQTableSkeleton />
+        {showLoadingSpinner ? (
+          <AdFAQTableSkeleton />
         ) : faqs.length === 0 ? (
             <div className="flex justify-center items-center h-64">
               <EmptyState
@@ -446,7 +464,7 @@ export default function AdminFAQPage() {
                 totalItems={totalItems}
                 itemsPerPage={itemsPerPage}
                 onPageChange={handlePageChange}
-                loading={loading}
+                loading={isInitialLoading}
                 showInfo={true}
                 className="flex justify-center"
               />

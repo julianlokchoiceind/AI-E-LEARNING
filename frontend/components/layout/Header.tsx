@@ -80,17 +80,15 @@ export function Header() {
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center text-sm text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors relative"
                 >
-                  <div className="relative">
-                    <User className="h-5 w-5 mr-1" />
-                    {/* Support notification badge */}
+                  <div className="relative inline-block mr-1">
+                    <User className="h-5 w-5" />
+                    {/* Support notification badge - consistent with AdminHeader */}
                     {unreadCount > 0 && (
-                      <Badge 
-                        variant="destructive" 
-                        size="sm" 
-                        className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs min-w-[16px]"
-                      >
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </Badge>
+                      <div className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-red-500 rounded-full flex items-center justify-center border-[1.5px] border-white shadow-sm px-0.5 transform translate-x-1/4 -translate-y-1/4">
+                        <span className="text-[9px] font-bold text-white leading-none">
+                          {unreadCount}
+                        </span>
+                      </div>
                     )}
                   </div>
                   <span>{user?.name || user?.email || 'User'}</span>
@@ -132,36 +130,22 @@ export function Header() {
                     </button>
                     <button
                       onClick={() => {
-                        router.push('/certificates')
-                        setUserMenuOpen(false)
-                      }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <svg className="h-4 w-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Certificates
-                    </button>
-                    <button
-                      onClick={() => {
                         router.push('/support')
                         setUserMenuOpen(false)
                       }}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 relative"
                     >
-                      <div className="relative mr-3">
+                      <div className="relative inline-block mr-3">
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
-                        {/* Support notification badge */}
+                        {/* Support notification badge - consistent with AdminHeader */}
                         {unreadCount > 0 && (
-                          <Badge 
-                            variant="destructive" 
-                            size="sm" 
-                            className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs min-w-[16px]"
-                          >
-                            {unreadCount > 99 ? '99+' : unreadCount}
-                          </Badge>
+                          <div className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-red-500 rounded-full flex items-center justify-center border-[1.5px] border-white shadow-sm px-0.5 transform translate-x-1/4 -translate-y-1/4">
+                            <span className="text-[9px] font-bold text-white leading-none">
+                              {unreadCount}
+                            </span>
+                          </div>
                         )}
                       </div>
                       {t('nav.support')}
@@ -293,12 +277,6 @@ export function Header() {
                     className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                   >
                     {navItems.profile}
-                  </button>
-                  <button
-                    onClick={() => router.push('/certificates')}
-                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                  >
-                    Certificates
                   </button>
                   <button
                     onClick={() => router.push('/support')}

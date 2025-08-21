@@ -93,8 +93,14 @@ class SupportTicket(Document):
     response_count: int = Field(default=0, ge=0)
     last_user_message_at: Optional[datetime] = None
     last_support_message_at: Optional[datetime] = None
-    satisfaction_rating: Optional[int] = Field(None, ge=1, le=5)
+    satisfaction_rating: Optional[float] = Field(None, ge=1, le=5)
     satisfaction_comment: Optional[str] = None
+    
+    # Viewed tracking for notifications
+    viewed_by_admin_at: Optional[datetime] = None
+    last_admin_view_at: Optional[datetime] = None
+    viewed_by_user_at: Optional[datetime] = None
+    last_user_view_at: Optional[datetime] = None
     
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -108,8 +114,12 @@ class SupportTicket(Document):
             "priority",
             "category",
             "assigned_to",
+            "viewed_by_admin_at",  # For unread logic
+            "last_user_message_at",  # For unread comparisons
             [("status", 1), ("priority", -1)],
             [("user_id", 1), ("created_at", -1)],
+            [("status", 1), ("viewed_by_admin_at", 1)],  # For unread filtering
+            [("viewed_by_admin_at", 1), ("last_user_message_at", -1)],  # For unread comparisons
             "created_at"
         ]
 

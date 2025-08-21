@@ -59,7 +59,10 @@ export function useSupportTicketsQuery(filters: SupportTicketFilters = {}) {
       page, 
       per_page: limit 
     }),
-    getCacheConfig('SUPPORT_TICKETS') // Support tickets - fresh data
+    {
+      ...getCacheConfig('SUPPORT_TICKETS'), // Support tickets - fresh data
+      keepPreviousData: true, // Smooth filter transitions
+    }
   );
 }
 
@@ -74,6 +77,7 @@ export function useCreateSupportTicket() {
       invalidateQueries: [
         ['support-tickets'], // Refresh tickets list
         ['support-stats'], // Update support statistics
+        ['support-notifications'], // Update badge count immediately
       ],
     }
   );
@@ -93,6 +97,7 @@ export function useUpdateSupportTicket() {
         ['support-tickets'], // Refresh tickets list
         ['support-ticket', 'ticketId'], // Refresh specific ticket
         ['support-stats'], // Update support statistics
+        ['support-notifications'], // Update badge count immediately
       ],
     }
   );
@@ -111,6 +116,7 @@ export function useAssignSupportTicket() {
       invalidateQueries: [
         ['support-tickets'], // Refresh tickets list
         ['support-stats'], // Update support statistics
+        ['support-notifications'], // Update badge count immediately
       ],
     }
   );
@@ -129,6 +135,7 @@ export function useResolveSupportTicket() {
       invalidateQueries: [
         ['support-tickets'], // Refresh tickets list
         ['support-stats'], // Update support statistics
+        ['support-notifications'], // Update badge count immediately
       ],
     }
   );
@@ -146,6 +153,7 @@ export function useDeleteSupportTicket() {
       invalidateQueries: [
         ['support-tickets'], // Refresh tickets list
         ['support-stats'], // Update support statistics
+        ['support-notifications'], // Update badge count immediately
       ],
     }
   );
@@ -229,6 +237,7 @@ export function useCreateSupportMessage() {
       invalidateQueries: [
         ['support-ticket'], // Refresh specific ticket
         ['support-tickets'], // Refresh tickets list
+        ['support-notifications'], // Update badge count immediately
       ],
     }
   );
@@ -246,6 +255,7 @@ export function useRateSupportTicket() {
       invalidateQueries: [
         ['support-ticket'], // Refresh specific ticket
         ['support-stats'], // Update satisfaction statistics
+        ['support-notifications'], // Update badge count immediately
       ],
     }
   );
@@ -291,7 +301,58 @@ export function useBulkSupportActions() {
       invalidateQueries: [
         ['support-tickets'], // Refresh tickets list
         ['support-stats'], // Update statistics
+        ['support-notifications'], // Update badge count immediately
       ],
+    }
+  );
+}
+
+/**
+ * MARK TICKET AS VIEWED - Update viewed timestamps for notifications
+ * High-impact: Badge count accuracy
+ */
+export function useMarkTicketViewed() {
+  return useApiMutation(
+    (ticketId: string) => supportAPI.markTicketViewed(ticketId),
+    {
+      operationName: 'mark-ticket-viewed',
+      showToast: false, // Silent operation
+      invalidateQueries: [
+        ['support-notifications'], // Update badge count immediately
+        ['support-ticket'], // Refresh specific ticket if needed
+      ],
+    }
+  );
+}
+
+/**
+ * ADMIN SUPPORT TICKETS - Admin view with all tickets and show_unread filter
+ * Critical: Admin support management workflow
+ */
+export function useAdminSupportTicketsQuery(filters: SupportTicketFilters = {}) {
+  const { 
+    search = '', 
+    status, 
+    priority, 
+    assignee, 
+    category, 
+    page = 1, 
+    limit = 20 
+  } = filters;
+  
+  return useApiQuery(
+    ['admin-support-tickets', { search, status, priority, assignee, category, page, limit }],
+    () => supportAPI.getTickets({ 
+      q: search, 
+      status,  // Backend handles "unread" as virtual status
+      priority, 
+      category, 
+      page, 
+      per_page: limit 
+    }),
+    {
+      ...getCacheConfig('SUPPORT_TICKETS'), // Support tickets - fresh data
+      keepPreviousData: true, // Smooth filter transitions
     }
   );
 }

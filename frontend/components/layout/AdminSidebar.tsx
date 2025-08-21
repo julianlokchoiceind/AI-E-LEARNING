@@ -12,6 +12,7 @@ import {
   Settings, 
   Shield, 
   HelpCircle,
+  HandHeart,
   FileText,
   FolderOpen,
   ChevronRight,
@@ -56,7 +57,7 @@ const navigationItems = [
   {
     name: 'Support Tickets',
     href: '/admin/support',
-    icon: HelpCircle,
+    icon: HandHeart,
   },
   {
     name: 'FAQ Management',

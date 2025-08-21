@@ -72,9 +72,9 @@ export function useApiQuery<T>(
     staleTime,
     gcTime,
     retry: 1,
-    refetchOnWindowFocus: false, // Disable aggressive window focus refetch to prevent continuous re-renders
-    refetchOnReconnect: false, // Disable reconnect refetch to prevent continuous re-renders
-    refetchInterval: false, // Disable automatic background refetch
+    refetchOnWindowFocus: true, // Enable smart window focus refetch for natural cache sync
+    refetchOnReconnect: false, // Keep disabled to prevent excessive network calls
+    refetchInterval: false, // Keep disabled - use cache invalidation instead
     keepPreviousData,
   } as UseQueryOptions);
 

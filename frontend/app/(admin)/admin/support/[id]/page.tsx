@@ -16,28 +16,25 @@ import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   useSupportTicketQuery,
   useCreateSupportMessage,
-  useRateSupportTicket,
-  useMarkTicketViewed
+  useMarkTicketViewed,
 } from '@/hooks/queries/useSupport';
 import {
   TicketWithMessages,
   MessageCreateData,
-  SatisfactionRatingData,
   TICKET_CATEGORIES,
   TICKET_PRIORITIES,
   TICKET_STATUSES
 } from '@/lib/types/support';
 
-export default function TicketDetailPage() {
+export default function AdminTicketDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const ticketId = params.ticketId as string;
+  const ticketId = params.id as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasMarkedAsViewed = useRef(false);
   
@@ -50,20 +47,16 @@ export default function TicketDetailPage() {
   } = useSupportTicketQuery(ticketId);
   
   const { mutate: sendMessage, loading: sending } = useCreateSupportMessage();
-  const { mutate: rateTicket, loading: submittingRating } = useRateSupportTicket();
   const { mutate: markAsViewed } = useMarkTicketViewed();
   
   const ticket = ticketResponse?.data || null;
   const [message, setMessage] = useState('');
-  const [showRatingModal, setShowRatingModal] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [ratingComment, setRatingComment] = useState('');
 
   // Handle ticket error
   useEffect(() => {
     if (ticketError) {
       ToastService.error('Failed to load ticket');
-      router.push('/support');
+      router.push('/admin/support');
     }
   }, [ticketError, router]);
 
@@ -81,13 +74,7 @@ export default function TicketDetailPage() {
 
   useEffect(() => {
     scrollToBottom();
-    
-    // Show rating modal if resolved and not rated
-    if (ticket?.status === 'resolved' && !ticket.satisfaction_rating) {
-      setShowRatingModal(true);
-    }
-  }, [ticket?.messages, ticket?.status, ticket?.satisfaction_rating]);
-
+  }, [ticket?.messages]);
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
@@ -103,33 +90,6 @@ export default function TicketDetailPage() {
           setMessage('');
           refetchTicket(); // Refresh to get new message
           // useApiMutation already handles toast notifications automatically
-        }
-      }
-    );
-  };
-
-  const handleRateTicket = () => {
-    if (rating === 0) {
-      ToastService.error('Please select a rating');
-      return;
-    }
-
-    const ratingData: SatisfactionRatingData = {
-      rating,
-      comment: ratingComment.trim() || undefined,
-    };
-    
-    rateTicket(
-      { ticketId, ratingData },
-      {
-        onSuccess: (response) => {
-          setShowRatingModal(false);
-          refetchTicket(); // Refresh to show rating
-          // useApiMutation already handles toast notifications automatically
-        },
-        onError: (error: any) => {
-          console.error('Failed to rate ticket:', error);
-          // useApiMutation already handles error toast notifications automatically
         }
       }
     );
@@ -151,7 +111,7 @@ export default function TicketDetailPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
       </div>
     );
   }
@@ -165,22 +125,23 @@ export default function TicketDetailPage() {
   const priorityInfo = TICKET_PRIORITIES.find(p => p.value === ticket.priority);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-6">
         <Button
           variant="ghost"
-          onClick={() => router.push('/support')}
+          onClick={() => router.push('/admin/support')}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Support
+          Back to Admin Support
         </Button>
         
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-2xl font-bold text-gray-900">{ticket.title}</h1>
+              <Badge variant="outline" size="sm">Admin View</Badge>
             </div>
             
             <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -198,6 +159,8 @@ export default function TicketDetailPage() {
                 <Clock className="h-3 w-3" />
                 Created {formatDate(ticket.created_at)}
               </span>
+
+              <span>From: {ticket.user_name}</span>
             </div>
           </div>
           
@@ -231,13 +194,13 @@ export default function TicketDetailPage() {
               return (
                 <div
                   key={msg.id}
-                  className={`flex ${isSupport ? 'justify-start' : 'justify-end'}`}
+                  className={`flex ${isSupport ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
                     className={`max-w-[70%] rounded-lg p-4 ${
                       isSupport
-                        ? 'bg-gray-100 text-gray-900'
-                        : 'bg-blue-600 text-white'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-100 text-gray-900'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-2">
@@ -248,7 +211,7 @@ export default function TicketDetailPage() {
                       )}
                       <span className="font-medium">{msg.sender_name}</span>
                       <span className={`text-xs ${
-                        isSupport ? 'text-gray-500' : 'text-blue-100'
+                        isSupport ? 'text-red-100' : 'text-gray-500'
                       }`}>
                         {formatDate(msg.created_at)}
                       </span>
@@ -257,7 +220,7 @@ export default function TicketDetailPage() {
                     <p className="whitespace-pre-wrap">{msg.message}</p>
                     
                     {msg.is_internal_note && (
-                      <p className="text-xs mt-2 text-gray-500 italic">
+                      <p className="text-xs mt-2 text-red-200 italic">
                         Internal Note
                       </p>
                     )}
@@ -281,7 +244,7 @@ export default function TicketDetailPage() {
                       handleSendMessage();
                     }
                   }}
-                  placeholder="Type your message..."
+                  placeholder="Type your admin response..."
                   className="flex-1 px-3 py-2 border rounded-md resize-none"
                   rows={3}
                 />
@@ -297,7 +260,7 @@ export default function TicketDetailPage() {
           
           {ticket.status === 'closed' && (
             <div className="border-t p-4 text-center text-gray-600">
-              This ticket has been closed. Create a new ticket if you need further assistance.
+              This ticket has been closed. You can still add internal notes or reopen if needed.
             </div>
           )}
         </CardContent>
@@ -317,66 +280,6 @@ export default function TicketDetailPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Rating Modal */}
-      <Modal
-        isOpen={showRatingModal}
-        onClose={() => setShowRatingModal(false)}
-        title="Rate Your Support Experience"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            How satisfied are you with the resolution of your ticket?
-          </p>
-          
-          <div className="flex justify-center gap-2">
-            {[1, 2, 3, 4, 5].map((value) => (
-              <button
-                key={value}
-                onClick={() => setRating(value)}
-                className="p-2 hover:scale-110 transition-transform"
-              >
-                <Star
-                  className={`h-8 w-8 ${
-                    value <= rating
-                      ? 'text-yellow-400 fill-current'
-                      : 'text-gray-300'
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Additional Comments (Optional)
-            </label>
-            <textarea
-              value={ratingComment}
-              onChange={(e) => setRatingComment(e.target.value)}
-              placeholder="Tell us more about your experience..."
-              className="w-full px-3 py-2 border rounded-md"
-              rows={4}
-            />
-          </div>
-          
-          <div className="flex justify-end gap-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowRatingModal(false)}
-            >
-              Skip
-            </Button>
-            <Button
-              onClick={handleRateTicket}
-              loading={submittingRating}
-              disabled={rating === 0}
-            >
-              Submit Rating
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
-import { LoadingSpinner, EmptyState, UserListSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, AdUsersTableSkeleton } from '@/components/ui/LoadingStates';
 import { 
   useAdminUsersQuery,
   useToggleUserPremium,
@@ -61,8 +61,13 @@ export default function UserManagement() {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   
-  // React Query hooks for data fetching and mutations
-  const { data: usersData, loading, execute: refetchUsers } = useAdminUsersQuery({
+  // React Query hooks for data fetching and mutations  
+  const { 
+    data: usersData, 
+    loading: isInitialLoading, 
+    query: { isFetching, isRefetching },
+    execute: refetchUsers 
+  } = useAdminUsersQuery({
     search: searchTerm,
     role: roleFilter,
     premiumOnly: premiumFilter === 'premium' ? true : undefined,
@@ -76,6 +81,10 @@ export default function UserManagement() {
   
   // Combined loading state for actions
   const actionLoading = premiumLoading || roleLoading || deleteLoading;
+  
+  // Smart loading states: Only show spinner on initial load, not background refetch
+  const showLoadingSpinner = isInitialLoading && !usersData;
+  const showBackgroundUpdate = (isFetching || isRefetching) && usersData;
   
   // Extract users and pagination data from React Query response
   const users = usersData?.data?.users || [];
@@ -302,13 +311,21 @@ export default function UserManagement() {
       {/* Users Table */}
       <Card className="overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">
-            Users ({totalItems})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">
+              Users ({totalItems})
+            </h2>
+            {showBackgroundUpdate && (
+              <div className="flex items-center text-sm text-blue-600">
+                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                Refreshing...
+              </div>
+            )}
+          </div>
         </div>
 
-        {loading ? (
-          <UserListSkeleton rows={6} />
+        {showLoadingSpinner ? (
+          <AdUsersTableSkeleton rows={6} />
         ) : users.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             <EmptyState
@@ -476,7 +493,7 @@ export default function UserManagement() {
               totalItems={totalItems}
               itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}
-              loading={loading}
+              loading={isInitialLoading}
               showInfo={true}
               className="flex justify-center"
             />

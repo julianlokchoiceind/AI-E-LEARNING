@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Plus, 
   MessageCircle, 
@@ -30,6 +31,7 @@ import {
 } from '@/hooks/queries/useSupport';
 
 export default function SupportPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,7 +48,7 @@ export default function SupportPage() {
   const { 
     data: ticketsResponse, 
     loading, 
-    error 
+    error
   } = useSupportTicketsQuery({
     search: searchQuery,
     status: selectedStatus as any || undefined,
@@ -59,6 +61,7 @@ export default function SupportPage() {
   // Extract data from React Query responses
   const tickets = ticketsResponse?.data?.items || [];
   const totalPages = ticketsResponse?.data?.total_pages || 1;
+
 
   // ✅ React Query automatically handles data fetching when dependencies change
 
@@ -178,17 +181,25 @@ export default function SupportPage() {
           {tickets.map((ticket: any) => {
             const categoryInfo = TICKET_CATEGORIES.find(c => c.value === ticket.category);
             
+            // Use backend-computed unread status (smart backend, dumb frontend)
+            const isUnread = ticket.is_unread;
+            
             return (
               <Card 
                 key={ticket.id} 
-                className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => window.location.href = `/support/${ticket.id}`}
+                className={`hover:shadow-lg transition-shadow cursor-pointer ${
+                  isUnread ? 'bg-blue-50 border-l-4 border-blue-500 shadow-md' : ''
+                }`}
+                onClick={() => router.push(`/support/${ticket.id}`)}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        {isUnread && (
+                          <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse flex-shrink-0" title="New messages"></div>
+                        )}
+                        <h3 className={`text-lg font-semibold text-gray-900 ${isUnread ? 'font-bold' : ''}`}>
                           {ticket.title}
                         </h3>
                       </div>
@@ -280,7 +291,7 @@ export default function SupportPage() {
             >
               {TICKET_CATEGORIES.map(cat => (
                 <option key={cat.value} value={cat.value}>
-                  {cat.icon} {cat.label}
+                  {cat.label}
                 </option>
               ))}
             </select>

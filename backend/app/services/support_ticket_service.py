@@ -21,6 +21,28 @@ from app.core.email import email_service
 class SupportTicketService:
     def __init__(self):
         pass
+    
+    def _compute_is_unread(self, ticket):
+        """Compute is_unread for ticket (same logic as endpoint)"""
+        is_unread = False
+        
+        # Get status
+        ticket_status = ticket.status.value if hasattr(ticket.status, 'value') else ticket.status
+        viewed_by_admin = getattr(ticket, 'viewed_by_admin_at', None)
+        last_user_message_at = getattr(ticket, 'last_user_message_at', None)
+        
+        # Only consider unread if ticket is not closed/resolved
+        if ticket_status not in ["closed", "resolved"]:
+            # New ticket never viewed by admin
+            if not viewed_by_admin:
+                is_unread = True
+            # User messaged after admin last viewed
+            elif last_user_message_at and viewed_by_admin:
+                # Simple string comparison for ISO dates
+                if str(last_user_message_at) > str(viewed_by_admin):
+                    is_unread = True
+        
+        return is_unread
 
     async def create_ticket(
         self,
@@ -117,6 +139,11 @@ class SupportTicketService:
             "last_support_message_at": ticket.last_support_message_at.isoformat() if ticket.last_support_message_at else None,
             "satisfaction_rating": ticket.satisfaction_rating,
             "satisfaction_comment": ticket.satisfaction_comment,
+            "viewed_by_admin_at": ticket.viewed_by_admin_at.isoformat() if ticket.viewed_by_admin_at else None,
+            "last_admin_view_at": ticket.last_admin_view_at.isoformat() if ticket.last_admin_view_at else None,
+            "viewed_by_user_at": ticket.viewed_by_user_at.isoformat() if ticket.viewed_by_user_at else None,
+            "last_user_view_at": ticket.last_user_view_at.isoformat() if ticket.last_user_view_at else None,
+            "is_unread": self._compute_is_unread(ticket),  # Add computed field
             "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
             "updated_at": ticket.updated_at.isoformat() if ticket.updated_at else None
         }
@@ -195,15 +222,163 @@ class SupportTicketService:
         skip = (query.page - 1) * query.per_page
         tickets = await SupportTicket.find(filter_dict).sort(sort_field).skip(skip).limit(query.per_page).to_list()
         
-        # Convert _id to id for frontend consistency (smart backend pattern)
-        formatted_tickets = []
-        for ticket in tickets:
-            ticket_dict = ticket.dict(exclude={"id"})
-            ticket_dict["id"] = str(ticket.id)
-            formatted_tickets.append(ticket_dict)
+        # Return raw Pydantic models - endpoint will handle conversion with is_unread computation
+        return {
+            "items": tickets,
+            "total": total,
+            "page": query.page,
+            "per_page": query.per_page,
+            "total_pages": (total + query.per_page - 1) // query.per_page
+        }
+
+    async def search_tickets_with_unread_aggregation(
+        self,
+        query: TicketSearchQuery,
+        user: Optional[User] = None,
+        filter_unread_only: bool = False
+    ) -> Dict:
+        """
+        Optimized search with MongoDB aggregation pipeline for unread filtering.
+        Moves computation from Python to MongoDB for better performance.
+        """
+        # Build match stage
+        match_stage = {}
+        
+        # Access control
+        if user and user.role == "student":
+            match_stage["user_id"] = str(user.id)
+        elif query.user_id:
+            match_stage["user_id"] = query.user_id
+        
+        # Search filters
+        if query.q:
+            match_stage["$or"] = [
+                {"title": {"$regex": query.q, "$options": "i"}},
+                {"description": {"$regex": query.q, "$options": "i"}}
+            ]
+        
+        if query.status:
+            match_stage["status"] = query.status
+        if query.priority:
+            match_stage["priority"] = query.priority
+        if query.category:
+            match_stage["category"] = query.category
+        if query.assigned_to:
+            match_stage["assigned_to"] = query.assigned_to
+        
+        # Date range filter
+        if query.date_from or query.date_to:
+            date_filter = {}
+            if query.date_from:
+                date_filter["$gte"] = query.date_from
+            if query.date_to:
+                date_filter["$lte"] = query.date_to
+            match_stage["created_at"] = date_filter
+        
+        # Build aggregation pipeline
+        pipeline = [
+            {"$match": match_stage},
+            
+            # Single $addFields stage: compute is_unread AND ensure all required fields exist
+            {"$addFields": {
+                # Compute is_unread using MongoDB logic - MUST be preserved
+                "is_unread": {
+                    "$cond": {
+                        "if": {
+                            "$and": [
+                                # Only consider if ticket is not closed/resolved
+                                {"$not": {"$in": ["$status", ["closed", "resolved"]]}},
+                                {
+                                    "$or": [
+                                        # Case 1: Never viewed by admin (viewed_by_admin_at is null/missing)
+                                        {"$or": [
+                                            {"$eq": ["$viewed_by_admin_at", None]},
+                                            {"$eq": [{"$type": "$viewed_by_admin_at"}, "missing"]}
+                                        ]},
+                                        # Case 2: User messaged after admin last viewed
+                                        {
+                                            "$and": [
+                                                {"$ne": ["$last_user_message_at", None]},
+                                                {"$ne": ["$viewed_by_admin_at", None]},
+                                                {"$ne": [{"$type": "$last_user_message_at"}, "missing"]},
+                                                {"$ne": [{"$type": "$viewed_by_admin_at"}, "missing"]},
+                                                {"$gt": ["$last_user_message_at", "$viewed_by_admin_at"]}
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "then": True,
+                        "else": False
+                    }
+                },
+                # Convert _id to id for frontend consistency
+                "id": {"$toString": "$_id"},
+                # Core tracking fields - ensure they exist with null if missing
+                "viewed_by_admin_at": {"$ifNull": ["$viewed_by_admin_at", None]},
+                "last_admin_view_at": {"$ifNull": ["$last_admin_view_at", None]},  
+                "viewed_by_user_at": {"$ifNull": ["$viewed_by_user_at", None]},
+                "last_user_view_at": {"$ifNull": ["$last_user_view_at", None]},
+                # Assignment fields
+                "assigned_to": {"$ifNull": ["$assigned_to", None]},
+                "assigned_to_name": {"$ifNull": ["$assigned_to_name", None]},
+                "assigned_at": {"$ifNull": ["$assigned_at", None]},
+                # Resolution fields  
+                "first_response_at": {"$ifNull": ["$first_response_at", None]},
+                "resolved_at": {"$ifNull": ["$resolved_at", None]},
+                "closed_at": {"$ifNull": ["$closed_at", None]},
+                "resolution_note": {"$ifNull": ["$resolution_note", None]},
+                # Analytics fields
+                "last_user_message_at": {"$ifNull": ["$last_user_message_at", None]},
+                "last_support_message_at": {"$ifNull": ["$last_support_message_at", None]},
+                "satisfaction_rating": {"$ifNull": ["$satisfaction_rating", None]},
+                "satisfaction_comment": {"$ifNull": ["$satisfaction_comment", None]},
+                # Other optional fields
+                "related_course_id": {"$ifNull": ["$related_course_id", None]},
+                "related_order_id": {"$ifNull": ["$related_order_id", None]},
+                # Arrays with empty defaults
+                "tags": {"$ifNull": ["$tags", []]},
+                # Ensure response_count has default
+                "response_count": {"$ifNull": ["$response_count", 0]}
+            }},
+            
+            # Only remove _id field, preserve all other fields
+            {"$project": {"_id": 0}}
+        ]
+        
+        # Add unread filter to pipeline if requested
+        if filter_unread_only:
+            pipeline.append({"$match": {"is_unread": True}})
+        
+        # Add sorting
+        sort_direction = -1 if query.sort_order == "desc" else 1
+        pipeline.append({"$sort": {query.sort_by: sort_direction}})
+        
+        # Count total documents (before pagination)
+        count_pipeline = pipeline.copy()
+        count_pipeline.append({"$count": "total"})
+        
+        # Add pagination to main pipeline
+        skip = (query.page - 1) * query.per_page
+        pipeline.extend([
+            {"$skip": skip},
+            {"$limit": query.per_page}
+        ])
+        
+        # Execute both pipelines
+        collection = SupportTicket.get_motor_collection()
+        
+        # Get total count
+        count_result = await collection.aggregate(count_pipeline).to_list(length=None)
+        total = count_result[0]["total"] if count_result else 0
+        
+        # Get paginated results
+        tickets = await collection.aggregate(pipeline).to_list(length=None)
+        
         
         return {
-            "items": formatted_tickets,
+            "items": tickets,
             "total": total,
             "page": query.page,
             "per_page": query.per_page,

@@ -161,7 +161,8 @@ export function useAdminPaymentHistoryQuery(
     () => getAdminPaymentHistory(page, per_page, status, type),
     {
       enabled,
-      ...getCacheConfig('PAYMENT_ANALYTICS_SUMMARY') // Use same cache as other admin analytics
+      ...getCacheConfig('PAYMENT_ANALYTICS_SUMMARY'), // Use same cache as other admin analytics
+      keepPreviousData: true, // Smooth filter transitions
     }
   );
 }

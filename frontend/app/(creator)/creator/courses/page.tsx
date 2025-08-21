@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
-import { EmptyState, CourseListSkeleton } from '@/components/ui/LoadingStates';
+import { EmptyState, AdCoursesTableSkeleton } from '@/components/ui/LoadingStates';
 import { Pagination } from '@/components/ui/Pagination';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
@@ -322,7 +322,7 @@ const CreatorCoursesPage = () => {
         </div>
         {/* Skeleton Loader */}
         <div className="container mx-auto px-4 py-8">
-          <CourseListSkeleton rows={6} />
+          <AdCoursesTableSkeleton rows={6} />
         </div>
       </div>
     );

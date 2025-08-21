@@ -44,6 +44,11 @@ export interface SupportTicket {
   last_support_message_at?: string;
   satisfaction_rating?: number;
   satisfaction_comment?: string;
+  viewed_by_admin_at?: string;
+  last_admin_view_at?: string;
+  viewed_by_user_at?: string;
+  last_user_view_at?: string;
+  is_unread?: boolean;  // NEW: Computed field from backend
   created_at: string;
   updated_at: string;
 }
@@ -133,4 +138,5 @@ export const TICKET_STATUSES = [
   { value: 'waiting_for_user', label: 'Waiting for User', color: 'purple' },
   { value: 'resolved', label: 'Resolved', color: 'green' },
   { value: 'closed', label: 'Closed', color: 'gray' },
+  { value: 'unread', label: 'Unread', color: 'red' },  // NEW: Virtual status for filtering
 ] as const;

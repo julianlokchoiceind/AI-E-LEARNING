@@ -41,7 +41,10 @@ export function useAdminUsersQuery(filters: AdminUsersFilters = {}) {
   return useApiQuery(
     ['admin-users', { search, role, premiumOnly, page, per_page }],
     () => getAdminUsers({ search, role, premiumOnly, page, per_page }),
-    getCacheConfig('ADMIN_OPERATIONS') // Realtime - admin user management
+    {
+      ...getCacheConfig('ADMIN_OPERATIONS'), // Realtime - admin user management
+      keepPreviousData: true, // Smooth filter transitions
+    }
   );
 }
 
