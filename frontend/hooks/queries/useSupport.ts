@@ -76,6 +76,7 @@ export function useCreateSupportTicket() {
     {
       invalidateQueries: [
         ['support-tickets'], // Refresh tickets list
+        ['admin-support-tickets'], // Refresh admin table - prefix matching
         ['support-stats'], // Update support statistics
         ['support-notifications'], // Update badge count immediately
       ],
@@ -94,27 +95,9 @@ export function useUpdateSupportTicket() {
     {
       operationName: 'update-ticket',
       invalidateQueries: [
+        ['admin-support-tickets'], // Refresh admin tickets list
         ['support-tickets'], // Refresh tickets list
         ['support-ticket', 'ticketId'], // Refresh specific ticket
-        ['support-stats'], // Update support statistics
-        ['support-notifications'], // Update badge count immediately
-      ],
-    }
-  );
-}
-
-/**
- * ASSIGN SUPPORT TICKET - Assign ticket to admin
- * Critical: Support workflow management
- */
-export function useAssignSupportTicket() {
-  return useApiMutation(
-    ({ ticketId, assigneeId }: { ticketId: string; assigneeId: string }) => 
-      supportAPI.assignTicket(ticketId, assigneeId),
-    {
-      operationName: 'assign-ticket',
-      invalidateQueries: [
-        ['support-tickets'], // Refresh tickets list
         ['support-stats'], // Update support statistics
         ['support-notifications'], // Update badge count immediately
       ],
@@ -201,6 +184,7 @@ export function useCreateSupportMessage() {
       invalidateQueries: [
         ['support-ticket'], // Refresh specific ticket
         ['support-tickets'], // Refresh tickets list
+        ['admin-support-tickets'], // Refresh admin table
         ['support-notifications'], // Update badge count immediately
       ],
     }
@@ -244,6 +228,7 @@ export function useBulkSupportActions() {
     {
       invalidateQueries: [
         ['support-tickets'], // Refresh tickets list
+        ['admin-support-tickets'], // Refresh admin table
         ['support-stats'], // Update statistics
         ['support-notifications'], // Update badge count immediately
       ],
@@ -311,7 +296,7 @@ export function useCloseSupportTicket() {
     {
       operationName: 'close-ticket',
       invalidateQueries: [
-        ['admin-tickets'], // Refresh admin tickets list
+        ['admin-support-tickets'], // Refresh admin tickets list
         ['support-tickets'], // Refresh user tickets list
         ['support-notifications'], // Update badge count
         ['support-ticket'], // Refresh specific ticket
@@ -330,7 +315,7 @@ export function useReopenSupportTicket() {
     {
       operationName: 'reopen-ticket',
       invalidateQueries: [
-        ['admin-tickets'], // Refresh admin tickets list
+        ['admin-support-tickets'], // Refresh admin tickets list
         ['support-tickets'], // Refresh user tickets list
         ['support-notifications'], // Update badge count
         ['support-ticket'], // Refresh specific ticket
