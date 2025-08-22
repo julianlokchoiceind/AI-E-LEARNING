@@ -13,7 +13,6 @@ import {
   BarChart3,
   RefreshCw
 } from 'lucide-react';
-import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -48,6 +47,7 @@ export default function AdminSupportPage() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+  const [processingTicketId, setProcessingTicketId] = useState<string | null>(null);
 
   // Handle URL parameters - set filters from URL on mount
   useEffect(() => {
@@ -62,7 +62,8 @@ export default function AdminSupportPage() {
     data: ticketsResponse, 
     loading: isInitialLoading,
     query: { isFetching, isRefetching },
-    error: ticketsError 
+    error: ticketsError,
+    refetch: refetchTickets
   } = useAdminSupportTicketsQuery({
     search: searchQuery,
     status: filters.status as any || undefined,  // Send "unread" as status, backend will handle it
@@ -116,15 +117,16 @@ export default function AdminSupportPage() {
   // Toggle status handler - uses dedicated close/reopen endpoints
   const handleToggleStatus = useCallback(async (ticketId: string, currentStatus: string) => {
     try {
+      setProcessingTicketId(ticketId);
       if (currentStatus === 'closed') {
         await reopenTicketMutation.mutateAsync(ticketId);
-        ToastService.success('Ticket reopened successfully');
       } else {
         await closeTicketMutation.mutateAsync(ticketId);
-        ToastService.success('Ticket closed successfully');
       }
     } catch (error: any) {
-      ToastService.error(error.message || 'Something went wrong');
+      // Error toast is handled automatically by useApiMutation
+    } finally {
+      setProcessingTicketId(null);
     }
   }, [closeTicketMutation, reopenTicketMutation]);
 
@@ -190,6 +192,15 @@ export default function AdminSupportPage() {
           <h1 className="text-2xl font-bold text-gray-900">Support Ticket Management</h1>
           <p className="text-gray-600">Manage and respond to customer support tickets</p>
         </div>
+        <Button
+          onClick={() => refetchTickets()}
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Refresh
+        </Button>
       </div>
 
       {/* Quick Stats */}
@@ -415,7 +426,7 @@ export default function AdminSupportPage() {
                             e.stopPropagation();
                             handleToggleStatus(ticket.id, ticket.status);
                           }}
-                          loading={closeTicketMutation.loading || reopenTicketMutation.loading}
+                          loading={processingTicketId === ticket.id}
                         >
                           {ticket.status === 'closed' ? 'Re-open' : 'Close'}
                         </Button>

@@ -77,14 +77,14 @@ export const supportAPI = {
    * Close a ticket
    */
   async closeTicket(ticketId: string): Promise<StandardResponse<SupportTicket>> {
-    return apiClient.post<StandardResponse<SupportTicket>>(`/support/tickets/${ticketId}/close`, {});
+    return apiClient.patch<StandardResponse<SupportTicket>>(`/support/tickets/${ticketId}/close`, {});
   },
 
   /**
    * Reopen a ticket
    */
   async reopenTicket(ticketId: string): Promise<StandardResponse<SupportTicket>> {
-    return apiClient.post<StandardResponse<SupportTicket>>(`/support/tickets/${ticketId}/reopen`, {});
+    return apiClient.patch<StandardResponse<SupportTicket>>(`/support/tickets/${ticketId}/reopen`, {});
   },
 
   /**
