@@ -12,8 +12,7 @@ from app.schemas.support_ticket import (
     TicketCreateRequest,
     TicketUpdateRequest,
     MessageCreateRequest,
-    TicketSearchQuery,
-    SatisfactionRatingRequest
+    TicketSearchQuery
 )
 from app.core.email import email_service
 
@@ -31,8 +30,8 @@ class SupportTicketService:
         viewed_by_admin = getattr(ticket, 'viewed_by_admin_at', None)
         last_user_message_at = getattr(ticket, 'last_user_message_at', None)
         
-        # Only consider unread if ticket is not closed/resolved
-        if ticket_status not in ["closed", "resolved"]:
+        # Only consider unread if ticket is not closed
+        if ticket_status != "closed":
             # New ticket never viewed by admin
             if not viewed_by_admin:
                 is_unread = True
@@ -137,8 +136,6 @@ class SupportTicketService:
             "response_count": ticket.response_count,
             "last_user_message_at": ticket.last_user_message_at.isoformat() if ticket.last_user_message_at else None,
             "last_support_message_at": ticket.last_support_message_at.isoformat() if ticket.last_support_message_at else None,
-            "satisfaction_rating": ticket.satisfaction_rating,
-            "satisfaction_comment": ticket.satisfaction_comment,
             "viewed_by_admin_at": ticket.viewed_by_admin_at.isoformat() if ticket.viewed_by_admin_at else None,
             "last_admin_view_at": ticket.last_admin_view_at.isoformat() if ticket.last_admin_view_at else None,
             "viewed_by_user_at": ticket.viewed_by_user_at.isoformat() if ticket.viewed_by_user_at else None,
@@ -286,8 +283,8 @@ class SupportTicketService:
                     "$cond": {
                         "if": {
                             "$and": [
-                                # Only consider if ticket is not closed/resolved
-                                {"$not": {"$in": ["$status", ["closed", "resolved"]]}},
+                                # Only consider if ticket is not closed
+                                {"$ne": ["$status", "closed"]},
                                 {
                                     "$or": [
                                         # Case 1: Never viewed by admin (viewed_by_admin_at is null/missing)
@@ -332,8 +329,6 @@ class SupportTicketService:
                 # Analytics fields
                 "last_user_message_at": {"$ifNull": ["$last_user_message_at", None]},
                 "last_support_message_at": {"$ifNull": ["$last_support_message_at", None]},
-                "satisfaction_rating": {"$ifNull": ["$satisfaction_rating", None]},
-                "satisfaction_comment": {"$ifNull": ["$satisfaction_comment", None]},
                 # Other optional fields
                 "related_course_id": {"$ifNull": ["$related_course_id", None]},
                 "related_order_id": {"$ifNull": ["$related_order_id", None]},
@@ -402,11 +397,9 @@ class SupportTicketService:
         # Handle status changes
         if "status" in update_dict:
             new_status = update_dict["status"]
-            if new_status == TicketStatus.RESOLVED and not ticket.resolved_at:
-                ticket.resolved_at = datetime.utcnow()
-            elif new_status == TicketStatus.CLOSED and not ticket.closed_at:
+            if new_status == TicketStatus.CLOSED and not ticket.closed_at:
                 ticket.closed_at = datetime.utcnow()
-            elif new_status == TicketStatus.IN_PROGRESS and not ticket.first_response_at:
+            elif new_status == TicketStatus.OPEN and not ticket.first_response_at:
                 ticket.first_response_at = datetime.utcnow()
         
         # Handle assignment
@@ -450,7 +443,7 @@ class SupportTicketService:
         message = TicketMessage(
             ticket_id=ticket_id,
             sender_id=str(sender.id),
-            sender_name=sender.name,
+            sender_name=sender.name or sender.email,
             sender_role="support" if is_support else "user",
             message=message_data.message,
             attachments=message_data.attachments or [],
@@ -464,13 +457,10 @@ class SupportTicketService:
             ticket.last_support_message_at = datetime.utcnow()
             if not ticket.first_response_at:
                 ticket.first_response_at = datetime.utcnow()
-            # Auto set to in_progress if open
-            if ticket.status == TicketStatus.OPEN:
-                ticket.status = TicketStatus.IN_PROGRESS
         else:
             ticket.last_user_message_at = datetime.utcnow()
-            # Reopen if resolved/closed
-            if ticket.status in [TicketStatus.RESOLVED, TicketStatus.CLOSED]:
+            # Reopen if closed
+            if ticket.status == TicketStatus.CLOSED:
                 ticket.status = TicketStatus.OPEN
         
         ticket.update_timestamps()
@@ -482,31 +472,6 @@ class SupportTicketService:
         
         return message
 
-    async def rate_ticket(
-        self,
-        ticket_id: str,
-        rating_data: SatisfactionRatingRequest,
-        user: User
-    ) -> Optional[SupportTicket]:
-        """Rate ticket satisfaction"""
-        ticket = await SupportTicket.get(ticket_id)
-        if not ticket:
-            return None
-        
-        # Only ticket owner can rate
-        if str(ticket.user_id) != str(user.id):
-            return None
-        
-        # Only resolved/closed tickets can be rated
-        if ticket.status not in [TicketStatus.RESOLVED, TicketStatus.CLOSED]:
-            return None
-        
-        ticket.satisfaction_rating = rating_data.rating
-        ticket.satisfaction_comment = rating_data.comment
-        ticket.update_timestamps()
-        await ticket.save()
-        
-        return ticket
 
     async def get_ticket_stats(self, user: Optional[User] = None) -> Dict:
         """Get ticket statistics"""
@@ -514,11 +479,10 @@ class SupportTicketService:
         if user and user.role == "student":
             filter_dict["user_id"] = str(user.id)
         
-        # Get counts by status
+        # Get counts by status (simplified to open/closed)
         total = await SupportTicket.find(filter_dict).count()
         open_count = await SupportTicket.find({**filter_dict, "status": TicketStatus.OPEN}).count()
-        in_progress = await SupportTicket.find({**filter_dict, "status": TicketStatus.IN_PROGRESS}).count()
-        resolved = await SupportTicket.find({**filter_dict, "status": TicketStatus.RESOLVED}).count()
+        closed_count = await SupportTicket.find({**filter_dict, "status": TicketStatus.CLOSED}).count()
         
         # Calculate average times
         pipeline = [
@@ -542,8 +506,7 @@ class SupportTicketService:
                             None
                         ]
                     }
-                },
-                "avg_satisfaction": {"$avg": "$satisfaction_rating"}
+                }
             }}
         ]
         
@@ -573,15 +536,13 @@ class SupportTicketService:
         return {
             "total_tickets": total,
             "open_tickets": open_count,
-            "in_progress_tickets": in_progress,
-            "resolved_tickets": resolved,
+            "closed_tickets": closed_count,
             "avg_response_time_hours": (
                 stats.get("avg_response_time", 0) / 3600000 if stats.get("avg_response_time") else None
             ),
             "avg_resolution_time_hours": (
                 stats.get("avg_resolution_time", 0) / 3600000 if stats.get("avg_resolution_time") else None
             ),
-            "satisfaction_avg": stats.get("avg_satisfaction"),
             "tickets_by_category": category_counts,
             "tickets_by_priority": priority_counts
         }
@@ -677,7 +638,7 @@ class SupportTicketService:
             ticket_id=ticket_id,
             sender_id=str(current_user.id),
             sender_name=current_user.name or current_user.email,
-            sender_role=current_user.role,
+            sender_role="support" if current_user.role in ["admin", "creator"] else "user",
             message=f"📎 Uploaded attachment: **{filename}** ({size_str})",
             attachments=[attachment_url],
             is_internal_note=False

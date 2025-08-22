@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { XCircle, ArrowLeft, RefreshCw, CreditCard, HelpCircle, AlertTriangle } from 'lucide-react';
 import { useCourseQuery } from '@/hooks/queries/useCourses';
 import { ToastService } from '@/lib/toast/ToastService';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
 export default function PaymentFailedPage() {
   const router = useRouter();
@@ -102,7 +103,7 @@ export default function PaymentFailedPage() {
                 <div className="flex gap-3 p-3 bg-gray-50 rounded-lg">
                   {course.thumbnail && (
                     <img
-                      src={course.thumbnail}
+                      src={getAttachmentUrl(course.thumbnail)}
                       alt={course.title}
                       className="w-16 h-12 object-cover rounded flex-shrink-0"
                     />

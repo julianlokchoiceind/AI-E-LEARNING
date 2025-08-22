@@ -62,7 +62,7 @@ export default function PaymentSuccessPage() {
                 <div className="flex gap-4 mb-4">
                   {course.thumbnail && (
                     <img
-                      src={course.thumbnail}
+                      src={getAttachmentUrl(course.thumbnail)}
                       alt={course.title}
                       className="w-20 h-16 object-cover rounded-lg flex-shrink-0"
                     />

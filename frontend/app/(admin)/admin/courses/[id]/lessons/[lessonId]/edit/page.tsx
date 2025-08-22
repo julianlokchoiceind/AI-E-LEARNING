@@ -42,6 +42,7 @@ import { Lesson, LessonResource } from '@/lib/types/course';
 import { StandardResponse } from '@/lib/types/api';
 import { EmptyResourceState } from '@/components/feature/EmptyResourceState';
 import { ResourceTypeModal } from '@/components/feature/ResourceTypeModal';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { ResourceForm } from '@/components/feature/ResourceForm';
 import { Modal } from '@/components/ui/Modal';
 import { CreateQuizModal } from '@/components/feature/CreateQuizModal';
@@ -731,7 +732,7 @@ const LessonEditPage = () => {
                           )}
                           
                           <a
-                            href={resource.url}
+                            href={getAttachmentUrl(resource.url)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-blue-600 hover:text-blue-800"

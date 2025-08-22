@@ -15,6 +15,7 @@ import { useEnrollmentQuery } from '@/hooks/queries/useEnrollments';
 import { getCourseEnrollment } from '@/lib/api/enrollments';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
 import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
 
@@ -277,7 +278,7 @@ const CourseDetailPage = () => {
                   />
                 ) : course.thumbnail ? (
                   <img
-                    src={course.thumbnail}
+                    src={getAttachmentUrl(course.thumbnail)}
                     alt={course.title}
                     className="w-full h-48 object-cover rounded-lg mb-6"
                   />

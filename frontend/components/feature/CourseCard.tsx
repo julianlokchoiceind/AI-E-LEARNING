@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { CourseRatingMini } from '@/components/feature/CourseRating';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
 interface CourseCardProps {
   course: {
@@ -101,7 +102,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
       <div className="relative h-40 sm:h-48 bg-gray-200 rounded-t-lg overflow-hidden">
         {course.thumbnail ? (
           <img
-            src={course.thumbnail}
+            src={getAttachmentUrl(course.thumbnail)}
             alt={course.title}
             className="w-full h-full object-cover"
           />

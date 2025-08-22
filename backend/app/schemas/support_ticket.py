@@ -55,11 +55,6 @@ class TicketSearchQuery(BaseModel):
     sort_order: str = Field("desc", pattern="^(asc|desc)$")
 
 
-class SatisfactionRatingRequest(BaseModel):
-    """Request schema for ticket satisfaction rating"""
-    rating: int = Field(..., ge=1, le=5)
-    comment: Optional[str] = Field(None, max_length=1000)
-
 
 class ContactFormRequest(BaseModel):
     """Request schema for contact form submission"""
@@ -111,8 +106,6 @@ class SupportTicket(BaseModel):
     response_count: int
     last_user_message_at: Optional[datetime]
     last_support_message_at: Optional[datetime]
-    satisfaction_rating: Optional[float]
-    satisfaction_comment: Optional[str]
     viewed_by_admin_at: Optional[datetime]
     last_admin_view_at: Optional[datetime]
     viewed_by_user_at: Optional[datetime]
@@ -140,14 +133,12 @@ class TicketListResponse(BaseModel):
 
 
 class TicketStats(BaseModel):
-    """Ticket statistics"""
+    """Ticket statistics - simplified for open/closed only"""
     total_tickets: int
     open_tickets: int
-    in_progress_tickets: int
-    resolved_tickets: int
+    closed_tickets: int
     avg_response_time_hours: Optional[float]
     avg_resolution_time_hours: Optional[float]
-    satisfaction_avg: Optional[float]
     tickets_by_category: Dict[str, int]
     tickets_by_priority: Dict[str, int]
 

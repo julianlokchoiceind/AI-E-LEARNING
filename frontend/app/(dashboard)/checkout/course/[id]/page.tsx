@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useCourseQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Clock, Users, BookOpen, ArrowLeft, Shield, CreditCard } from 'lucide-react';
 
 export default function CourseCheckoutPage() {
@@ -124,7 +125,7 @@ export default function CourseCheckoutPage() {
               <div className="flex gap-4">
                 {course.thumbnail && (
                   <img
-                    src={course.thumbnail}
+                    src={getAttachmentUrl(course.thumbnail)}
                     alt={course.title}
                     className="w-24 h-16 object-cover rounded-lg flex-shrink-0"
                   />

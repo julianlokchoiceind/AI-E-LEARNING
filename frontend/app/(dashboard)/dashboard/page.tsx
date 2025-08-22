@@ -15,6 +15,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { formatDistanceToNow } from '@/lib/utils/formatters';
 import { LoadingSpinner, EmptyState, CourseCardSkeleton } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
 interface DashboardData {
   user: {
@@ -239,7 +240,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-4">
                     {course.thumbnail ? (
                       <img
-                        src={course.thumbnail}
+                        src={getAttachmentUrl(course.thumbnail)}
                         alt={course.title}
                         className="w-24 h-16 object-cover rounded"
                       />

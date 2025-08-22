@@ -4,6 +4,7 @@ import React from 'react';
 import { FileText, ExternalLink, Download, Link, Image, FileCode, FileArchive } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { LessonResource } from '@/lib/types/course';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
 interface ResourceDisplayProps {
   resources: LessonResource[];
@@ -55,10 +56,11 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
       const urlParts = resource.url.split('/');
       const filename = urlParts[urlParts.length - 1] || resource.title;
       
-      // Add download query parameter to force download
-      const downloadUrl = resource.url.includes('?') 
-        ? `${resource.url}&download=true`
-        : `${resource.url}?download=true`;
+      // Use getAttachmentUrl for proper URL handling
+      const fullUrl = getAttachmentUrl(resource.url);
+      const downloadUrl = fullUrl.includes('?') 
+        ? `${fullUrl}&download=true`
+        : `${fullUrl}?download=true`;
       
       return (
         <a
@@ -74,7 +76,7 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
     } else {
       return (
         <a
-          href={resource.url}
+          href={getAttachmentUrl(resource.url)}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"

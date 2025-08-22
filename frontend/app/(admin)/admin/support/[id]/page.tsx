@@ -10,7 +10,11 @@ import {
   AlertCircle,
   User,
   Shield,
-  Star
+  FileText,
+  FileArchive,
+  Image as ImageIcon,
+  Upload,
+  X
 } from 'lucide-react';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
@@ -22,6 +26,7 @@ import {
   useCreateSupportMessage,
   useMarkTicketViewed,
 } from '@/hooks/queries/useSupport';
+import { supportAPI } from '@/lib/api/support';
 import {
   TicketWithMessages,
   MessageCreateData,
@@ -29,6 +34,7 @@ import {
   TICKET_PRIORITIES,
   TICKET_STATUSES
 } from '@/lib/types/support';
+import { getAttachmentUrl, isImageFile } from '@/lib/utils/attachmentUrl';
 
 export default function AdminTicketDetailPage() {
   const params = useParams();
@@ -51,6 +57,7 @@ export default function AdminTicketDetailPage() {
   
   const ticket = ticketResponse?.data || null;
   const [message, setMessage] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   // Handle ticket error
   useEffect(() => {
@@ -108,6 +115,23 @@ export default function AdminTicketDetailPage() {
     });
   };
 
+  // File handling functions for attachments
+  const getFileIcon = (filename: string) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) {
+      return <ImageIcon className="h-4 w-4 text-green-500" />;
+    }
+    if (['pdf'].includes(ext || '')) {
+      return <FileText className="h-4 w-4 text-red-500" />;
+    }
+    if (['zip', 'rar', '7z'].includes(ext || '')) {
+      return <FileArchive className="h-4 w-4 text-purple-500" />;
+    }
+    return <FileText className="h-4 w-4 text-blue-500" />;
+  };
+
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -163,24 +187,6 @@ export default function AdminTicketDetailPage() {
               <span>From: {ticket.user_name}</span>
             </div>
           </div>
-          
-          {ticket.satisfaction_rating && (
-            <div className="text-right">
-              <div className="flex items-center gap-1 mb-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-5 w-5 ${
-                      i < ticket.satisfaction_rating!
-                        ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              <p className="text-sm text-gray-600">Customer Rating</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -218,6 +224,47 @@ export default function AdminTicketDetailPage() {
                     </div>
                     
                     <p className="whitespace-pre-wrap">{msg.message}</p>
+                    
+                    {/* Message Attachments */}
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {msg.attachments.map((attachment: string, attachIndex: number) => {
+                          const filename = attachment.split('/').pop() || attachment;
+                          const isImage = isImageFile(filename);
+                          
+                          return (
+                            <div key={attachIndex}>
+                              {isImage ? (
+                                <div className="mt-2">
+                                  <img
+                                    src={getAttachmentUrl(attachment)}
+                                    alt={filename}
+                                    className="max-w-xs max-h-64 rounded-lg border"
+                                    onClick={() => window.open(getAttachmentUrl(attachment), '_blank')}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                  <p className="text-xs mt-1 text-gray-500">{filename}</p>
+                                </div>
+                              ) : (
+                                <a
+                                  href={getAttachmentUrl(attachment)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm hover:bg-opacity-80 ${
+                                    isSupport 
+                                      ? 'bg-gray-100 text-gray-700 border-gray-300' 
+                                      : 'bg-blue-100 text-blue-700 border-blue-300'
+                                  }`}
+                                >
+                                  {getFileIcon(filename)}
+                                  <span className="truncate max-w-[200px]">{filename}</span>
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                     
                     {msg.is_internal_note && (
                       <p className="text-xs mt-2 text-red-200 italic">

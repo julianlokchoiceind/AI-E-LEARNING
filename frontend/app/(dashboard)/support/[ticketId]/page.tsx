@@ -10,7 +10,10 @@ import {
   AlertCircle,
   User,
   Shield,
-  Star
+  FileText,
+  FileArchive,
+  Image as ImageIcon,
+  Upload
 } from 'lucide-react';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
@@ -21,22 +24,24 @@ import { useAuth } from '@/hooks/useAuth';
 import { 
   useSupportTicketQuery,
   useCreateSupportMessage,
-  useRateSupportTicket,
   useMarkTicketViewed
 } from '@/hooks/queries/useSupport';
+import { supportAPI } from '@/lib/api/support';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   TicketWithMessages,
   MessageCreateData,
-  SatisfactionRatingData,
   TICKET_CATEGORIES,
   TICKET_PRIORITIES,
   TICKET_STATUSES
 } from '@/lib/types/support';
+import { getAttachmentUrl, isImageFile } from '@/lib/utils/attachmentUrl';
 
 export default function TicketDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const ticketId = params.ticketId as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasMarkedAsViewed = useRef(false);
@@ -50,14 +55,11 @@ export default function TicketDetailPage() {
   } = useSupportTicketQuery(ticketId);
   
   const { mutate: sendMessage, loading: sending } = useCreateSupportMessage();
-  const { mutate: rateTicket, loading: submittingRating } = useRateSupportTicket();
   const { mutate: markAsViewed } = useMarkTicketViewed();
   
   const ticket = ticketResponse?.data || null;
   const [message, setMessage] = useState('');
-  const [showRatingModal, setShowRatingModal] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [ratingComment, setRatingComment] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   // Handle ticket error
   useEffect(() => {
@@ -81,59 +83,94 @@ export default function TicketDetailPage() {
 
   useEffect(() => {
     scrollToBottom();
-    
-    // Show rating modal if resolved and not rated
-    if (ticket?.status === 'resolved' && !ticket.satisfaction_rating) {
-      setShowRatingModal(true);
-    }
-  }, [ticket?.messages, ticket?.status, ticket?.satisfaction_rating]);
+  }, [ticket?.messages]);
 
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return;
+  const handleSendMessage = async () => {
+    if (!message.trim() && selectedFiles.length === 0) return;
 
-    const messageData: MessageCreateData = {
-      message: message.trim(),
-    };
-    
-    sendMessage(
-      { ticketId, messageData },
-      {
-        onSuccess: (response) => {
-          setMessage('');
-          refetchTicket(); // Refresh to get new message
-          // useApiMutation already handles toast notifications automatically
+    // If there's text message, send it first
+    if (message.trim()) {
+      const messageData: MessageCreateData = {
+        message: message.trim(),
+        attachments: [],
+      };
+      
+      sendMessage(
+        { ticketId, messageData },
+        {
+          onSuccess: async (response) => {
+            // After text message sent, upload files if any
+            if (selectedFiles.length > 0) {
+              try {
+                for (const file of selectedFiles) {
+                  await supportAPI.uploadAttachment(ticketId, file);
+                }
+                // Invalidate to show attachments immediately
+                await queryClient.invalidateQueries(['support-ticket', ticketId]);
+              } catch (uploadError) {
+                console.error('File upload error:', uploadError);
+              }
+            }
+            
+            setMessage('');
+            setSelectedFiles([]);
+            refetchTicket(); // Refresh to get new messages
+          }
         }
+      );
+    } else if (selectedFiles.length > 0) {
+      // Only files, no text message
+      try {
+        for (const file of selectedFiles) {
+          await supportAPI.uploadAttachment(ticketId, file);
+        }
+        // Invalidate to show attachments immediately
+        await queryClient.invalidateQueries(['support-ticket', ticketId]);
+        
+        setSelectedFiles([]);
+        refetchTicket(); // Refresh to get new messages
+      } catch (error) {
+        console.error('File upload error:', error);
       }
-    );
+    }
   };
 
-  const handleRateTicket = () => {
-    if (rating === 0) {
-      ToastService.error('Please select a rating');
-      return;
-    }
-
-    const ratingData: SatisfactionRatingData = {
-      rating,
-      comment: ratingComment.trim() || undefined,
-    };
+  // File handling functions
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const validFiles: File[] = [];
     
-    rateTicket(
-      { ticketId, ratingData },
-      {
-        onSuccess: (response) => {
-          setShowRatingModal(false);
-          refetchTicket(); // Refresh to show rating
-          // useApiMutation already handles toast notifications automatically
-        },
-        onError: (error: any) => {
-          console.error('Failed to rate ticket:', error);
-          // useApiMutation already handles error toast notifications automatically
-        }
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        ToastService.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
+        continue;
       }
-    );
+      validFiles.push(file);
+    }
+    
+    setSelectedFiles(prev => [...prev, ...validFiles]);
   };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (filename: string) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) {
+      return <ImageIcon className="h-4 w-4 text-green-500" />;
+    }
+    if (['pdf'].includes(ext || '')) {
+      return <FileText className="h-4 w-4 text-red-500" />;
+    }
+    if (['zip', 'rar', '7z'].includes(ext || '')) {
+      return <FileArchive className="h-4 w-4 text-purple-500" />;
+    }
+    return <FileText className="h-4 w-4 text-blue-500" />;
+  };
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -200,24 +237,6 @@ export default function TicketDetailPage() {
               </span>
             </div>
           </div>
-          
-          {ticket.satisfaction_rating && (
-            <div className="text-right">
-              <div className="flex items-center gap-1 mb-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-5 w-5 ${
-                      i < ticket.satisfaction_rating!
-                        ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              <p className="text-sm text-gray-600">Customer Rating</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -256,6 +275,47 @@ export default function TicketDetailPage() {
                     
                     <p className="whitespace-pre-wrap">{msg.message}</p>
                     
+                    {/* Message Attachments */}
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {msg.attachments.map((attachment: string, attachIndex: number) => {
+                          const filename = attachment.split('/').pop() || attachment;
+                          const isImage = isImageFile(filename);
+                          
+                          return (
+                            <div key={attachIndex}>
+                              {isImage ? (
+                                <div className="mt-2">
+                                  <img
+                                    src={getAttachmentUrl(attachment)}
+                                    alt={filename}
+                                    className="max-w-xs max-h-64 rounded-lg border"
+                                    onClick={() => window.open(getAttachmentUrl(attachment), '_blank')}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                  <p className="text-xs mt-1 text-gray-500">{filename}</p>
+                                </div>
+                              ) : (
+                                <a
+                                  href={getAttachmentUrl(attachment)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm hover:bg-opacity-80 ${
+                                    isSupport 
+                                      ? 'bg-white text-gray-700 border-gray-200' 
+                                      : 'bg-blue-500 text-white border-blue-400'
+                                  }`}
+                                >
+                                  {getFileIcon(filename)}
+                                  <span className="truncate max-w-[200px]">{filename}</span>
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    
                     {msg.is_internal_note && (
                       <p className="text-xs mt-2 text-gray-500 italic">
                         Internal Note
@@ -271,23 +331,77 @@ export default function TicketDetailPage() {
           {/* Message Input */}
           {ticket.status !== 'closed' && (
             <div className="border-t p-4">
+              {/* Selected Files Preview */}
+              {selectedFiles.length > 0 && (
+                <div className="mb-3 space-y-2">
+                  <p className="text-sm font-medium text-gray-700">Attachments:</p>
+                  {selectedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                      {getFileIcon(file.name)}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {(file.size / (1024 * 1024)).toFixed(1)} MB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
               <div className="flex gap-2">
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  placeholder="Type your message..."
-                  className="flex-1 px-3 py-2 border rounded-md resize-none"
-                  rows={3}
-                />
+                <div className="flex flex-col flex-1 gap-2">
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    placeholder="Type your message..."
+                    className="flex-1 px-3 py-2 border rounded-md resize-none"
+                    rows={3}
+                  />
+                  
+                  <div className="flex gap-2">
+                    {/* File Upload Button */}
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="message-file-upload"
+                        multiple
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.zip,.rar"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('message-file-upload')?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-1" />
+                        Attach
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
                 <Button
                   onClick={handleSendMessage}
                   disabled={!message.trim() || sending}
+                  className="self-end"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -318,65 +432,6 @@ export default function TicketDetailPage() {
         </Card>
       )}
 
-      {/* Rating Modal */}
-      <Modal
-        isOpen={showRatingModal}
-        onClose={() => setShowRatingModal(false)}
-        title="Rate Your Support Experience"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            How satisfied are you with the resolution of your ticket?
-          </p>
-          
-          <div className="flex justify-center gap-2">
-            {[1, 2, 3, 4, 5].map((value) => (
-              <button
-                key={value}
-                onClick={() => setRating(value)}
-                className="p-2 hover:scale-110 transition-transform"
-              >
-                <Star
-                  className={`h-8 w-8 ${
-                    value <= rating
-                      ? 'text-yellow-400 fill-current'
-                      : 'text-gray-300'
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Additional Comments (Optional)
-            </label>
-            <textarea
-              value={ratingComment}
-              onChange={(e) => setRatingComment(e.target.value)}
-              placeholder="Tell us more about your experience..."
-              className="w-full px-3 py-2 border rounded-md"
-              rows={4}
-            />
-          </div>
-          
-          <div className="flex justify-end gap-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowRatingModal(false)}
-            >
-              Skip
-            </Button>
-            <Button
-              onClick={handleRateTicket}
-              loading={submittingRating}
-              disabled={rating === 0}
-            >
-              Submit Rating
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

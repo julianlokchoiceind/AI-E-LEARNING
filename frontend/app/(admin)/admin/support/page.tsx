@@ -9,7 +9,6 @@ import {
   CheckCircle,
   AlertCircle,
   MessageCircle,
-  TrendingUp,
   Users,
   BarChart3,
   RefreshCw
@@ -22,7 +21,9 @@ import { LoadingSpinner, EmptyState, AdSupportTableSkeleton } from '@/components
 import { 
   useAdminSupportTicketsQuery, 
   useSupportStatsQuery, 
-  useUpdateSupportTicket 
+  useUpdateSupportTicket,
+  useCloseSupportTicket,
+  useReopenSupportTicket
 } from '@/hooks/queries/useSupport';
 import {
   SupportTicket,
@@ -31,7 +32,8 @@ import {
   TicketUpdateData,
   TICKET_CATEGORIES,
   TICKET_PRIORITIES,
-  TICKET_STATUSES
+  TICKET_STATUSES,
+  TICKET_FILTER_OPTIONS
 } from '@/lib/types/support';
 import { Pagination } from '@/components/ui/Pagination';
 
@@ -77,6 +79,8 @@ export default function AdminSupportPage() {
   } = useSupportStatsQuery();
 
   const updateTicketMutation = useUpdateSupportTicket();
+  const closeTicketMutation = useCloseSupportTicket();
+  const reopenTicketMutation = useReopenSupportTicket();
 
   // Memoized computed values for better performance
   const computedValues = useMemo(() => {
@@ -109,6 +113,21 @@ export default function AdminSupportPage() {
     }
   }, [updateTicketMutation]);
 
+  // Toggle status handler - uses dedicated close/reopen endpoints
+  const handleToggleStatus = useCallback(async (ticketId: string, currentStatus: string) => {
+    try {
+      if (currentStatus === 'closed') {
+        await reopenTicketMutation.mutateAsync(ticketId);
+        ToastService.success('Ticket reopened successfully');
+      } else {
+        await closeTicketMutation.mutateAsync(ticketId);
+        ToastService.success('Ticket closed successfully');
+      }
+    } catch (error: any) {
+      ToastService.error(error.message || 'Something went wrong');
+    }
+  }, [closeTicketMutation, reopenTicketMutation]);
+
   const formatDate = useCallback((date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
@@ -127,12 +146,6 @@ export default function AdminSupportPage() {
         return `${computedValues.stats.avg_response_time_hours.toFixed(1)}h`;
       }
       return '< 1h';
-    },
-    getSatisfactionRating: () => {
-      if (computedValues.stats?.satisfaction_avg && computedValues.stats.satisfaction_avg > 0) {
-        return `${computedValues.stats.satisfaction_avg.toFixed(1)}/5`;
-      }
-      return 'No Reviews';
     }
   }), [computedValues.stats]);
 
@@ -180,7 +193,7 @@ export default function AdminSupportPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-4">
           <div className="flex items-center">
             <BarChart3 className="h-8 w-8 text-blue-500 mr-3" />
@@ -217,17 +230,6 @@ export default function AdminSupportPage() {
           </div>
         </Card>
 
-        <Card className="p-4">
-          <div className="flex items-center">
-            <TrendingUp className="h-8 w-8 text-green-500 mr-3" />
-            <div>
-              <p className="text-2xl font-bold">
-                {statsLoading ? '...' : statGetters.getSatisfactionRating()}
-              </p>
-              <p className="text-sm text-gray-600">Satisfaction</p>
-            </div>
-          </div>
-        </Card>
       </div>
 
       {/* Show stats error if any */}
@@ -257,14 +259,14 @@ export default function AdminSupportPage() {
             />
           </div>
           
-          {/* Status Filter - NOW INCLUDES UNREAD */}
+          {/* Status Filter - Simplified to Open/Closed/Unread */}
           <select
             value={filters.status}
             onChange={(e) => handleFilterChange(e.target.value, 'status')}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
           >
             <option value="">All Status</option>
-            {TICKET_STATUSES.map(status => (
+            {TICKET_FILTER_OPTIONS.map(status => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>
@@ -406,20 +408,17 @@ export default function AdminSupportPage() {
                       </td>
                       
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <select
-                          value={ticket.status}
-                          onChange={(e) => handleQuickUpdate(ticket.id, { 
-                            status: e.target.value as any 
-                          })}
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-sm border rounded px-2 py-1"
+                        <Button
+                          size="sm"
+                          variant={ticket.status === 'closed' ? 'primary' : 'danger'}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleStatus(ticket.id, ticket.status);
+                          }}
+                          loading={closeTicketMutation.loading || reopenTicketMutation.loading}
                         >
-                          {TICKET_STATUSES.map(s => (
-                            <option key={s.value} value={s.value}>
-                              {s.label}
-                            </option>
-                          ))}
-                        </select>
+                          {ticket.status === 'closed' ? 'Re-open' : 'Close'}
+                        </Button>
                       </td>
                       
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

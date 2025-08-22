@@ -9,6 +9,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { MyCoursesGridSkeleton } from '@/components/ui/LoadingStates';
 import { useMyCoursesQuery } from '@/hooks/queries/useStudent';
 import { ToastService } from '@/lib/toast/ToastService';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
 interface EnrolledCourse {
   id: string;
@@ -163,7 +164,7 @@ export default function MyCoursesPage() {
               <div className="relative h-48">
                 {enrollment.course.thumbnail ? (
                   <img
-                    src={enrollment.course.thumbnail}
+                    src={getAttachmentUrl(enrollment.course.thumbnail)}
                     alt={enrollment.course.title}
                     className="w-full h-full object-cover"
                   />

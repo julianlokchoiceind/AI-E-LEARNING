@@ -11,7 +11,6 @@ from app.schemas.support_ticket import (
     TicketUpdateRequest,
     MessageCreateRequest,
     TicketSearchQuery,
-    SatisfactionRatingRequest,
     SupportTicket,
     TicketWithMessages,
     TicketListResponse,
@@ -46,8 +45,8 @@ def compute_is_unread(ticket_data, current_user=None):
         last_user_message_at = getattr(ticket_data, 'last_user_message_at', None)
         last_support_message_at = getattr(ticket_data, 'last_support_message_at', None)
     
-    # Only consider unread if ticket is not closed/resolved
-    if ticket_status not in ["closed", "resolved"]:
+    # Only consider unread if ticket is not closed
+    if ticket_status != "closed":
         # Determine perspective based on user role
         if current_user and current_user.role in ["admin", "creator"]:
             # ADMIN perspective: Check if user sent new messages
@@ -103,8 +102,6 @@ def convert_ticket_to_dict(ticket, current_user=None):
         "response_count": ticket.response_count,
         "last_user_message_at": ticket.last_user_message_at.isoformat() if ticket.last_user_message_at else None,
         "last_support_message_at": ticket.last_support_message_at.isoformat() if ticket.last_support_message_at else None,
-        "satisfaction_rating": ticket.satisfaction_rating,
-        "satisfaction_comment": ticket.satisfaction_comment,
         "viewed_by_admin_at": ticket.viewed_by_admin_at.isoformat() if hasattr(ticket, 'viewed_by_admin_at') and ticket.viewed_by_admin_at else None,
         "last_admin_view_at": ticket.last_admin_view_at.isoformat() if hasattr(ticket, 'last_admin_view_at') and ticket.last_admin_view_at else None,
         "viewed_by_user_at": ticket.viewed_by_user_at.isoformat() if hasattr(ticket, 'viewed_by_user_at') and ticket.viewed_by_user_at else None,
@@ -163,8 +160,6 @@ async def create_ticket(
             "response_count": ticket.response_count,
             "last_user_message_at": ticket.last_user_message_at.isoformat() if ticket.last_user_message_at else None,
             "last_support_message_at": ticket.last_support_message_at.isoformat() if ticket.last_support_message_at else None,
-            "satisfaction_rating": ticket.satisfaction_rating,
-            "satisfaction_comment": ticket.satisfaction_comment,
             "viewed_by_admin_at": ticket.viewed_by_admin_at.isoformat() if hasattr(ticket, 'viewed_by_admin_at') and ticket.viewed_by_admin_at else None,
             "last_admin_view_at": ticket.last_admin_view_at.isoformat() if hasattr(ticket, 'last_admin_view_at') and ticket.last_admin_view_at else None,
             "viewed_by_user_at": ticket.viewed_by_user_at.isoformat() if hasattr(ticket, 'viewed_by_user_at') and ticket.viewed_by_user_at else None,
@@ -397,39 +392,6 @@ async def add_message(
         raise HTTPException(
             status_code=http_status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to add message: {str(e)}"
-        )
-
-
-@router.post("/tickets/{ticket_id}/rate", response_model=StandardResponse[SupportTicket])
-async def rate_ticket(
-    ticket_id: str,
-    rating_data: SatisfactionRatingRequest,
-    current_user: User = Depends(get_current_user)
-):
-    """Rate ticket satisfaction"""
-    try:
-        ticket = await ticket_service.rate_ticket(ticket_id, rating_data, current_user)
-        
-        if not ticket:
-            raise HTTPException(
-                status_code=http_status.HTTP_404_NOT_FOUND,
-                detail="Ticket not found, access denied, or ticket not resolved"
-            )
-        
-        # Use manual dictionary conversion instead of .dict()
-        ticket_dict = convert_ticket_to_dict(ticket, current_user)
-        
-        return StandardResponse(
-            success=True,
-            data=ticket_dict,
-            message="Thank you for your feedback!"
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=http_status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to rate ticket: {str(e)}"
         )
 
 
@@ -729,9 +691,9 @@ async def get_notifications(current_user: User = Depends(get_current_user)):
         if is_admin:
             # Admin: Get unread tickets with details for dropdown
             pipeline = [
-                # Skip closed/resolved tickets for admin notifications
+                # Skip closed tickets for admin notifications
                 {"$match": {
-                    "status": {"$nin": ["closed", "resolved"]}
+                    "status": {"$ne": "closed"}
                 }},
                 
                 # Compute is_unread (same logic as table aggregation)

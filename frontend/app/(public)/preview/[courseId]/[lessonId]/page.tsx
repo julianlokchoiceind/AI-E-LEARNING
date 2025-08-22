@@ -14,6 +14,7 @@ import { usePreviewLessonQuery } from '@/hooks/queries/useLessons';
 import { useAuth } from '@/hooks/useAuth';
 import { Course, Lesson } from '@/lib/types/course';
 import { ToastService } from '@/lib/toast/ToastService';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
 const PreviewLessonPage = () => {
   const params = useParams();
@@ -188,7 +189,7 @@ const PreviewLessonPage = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(resource.url, '_blank')}
+                        onClick={() => window.open(getAttachmentUrl(resource.url), '_blank')}
                       >
                         Download
                       </Button>

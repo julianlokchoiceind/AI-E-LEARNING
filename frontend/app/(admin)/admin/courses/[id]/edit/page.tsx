@@ -198,14 +198,14 @@ const CourseBuilderPage = () => {
     // Check backend health - health endpoint is at /health, not /api/v1/health
     const checkHealth = async () => {
       try {
-        const response = await fetch('http://localhost:8000/health');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '')}/health`);
         if (!response.ok) {
           ToastService.error('Backend server is not responding properly');
         } else {
           // Backend health check successful
         }
       } catch (error) {
-        ToastService.error('Cannot connect to backend server. Make sure it is running on http://localhost:8000');
+        ToastService.error('Cannot connect to backend server');
       }
     };
     

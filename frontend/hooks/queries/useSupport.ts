@@ -122,42 +122,6 @@ export function useAssignSupportTicket() {
   );
 }
 
-/**
- * RESOLVE SUPPORT TICKET - Mark ticket as resolved
- * Critical: Support completion workflow
- */
-export function useResolveSupportTicket() {
-  return useApiMutation(
-    ({ ticketId, resolution }: { ticketId: string; resolution: string }) => 
-      supportAPI.updateTicket(ticketId, { status: 'resolved', resolution_note: resolution }),
-    {
-      operationName: 'resolve-ticket',
-      invalidateQueries: [
-        ['support-tickets'], // Refresh tickets list
-        ['support-stats'], // Update support statistics
-        ['support-notifications'], // Update badge count immediately
-      ],
-    }
-  );
-}
-
-/**
- * DELETE SUPPORT TICKET - Remove ticket (admin only)
- * Medium-impact: Support management
- */
-export function useDeleteSupportTicket() {
-  return useApiMutation(
-    (ticketId: string) => supportAPI.updateTicket(ticketId, { status: 'closed' }),
-    {
-      operationName: 'delete-ticket',
-      invalidateQueries: [
-        ['support-tickets'], // Refresh tickets list
-        ['support-stats'], // Update support statistics
-        ['support-notifications'], // Update badge count immediately
-      ],
-    }
-  );
-}
 
 /**
  * SUPPORT STATISTICS - Overview metrics for admin
@@ -244,31 +208,13 @@ export function useCreateSupportMessage() {
 }
 
 /**
- * RATE SUPPORT TICKET - Submit satisfaction rating
- * Medium-impact: Support quality tracking
- */
-export function useRateSupportTicket() {
-  return useApiMutation(
-    ({ ticketId, ratingData }: { ticketId: string; ratingData: any }) => 
-      supportAPI.rateTicket(ticketId, ratingData),
-    {
-      invalidateQueries: [
-        ['support-ticket'], // Refresh specific ticket
-        ['support-stats'], // Update satisfaction statistics
-        ['support-notifications'], // Update badge count immediately
-      ],
-    }
-  );
-}
-
-/**
  * SUPPORT BULK ACTIONS - Bulk operations on tickets
  * Medium-impact: Admin efficiency
  */
 export function useBulkSupportActions() {
   return useApiMutation(
     async ({ action, ticketIds, data }: { 
-      action: 'assign' | 'resolve' | 'close' | 'delete'; 
+      action: 'assign' | 'close' | 'delete'; 
       ticketIds: string[];
       data?: any;
     }) => {
@@ -278,12 +224,10 @@ export function useBulkSupportActions() {
           switch (action) {
             case 'assign':
               return supportAPI.assignTicket(id, data.assigneeId);
-            case 'resolve':
-              return supportAPI.updateTicket(id, { status: 'resolved', resolution_note: data.resolution });
             case 'close':
-              return supportAPI.updateTicket(id, { status: 'closed' });
+              return supportAPI.closeTicket(id);
             case 'delete':
-              return supportAPI.updateTicket(id, { status: 'closed' });
+              return supportAPI.closeTicket(id); // Delete = Close for now
             default:
               throw new Error('Invalid bulk action');
           }
@@ -353,6 +297,44 @@ export function useAdminSupportTicketsQuery(filters: SupportTicketFilters = {}) 
     {
       ...getCacheConfig('SUPPORT_TICKETS'), // Support tickets - fresh data
       keepPreviousData: true, // Smooth filter transitions
+    }
+  );
+}
+
+/**
+ * CLOSE SUPPORT TICKET - Use dedicated close endpoint
+ * High-impact: Proper ticket closure with timestamps
+ */
+export function useCloseSupportTicket() {
+  return useApiMutation(
+    (ticketId: string) => supportAPI.closeTicket(ticketId),
+    {
+      operationName: 'close-ticket',
+      invalidateQueries: [
+        ['admin-tickets'], // Refresh admin tickets list
+        ['support-tickets'], // Refresh user tickets list
+        ['support-notifications'], // Update badge count
+        ['support-ticket'], // Refresh specific ticket
+      ],
+    }
+  );
+}
+
+/**
+ * REOPEN SUPPORT TICKET - Use dedicated reopen endpoint
+ * High-impact: Proper ticket reopening with timestamp updates
+ */
+export function useReopenSupportTicket() {
+  return useApiMutation(
+    (ticketId: string) => supportAPI.reopenTicket(ticketId),
+    {
+      operationName: 'reopen-ticket',
+      invalidateQueries: [
+        ['admin-tickets'], // Refresh admin tickets list
+        ['support-tickets'], // Refresh user tickets list
+        ['support-notifications'], // Update badge count
+        ['support-ticket'], // Refresh specific ticket
+      ],
     }
   );
 }

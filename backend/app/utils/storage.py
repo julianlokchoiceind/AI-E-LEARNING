@@ -424,9 +424,9 @@ def get_storage_backend(
         Configured storage backend instance
     """
     if use_local:
-        # Get base URL from environment or use default
-        import os
-        base_url = os.getenv("API_BASE_URL", "http://localhost:8000")
+        # Get base URL from settings
+        from ..core.config import settings
+        base_url = settings.API_BASE_URL
         return LocalStorage(
             upload_dir=local_upload_dir,
             url_prefix=local_url_prefix,

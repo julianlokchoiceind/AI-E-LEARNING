@@ -19,11 +19,8 @@ class TicketPriority(str, Enum):
 
 
 class TicketStatus(str, Enum):
-    """Ticket status"""
+    """Ticket status - simplified to open/closed only"""
     OPEN = "open"
-    IN_PROGRESS = "in_progress"
-    WAITING_FOR_USER = "waiting_for_user"
-    RESOLVED = "resolved"
     CLOSED = "closed"
 
 
@@ -93,8 +90,6 @@ class SupportTicket(Document):
     response_count: int = Field(default=0, ge=0)
     last_user_message_at: Optional[datetime] = None
     last_support_message_at: Optional[datetime] = None
-    satisfaction_rating: Optional[float] = Field(None, ge=1, le=5)
-    satisfaction_comment: Optional[str] = None
     
     # Viewed tracking for notifications
     viewed_by_admin_at: Optional[datetime] = None

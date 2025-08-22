@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal';
 import DeleteCourseModal, { CourseDeleteData } from '@/components/feature/DeleteCourseModal';
 import { LoadingSpinner, EmptyState, AdCoursesTableSkeleton } from '@/components/ui/LoadingStates';
 import { StandardResponse } from '@/lib/types/api';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { 
   useAdminCoursesQuery, 
   useApproveCourse, 
@@ -542,7 +543,7 @@ export default function CourseApproval() {
                       <div className="flex items-center">
                         {course.thumbnail ? (
                           <img 
-                            src={course.thumbnail} 
+                            src={getAttachmentUrl(course.thumbnail)} 
                             alt={course.title}
                             className="h-12 w-16 object-cover rounded-lg mr-4"
                           />
@@ -699,7 +700,7 @@ export default function CourseApproval() {
             <div className="flex items-start space-x-4">
               {selectedCourse.thumbnail ? (
                 <img 
-                  src={selectedCourse.thumbnail} 
+                  src={getAttachmentUrl(selectedCourse.thumbnail)} 
                   alt={selectedCourse.title}
                   className="h-24 w-32 object-cover rounded-lg"
                 />

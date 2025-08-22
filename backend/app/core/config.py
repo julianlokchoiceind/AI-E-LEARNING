@@ -100,6 +100,8 @@ class Settings(BaseSettings):
     
     # File Upload Configuration
     USE_LOCAL_STORAGE: bool = True
+    UPLOAD_DIR: Optional[str] = None
+    API_BASE_URL: Optional[str] = None
     LOCAL_UPLOAD_DIR: str = "./uploads"
     LOCAL_UPLOAD_URL_PREFIX: str = "/uploads"
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
@@ -159,9 +161,12 @@ def get_storage_backend():
     """Get configured storage backend instance."""
     from ..utils.storage import get_storage_backend
     
+    # Use UPLOAD_DIR if provided, otherwise use LOCAL_UPLOAD_DIR
+    upload_dir = settings.UPLOAD_DIR or settings.LOCAL_UPLOAD_DIR
+    
     return get_storage_backend(
         use_local=settings.USE_LOCAL_STORAGE,
-        local_upload_dir=settings.LOCAL_UPLOAD_DIR,
+        local_upload_dir=upload_dir,
         local_url_prefix=settings.LOCAL_UPLOAD_URL_PREFIX,
         s3_bucket=settings.S3_BUCKET_NAME,
         s3_region=settings.AWS_S3_REGION,

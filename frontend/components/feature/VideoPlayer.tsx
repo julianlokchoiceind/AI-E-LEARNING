@@ -174,7 +174,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
       iv_load_policy: 3,    // Hide annotations
       fs: 0,                // Disable fullscreen button
       playsinline: 1,       // Play inline on mobile
-      origin: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+      origin: typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL
     }
   }), []);
 

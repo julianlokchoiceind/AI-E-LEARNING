@@ -36,6 +36,7 @@ import {
 import { formatDate, formatCurrency } from '@/lib/utils/formatters';
 import DeleteCourseModal, { CourseDeleteData } from '@/components/feature/DeleteCourseModal';
 import { StandardResponse } from '@/lib/types/api';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
 interface Course {
   _id?: string;      // Optional since API might return id instead
@@ -525,7 +526,7 @@ const CreatorCoursesPage = () => {
                 <div className="h-48 bg-gradient-to-br from-blue-500 to-indigo-600 relative">
                   {course.thumbnail ? (
                     <img
-                      src={course.thumbnail}
+                      src={getAttachmentUrl(course.thumbnail)}
                       alt={course.title}
                       className="w-full h-full object-cover"
                     />

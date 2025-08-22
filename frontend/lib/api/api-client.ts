@@ -14,7 +14,7 @@ class ApiClient {
 
   constructor(baseUrl?: string) {
     // Use the provided baseUrl or fall back to API_ENDPOINTS.BASE_URL
-    this.baseUrl = baseUrl || API_ENDPOINTS.BASE_URL || 'http://localhost:8000/api/v1';
+    this.baseUrl = baseUrl || API_ENDPOINTS.BASE_URL;
     log('API-CLIENT', 'Constructor - baseUrl:', this.baseUrl);
   }
 
@@ -114,9 +114,10 @@ class ApiClient {
     // Create abort controller
     const controller = this.createAbortController(timeout);
 
-    // Prepare headers - set default content type only if not specified
+    // Prepare headers - set default content type only if not specified AND not FormData
+    const isFormData = fetchOptions.body instanceof FormData;
     const baseHeaders = {
-      ...(!Object.keys(headers).some(key => key.toLowerCase() === 'content-type') ? { 'Content-Type': 'application/json' } : {}),
+      ...(!Object.keys(headers).some(key => key.toLowerCase() === 'content-type') && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...headers
     };
     

@@ -10,7 +10,6 @@ import type {
   TicketUpdateData,
   MessageCreateData,
   TicketSearchParams,
-  SatisfactionRatingData,
   TicketStats
 } from '@/lib/types/support';
 
@@ -107,13 +106,6 @@ export const supportAPI = {
       formData,
       { requireAuth: true }
     );
-  },
-
-  /**
-   * Rate ticket satisfaction
-   */
-  async rateTicket(ticketId: string, data: SatisfactionRatingData): Promise<StandardResponse<any>> {
-    return apiClient.post<StandardResponse<any>>(`/support/tickets/${ticketId}/rate`, data);
   },
 
   /**

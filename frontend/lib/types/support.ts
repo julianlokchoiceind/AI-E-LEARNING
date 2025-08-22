@@ -3,7 +3,7 @@
  */
 
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
-export type TicketStatus = 'open' | 'in_progress' | 'waiting_for_user' | 'resolved' | 'closed';
+export type TicketStatus = 'open' | 'closed';
 export type TicketCategory = 'technical' | 'billing' | 'course_content' | 'account' | 'feature_request' | 'bug_report' | 'other';
 
 export interface TicketMessage {
@@ -42,8 +42,6 @@ export interface SupportTicket {
   response_count: number;
   last_user_message_at?: string;
   last_support_message_at?: string;
-  satisfaction_rating?: number;
-  satisfaction_comment?: string;
   viewed_by_admin_at?: string;
   last_admin_view_at?: string;
   viewed_by_user_at?: string;
@@ -98,19 +96,12 @@ export interface TicketSearchParams {
   sort_order?: 'asc' | 'desc';
 }
 
-export interface SatisfactionRatingData {
-  rating: number;
-  comment?: string;
-}
-
 export interface TicketStats {
   total_tickets: number;
   open_tickets: number;
-  in_progress_tickets: number;
-  resolved_tickets: number;
+  closed_tickets: number;
   avg_response_time_hours?: number;
   avg_resolution_time_hours?: number;
-  satisfaction_avg?: number;
   tickets_by_category: Record<string, number>;
   tickets_by_priority: Record<string, number>;
 }
@@ -134,9 +125,11 @@ export const TICKET_PRIORITIES = [
 
 export const TICKET_STATUSES = [
   { value: 'open', label: 'Open', color: 'yellow' },
-  { value: 'in_progress', label: 'In Progress', color: 'blue' },
-  { value: 'waiting_for_user', label: 'Waiting for User', color: 'purple' },
-  { value: 'resolved', label: 'Resolved', color: 'green' },
   { value: 'closed', label: 'Closed', color: 'gray' },
-  { value: 'unread', label: 'Unread', color: 'red' },  // NEW: Virtual status for filtering
+] as const;
+
+export const TICKET_FILTER_OPTIONS = [
+  { value: 'open', label: 'Open', color: 'yellow' },
+  { value: 'closed', label: 'Closed', color: 'gray' },
+  { value: 'unread', label: 'Unread', color: 'red' },  // Virtual status for filtering
 ] as const;

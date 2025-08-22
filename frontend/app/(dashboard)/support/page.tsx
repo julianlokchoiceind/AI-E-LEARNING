@@ -9,7 +9,12 @@ import {
   CheckCircle,
   AlertCircle,
   Search,
-  Filter
+  Filter,
+  Upload,
+  FileText,
+  FileArchive,
+  Image,
+  X
 } from 'lucide-react';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
@@ -29,10 +34,13 @@ import {
   useSupportTicketsQuery,
   useCreateSupportTicket
 } from '@/hooks/queries/useSupport';
+import { supportAPI } from '@/lib/api/support';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function SupportPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
@@ -42,7 +50,9 @@ export default function SupportPage() {
     description: '',
     category: 'other',
     priority: 'medium',
+    attachments: [],
   });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   // React Query hooks for support data - replaces manual API calls
   const { 
@@ -65,19 +75,33 @@ export default function SupportPage() {
 
   // ✅ React Query automatically handles data fetching when dependencies change
 
-  const handleCreateTicket = () => {
+  const handleCreateTicket = async () => {
+    // Simple approach: Create ticket first, then upload files
     createTicket({
       ...formData,
-      priority: formData.priority || 'medium' // Default to medium priority
+      priority: formData.priority || 'medium',
+      attachments: [] // Start with empty attachments
     }, {
-      onSuccess: (response) => {
+      onSuccess: async (response) => {
+        const ticketId = response.data.id;
+        
+        // Upload files after ticket creation if any selected
+        if (selectedFiles.length > 0) {
+          try {
+            for (const file of selectedFiles) {
+              await supportAPI.uploadAttachment(ticketId, file);
+            }
+            // CRITICAL: Invalidate cache after uploads complete
+            await queryClient.invalidateQueries(['support-tickets']);
+          } catch (uploadError) {
+            console.error('File upload error:', uploadError);
+          }
+        }
+        
         setShowCreateModal(false);
         resetForm();
-        // React Query automatically invalidates and refetches tickets list
-        // Toast handled automatically by useCreateSupportTicket
       },
       onError: (error: any) => {
-        // Keep error handling logic only, toast is handled automatically
         console.error('Support ticket creation failed:', error);
       }
     });
@@ -89,7 +113,9 @@ export default function SupportPage() {
       description: '',
       category: 'other',
       priority: 'medium',
+      attachments: [],
     });
+    setSelectedFiles([]);
   };
 
   const getStatusColor = (status: string) => {
@@ -110,6 +136,51 @@ export default function SupportPage() {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  // File handling functions
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const validFiles: File[] = [];
+    
+    for (const file of files) {
+      // 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
+        ToastService.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+    
+    setSelectedFiles(prev => [...prev, ...validFiles]);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (file: File) => {
+    const type = file.type.toLowerCase();
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    
+    if (type.startsWith('image/')) {
+      return <Image className="h-4 w-4 text-green-500" />;
+    }
+    if (type === 'application/pdf' || ext === 'pdf') {
+      return <FileText className="h-4 w-4 text-red-500" />;
+    }
+    if (type.includes('zip') || type.includes('rar') || ['zip', 'rar', '7z'].includes(ext || '')) {
+      return <FileArchive className="h-4 w-4 text-purple-500" />;
+    }
+    return <FileText className="h-4 w-4 text-blue-500" />;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -230,10 +301,8 @@ export default function SupportPage() {
                     </div>
                     
                     <div className="ml-4">
-                      {ticket.status === 'resolved' ? (
+                      {ticket.status === 'closed' ? (
                         <CheckCircle className="h-6 w-6 text-green-500" />
-                      ) : ticket.status === 'waiting_for_user' ? (
-                        <AlertCircle className="h-6 w-6 text-purple-500" />
                       ) : (
                         <Clock className="h-6 w-6 text-blue-500" />
                       )}
@@ -336,6 +405,64 @@ export default function SupportPage() {
               className="w-full px-3 py-2 border rounded-md min-h-[150px]"
               rows={6}
             />
+          </div>
+
+          {/* File Upload Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Attachments <span className="text-gray-500 text-xs">(Optional, max 10MB per file)</span>
+            </label>
+            
+            {/* File Upload Input */}
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+              <input
+                type="file"
+                id="file-upload"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+                accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.zip,.rar"
+              />
+              <label 
+                htmlFor="file-upload" 
+                className="cursor-pointer flex flex-col items-center gap-2"
+              >
+                <Upload className="h-8 w-8 text-gray-400" />
+                <span className="text-sm text-gray-600">
+                  Click to upload files or drag and drop
+                </span>
+                <span className="text-xs text-gray-500">
+                  Supports: Images, PDFs, Documents, Archives
+                </span>
+              </label>
+            </div>
+
+            {/* Selected Files List */}
+            {selectedFiles.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <p className="text-sm font-medium text-gray-700">Selected files:</p>
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                    {getFileIcon(file)}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatFileSize(file.size)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-4">
