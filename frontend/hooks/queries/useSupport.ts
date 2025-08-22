@@ -249,6 +249,7 @@ export function useMarkTicketViewed() {
       invalidateQueries: [
         ['support-notifications'], // Update badge count immediately
         ['support-ticket'], // Refresh specific ticket if needed
+        ['admin-support-tickets'], // Refresh admin table
       ],
     }
   );
