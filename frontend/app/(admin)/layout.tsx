@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { AdminHeader } from '@/components/layout/AdminHeader';
+import { AdMainPageSkeleton } from '@/components/ui/LoadingStates';
 
 export default function AdminLayout({
   children,
@@ -28,13 +29,9 @@ export default function AdminLayout({
     }
   }, [user, loading, router]);
 
-  // Show loading spinner while checking authentication
+  // Show admin skeleton while checking authentication
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <AdMainPageSkeleton />;
   }
 
   // Don't render anything until user is confirmed as admin

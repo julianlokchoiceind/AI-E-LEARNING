@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { AdAnalyticsSkeleton, EmptyState } from '@/components/ui/LoadingStates';
 import { AnalyticsChart } from '@/components/feature/AnalyticsChart';
 import { useAdminOverviewQuery } from '@/hooks/queries/useAdminStats';
 import { usePaymentAnalyticsQuery } from '@/hooks/queries/usePayments';
@@ -13,7 +13,6 @@ import {
   Users, 
   BookOpen, 
   DollarSign,
-  Activity,
   BarChart3,
   PieChart,
   Calendar
@@ -96,11 +95,7 @@ export default function AdminAnalyticsPage() {
   };
 
   if (adminLoading || paymentLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <LoadingSpinner size="lg" message="Loading analytics dashboard..." />
-      </div>
-    );
+    return <AdAnalyticsSkeleton />;
   }
 
   if (adminError || paymentError) {
@@ -171,10 +166,6 @@ export default function AdminAnalyticsPage() {
             </Button>
           </div>
           
-          <Button onClick={handleRefresh} variant="outline">
-            <Activity className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
         </div>
       </div>
 
@@ -192,7 +183,7 @@ export default function AdminAnalyticsPage() {
               </p>
             </div>
             <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="h-6 w-6 text-green-600" />
+              <DollarSign className="w-8 h-8 text-green-600" />
             </div>
           </div>
         </Card>
@@ -209,7 +200,7 @@ export default function AdminAnalyticsPage() {
               </p>
             </div>
             <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="h-6 w-6 text-blue-600" />
+              <Users className="w-8 h-8 text-blue-600" />
             </div>
           </div>
         </Card>
@@ -226,7 +217,7 @@ export default function AdminAnalyticsPage() {
               </p>
             </div>
             <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <BookOpen className="h-6 w-6 text-purple-600" />
+              <BookOpen className="w-8 h-8 text-purple-600" />
             </div>
           </div>
         </Card>
@@ -243,7 +234,7 @@ export default function AdminAnalyticsPage() {
               </p>
             </div>
             <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-indigo-600" />
+              <TrendingUp className="w-8 h-8 text-indigo-600" />
             </div>
           </div>
         </Card>

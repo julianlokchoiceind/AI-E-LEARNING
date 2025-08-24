@@ -17,8 +17,7 @@ import {
   CreditCard,
   Download,
   Search,
-  CheckCircle,
-  RefreshCw
+  CheckCircle
 } from 'lucide-react';
 
 export default function AdminPaymentsPage() {
@@ -55,7 +54,6 @@ export default function AdminPaymentsPage() {
 
   // Smart loading states: Only show spinner on initial load, not background refetch
   const showLoadingSpinner = isInitialLoading && !adminPaymentHistoryResponse;
-  const showBackgroundUpdate = (isFetching || isRefetching) && adminPaymentHistoryResponse;
 
   useEffect(() => {
     if (user?.role !== 'admin') {
@@ -302,12 +300,6 @@ export default function AdminPaymentsPage() {
             <h2 className="text-lg font-semibold">
               Payments ({totalItems})
             </h2>
-            {showBackgroundUpdate && (
-              <div className="flex items-center text-sm text-blue-600">
-                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                Refreshing...
-              </div>
-            )}
           </div>
         </div>
         

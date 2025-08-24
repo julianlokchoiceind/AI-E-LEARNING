@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { EmptyState } from '@/components/ui/LoadingStates';
 import { useAdminOverviewQuery } from '@/hooks/queries/useAdminStats';
 import { usePaymentAnalyticsQuery } from '@/hooks/queries/usePayments';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -16,8 +16,7 @@ import {
   CheckCircle,
   Clock,
   Star,
-  Crown,
-  Activity
+  Crown
 } from 'lucide-react';
 
 // Map the AdminDashboardStats to the format expected by the component
@@ -131,8 +130,56 @@ export default function AdminDashboard() {
 
   if (loading || analyticsLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <LoadingSpinner size="lg" message="Loading admin dashboard..." />
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+            <div className="h-4 w-96 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Key Metrics skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+                <div className="h-12 w-12 bg-gray-200 rounded-lg animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Cards skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4"></div>
+            <div className="space-y-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="h-5 w-5 bg-gray-200 rounded animate-pulse mr-3"></div>
+                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                  <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4"></div>
+            <div className="grid grid-cols-2 gap-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="h-10 bg-gray-200 rounded animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -165,14 +212,6 @@ export default function AdminDashboard() {
           <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600">Overview of platform performance and key metrics</p>
         </div>
-        <Button 
-          onClick={handleRefresh} 
-          loading={loading}
-          variant="outline"
-        >
-          <Activity className="w-4 h-4 mr-2" />
-          Refresh Data
-        </Button>
       </div>
 
       {/* Key Metrics */}
@@ -190,7 +229,7 @@ export default function AdminDashboard() {
               </p>
             </div>
             <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="h-6 w-6 text-blue-600" />
+              <Users className="w-8 h-8 text-blue-600" />
             </div>
           </div>
         </Card>
@@ -208,7 +247,7 @@ export default function AdminDashboard() {
               </p>
             </div>
             <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <BookOpen className="h-6 w-6 text-green-600" />
+              <BookOpen className="w-8 h-8 text-green-600" />
             </div>
           </div>
         </Card>
@@ -226,7 +265,7 @@ export default function AdminDashboard() {
               </p>
             </div>
             <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="h-6 w-6 text-purple-600" />
+              <DollarSign className="w-8 h-8 text-purple-600" />
             </div>
           </div>
         </Card>
@@ -244,7 +283,7 @@ export default function AdminDashboard() {
               </p>
             </div>
             <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-yellow-600" />
+              <TrendingUp className="w-8 h-8 text-yellow-600" />
             </div>
           </div>
         </Card>

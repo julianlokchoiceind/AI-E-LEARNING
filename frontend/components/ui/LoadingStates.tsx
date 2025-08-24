@@ -305,67 +305,183 @@ export const ButtonSkeleton: React.FC<{
   );
 };
 
+
 /**
- * DashboardSkeleton - Specialized skeleton for dashboard loading
- * Replaces LoadingSpinner in dashboard pages
+ * AdAnalyticsSkeleton - Specialized skeleton for admin analytics page
+ * Matches the structure of /app/(admin)/admin/analytics/page.tsx
+ * Includes KPI cards, chart placeholders, and analytics sections
  */
-export const DashboardSkeleton: React.FC = () => {
+export const AdAnalyticsSkeleton: React.FC = () => {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <Skeleton className="h-8 w-64 mb-2" />
-        <Skeleton className="h-4 w-96" />
+      <div className="flex justify-between items-center">
+        <div>
+          <Skeleton className="h-8 w-56 mb-2" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Time Range Selector */}
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <Skeleton className="h-8 w-16 mr-1" />
+            <Skeleton className="h-8 w-20 mr-1" />
+            <Skeleton className="h-8 w-20" />
+          </div>
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* KPI Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6">
+          <div key={index} className="bg-white rounded-lg border p-6">
             <div className="flex items-center justify-between">
               <div>
                 <Skeleton className="h-4 w-24 mb-2" />
-                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-8 w-20 mb-2" />
+                <Skeleton className="h-3 w-32" />
               </div>
-              <Skeleton className="h-10 w-10 rounded" />
+              <Skeleton className="h-12 w-12 rounded-lg" />
             </div>
           </div>
         ))}
       </div>
 
-      {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent courses section */}
-        <div className="lg:col-span-2">
+      {/* Charts Section 1: Revenue & User Growth */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg border p-6">
           <Skeleton className="h-6 w-32 mb-4" />
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="bg-white rounded-lg shadow p-4">
-                <div className="flex items-center gap-4">
-                  <Skeleton className="w-24 h-16 rounded" />
-                  <div className="flex-1">
-                    <Skeleton className="h-5 w-48 mb-2" />
-                    <Skeleton className="h-3 w-full mb-2" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
-                  <Skeleton className="h-8 w-20 rounded" />
-                </div>
-              </div>
-            ))}
+          <div className="h-72 bg-gray-100 rounded-lg flex items-center justify-center">
+            <Skeleton className="h-40 w-full" />
           </div>
         </div>
+        
+        <div className="bg-white rounded-lg border p-6">
+          <Skeleton className="h-6 w-36 mb-4" />
+          <div className="h-72 bg-gray-100 rounded-lg flex items-center justify-center">
+            <Skeleton className="h-48 w-48 rounded-full mx-auto" />
+          </div>
+        </div>
+      </div>
 
+      {/* Charts Section 2: Course & Activity Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg border p-6">
+          <Skeleton className="h-6 w-48 mb-4" />
+          <div className="h-72 bg-gray-100 rounded-lg flex items-center justify-center">
+            <Skeleton className="h-48 w-48 rounded-full mx-auto" />
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg border p-6">
+          <Skeleton className="h-6 w-44 mb-4" />
+          <div className="h-72 bg-gray-100 rounded-lg flex items-center justify-center">
+            <div className="flex items-end space-x-2 w-full h-40">
+              {Array.from({ length: 7 }).map((_, index) => (
+                <Skeleton key={index} className={`w-8 ${index % 2 === 0 ? 'h-20' : 'h-16'}`} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="bg-white rounded-lg border p-6">
+        <div className="flex items-center mb-4">
+          <Skeleton className="h-5 w-5 mr-2" />
+          <Skeleton className="h-6 w-40" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="text-center">
+              <Skeleton className="h-8 w-16 mx-auto mb-2" />
+              <Skeleton className="h-4 w-32 mx-auto" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Info Note */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start">
+          <Skeleton className="w-5 h-5 mt-0.5 mr-3 flex-shrink-0" />
+          <div className="flex-1">
+            <Skeleton className="h-4 w-40 mb-1" />
+            <Skeleton className="h-3 w-full mb-1" />
+            <Skeleton className="h-3 w-3/4" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * AdMainPageSkeleton - Specialized skeleton for admin main page initial load
+ * Used when accessing /admin route for the first time
+ * Includes sidebar and main content area skeletons
+ */
+export const AdMainPageSkeleton: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Admin Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center">
+            <Skeleton className="h-8 w-8 mr-3" />
+            <Skeleton className="h-6 w-32" />
+          </div>
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-10 w-10 rounded-full" />
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex">
         {/* Sidebar */}
-        <div className="space-y-6">
-          <div>
-            <Skeleton className="h-5 w-28 mb-3" />
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className="bg-white rounded-lg shadow p-4">
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-3 w-24" />
+        <div className="w-64 bg-white h-screen shadow-sm">
+          <div className="p-6">
+            <Skeleton className="h-6 w-32 mb-6" />
+            <div className="space-y-2">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="flex items-center p-3 rounded-lg">
+                  <Skeleton className="h-5 w-5 mr-3" />
+                  <Skeleton className="h-4 w-20" />
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+        
+        {/* Main Content */}
+        <div className="flex-1 p-8">
+          <div className="mb-8">
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+          
+          {/* Content Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white rounded-lg border p-6">
+              <Skeleton className="h-6 w-40 mb-4" />
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg border p-6">
+              <Skeleton className="h-6 w-36 mb-4" />
+              <div className="grid grid-cols-2 gap-3">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Skeleton key={index} className="h-10 rounded-lg" />
+                ))}
+              </div>
             </div>
           </div>
         </div>

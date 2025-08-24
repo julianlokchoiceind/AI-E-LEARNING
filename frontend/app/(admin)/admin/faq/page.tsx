@@ -9,8 +9,7 @@ import {
   Eye,
   EyeOff,
   ChevronDown,
-  AlertTriangle,
-  RefreshCw
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -81,7 +80,6 @@ export default function AdminFAQPage() {
   
   // Smart loading states: Only show spinner on initial load, not background refetch
   const showLoadingSpinner = isInitialLoading && !faqsData;
-  const showBackgroundUpdate = (isFetching || isRefetching) && faqsData;
   
   // Extract FAQs and pagination data from React Query response
   // Backend now handles _id to id conversion (smart backend pattern)
@@ -332,12 +330,6 @@ export default function AdminFAQPage() {
             <h2 className="text-lg font-semibold">
               FAQs ({totalItems})
             </h2>
-            {showBackgroundUpdate && (
-              <div className="flex items-center text-sm text-blue-600">
-                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                Refreshing...
-              </div>
-            )}
           </div>
         </div>
 

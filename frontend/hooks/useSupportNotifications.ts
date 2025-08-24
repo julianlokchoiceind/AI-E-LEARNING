@@ -26,9 +26,9 @@ export function useSupportNotifications() {
     }
   );
 
-  // Manual polling for cross-session real-time updates (like old implementation)
+  // Smart polling with visibility detection - only poll when tab is active
   useEffect(() => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !user || document.hidden) {
       return;
     }
 
@@ -37,6 +37,18 @@ export function useSupportNotifications() {
     }, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval);
+  }, [isAuthenticated, user, refetch]);
+
+  // Listen for visibility change - refresh when tab becomes active
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isAuthenticated && user) {
+        refetch(); // Immediate refresh when tab becomes active
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [isAuthenticated, user, refetch]);
 
   // Global refresh function using existing pattern

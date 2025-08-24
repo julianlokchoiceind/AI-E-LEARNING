@@ -26,7 +26,6 @@ import {
   Edit,
   Trash2,
   Eye,
-  RefreshCw,
   AlertTriangle
 } from 'lucide-react';
 
@@ -84,7 +83,6 @@ export default function UserManagement() {
   
   // Smart loading states: Only show spinner on initial load, not background refetch
   const showLoadingSpinner = isInitialLoading && !usersData;
-  const showBackgroundUpdate = (isFetching || isRefetching) && usersData;
   
   // Extract users and pagination data from React Query response
   const users = usersData?.data?.users || [];
@@ -219,10 +217,6 @@ export default function UserManagement() {
           <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600">Manage platform users, roles, and permissions</p>
         </div>
-        <Button onClick={refetchUsers}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
       </div>
 
       {/* Filters */}
@@ -315,12 +309,6 @@ export default function UserManagement() {
             <h2 className="text-lg font-semibold">
               Users ({totalItems})
             </h2>
-            {showBackgroundUpdate && (
-              <div className="flex items-center text-sm text-blue-600">
-                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                Refreshing...
-              </div>
-            )}
           </div>
         </div>
 

@@ -32,7 +32,6 @@ import {
   DollarSign,
   BookOpen,
   Calendar,
-  RefreshCw,
   AlertTriangle,
   CheckCircle,
   Gift,
@@ -106,7 +105,6 @@ export default function CourseApproval() {
   
   // Smart loading states: Only show spinner on initial load, not background refetch
   const showLoadingSpinner = isInitialLoading && !coursesData;
-  const showBackgroundUpdate = (isFetching || isRefetching) && coursesData;
   
   const { mutate: approveCourse, loading: approveLoading } = useApproveCourse();
   const { mutate: rejectCourse, loading: rejectLoading } = useRejectCourse();
@@ -316,59 +314,63 @@ export default function CourseApproval() {
             <BookOpen className="w-4 h-4 mr-2" />
             Create New Course
           </Button>
-          <Button onClick={() => window.location.reload()}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
         </div>
       </div>
 
       {/* Quick Stats - Using real database totals, not current page data */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="p-4">
-          <div className="flex items-center">
-            <Clock className="h-8 w-8 text-yellow-500 mr-3" />
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold">
                 {statisticsLoading ? '...' : (statistics?.pending_review || 0)}
               </p>
               <p className="text-sm text-gray-600">Pending Review</p>
             </div>
+            <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <Clock className="w-8 h-8 text-yellow-600" />
+            </div>
           </div>
         </Card>
         
         <Card className="p-4">
-          <div className="flex items-center">
-            <CheckCircle className="h-8 w-8 text-green-500 mr-3" />
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold">
                 {statisticsLoading ? '...' : (statistics?.published || 0)}
               </p>
               <p className="text-sm text-gray-600">Published</p>
             </div>
+            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
           </div>
         </Card>
         
         <Card className="p-4">
-          <div className="flex items-center">
-            <AlertTriangle className="h-8 w-8 text-red-500 mr-3" />
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold">
                 {statisticsLoading ? '...' : (statistics?.rejected || 0)}
               </p>
               <p className="text-sm text-gray-600">Rejected</p>
             </div>
+            <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
           </div>
         </Card>
         
         <Card className="p-4">
-          <div className="flex items-center">
-            <Gift className="h-8 w-8 text-blue-500 mr-3" />
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold">
                 {statisticsLoading ? '...' : (statistics?.free_courses || 0)}
               </p>
               <p className="text-sm text-gray-600">Free Courses</p>
+            </div>
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Gift className="w-8 h-8 text-blue-600" />
             </div>
           </div>
         </Card>
@@ -467,12 +469,6 @@ export default function CourseApproval() {
             <h2 className="text-lg font-semibold">
               Courses ({totalItems})
             </h2>
-            {showBackgroundUpdate && (
-              <div className="flex items-center text-sm text-blue-600">
-                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                Refreshing...
-              </div>
-            )}
           </div>
         </div>
 

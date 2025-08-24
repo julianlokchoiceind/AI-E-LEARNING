@@ -10,8 +10,7 @@ import {
   AlertCircle,
   MessageCircle,
   Users,
-  BarChart3,
-  RefreshCw
+  BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
@@ -87,7 +86,6 @@ export default function AdminSupportPage() {
   const computedValues = useMemo(() => {
     // Smart loading states: Only show spinner on initial load, not background refetch
     const showLoadingSpinner = isInitialLoading && !ticketsResponse;
-    const showBackgroundUpdate = (isFetching || isRefetching) && ticketsResponse;
 
     const tickets = ticketsResponse?.data?.items || [];
     const totalPages = ticketsResponse?.data?.total_pages || 1;
@@ -96,13 +94,35 @@ export default function AdminSupportPage() {
 
     return {
       showLoadingSpinner,
-      showBackgroundUpdate,
       tickets,
       totalPages,
       totalItems,
       stats
     };
-  }, [ticketsResponse, statsResponse, isInitialLoading, isFetching, isRefetching]);
+  }, [ticketsResponse, statsResponse, isInitialLoading]);
+
+  // Smart polling for table data - only poll when tab is active
+  useEffect(() => {
+    if (document.hidden) return;
+    
+    const interval = setInterval(() => {
+      refetchTickets();
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [refetchTickets]);
+
+  // Listen for visibility change - refresh when tab becomes active
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refetchTickets(); // Immediate refresh when tab becomes active
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [refetchTickets]);
 
   // Optimized callback handlers with useCallback
   const handleQuickUpdate = useCallback(async (ticketId: string, update: TicketUpdateData) => {
@@ -192,51 +212,48 @@ export default function AdminSupportPage() {
           <h1 className="text-2xl font-bold text-gray-900">Support Ticket Management</h1>
           <p className="text-gray-600">Manage and respond to customer support tickets</p>
         </div>
-        <Button
-          onClick={() => refetchTickets()}
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Refresh
-        </Button>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-4">
-          <div className="flex items-center">
-            <BarChart3 className="h-8 w-8 text-blue-500 mr-3" />
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold">
                 {statsLoading ? '...' : statGetters.getTotalTickets()}
               </p>
               <p className="text-sm text-gray-600">Total Tickets</p>
             </div>
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-8 h-8 text-blue-600" />
+            </div>
           </div>
         </Card>
 
         <Card className="p-4">
-          <div className="flex items-center">
-            <AlertCircle className="h-8 w-8 text-yellow-500 mr-3" />
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold">
                 {statsLoading ? '...' : statGetters.getOpenTickets()}
               </p>
               <p className="text-sm text-gray-600">Open Tickets</p>
             </div>
+            <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-yellow-600" />
+            </div>
           </div>
         </Card>
 
         <Card className="p-4">
-          <div className="flex items-center">
-            <Clock className="h-8 w-8 text-purple-500 mr-3" />
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold">
                 {statsLoading ? '...' : statGetters.getAvgResponseTime()}
               </p>
               <p className="text-sm text-gray-600">Avg Response Time</p>
+            </div>
+            <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <Clock className="w-8 h-8 text-purple-600" />
             </div>
           </div>
         </Card>
@@ -321,12 +338,6 @@ export default function AdminSupportPage() {
             <h2 className="text-lg font-semibold">
               Tickets ({computedValues.totalItems})
             </h2>
-            {computedValues.showBackgroundUpdate && (
-              <div className="flex items-center text-sm text-blue-600">
-                <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                Refreshing...
-              </div>
-            )}
           </div>
         </div>
 
@@ -369,16 +380,16 @@ export default function AdminSupportPage() {
                   return (
                     <tr 
                       key={ticket.id} 
-                      className={`hover:bg-gray-50 cursor-pointer ${isUnread ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`}
+                      className={`hover:bg-gray-50 cursor-pointer ${isUnread ? 'bg-blue-50' : ''}`}
                       onClick={() => router.push(`/admin/support/${ticket.id}`)}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className={`px-6 py-4 whitespace-nowrap relative ${isUnread ? 'border-l-4 border-blue-500' : ''}`}>
                         <div className="flex items-center">
                           {isUnread && (
                             <div className="w-3 h-3 bg-blue-500 rounded-full mr-3 animate-pulse" title="New messages"></div>
                           )}
                           <div>
-                            <p className={`font-medium text-gray-900 ${isUnread ? 'font-bold' : ''}`}>
+                            <p className={`text-gray-900 ${isUnread ? 'font-bold' : 'font-normal'}`}>
                               {ticket.title}
                             </p>
                             <p className="text-sm text-gray-500">

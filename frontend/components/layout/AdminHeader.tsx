@@ -19,6 +19,19 @@ import {
   Bell
 } from 'lucide-react';
 
+// Category display name mapping
+const getCategoryDisplayName = (category: string): string => {
+  const categoryMap: Record<string, string> = {
+    bug_report: 'Bug Report',
+    feature_request: 'Feature Request',
+    billing: 'Billing & Payment',
+    technical_support: 'Technical Support',
+    account: 'Account',
+    other: 'Other'
+  };
+  return categoryMap[category] || category;
+};
+
 export function AdminHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -138,7 +151,7 @@ export function AdminHeader() {
                               {ticket.title}
                             </p>
                             <p className="text-xs text-gray-500">
-                              From: {ticket.user_name} • {ticket.category}
+                              From: {ticket.user_name} • {getCategoryDisplayName(ticket.category)}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">
                               {new Date(ticket.created_at).toLocaleDateString()}
