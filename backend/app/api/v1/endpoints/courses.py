@@ -4,12 +4,14 @@ Based on CLAUDE.md course workflows.
 """
 # Standard library imports
 import logging
+import os
+import time
 from datetime import datetime, timezone
 from typing import Optional
 
 # Third-party imports
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 
 # Local application imports
 from app.core.database import db
@@ -29,6 +31,7 @@ from app.schemas.course import (
 )
 from app.services.analytics_service import AnalyticsService
 from app.services.course_service import CourseService
+from app.core.config import get_file_upload_service
 
 
 router = APIRouter()
@@ -283,6 +286,140 @@ async def delete_course(
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to delete course")
+
+
+@router.post("/{course_id}/thumbnail", response_model=StandardResponse[dict])
+async def upload_course_thumbnail(
+    course_id: str,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """
+    Upload thumbnail image for a course.
+    
+    Only course creator or admin can upload thumbnails.
+    Supports image files (JPG, PNG) up to 10MB.
+    """
+    try:
+        # Verify course exists and user has permission
+        course = await CourseService.get_course(course_id, current_user)
+        
+        # Check permissions
+        if str(course.creator_id) != str(current_user.id) and current_user.role != "admin":
+            raise ForbiddenException("Only the course creator or admin can upload thumbnails")
+        
+        # Use the global file upload service (same as support & lesson resources)
+        upload_service = get_file_upload_service()
+        
+        # Delete old thumbnail file if replacing (cleanup storage)
+        if course.thumbnail and '/uploads/' in course.thumbnail:
+            old_file_path = course.thumbnail.split('/uploads/')[-1]
+            try:
+                deleted = await upload_service.delete_file(old_file_path)
+                if deleted:
+                    logger.info(f"Deleted old thumbnail file: {old_file_path}")
+                else:
+                    logger.warning(f"Could not delete old thumbnail file: {old_file_path}")
+            except Exception as e:
+                logger.error(f"Error deleting old thumbnail file: {e}")
+                # Continue with upload even if old file deletion fails
+        
+        # Upload file to course-thumbnails directory with proper extension and timestamp
+        _, ext = os.path.splitext(file.filename)
+        timestamp = int(time.time())
+        upload_result = await upload_service.upload_file(
+            file=file,
+            context="course-thumbnails",
+            custom_filename=f"course-{course_id}-thumbnail-{timestamp}{ext}"
+        )
+        
+        # Update course with new thumbnail URL
+        await CourseService.update_course(
+            course_id, 
+            CourseUpdate(thumbnail=upload_result["url"]), 
+            current_user
+        )
+        
+        return StandardResponse(
+            success=True,
+            data={
+                "url": upload_result["url"],
+                "filename": upload_result["filename"],
+                "size": upload_result["size"]
+            },
+            message="Course thumbnail uploaded successfully"
+        )
+        
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ForbiddenException as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except HTTPException as e:
+        # Re-raise HTTP exceptions from file upload service
+        raise e
+    except Exception as e:
+        logger.error(f"Error uploading course thumbnail: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to upload course thumbnail")
+
+
+@router.delete("/{course_id}/thumbnail", response_model=StandardResponse[dict])
+async def delete_course_thumbnail(
+    course_id: str,
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """
+    Delete course thumbnail.
+    
+    Only course creator or admin can delete thumbnails.
+    Removes both file from storage and thumbnail URL from database.
+    """
+    try:
+        # Verify course exists and user has permission
+        course = await CourseService.get_course(course_id, current_user)
+        
+        # Check permissions
+        if str(course.creator_id) != str(current_user.id) and current_user.role != "admin":
+            raise ForbiddenException("Only the course creator or admin can delete thumbnails")
+        
+        # Delete file from storage if exists
+        if course.thumbnail:
+            # Extract file path from URL (e.g., "/uploads/course-thumbnails/ait-...")
+            if '/uploads/' in course.thumbnail:
+                file_path = course.thumbnail.split('/uploads/')[-1]
+                upload_service = get_file_upload_service()
+                try:
+                    deleted = await upload_service.delete_file(file_path)
+                    if deleted:
+                        logger.info(f"Deleted course thumbnail file: {file_path}")
+                    else:
+                        logger.warning(f"Could not delete course thumbnail file: {file_path}")
+                except Exception as e:
+                    logger.error(f"Error deleting thumbnail file: {e}")
+                    # Continue to clear DB even if file deletion fails
+        
+        # Clear thumbnail URL from database
+        await CourseService.update_course(
+            course_id,
+            CourseUpdate(thumbnail=None),
+            current_user
+        )
+        
+        return StandardResponse(
+            success=True,
+            data={
+                "course_id": course_id,
+                "thumbnail": None
+            },
+            message="Course thumbnail removed successfully"
+        )
+        
+    except NotFoundException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ForbiddenException as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error deleting course thumbnail: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to delete course thumbnail")
 
 
 @router.post("/{course_id}/submit-for-review", response_model=StandardResponse[dict])

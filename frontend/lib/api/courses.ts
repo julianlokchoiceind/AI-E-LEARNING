@@ -145,4 +145,27 @@ export const deleteCourse = async (courseId: string): Promise<StandardResponse<a
   );
 };
 
+// Upload course thumbnail
+export const uploadCourseThumbnail = async (
+  courseId: string, 
+  file: File
+): Promise<StandardResponse<{ url: string; filename: string; size: number }>> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  return api.upload<StandardResponse<{ url: string; filename: string; size: number }>>(
+    `/courses/${courseId}/thumbnail`,
+    formData,
+    { requireAuth: true }
+  );
+};
+
+// Delete course thumbnail
+export const deleteCourseThumbnail = async (courseId: string): Promise<StandardResponse<any>> => {
+  return api.delete<StandardResponse<any>>(
+    `/courses/${courseId}/thumbnail`,
+    { requireAuth: true }
+  );
+};
+
 // Enroll in course - REMOVED: Use enrollInCourse from enrollments.ts instead

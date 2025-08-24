@@ -14,6 +14,7 @@ import EditChapterModal, { ChapterEditData } from '@/components/feature/EditChap
 import DeleteChapterModal, { ChapterDeleteData } from '@/components/feature/DeleteChapterModal';
 import EditLessonModal, { LessonEditData } from '@/components/feature/EditLessonModal';
 import DeleteLessonModal, { LessonDeleteData } from '@/components/feature/DeleteLessonModal';
+import CourseImageUpload from '@/components/feature/CourseImageUpload';
 import { useAutosave } from '@/hooks/useAutosave';
 import { useEditorStore } from '@/stores/editorStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -598,6 +599,14 @@ const CourseBuilderPage = () => {
                   <h2 className="text-xl font-semibold mb-6">General Information</h2>
                   
                   <div className="space-y-6">
+                    {/* Course Image Upload */}
+                    <CourseImageUpload
+                      courseId={courseId}
+                      currentImage={courseData.thumbnail}
+                      onImageUpdate={(imageUrl) => updateCourseData({ thumbnail: imageUrl })}
+                      className="mb-6"
+                    />
+
                     {/* Description */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Link, X, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { getUploadConstraints } from '@/lib/api/lesson-resources';
 import { useUploadLessonResource, useAddLessonUrlResource } from '@/hooks/queries/useLessonResources';
 
 interface ResourceFormProps {
@@ -15,12 +14,6 @@ interface ResourceFormProps {
   className?: string;
 }
 
-interface UploadConstraints {
-  max_file_size: number;
-  max_file_size_mb: number;
-  allowed_extensions: string[];
-  allowed_mime_types: string[];
-}
 
 /**
  * Form for adding resources to lessons - supports both file upload and URL modes.
@@ -42,7 +35,6 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
   const [url, setUrl] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [constraints, setConstraints] = useState<UploadConstraints | null>(null);
   
   // Validation state
   const [errors, setErrors] = useState<{
@@ -53,23 +45,6 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load upload constraints when component mounts
-  useEffect(() => {
-    if (isOpen && mode === 'upload') {
-      loadUploadConstraints();
-    }
-  }, [isOpen, mode, lessonId]);
-
-  const loadUploadConstraints = async () => {
-    try {
-      const response = await getUploadConstraints(lessonId);
-      if (response.success) {
-        setConstraints(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load upload constraints:', error);
-    }
-  };
 
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -108,20 +83,11 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
         newErrors.title = 'Title is required';
       }
     } else {
-      // Upload mode validation
+      // Upload mode validation (simple pattern like Support)
       if (!file) {
         newErrors.file = 'Please select a file to upload';
-      } else if (constraints) {
-        // File size validation
-        if (file.size > constraints.max_file_size) {
-          newErrors.file = `File size (${(file.size / 1024 / 1024).toFixed(1)}MB) exceeds maximum allowed size (${constraints.max_file_size_mb}MB)`;
-        }
-
-        // File extension validation
-        const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-        if (!constraints.allowed_extensions.includes(fileExtension)) {
-          newErrors.file = `File type not allowed. Supported formats: ${constraints.allowed_extensions.join(', ')}`;
-        }
+      } else if (file.size > 10 * 1024 * 1024) {
+        newErrors.file = `File "${file.name}" is too large. Maximum size is 10MB`;
       }
     }
 
@@ -267,7 +233,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
                   type="file"
                   className="hidden"
                   onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
-                  accept={constraints?.allowed_extensions.join(',') || ''}
+                  accept=".pdf,.doc,.docx,.zip,.rar,.jpg,.jpeg,.png,.gif,.webp,.txt,.md,.py,.js,.html,.css"
                 />
                 
                 {file ? (
@@ -287,11 +253,9 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
                     <p className="text-gray-600 mb-2">
                       Click to select or drag and drop a file
                     </p>
-                    {constraints && (
-                      <p className="text-sm text-gray-500">
-                        Max {constraints.max_file_size_mb}MB • {constraints.allowed_extensions.join(', ')}
-                      </p>
-                    )}
+                    <p className="text-sm text-gray-500">
+                      Max 10MB • PDF, DOC, ZIP, Images, etc.
+                    </p>
                   </div>
                 )}
               </div>
