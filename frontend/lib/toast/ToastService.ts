@@ -31,20 +31,20 @@ export class ToastService {
       duration: 5000,
       icon: '✓',
       style: {
-        background: 'rgba(255, 255, 255, 0.95)',
+        background: 'hsl(var(--background) / 0.95)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)', // Safari support
-        color: '#10b981',
-        border: '1px solid rgba(16, 185, 129, 0.3)',
+        color: 'hsl(var(--success))',
+        border: '1px solid hsl(var(--success) / 0.3)',
         padding: '12px',
         borderRadius: '8px',
         fontSize: '13px',
         fontWeight: '300', // Thinner font
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 4px 6px -1px hsl(var(--foreground) / 0.1)',
       },
       iconTheme: {
-        primary: '#10b981',
-        secondary: 'rgba(255, 255, 255, 0.9)',
+        primary: 'hsl(var(--success))',
+        secondary: 'hsl(var(--background) / 0.9)',
       },
     });
     
@@ -77,20 +77,20 @@ export class ToastService {
       duration: 5000,
       icon: '✕',
       style: {
-        background: 'rgba(255, 255, 255, 0.95)',
+        background: 'hsl(var(--background) / 0.95)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)', // Safari support
-        color: '#ef4444',
-        border: '1px solid rgba(239, 68, 68, 0.3)',
+        color: 'hsl(var(--destructive))',
+        border: '1px solid hsl(var(--destructive) / 0.3)',
         padding: '12px',
         borderRadius: '8px',
         fontSize: '13px',
         fontWeight: '300', // Thinner font
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 4px 6px -1px hsl(var(--foreground) / 0.1)',
       },
       iconTheme: {
-        primary: '#ef4444',
-        secondary: 'rgba(255, 255, 255, 0.9)',
+        primary: 'hsl(var(--destructive))',
+        secondary: 'hsl(var(--background) / 0.9)',
       },
     });
     
@@ -123,20 +123,20 @@ export class ToastService {
       duration: 5000,
       icon: 'ⓘ',
       style: {
-        background: 'rgba(255, 255, 255, 0.95)',
+        background: 'hsl(var(--background) / 0.95)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)', // Safari support
-        color: '#3b82f6',
-        border: '1px solid rgba(59, 130, 246, 0.3)',
+        color: 'hsl(var(--primary))',
+        border: '1px solid hsl(var(--primary) / 0.3)',
         padding: '12px',
         borderRadius: '8px',
         fontSize: '13px',
         fontWeight: '300', // Thinner font
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 4px 6px -1px hsl(var(--foreground) / 0.1)',
       },
       iconTheme: {
-        primary: '#3b82f6',
-        secondary: 'rgba(255, 255, 255, 0.9)',
+        primary: 'hsl(var(--primary))',
+        secondary: 'hsl(var(--background) / 0.9)',
       },
     });
     
@@ -167,16 +167,16 @@ export class ToastService {
     const newToastId = toast.loading(finalMessage, {
       id: toastId,
       style: {
-        background: 'rgba(255, 255, 255, 0.95)',
+        background: 'hsl(var(--background) / 0.95)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)', // Safari support
-        color: '#3b82f6',
-        border: '1px solid rgba(59, 130, 246, 0.3)',
+        color: 'hsl(var(--primary))',
+        border: '1px solid hsl(var(--primary) / 0.3)',
         padding: '12px',
         borderRadius: '8px',
         fontSize: '13px',
         fontWeight: '300', // Thinner font
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        boxShadow: '0 4px 6px -1px hsl(var(--foreground) / 0.1)',
       },
     });
     
@@ -196,20 +196,20 @@ export class ToastService {
         id: toastId,
         icon: '✓',
         style: {
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'hsl(var(--background) / 0.95)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)', // Safari support
-          color: '#10b981',
-          border: '1px solid rgba(16, 185, 129, 0.3)',
+          color: 'hsl(var(--success))',
+          border: '1px solid hsl(var(--success) / 0.3)',
           padding: '16px',
           borderRadius: '8px',
           fontSize: '13px',
           fontWeight: '300', // Thinner font
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 4px 6px -1px hsl(var(--foreground) / 0.1)',
         },
         iconTheme: {
-          primary: '#10b981',
-          secondary: 'rgba(255, 255, 255, 0.9)',
+          primary: 'hsl(var(--success))',
+          secondary: 'hsl(var(--background) / 0.9)',
         },
       });
     } else {
@@ -217,20 +217,20 @@ export class ToastService {
         id: toastId,
         icon: '✕',
         style: {
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'hsl(var(--background) / 0.95)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)', // Safari support
-          color: '#ef4444',
-          border: '1px solid rgba(239, 68, 68, 0.3)',
+          color: 'hsl(var(--destructive))',
+          border: '1px solid hsl(var(--destructive) / 0.3)',
           padding: '16px',
           borderRadius: '8px',
           fontSize: '13px',
           fontWeight: '300', // Thinner font
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 4px 6px -1px hsl(var(--foreground) / 0.1)',
         },
         iconTheme: {
-          primary: '#ef4444',
-          secondary: 'rgba(255, 255, 255, 0.9)',
+          primary: 'hsl(var(--destructive))',
+          secondary: 'hsl(var(--background) / 0.9)',
         },
       });
     }
@@ -295,48 +295,48 @@ export class ToastService {
       },
       loading: {
         style: {
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'hsl(var(--background) / 0.95)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)', // Safari support
-          color: '#3b82f6',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
+          color: 'hsl(var(--primary))',
+          border: '1px solid hsl(var(--primary) / 0.3)',
           padding: '16px',
           borderRadius: '8px',
           fontSize: '13px',
           fontWeight: '300', // Thinner font
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 4px 6px -1px hsl(var(--foreground) / 0.1)',
         },
       },
       success: {
         duration: 5000,
         icon: '✓',
         style: {
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'hsl(var(--background) / 0.95)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)', // Safari support
-          color: '#10b981',
-          border: '1px solid rgba(16, 185, 129, 0.3)',
+          color: 'hsl(var(--success))',
+          border: '1px solid hsl(var(--success) / 0.3)',
           padding: '16px',
           borderRadius: '8px',
           fontSize: '13px',
           fontWeight: '300', // Thinner font
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 4px 6px -1px hsl(var(--foreground) / 0.1)',
         },
       },
       error: {
         duration: 5000,
         icon: '✕',
         style: {
-          background: 'rgba(255, 255, 255, 0.95)',
+          background: 'hsl(var(--background) / 0.95)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)', // Safari support
-          color: '#ef4444',
-          border: '1px solid rgba(239, 68, 68, 0.3)',
+          color: 'hsl(var(--destructive))',
+          border: '1px solid hsl(var(--destructive) / 0.3)',
           padding: '16px',
           borderRadius: '8px',
           fontSize: '13px',
           fontWeight: '300', // Thinner font
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 4px 6px -1px hsl(var(--foreground) / 0.1)',
         },
       },
     });

@@ -296,19 +296,19 @@ const CreatorCoursesPage = () => {
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'beginner':
-        return 'text-green-600';
+        return 'text-success';
       case 'intermediate':
-        return 'text-yellow-600';
+        return 'text-warning';
       case 'advanced':
-        return 'text-red-600';
+        return 'text-destructive';
       default:
-        return 'text-gray-600';
+        return 'text-muted-foreground';
     }
   };
 
   if (showLoadingSpinner) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-muted">
         {/* Header */}
         <div className="bg-white border-b">
           <div className="container mx-auto px-4 py-6">
@@ -331,7 +331,7 @@ const CreatorCoursesPage = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-muted">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-6">
@@ -339,7 +339,7 @@ const CreatorCoursesPage = () => {
             <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold">My Courses</h1>
               {showBackgroundUpdate && (
-                <div className="flex items-center text-sm text-blue-600">
+                <div className="flex items-center text-sm text-primary">
                   <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
                   Refreshing...
                 </div>
@@ -347,7 +347,7 @@ const CreatorCoursesPage = () => {
             </div>
             <div className="flex items-center gap-4">
               {/* View Toggle */}
-              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <div className="flex items-center bg-muted rounded-lg p-1">
                 <Button
                   variant={viewMode === 'card' ? 'primary' : 'ghost'}
                   size="sm"
@@ -403,7 +403,7 @@ const CreatorCoursesPage = () => {
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
                 type="text"
                 placeholder="Search courses..."
@@ -416,7 +416,7 @@ const CreatorCoursesPage = () => {
             {/* Filters */}
             <div className="flex gap-2">
               <select
-                className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 value={filterStatus}
                 onChange={(e) => handleFilterChange(e.target.value, 'status')}
               >
@@ -429,7 +429,7 @@ const CreatorCoursesPage = () => {
 
               {/* Category Filter */}
               <select
-                className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 value={categoryFilter}
                 onChange={(e) => handleFilterChange(e.target.value, 'category')}
               >
@@ -459,8 +459,8 @@ const CreatorCoursesPage = () => {
 
           {/* Bulk Actions */}
           {viewMode === 'table' && selectedCourses.size > 0 && (
-            <div className="mt-4 flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-              <span className="text-blue-700">
+            <div className="mt-4 flex items-center justify-between p-4 bg-primary/10 rounded-lg">
+              <span className="text-primary">
                 {selectedCourses.size} courses selected
               </span>
               <div className="flex gap-2">
@@ -475,7 +475,7 @@ const CreatorCoursesPage = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleBulkDelete}
-                  className="text-red-600 hover:bg-red-50"
+                  className="text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Delete Selected
@@ -498,7 +498,7 @@ const CreatorCoursesPage = () => {
                   label: 'Create Your First Course',
                   onClick: handleCreateCourse
                 }}
-                icon={<Plus className="w-16 h-16 text-gray-300" />}
+                icon={<Plus className="w-16 h-16 text-muted-foreground" />}
               />
             ) : (
               <EmptyState
@@ -513,7 +513,7 @@ const CreatorCoursesPage = () => {
                     setCurrentPage(1);
                   }
                 }}
-                icon={<Search className="w-16 h-16 text-gray-300" />}
+                icon={<Search className="w-16 h-16 text-muted-foreground" />}
               />
             )}
           </div>
@@ -523,7 +523,7 @@ const CreatorCoursesPage = () => {
             {filteredCourses.map((course) => (
               <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Course Thumbnail */}
-                <div className="h-48 bg-gradient-to-br from-blue-500 to-indigo-600 relative">
+                <div className="h-48 bg-gradient-to-br from-primary to-primary/80 relative">
                   {course.thumbnail ? (
                     <img
                       src={getAttachmentUrl(course.thumbnail)}
@@ -558,7 +558,7 @@ const CreatorCoursesPage = () => {
                               handleEditCourse(course.id);
                               setActiveDropdown(null);
                             }}
-                            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center"
+                            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center"
                           >
                             <Edit className="w-4 h-4 mr-2" />
                             Edit Course
@@ -569,7 +569,7 @@ const CreatorCoursesPage = () => {
                               handleViewCourse(course.id);
                               setActiveDropdown(null);
                             }}
-                            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center"
+                            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center"
                           >
                             <Eye className="w-4 h-4 mr-2" />
                             Preview
@@ -580,7 +580,7 @@ const CreatorCoursesPage = () => {
                               handleViewAnalytics(course.id);
                               setActiveDropdown(null);
                             }}
-                            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center"
+                            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center"
                           >
                             <BarChart className="w-4 h-4 mr-2" />
                             Analytics
@@ -594,7 +594,7 @@ const CreatorCoursesPage = () => {
                               setActiveDropdown(null);
                             }}
                             disabled={deleteLoading}
-                            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center text-red-600 disabled:opacity-50"
+                            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center text-destructive disabled:opacity-50"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
                             {deleteLoading ? 'Deleting...' : 'Delete'}
@@ -608,23 +608,23 @@ const CreatorCoursesPage = () => {
                 {/* Course Info */}
                 <div className="p-6">
                   <h3 className="font-semibold text-lg mb-2">{course.title}</h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
                     {course.short_description || course.description}
                   </p>
 
                   {/* Stats */}
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
                     <span>{course.stats?.total_enrollments || 0} students</span>
                     <span>{course.total_lessons || 0} lessons</span>
                   </div>
 
                   {/* Revenue */}
                   {course.pricing?.is_free ? (
-                    <div className="text-green-600 font-semibold">Free</div>
+                    <div className="text-success font-semibold">Free</div>
                   ) : (
                     <div className="flex items-center justify-between">
                       <span className="text-2xl font-bold">${course.pricing?.price || 0}</span>
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-muted-foreground">
                         Revenue: ${course.stats?.total_revenue || 0}
                       </span>
                     </div>
@@ -646,18 +646,18 @@ const CreatorCoursesPage = () => {
         ) : (
           /* Table View */
           <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-6 py-4 border-b border-border">
               <h2 className="text-lg font-semibold">
                 Courses ({totalItems})
               </h2>
             </div>
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-muted border-b">
                 <tr>
                   <th className="px-6 py-3 text-left">
                     <button
                       onClick={handleSelectAll}
-                      className="flex items-center gap-2 hover:text-blue-600"
+                      className="flex items-center gap-2 hover:text-primary"
                     >
                       {selectedCourses.size === filteredCourses.length ? (
                         <CheckSquare className="w-4 h-4" />
@@ -666,50 +666,50 @@ const CreatorCoursesPage = () => {
                       )}
                     </button>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Course
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Students
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Revenue
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Rating
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Updated
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {filteredCourses.map((course) => (
-                  <tr key={course.id} className="hover:bg-gray-50">
+                  <tr key={course.id} className="hover:bg-muted">
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleSelectCourse(course.id)}
                         className="flex items-center"
                       >
                         {selectedCourses.has(course.id) ? (
-                          <CheckSquare className="w-4 h-4 text-blue-600" />
+                          <CheckSquare className="w-4 h-4 text-primary" />
                         ) : (
-                          <Square className="w-4 h-4 text-gray-400" />
+                          <Square className="w-4 h-4 text-muted-foreground" />
                         )}
                       </button>
                     </td>
                     <td className="px-6 py-4">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-foreground">
                           {course.title}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           {course.category} • <span className={getLevelColor(course.level)}>{course.level}</span>
                         </div>
                       </div>
@@ -717,24 +717,24 @@ const CreatorCoursesPage = () => {
                     <td className="px-6 py-4">
                       {getStatusBadge(course.status)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm text-foreground">
                       {course.stats?.total_enrollments || 0}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm text-foreground">
                       {formatCurrency(course.stats?.total_revenue || 0)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm text-foreground">
                           {(course.stats?.average_rating || 0).toFixed(1)}
                         </span>
-                        <span className="text-yellow-400 ml-1">⭐</span>
-                        <span className="text-sm text-gray-500 ml-1">
+                        <span className="text-warning ml-1">⭐</span>
+                        <span className="text-sm text-muted-foreground ml-1">
                           ({course.stats?.total_reviews || 0})
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-muted-foreground">
                       {formatDate(course.updated_at)}
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -813,15 +813,15 @@ const CreatorCoursesPage = () => {
           {/* Warning Icon & Message */}
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
+              <div className="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-destructive" />
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
                 Confirm Bulk Deletion
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 You are about to permanently delete {selectedCourses.size} course{selectedCourses.size > 1 ? 's' : ''}. 
                 This action cannot be undone.
               </p>
@@ -829,12 +829,12 @@ const CreatorCoursesPage = () => {
           </div>
 
           {/* Warning Details */}
-          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+          <div className="bg-warning/10 border border-warning/30 p-4 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-600" />
-              <h4 className="font-medium text-yellow-800">Warning</h4>
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              <h4 className="font-medium text-warning">Warning</h4>
             </div>
-            <p className="text-sm text-yellow-700">
+            <p className="text-sm text-warning">
               All course content, chapters, lessons, and student progress for these courses will be permanently deleted.
               This includes all enrollments, reviews, and associated data.
             </p>

@@ -93,7 +93,7 @@ export function UnsavedChangesWarning({
       title="Unsaved Changes"
     >
       <div className="space-y-4">
-        <p className="text-gray-600">{message}</p>
+        <p className="text-muted-foreground">{message}</p>
         <div className="flex gap-3 justify-end">
           <Button
             variant="outline"

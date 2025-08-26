@@ -99,7 +99,7 @@ export const VideoProgressBar: React.FC<VideoProgressBarProps> = ({
       {/* Progress Bar Container */}
       <div
         ref={progressBarRef}
-        className={`relative w-full bg-gray-700 rounded-full cursor-pointer group ${
+        className={`relative w-full bg-muted rounded-full cursor-pointer group ${
           isMobile ? 'h-3' : 'h-2 hover:h-3'
         } transition-all duration-200`}
         onClick={handleClick}
@@ -111,19 +111,19 @@ export const VideoProgressBar: React.FC<VideoProgressBarProps> = ({
       >
         {/* Buffered Progress */}
         <div
-          className="absolute top-0 left-0 h-full bg-gray-500 rounded-full transition-all duration-300"
+          className="absolute top-0 left-0 h-full bg-muted-foreground/60 rounded-full transition-all duration-300"
           style={{ width: `${buffered}%` }}
         />
         
         {/* Watch Progress */}
         <div
-          className="absolute top-0 left-0 h-full bg-blue-600 rounded-full transition-all duration-300 relative"
+          className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-300 relative"
           style={{ width: `${progress}%` }}
         >
           {/* Progress Thumb */}
           {!disabled && onSeek && (
             <div className={`absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 
-              bg-blue-600 border-2 border-white rounded-full transition-all duration-200 ${
+              bg-primary border-2 border-white rounded-full transition-all duration-200 ${
                 isDragging || (!isMobile && hoverTime !== null)
                   ? 'opacity-100 scale-100'
                   : 'opacity-0 scale-75'

@@ -113,11 +113,11 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
-          <h2 className="text-lg font-semibold text-gray-900">Course Navigation</h2>
+        <div className="flex items-center justify-between p-4 border-b border-border bg-muted/50">
+          <h2 className="text-lg font-semibold text-foreground">Course Navigation</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted/60 rounded-lg transition-colors"
             aria-label="Close navigation"
           >
             <X className="w-5 h-5" />
@@ -125,14 +125,14 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
         </div>
 
         {/* Course Progress */}
-        <div className="p-4 border-b border-gray-200 bg-white">
-          <h3 className="font-semibold text-gray-900 mb-3">
+        <div className="p-4 border-b border-border bg-white">
+          <h3 className="font-semibold text-foreground mb-3">
             Course Progress
           </h3>
           
           {/* Progress Bar */}
           <div className="mb-3">
-            <div className="flex justify-between text-sm text-gray-600 mb-1">
+            <div className="flex justify-between text-sm text-muted-foreground mb-1">
               <span>Overall Progress</span>
               <span>{courseProgress.percentage}%</span>
             </div>
@@ -143,16 +143,16 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
           </div>
           
           {/* Stats */}
-          <div className="text-sm text-gray-600 space-y-1">
+          <div className="text-sm text-muted-foreground space-y-1">
             <div className="flex items-center">
-              <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+              <CheckCircle className="w-4 h-4 mr-2 text-success" />
               {courseProgress.completedLessons} of {courseProgress.totalLessons} lessons completed
             </div>
             <div className="flex items-center">
               <Clock className="w-4 h-4 mr-2" />
               {courseProgress.remainingTime} remaining
             </div>
-            <div className="flex items-center text-xs text-gray-500">
+            <div className="flex items-center text-xs text-muted-foreground">
               <BookOpen className="w-3 h-3 mr-2" />
               Total duration: {courseProgress.totalTime}
             </div>
@@ -162,19 +162,19 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
         {/* Chapters & Lessons */}
         <div className="flex-1 overflow-y-auto">
           {chapters.map((chapter) => (
-            <div key={chapter.id} className="border-b border-gray-100">
+            <div key={chapter.id} className="border-b border-border/50">
               {/* Chapter Header */}
               <button
                 onClick={() => toggleChapter(chapter.id)}
-                className="w-full px-4 py-3 bg-gray-50 text-left hover:bg-gray-100 transition-colors"
+                className="w-full px-4 py-3 bg-muted/50 text-left hover:bg-muted/40 transition-colors"
               >
                 <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-gray-900 flex items-center">
+                  <h4 className="font-medium text-foreground flex items-center">
                     <BookOpen className="w-4 h-4 mr-2" />
                     Chapter {chapter.order}: {chapter.title}
                   </h4>
                   <ChevronRight 
-                    className={`w-4 h-4 text-gray-500 transition-transform ${
+                    className={`w-4 h-4 text-muted-foreground transition-transform ${
                       expandedChapters.has(chapter.id) ? 'rotate-90' : ''
                     }`} 
                   />
@@ -200,11 +200,11 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
                           flex items-center justify-between
                           border-l-4 border-transparent
                           ${isCurrentLesson
-                            ? 'bg-blue-50 text-blue-700 border-blue-600'
+                            ? 'bg-primary/10 text-primary border-primary'
                             : isCompleted
-                            ? 'hover:bg-green-50 cursor-pointer'
+                            ? 'hover:bg-success/10 cursor-pointer'
                             : isUnlocked
-                            ? 'hover:bg-gray-50 cursor-pointer'
+                            ? 'hover:bg-muted/50 cursor-pointer'
                             : 'opacity-50 cursor-not-allowed'
                           }
                         `}
@@ -213,16 +213,16 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
                           {/* Status Icon */}
                           <div className="mr-3 flex-shrink-0">
                             {isCompleted ? (
-                              <CheckCircle className="w-5 h-5 text-green-600" />
+                              <CheckCircle className="w-5 h-5 text-success" />
                             ) : isUnlocked ? (
                               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                isCurrentLesson ? 'border-blue-600 bg-blue-600' : 'border-gray-400'
+                                isCurrentLesson ? 'border-primary bg-primary' : 'border-border/60'
                               }`}>
                                 {isCurrentLesson && <div className="w-2 h-2 bg-white rounded-full" />}
                               </div>
                             ) : (
-                              <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center">
-                                <div className="w-2 h-2 bg-gray-500 rounded-full" />
+                              <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
+                                <div className="w-2 h-2 bg-muted/500 rounded-full" />
                               </div>
                             )}
                           </div>
@@ -232,7 +232,7 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
                             <div className="text-sm font-medium truncate">
                               {lesson.title}
                             </div>
-                            <div className="flex items-center text-xs text-gray-500 mt-1">
+                            <div className="flex items-center text-xs text-muted-foreground mt-1">
                               <Clock className="w-3 h-3 mr-1" />
                               <span>
                                 {lesson.id === currentLessonId && currentVideoDuration 
@@ -243,7 +243,7 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
                                 }
                               </span>
                               {isCurrentLesson && (
-                                <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                <span className="ml-2 px-2 py-0.5 bg-primary/20 text-primary rounded-full text-xs font-medium">
                                   Current
                                 </span>
                               )}

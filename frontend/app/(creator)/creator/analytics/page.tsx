@@ -150,14 +150,14 @@ const CreatorAnalyticsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Analytics Overview</h1>
-              <p className="text-gray-600">Track your course performance and revenue</p>
+              <p className="text-muted-foreground">Track your course performance and revenue</p>
             </div>
             
             <Button
@@ -178,52 +178,52 @@ const CreatorAnalyticsPage = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm text-gray-600">Total Revenue</p>
+                <p className="text-sm text-muted-foreground">Total Revenue</p>
                 <p className="text-2xl font-bold">{formatCurrency(analytics.overview.total_revenue)}</p>
-                <p className="text-sm text-green-600 mt-1">
+                <p className="text-sm text-success mt-1">
                   +{formatCurrency(analytics.overview.this_month_revenue)} this month
                 </p>
               </div>
-              <DollarSign className="w-8 h-8 text-green-500" />
+              <DollarSign className="w-8 h-8 text-success" />
             </div>
           </Card>
 
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm text-gray-600">Total Payments</p>
+                <p className="text-sm text-muted-foreground">Total Payments</p>
                 <p className="text-2xl font-bold">{analytics.overview.total_payments}</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Avg: {formatCurrency(analytics.overview.average_payment)}
                 </p>
               </div>
-              <TrendingUp className="w-8 h-8 text-blue-500" />
+              <TrendingUp className="w-8 h-8 text-primary" />
             </div>
           </Card>
 
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm text-gray-600">Success Rate</p>
+                <p className="text-sm text-muted-foreground">Success Rate</p>
                 <p className="text-2xl font-bold">{analytics.overview.success_rate.toFixed(1)}%</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Payment success rate
                 </p>
               </div>
-              <Award className="w-8 h-8 text-green-500" />
+              <Award className="w-8 h-8 text-success" />
             </div>
           </Card>
 
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm text-gray-600">Total Students</p>
+                <p className="text-sm text-muted-foreground">Total Students</p>
                 <p className="text-2xl font-bold">{analytics.overview.total_students}</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {analytics.overview.published_courses} courses
                 </p>
               </div>
-              <Users className="w-8 h-8 text-indigo-500" />
+              <Users className="w-8 h-8 text-primary" />
             </div>
           </Card>
         </div>
@@ -239,12 +239,12 @@ const CreatorAnalyticsPage = () => {
                   {analytics.revenueByCoursе.map((course: any, index: number) => (
                     <div key={index} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-semibold">
+                        <div className="w-8 h-8 bg-success/20 text-success rounded-full flex items-center justify-center text-sm font-semibold">
                           {index + 1}
                         </div>
                         <span className="text-sm font-medium">{course.name}</span>
                       </div>
-                      <span className="text-sm font-semibold text-green-600">
+                      <span className="text-sm font-semibold text-success">
                         {formatCurrency(course.value)}
                       </span>
                     </div>
@@ -261,12 +261,12 @@ const CreatorAnalyticsPage = () => {
                   {analytics.studentsByCourse.map((course, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold">
+                        <div className="w-8 h-8 bg-primary/20 text-primary rounded-full flex items-center justify-center text-sm font-semibold">
                           {index + 1}
                         </div>
                         <span className="text-sm font-medium">{course.name}</span>
                       </div>
-                      <span className="text-sm font-semibold text-blue-600">
+                      <span className="text-sm font-semibold text-primary">
                         {course.value} students
                       </span>
                     </div>
@@ -286,17 +286,17 @@ const CreatorAnalyticsPage = () => {
               <div className="grid grid-cols-7 gap-2 text-xs">
                 {analytics.dailyRevenue.slice(-7).map((day: any, index: number) => (
                   <div key={index} className="text-center">
-                    <div className="text-gray-500 mb-1">
+                    <div className="text-muted-foreground mb-1">
                       {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
                     </div>
-                    <div className="bg-blue-100 rounded p-2">
-                      <div className="font-semibold text-blue-600">
+                    <div className="bg-primary/20 rounded p-2">
+                      <div className="font-semibold text-primary">
                         {formatCurrency(day.total_revenue)}
                       </div>
-                      <div className="text-gray-500 text-xs">
+                      <div className="text-muted-foreground text-xs">
                         {day.payment_count} payments
                       </div>
-                      <div className="text-green-600 text-xs">
+                      <div className="text-success text-xs">
                         {day.success_rate.toFixed(1)}% success
                       </div>
                     </div>
@@ -307,20 +307,20 @@ const CreatorAnalyticsPage = () => {
               {/* Summary stats */}
               <div className="grid grid-cols-3 gap-4 pt-4 border-t">
                 <div className="text-center">
-                  <div className="text-sm text-gray-600">Total (30 days)</div>
+                  <div className="text-sm text-muted-foreground">Total (30 days)</div>
                   <div className="text-lg font-semibold">
                     {formatCurrency(analytics.dailyRevenue.reduce((sum: number, day: any) => sum + day.total_revenue, 0))}
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm text-gray-600">Total Payments</div>
+                  <div className="text-sm text-muted-foreground">Total Payments</div>
                   <div className="text-lg font-semibold">
                     {analytics.dailyRevenue.reduce((sum: number, day: any) => sum + day.payment_count, 0)}
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm text-gray-600">Avg Success Rate</div>
-                  <div className="text-lg font-semibold text-green-600">
+                  <div className="text-sm text-muted-foreground">Avg Success Rate</div>
+                  <div className="text-lg font-semibold text-success">
                     {(analytics.dailyRevenue.reduce((sum: number, day: any) => sum + day.success_rate, 0) / analytics.dailyRevenue.length).toFixed(1)}%
                   </div>
                 </div>
@@ -336,26 +336,26 @@ const CreatorAnalyticsPage = () => {
             <table className="w-full">
               <thead className="border-b">
                 <tr>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Course</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Students</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Revenue</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Rating</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Last Updated</th>
-                  <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Course</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Students</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Revenue</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Rating</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Last Updated</th>
+                  <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {analytics.courseDetails.map((course) => (
-                  <tr key={course.id} className="hover:bg-gray-50">
+                  <tr key={course.id} className="hover:bg-muted/50">
                     <td className="py-3 px-4">
                       <div className="font-medium text-sm">{course.title}</div>
                     </td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
                         course.status === 'published' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-gray-100 text-gray-700'
+                          ? 'bg-success/20 text-success' 
+                          : 'bg-muted/50 text-muted-foreground'
                       }`}>
                         {course.status}
                       </span>
@@ -367,7 +367,7 @@ const CreatorAnalyticsPage = () => {
                     <td className="py-3 px-4 text-right text-sm">
                       {course.rating.toFixed(1)} ⭐ ({course.reviews})
                     </td>
-                    <td className="py-3 px-4 text-right text-sm text-gray-500">
+                    <td className="py-3 px-4 text-right text-sm text-muted-foreground">
                       {formatDate(course.updated)}
                     </td>
                     <td className="py-3 px-4 text-center">
@@ -387,8 +387,8 @@ const CreatorAnalyticsPage = () => {
         </Card>
 
         {/* Info Message */}
-        <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800">
+        <div className="mt-8 p-4 bg-primary/10 rounded-lg">
+          <p className="text-sm text-primary">
             <strong>Note:</strong> This analytics overview uses data from your courses. 
             For detailed analytics on individual courses, click the analytics icon next to each course.
           </p>

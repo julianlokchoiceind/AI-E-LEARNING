@@ -17,7 +17,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/85 focus-visible:ring-secondary',
       outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground active:bg-accent/80 focus-visible:ring-accent',
       ghost: 'hover:bg-accent hover:text-accent-foreground active:bg-accent/80 focus-visible:ring-accent',
-      danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus-visible:ring-red-600',
+      danger: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/95 focus-visible:ring-destructive',
     }
     
     const sizes = {

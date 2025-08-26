@@ -286,12 +286,12 @@ function getErrorIcon(type: ErrorType): string {
 // Get background color based on severity
 function getErrorBackgroundColor(severity: ErrorSeverity): string {
   const colors: Record<ErrorSeverity, string> = {
-    [ErrorSeverity.LOW]: '#FCA5A5',
-    [ErrorSeverity.MEDIUM]: '#F87171',
-    [ErrorSeverity.HIGH]: '#EF4444',
-    [ErrorSeverity.CRITICAL]: '#DC2626'
+    [ErrorSeverity.LOW]: 'hsl(var(--warning) / 0.3)',
+    [ErrorSeverity.MEDIUM]: 'hsl(var(--warning))',
+    [ErrorSeverity.HIGH]: 'hsl(var(--destructive))',
+    [ErrorSeverity.CRITICAL]: 'hsl(var(--destructive) / 1.2)'
   };
-  return colors[severity] || '#EF4444';
+  return colors[severity] || 'hsl(var(--destructive))';
 }
 
 // Retry mechanism

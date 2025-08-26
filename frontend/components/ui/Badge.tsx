@@ -65,13 +65,13 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
               effectiveVariant === 'destructive',
             'text-foreground border border-input':
               effectiveVariant === 'outline',
-            'bg-green-100 text-green-700 border border-green-200':
+            'bg-success/20 text-success border border-success/30':
               effectiveVariant === 'success' || effectiveVariant === 'published',
-            'bg-yellow-100 text-yellow-700 border border-yellow-200':
+            'bg-warning/20 text-warning border border-warning/30':
               effectiveVariant === 'warning',
-            'bg-blue-100 text-blue-700 border border-blue-200':
+            'bg-info/20 text-info border border-info/30':
               effectiveVariant === 'info',
-            'bg-gray-100 text-gray-700 border border-gray-200':
+            'bg-muted text-muted-foreground border border-border':
               effectiveVariant === 'draft',
           },
           className

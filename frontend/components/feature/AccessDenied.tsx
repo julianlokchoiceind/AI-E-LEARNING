@@ -47,29 +47,29 @@ export function AccessDenied({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-muted flex items-center justify-center p-4">
       <Card className="max-w-md w-full p-8 text-center">
         <div className="mb-6">
-          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-            <Shield className="w-8 h-8 text-red-600" />
+          <div className="mx-auto w-16 h-16 bg-destructive/20 rounded-full flex items-center justify-center">
+            <Shield className="w-8 h-8 text-destructive" />
           </div>
         </div>
         
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-bold text-foreground mb-2">
           {title}
         </h1>
         
-        <p className="text-gray-600 mb-6">
+        <p className="text-muted-foreground mb-6">
           {message}
         </p>
 
         {requiredRole && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <div className="bg-warning/20 border border-warning/30 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-center mb-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
-              <span className="font-medium text-yellow-800">Access Requirements</span>
+              <AlertTriangle className="w-5 h-5 text-warning mr-2" />
+              <span className="font-medium text-warning">Access Requirements</span>
             </div>
-            <div className="text-sm text-yellow-700">
+            <div className="text-sm text-warning">
               <p><strong>Required Role:</strong> {getRoleDisplayName(requiredRole)}</p>
               {currentRole && (
                 <p><strong>Your Role:</strong> {getRoleDisplayName(currentRole)}</p>
@@ -103,7 +103,7 @@ export function AccessDenied({
           )}
         </div>
 
-        <div className="mt-6 pt-6 border-t text-xs text-gray-500">
+        <div className="mt-6 pt-6 border-t text-xs text-muted-foreground">
           <p>
             If you believe this is an error, please contact your administrator
             or check your account permissions.

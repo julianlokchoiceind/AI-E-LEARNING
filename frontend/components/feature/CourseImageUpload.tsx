@@ -47,7 +47,7 @@ export const CourseImageUpload: React.FC<CourseImageUploadProps> = ({
     try {
       const response = await uploadCourseThumbnail(courseId, file);
       
-      if (response.success && response.data.url) {
+      if (response.success && response.data?.url) {
         onImageUpdate(response.data.url);
       } else {
         throw new Error(response.message || 'Upload failed');
@@ -115,7 +115,7 @@ export const CourseImageUpload: React.FC<CourseImageUploadProps> = ({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="block text-sm font-medium text-foreground">
         Thumbnail
       </label>
       
@@ -133,7 +133,7 @@ export const CourseImageUpload: React.FC<CourseImageUploadProps> = ({
             type="button"
             onClick={handleRemoveImage}
             disabled={uploading}
-            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="absolute -top-2 -right-2 w-6 h-6 bg-destructive hover:bg-destructive/80 text-white rounded-full flex items-center justify-center shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Remove image"
           >
             <X className="w-4 h-4" />
@@ -151,7 +151,7 @@ export const CourseImageUpload: React.FC<CourseImageUploadProps> = ({
           className={`
             relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
             transition-colors duration-200 ease-in-out
-            ${dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+            ${dragActive ? 'border-primary bg-primary/20' : 'border-border hover:border-border'}
             ${uploading ? 'opacity-50 cursor-not-allowed' : ''}
           `}
           onDragEnter={handleDragEnter}
@@ -162,19 +162,19 @@ export const CourseImageUpload: React.FC<CourseImageUploadProps> = ({
         >
           {uploading ? (
             <div className="flex flex-col items-center">
-              <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-              <p className="text-sm text-gray-600">Uploading image...</p>
+              <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+              <p className="text-sm text-muted-foreground">Uploading image...</p>
             </div>
           ) : (
             <div className="flex flex-col items-center">
-              <Image className="w-8 h-8 text-gray-400 mb-2" />
-              <p className="text-sm font-medium text-gray-700 mb-1">
+              <Image className="w-8 h-8 text-muted-foreground mb-2" />
+              <p className="text-sm font-medium text-foreground mb-1">
                 Upload Thumbnail
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Drag & drop or click to select
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 PNG or JPG, max 10MB
               </p>
             </div>

@@ -14,7 +14,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   // Show minimal loading state during hydration
   if (!isHydrated) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-muted/50">
         {/* Render children immediately but hidden to start hydration sooner */}
         <div style={{ visibility: 'hidden' }}>
           <NextAuthSessionProvider>

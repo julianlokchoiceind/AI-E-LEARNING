@@ -156,36 +156,36 @@ export function CourseCompletionCelebration({
           {/* Celebration Animation */}
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-32 h-32 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full opacity-20 animate-pulse"></div>
+              <div className="w-32 h-32 bg-gradient-to-br from-warning to-warning rounded-full opacity-20 animate-pulse"></div>
             </div>
-            <Trophy className="h-20 w-20 text-yellow-500 mx-auto relative z-10 animate-bounce" />
+            <Trophy className="h-20 w-20 text-warning mx-auto relative z-10 animate-bounce" />
           </div>
 
           {/* Congratulations Message */}
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-3xl font-bold text-foreground mb-2">
             Congratulations! 🎉
           </h2>
-          <p className="text-lg text-gray-600 mb-6">
+          <p className="text-lg text-muted-foreground mb-6">
             You have successfully completed <strong>{courseName}</strong>
           </p>
 
           {/* Achievement Stats */}
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="text-center">
-              <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">Course</p>
+              <CheckCircle className="h-8 w-8 text-success mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Course</p>
               <p className="font-semibold">Completed</p>
             </div>
             <div className="text-center">
-              <Award className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">Certificate</p>
+              <Award className="h-8 w-8 text-primary mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Certificate</p>
               <p className="font-semibold">
                 {certificateGenerated ? 'Ready' : 'Available'}
               </p>
             </div>
             <div className="text-center">
-              <Trophy className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">Achievement</p>
+              <Trophy className="h-8 w-8 text-warning mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Achievement</p>
               <p className="font-semibold">Unlocked</p>
             </div>
           </div>
@@ -199,12 +199,12 @@ export function CourseCompletionCelebration({
               
               {certificateGenerated && certificate ? (
                 <div className="space-y-4">
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
+                  <div className="bg-gradient-to-r from-primary/20 to-primary/10 rounded-lg p-4">
                     <div className="flex items-center justify-center gap-2 mb-2">
-                      <Award className="h-5 w-5 text-blue-600" />
+                      <Award className="h-5 w-5 text-primary" />
                       <span className="font-medium">Certificate #{certificate.certificate_number}</span>
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Final Score: <span className="font-semibold">{certificate.final_score}%</span> • 
                       Duration: <span className="font-semibold">{certificate.total_hours.toFixed(1)} hours</span>
                     </p>
@@ -237,7 +237,7 @@ export function CourseCompletionCelebration({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Get your official certificate of completion to showcase your achievement.
                   </p>
                   <Button

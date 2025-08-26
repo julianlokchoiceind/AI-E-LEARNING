@@ -45,14 +45,14 @@ export function CourseRating({
               <Star
                 className={`${starSizes[size]} ${
                   isFilled || isHalf
-                    ? 'text-yellow-400 fill-current'
-                    : 'text-gray-300'
+                    ? 'text-warning fill-current'
+                    : 'text-muted-foreground'
                 }`}
               />
               {isHalf && (
                 <div className="absolute inset-0 overflow-hidden w-1/2">
                   <Star
-                    className={`${starSizes[size]} text-yellow-400 fill-current`}
+                    className={`${starSizes[size]} text-warning fill-current`}
                   />
                 </div>
               )}
@@ -68,7 +68,7 @@ export function CourseRating({
       <div className={`flex items-center ${className}`}>
         {renderStars()}
         {showCount && (
-          <span className={`ml-2 text-gray-500 ${textSizes[size]}`}>
+          <span className={`ml-2 text-muted-foreground ${textSizes[size]}`}>
             No reviews yet
           </span>
         )}
@@ -84,7 +84,7 @@ export function CourseRating({
           <span className={`ml-2 font-medium ${textSizes[size]}`}>
             {averageRating.toFixed(1)}
           </span>
-          <span className={`ml-1 text-gray-500 ${textSizes[size]}`}>
+          <span className={`ml-1 text-muted-foreground ${textSizes[size]}`}>
             ({totalReviews.toLocaleString()})
           </span>
         </>
@@ -107,9 +107,9 @@ export function CourseRatingMini({
 
   return (
     <div className="flex items-center gap-1 text-sm">
-      <Star className="h-4 w-4 text-yellow-400 fill-current" />
+      <Star className="h-4 w-4 text-warning fill-current" />
       <span className="font-medium">{averageRating.toFixed(1)}</span>
-      <span className="text-gray-500">({totalReviews})</span>
+      <span className="text-muted-foreground">({totalReviews})</span>
     </div>
   );
 }

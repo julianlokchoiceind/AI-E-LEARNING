@@ -117,19 +117,19 @@ export const TICKET_CATEGORIES = [
 ] as const;
 
 export const TICKET_PRIORITIES = [
-  { value: 'low', label: 'Low', color: 'gray' },
-  { value: 'medium', label: 'Medium', color: 'blue' },
-  { value: 'high', label: 'High', color: 'orange' },
-  { value: 'urgent', label: 'Urgent', color: 'red' },
+  { value: 'low', label: 'Low', color: 'muted-foreground' },
+  { value: 'medium', label: 'Medium', color: 'primary' },
+  { value: 'high', label: 'High', color: 'warning' },
+  { value: 'urgent', label: 'Urgent', color: 'destructive' },
 ] as const;
 
 export const TICKET_STATUSES = [
-  { value: 'open', label: 'Open', color: 'yellow' },
-  { value: 'closed', label: 'Closed', color: 'gray' },
+  { value: 'open', label: 'Open', color: 'warning' },
+  { value: 'closed', label: 'Closed', color: 'muted-foreground' },
 ] as const;
 
 export const TICKET_FILTER_OPTIONS = [
-  { value: 'open', label: 'Open', color: 'yellow' },
-  { value: 'closed', label: 'Closed', color: 'gray' },
-  { value: 'unread', label: 'Unread', color: 'red' },  // Virtual status for filtering
+  { value: 'open', label: 'Open', color: 'warning' },
+  { value: 'closed', label: 'Closed', color: 'muted-foreground' },
+  { value: 'unread', label: 'Unread', color: 'destructive' },  // Virtual status for filtering
 ] as const;

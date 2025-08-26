@@ -102,9 +102,9 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
     }
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <HelpCircle className="w-16 h-16 text-gray-300 mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Quiz Available</h3>
-        <p className="text-gray-600 max-w-md">
+        <HelpCircle className="w-16 h-16 text-muted-foreground mb-4" />
+        <h3 className="text-xl font-semibold text-foreground mb-2">No Quiz Available</h3>
+        <p className="text-muted-foreground max-w-md">
           This lesson doesn't have a quiz yet.
         </p>
       </div>
@@ -123,9 +123,9 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
-        <HelpCircle className="w-12 h-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Connection Error</h3>
-        <p className="text-gray-600 mb-4">Failed to load quiz data.</p>
+        <HelpCircle className="w-12 h-12 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-2">Connection Error</h3>
+        <p className="text-muted-foreground mb-4">Failed to load quiz data.</p>
         <Button onClick={() => refetch()} variant="outline" size="sm">
           Try Again
         </Button>
@@ -143,9 +143,9 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
     // If no onCreateQuiz handler (e.g., in student view), just show a simple message
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <HelpCircle className="w-16 h-16 text-gray-300 mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Quiz Available</h3>
-        <p className="text-gray-600 max-w-md">
+        <HelpCircle className="w-16 h-16 text-muted-foreground mb-4" />
+        <h3 className="text-xl font-semibold text-foreground mb-2">No Quiz Available</h3>
+        <p className="text-muted-foreground max-w-md">
           This lesson doesn't have a quiz yet.
         </p>
       </div>
@@ -160,16 +160,16 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <HelpCircle className="w-6 h-6 text-blue-600" />
-                <h2 className="text-xl font-semibold text-gray-900">{quiz.title}</h2>
+                <HelpCircle className="w-6 h-6 text-primary" />
+                <h2 className="text-xl font-semibold text-foreground">{quiz.title}</h2>
               </div>
               
               {quiz.description && (
-                <p className="text-gray-600 mb-4">{quiz.description}</p>
+                <p className="text-muted-foreground mb-4">{quiz.description}</p>
               )}
 
               {/* Quiz Stats */}
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <HelpCircle className="w-4 h-4" />
                   {quiz.questions?.length || 0} Questions
@@ -197,7 +197,7 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={handleDeleteQuiz}
-                className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="flex items-center gap-2 text-destructive hover:text-destructive hover:bg-destructive/20"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete
@@ -231,21 +231,21 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
 
           <div className="space-y-4">
             {quiz.questions?.map((question, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-4">
+              <div key={index} className="border border-border rounded-lg p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-start gap-3 flex-1">
-                    <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+                    <span className="flex-shrink-0 w-6 h-6 bg-primary/20 text-primary rounded-full flex items-center justify-center text-sm font-medium">
                       {index + 1}
                     </span>
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 mb-2">{question.question}</h4>
+                      <h4 className="font-medium text-foreground mb-2">{question.question}</h4>
                       
                       {/* Question Options */}
                       <div className="space-y-2">
                         {question.options?.map((option, optIndex) => (
                           <div key={optIndex} className="flex items-center gap-2 text-sm">
-                            <span className="w-4 h-4 border border-gray-300 rounded-full flex-shrink-0"></span>
-                            <span className="text-gray-700">{option}</span>
+                            <span className="w-4 h-4 border border-border rounded-full flex-shrink-0"></span>
+                            <span className="text-foreground">{option}</span>
                           </div>
                         ))}
                       </div>
@@ -266,16 +266,16 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
           </div>
 
           {/* Quiz Settings Summary */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <h4 className="font-medium text-gray-900 mb-3">Quiz Settings</h4>
+          <div className="mt-6 pt-4 border-t border-border">
+            <h4 className="font-medium text-foreground mb-3">Quiz Settings</h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Pass Percentage:</span>
+                  <span className="text-muted-foreground">Pass Percentage:</span>
                   <span className="font-medium">{quiz.config?.pass_percentage}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Time Limit:</span>
+                  <span className="text-muted-foreground">Time Limit:</span>
                   <span className="font-medium">
                     {quiz.config?.time_limit ? `${Math.round(quiz.config.time_limit / 60)} minutes` : 'No limit'}
                   </span>
@@ -283,11 +283,11 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Shuffle Questions:</span>
+                  <span className="text-muted-foreground">Shuffle Questions:</span>
                   <span className="font-medium">{quiz.config?.shuffle_questions ? 'Yes' : 'No'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Shuffle Answers:</span>
+                  <span className="text-muted-foreground">Shuffle Answers:</span>
                   <span className="font-medium">{quiz.config?.shuffle_answers ? 'Yes' : 'No'}</span>
                 </div>
               </div>
@@ -304,13 +304,13 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
           title="Delete Quiz"
         >
           <div className="space-y-4 p-6">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Are you sure you want to delete this quiz? This action cannot be undone and will affect all students who have taken or are planning to take this quiz.
             </p>
             
-            <div className="bg-red-50 p-3 rounded-lg">
-              <p className="font-medium text-red-900 text-sm">{quiz.title}</p>
-              <p className="text-red-700 text-sm mt-1">
+            <div className="bg-destructive/10 p-3 rounded-lg">
+              <p className="font-medium text-destructive text-sm">{quiz.title}</p>
+              <p className="text-destructive text-sm mt-1">
                 {quiz.questions?.length} questions • {quiz.total_points} total points
               </p>
             </div>
@@ -319,7 +319,7 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
               <Button
                 onClick={confirmDeleteQuiz}
                 variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50 flex-1"
+                className="text-destructive border-destructive hover:bg-destructive/20 flex-1"
                 disabled={deleteLoading}
               >
                 {deleteLoading ? 'Deleting...' : 'Delete Quiz'}

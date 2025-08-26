@@ -70,31 +70,31 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="min-h-screen flex items-center justify-center bg-muted px-4">
           <Card className="max-w-md w-full p-8 text-center">
             <div className="flex justify-center mb-4">
-              <div className="bg-red-100 p-3 rounded-full">
-                <AlertTriangle className="w-8 h-8 text-red-600" />
+              <div className="bg-destructive/20 p-3 rounded-full">
+                <AlertTriangle className="w-8 h-8 text-destructive" />
               </div>
             </div>
             
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-foreground mb-2">
               Oops! Something went wrong
             </h1>
             
-            <p className="text-gray-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               We apologize for the inconvenience. The application encountered an unexpected error.
             </p>
 
             {/* Error details in development */}
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mb-6 p-4 bg-gray-100 rounded-lg text-left">
-                <p className="text-sm font-mono text-red-600 mb-2">
+              <div className="mb-6 p-4 bg-muted rounded-lg text-left">
+                <p className="text-sm font-mono text-destructive mb-2">
                   {this.state.error.toString()}
                 </p>
                 {this.state.errorInfo && (
-                  <details className="text-xs text-gray-600">
-                    <summary className="cursor-pointer hover:text-gray-800">
+                  <details className="text-xs text-muted-foreground">
+                    <summary className="cursor-pointer hover:text-foreground">
                       Component Stack
                     </summary>
                     <pre className="mt-2 overflow-auto">
@@ -125,7 +125,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </Button>
             </div>
 
-            <p className="mt-6 text-sm text-gray-500">
+            <p className="mt-6 text-sm text-muted-foreground">
               If this problem persists, please contact our support team.
             </p>
           </Card>

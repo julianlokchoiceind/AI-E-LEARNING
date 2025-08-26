@@ -143,14 +143,14 @@ const CreatorDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-background border-b">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Creator Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {user?.name}!</p>
+              <p className="text-muted-foreground">Welcome back, {user?.name}!</p>
             </div>
             <Button variant="primary" onClick={handleCreateCourse} disabled={createLoading}>
               {createLoading ? (
@@ -176,13 +176,13 @@ const CreatorDashboard = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Revenue</p>
+                <p className="text-sm text-muted-foreground">Total Revenue</p>
                 <p className="text-2xl font-bold">{formatCurrency(overview.total_revenue || 0)}</p>
-                <p className="text-sm text-green-600">
+                <p className="text-sm text-success">
                   All-time earnings
                 </p>
               </div>
-              <DollarSign className="w-8 h-8 text-green-500" />
+              <DollarSign className="w-8 h-8 text-success" />
             </div>
           </Card>
 
@@ -190,15 +190,15 @@ const CreatorDashboard = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Students</p>
+                <p className="text-sm text-muted-foreground">Total Students</p>
                 <p className="text-2xl font-bold">{overview.total_students || 0}</p>
                 {overview.active_students !== undefined && (
-                  <p className="text-sm text-blue-600">
+                  <p className="text-sm text-primary">
                     {overview.active_students} active
                   </p>
                 )}
               </div>
-              <Users className="w-8 h-8 text-blue-500" />
+              <Users className="w-8 h-8 text-primary" />
             </div>
           </Card>
 
@@ -206,15 +206,15 @@ const CreatorDashboard = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Courses</p>
+                <p className="text-sm text-muted-foreground">Total Courses</p>
                 <p className="text-2xl font-bold">{overview.total_courses || 0}</p>
                 {overview.published_courses !== undefined && (
-                  <p className="text-sm text-indigo-600">
+                  <p className="text-sm text-primary">
                     {overview.published_courses} published
                   </p>
                 )}
               </div>
-              <BookOpen className="w-8 h-8 text-indigo-500" />
+              <BookOpen className="w-8 h-8 text-primary" />
             </div>
           </Card>
 
@@ -222,15 +222,15 @@ const CreatorDashboard = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Average Rating</p>
+                <p className="text-sm text-muted-foreground">Average Rating</p>
                 <p className="text-2xl font-bold">{(overview.average_rating || 0).toFixed(1)} ⭐</p>
                 {overview.total_reviews !== undefined && (
-                  <p className="text-sm text-yellow-600">
+                  <p className="text-sm text-warning">
                     {overview.total_reviews} reviews
                   </p>
                 )}
               </div>
-              <Star className="w-8 h-8 text-yellow-500" />
+              <Star className="w-8 h-8 text-warning" />
             </div>
           </Card>
         </div>
@@ -242,34 +242,34 @@ const CreatorDashboard = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Top Performing Courses</h2>
-              <TrendingUp className="w-5 h-5 text-gray-400" />
+              <TrendingUp className="w-5 h-5 text-muted-foreground" />
             </div>
             {topCourses.length === 0 ? (
               <div className="text-center py-8">
-                <BarChart2 className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-600 text-sm">No performance data yet</p>
-                <p className="text-gray-500 text-xs">Create and publish courses to see analytics</p>
+                <BarChart2 className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground text-sm">No performance data yet</p>
+                <p className="text-muted-foreground text-xs">Create and publish courses to see analytics</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {topCourses.slice(0, 4).map((course: any, index: number) => (
-                  <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={course.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold">
+                      <div className="w-6 h-6 bg-primary/20 text-primary rounded-full flex items-center justify-center text-sm font-semibold">
                         {index + 1}
                       </div>
                       <div>
                         <h4 className="font-medium text-sm">{course.title}</h4>
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-muted-foreground">
                           {course.total_enrollments || 0} students • {course.average_rating?.toFixed(1) || '0.0'} ⭐
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-green-600">
+                      <p className="text-sm font-semibold text-success">
                         {formatCurrency(course.total_revenue || 0)}
                       </p>
-                      <p className="text-xs text-gray-500">revenue</p>
+                      <p className="text-xs text-muted-foreground">revenue</p>
                     </div>
                   </div>
                 ))}
@@ -288,12 +288,12 @@ const CreatorDashboard = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Course Status</h2>
-              <BookOpen className="w-5 h-5 text-gray-400" />
+              <BookOpen className="w-5 h-5 text-muted-foreground" />
             </div>
             {overview.total_courses === 0 ? (
               <div className="text-center py-8">
-                <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-600 text-sm">No courses created yet</p>
+                <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground text-sm">No courses created yet</p>
                 <Button variant="primary" onClick={handleCreateCourse} disabled={createLoading} className="mt-2">
                   {createLoading ? 'Creating...' : 'Create Your First Course'}
                 </Button>
@@ -301,41 +301,41 @@ const CreatorDashboard = () => {
             ) : (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-3xl font-bold text-green-600">
+                  <div className="text-center p-4 bg-success/20 rounded-lg">
+                    <div className="text-3xl font-bold text-success">
                       {overview.published_courses}
                     </div>
-                    <p className="text-sm text-green-700 font-medium">Published</p>
+                    <p className="text-sm text-success font-medium">Published</p>
                   </div>
-                  <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                    <div className="text-3xl font-bold text-yellow-600">
+                  <div className="text-center p-4 bg-warning/20 rounded-lg">
+                    <div className="text-3xl font-bold text-warning">
                       {overview.draft_courses}
                     </div>
-                    <p className="text-sm text-yellow-700 font-medium">Draft/Review</p>
+                    <p className="text-sm text-warning font-medium">Draft/Review</p>
                   </div>
                 </div>
                 
                 {/* Course Performance Summary */}
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-semibold text-blue-900 mb-3">Course Performance</h3>
+                <div className="mt-6 p-4 bg-primary/20 rounded-lg">
+                  <h3 className="font-semibold text-primary mb-3">Course Performance</h3>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
-                      <div className="text-lg font-bold text-blue-600">
+                      <div className="text-lg font-bold text-primary">
                         {overview.total_students}
                       </div>
-                      <p className="text-xs text-blue-700">Total Students</p>
+                      <p className="text-xs text-primary">Total Students</p>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-blue-600">
+                      <div className="text-lg font-bold text-primary">
                         {formatCurrency(overview.total_revenue)}
                       </div>
-                      <p className="text-xs text-blue-700">Total Revenue</p>
+                      <p className="text-xs text-primary">Total Revenue</p>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-blue-600">
+                      <div className="text-lg font-bold text-primary">
                         {overview.average_rating.toFixed(1)} ⭐
                       </div>
-                      <p className="text-xs text-blue-700">Avg Rating</p>
+                      <p className="text-xs text-primary">Avg Rating</p>
                     </div>
                   </div>
                 </div>

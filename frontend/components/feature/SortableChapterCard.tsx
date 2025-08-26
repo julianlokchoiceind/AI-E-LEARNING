@@ -116,7 +116,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
       <Card 
         className={`transition-all duration-200 ${
           isDragging || isActiveItem 
-            ? 'shadow-2xl border-blue-300 bg-blue-50/50' 
+            ? 'shadow-2xl border-primary/50 bg-primary/10' 
             : 'hover:shadow-lg'
         }`}
       >
@@ -127,7 +127,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
             {isEditable && !isOverlay && (
               <div 
                 className={`flex-shrink-0 mt-1 cursor-grab active:cursor-grabbing transition-colors duration-200 ${
-                  isDragging || isActiveItem ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                  isDragging || isActiveItem ? 'text-primary' : 'text-muted-foreground hover:text-muted-foreground'
                 }`}
                 {...attributes}
                 {...listeners}
@@ -152,18 +152,18 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                     </Badge>
                   </div>
                   
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 break-words">
+                  <h3 className="text-lg font-semibold text-foreground mb-2 break-words">
                     {chapter.title}
                   </h3>
                   
                   {chapter.description && (
-                    <p className="text-sm text-gray-600 mb-3 break-words">
+                    <p className="text-sm text-muted-foreground mb-3 break-words">
                       {chapter.description}
                     </p>
                   )}
 
                   {/* Chapter Stats */}
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <BookOpen className="w-4 h-4" />
                       <span>{totalLessons} lesson{totalLessons !== 1 ? 's' : ''}</span>
@@ -178,9 +178,9 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
 
                     {progressPercentage > 0 && (
                       <div className="flex items-center gap-2">
-                        <div className="w-16 bg-gray-200 rounded-full h-2">
+                        <div className="w-16 bg-muted rounded-full h-2">
                           <div 
-                            className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                            className="bg-success h-2 rounded-full transition-all duration-300"
                             style={{ width: `${progressPercentage}%` }}
                           />
                         </div>
@@ -197,7 +197,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => onEdit(chapter.id)}
-                      className="text-gray-600 hover:text-blue-600"
+                      className="text-muted-foreground hover:text-primary"
                     >
                       <Edit3 className="w-4 h-4" />
                     </Button>
@@ -210,7 +210,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                         e.stopPropagation();
                         onDelete(chapter.id);
                       }}
-                      className="text-gray-600 hover:text-red-600"
+                      className="text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -220,7 +220,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className="text-gray-600 hover:text-gray-800"
+                        className="text-muted-foreground hover:text-foreground"
                       >
                         {isExpanded ? (
                           <ChevronUp className="w-4 h-4" />
@@ -235,14 +235,14 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
 
               {/* Add Lesson Button */}
               {isEditable && !isOverlay && (
-                <div className="mt-4 pt-3 border-t border-gray-100">
+                <div className="mt-4 pt-3 border-t border-border/50">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       onCreateLesson(chapter.id);
                     }}
-                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                    className="text-primary border-primary/30 hover:bg-primary/10"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Lesson
@@ -253,7 +253,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
               {/* Lessons List */}
               {isExpanded && totalLessons > 0 && !isOverlay && (
                 <div className="mt-4">
-                  <div className="pl-4 border-l-2 border-gray-100">
+                  <div className="pl-4 border-l-2 border-border/50">
                     <DroppableLessonList
                       lessons={lessons.sort((a, b) => a.order - b.order)}
                       chapterId={chapter.id}
@@ -273,7 +273,7 @@ const SortableChapterCard: React.FC<SortableChapterCardProps> = ({
 
         {/* Drag Indicator */}
         {(isDragging || isActiveItem) && !isOverlay && (
-          <div className="absolute inset-0 bg-blue-100/20 border-2 border-blue-300 border-dashed rounded-lg pointer-events-none" />
+          <div className="absolute inset-0 bg-primary/10 border-2 border-primary/50 border-dashed rounded-lg pointer-events-none" />
         )}
       </Card>
     </div>

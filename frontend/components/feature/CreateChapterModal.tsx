@@ -152,7 +152,7 @@ export const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
                 maxLength={100}
                 autoFocus
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.title.length}/100 characters
               </p>
             </div>
@@ -169,13 +169,13 @@ export const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
                 rows={3}
                 maxLength={500}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.description.length}/500 characters
               </p>
             </div>
 
             {/* Helper Text */}
-            <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+            <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
               <p className="font-medium mb-1">Tips:</p>
               <ul className="text-xs space-y-1 ml-4 list-disc">
                 <li>Use clear, descriptive titles for your chapters</li>
@@ -210,7 +210,7 @@ export const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
           </MobileFormActions>
 
           {/* Keyboard Shortcut Hint */}
-          <p className="text-xs text-gray-500 text-center mt-2">
+          <p className="text-xs text-muted-foreground text-center mt-2">
             Press ⌘ + Enter to create chapter
           </p>
         </MobileForm>

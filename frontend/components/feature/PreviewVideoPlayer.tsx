@@ -156,7 +156,7 @@ export const PreviewVideoPlayer: React.FC<PreviewVideoPlayerProps> = ({
 
   if (!videoId) {
     return (
-      <div className={`relative bg-gray-900 rounded-lg overflow-hidden ${className}`}>
+      <div className={`relative bg-background border-2 border-border rounded-lg overflow-hidden ${className}`}>
         <div className="aspect-video flex items-center justify-center">
           <div className="text-white text-center">
             <Play className="w-16 h-16 mx-auto mb-4 opacity-60" />
@@ -170,7 +170,7 @@ export const PreviewVideoPlayer: React.FC<PreviewVideoPlayerProps> = ({
 
   return (
     <div 
-      className={`relative bg-gray-900 rounded-lg overflow-hidden cursor-pointer ${className}`}
+      className={`relative bg-background border-2 border-border rounded-lg overflow-hidden cursor-pointer ${className}`}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
@@ -194,15 +194,15 @@ export const PreviewVideoPlayer: React.FC<PreviewVideoPlayerProps> = ({
           onClick={handlePlayPause}
         >
           {isPlaying ? (
-            <Pause className={`text-gray-900 ${isMobile ? 'w-6 h-6' : 'w-8 h-8'}`} />
+            <Pause className={`text-foreground ${isMobile ? 'w-6 h-6' : 'w-8 h-8'}`} />
           ) : (
-            <Play className={`text-gray-900 ml-1 ${isMobile ? 'w-6 h-6' : 'w-8 h-8'}`} />
+            <Play className={`text-foreground ml-1 ${isMobile ? 'w-6 h-6' : 'w-8 h-8'}`} />
           )}
         </button>
 
         {/* Preview Badge */}
         <div className={`absolute ${isMobile ? 'top-2 left-2' : 'top-4 left-4'}`}>
-          <span className={`bg-blue-600 text-white rounded-full font-medium ${
+          <span className={`bg-primary text-primary-foreground rounded-full font-medium ${
             isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm'
           }`}>
             Preview
@@ -239,7 +239,7 @@ export const PreviewVideoPlayer: React.FC<PreviewVideoPlayerProps> = ({
 
       {/* Loading State */}
       {!isReady && (
-        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+        <div className="absolute inset-0 bg-background border border-border flex items-center justify-center">
           <div className="text-white text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
             <p className="text-sm">Loading preview...</p>

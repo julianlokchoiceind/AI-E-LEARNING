@@ -41,7 +41,7 @@ export function MobileLoading({
 
   const LoadingSpinner = () => (
     <div className={`${sizeClasses[size]} ${animationClass} ${className}`}>
-      <div className="border-2 border-gray-300 border-t-blue-600 rounded-full w-full h-full"></div>
+      <div className="border-2 border-border border-t-primary rounded-full w-full h-full"></div>
     </div>
   );
 
@@ -50,7 +50,7 @@ export function MobileLoading({
       {[0, 1, 2].map((i) => (
         <div
           key={i}
-          className={`${sizeClasses[size]} bg-blue-600 rounded-full ${
+          className={`${sizeClasses[size]} bg-primary rounded-full ${
             shouldReduceAnimations ? '' : 'animate-bounce'
           }`}
           style={{
@@ -63,16 +63,16 @@ export function MobileLoading({
 
   const LoadingSkeleton = () => (
     <div className={`space-y-3 ${className}`}>
-      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+      <div className="h-4 bg-muted rounded animate-pulse"></div>
       <div className="space-y-2">
-        <div className="h-3 bg-gray-200 rounded animate-pulse"></div>
-        <div className="h-3 bg-gray-200 rounded w-5/6 animate-pulse"></div>
+        <div className="h-3 bg-muted rounded animate-pulse"></div>
+        <div className="h-3 bg-muted rounded w-5/6 animate-pulse"></div>
       </div>
     </div>
   );
 
   const LoadingPulse = () => (
-    <div className={`${sizeClasses[size]} bg-blue-600 rounded-full ${
+    <div className={`${sizeClasses[size]} bg-primary rounded-full ${
       shouldReduceAnimations ? 'opacity-50' : 'animate-pulse'
     } ${className}`} />
   );
@@ -94,7 +94,7 @@ export function MobileLoading({
     <div className="flex flex-col items-center justify-center space-y-3">
       {renderLoading()}
       {text && (
-        <p className={`text-gray-600 text-center ${textSizeClasses[size]} ${
+        <p className={`text-muted-foreground text-center ${textSizeClasses[size]} ${
           isMobile ? 'max-w-xs' : 'max-w-sm'
         }`}>
           {text}
@@ -130,7 +130,7 @@ export function MobileSkeleton({ lines = 3, className = '' }: MobileSkeletonProp
       {Array.from({ length: lines }).map((_, i) => (
         <div
           key={i}
-          className={`h-4 bg-gray-200 rounded ${
+          className={`h-4 bg-muted rounded ${
             shouldReduceAnimations ? '' : 'animate-pulse'
           }`}
           style={{
@@ -160,28 +160,28 @@ export function MobileCardSkeleton({
   const animationClass = shouldReduceAnimations ? '' : 'animate-pulse';
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden ${className}`}>
+    <div className={`bg-white rounded-lg shadow-sm border border-border overflow-hidden ${className}`}>
       {hasImage && (
-        <div className={`h-40 sm:h-48 bg-gray-200 ${animationClass}`} />
+        <div className={`h-40 sm:h-48 bg-muted ${animationClass}`} />
       )}
       <div className="p-4 sm:p-6 space-y-3">
         {/* Title */}
-        <div className={`h-6 bg-gray-200 rounded ${animationClass}`} />
+        <div className={`h-6 bg-muted rounded ${animationClass}`} />
         
         {/* Description lines */}
         <div className="space-y-2">
-          <div className={`h-4 bg-gray-200 rounded ${animationClass}`} />
-          <div className={`h-4 bg-gray-200 rounded w-3/4 ${animationClass}`} />
+          <div className={`h-4 bg-muted rounded ${animationClass}`} />
+          <div className={`h-4 bg-muted rounded w-3/4 ${animationClass}`} />
         </div>
         
         {/* Meta info */}
         <div className="flex space-x-4">
-          <div className={`h-3 bg-gray-200 rounded w-16 ${animationClass}`} />
-          <div className={`h-3 bg-gray-200 rounded w-20 ${animationClass}`} />
+          <div className={`h-3 bg-muted rounded w-16 ${animationClass}`} />
+          <div className={`h-3 bg-muted rounded w-20 ${animationClass}`} />
         </div>
         
         {hasButton && (
-          <div className={`h-10 bg-gray-200 rounded ${animationClass}`} />
+          <div className={`h-10 bg-muted rounded ${animationClass}`} />
         )}
       </div>
     </div>
@@ -224,17 +224,17 @@ export function MobileProgressIndicator({
         <div className={`flex justify-between items-center mb-1 ${
           isMobile ? 'mb-2' : 'mb-1'
         }`}>
-          <span className={`font-medium text-gray-700 ${textSizeClasses[size]}`}>
+          <span className={`font-medium text-foreground ${textSizeClasses[size]}`}>
             Progress
           </span>
-          <span className={`font-medium text-gray-900 ${textSizeClasses[size]}`}>
+          <span className={`font-medium text-foreground ${textSizeClasses[size]}`}>
             {Math.round(progress)}%
           </span>
         </div>
       )}
-      <div className={`w-full bg-gray-200 rounded-full ${sizeClasses[size]}`}>
+      <div className={`w-full bg-muted rounded-full ${sizeClasses[size]}`}>
         <div
-          className={`bg-blue-600 ${sizeClasses[size]} rounded-full transition-all duration-300 ease-out`}
+          className={`bg-primary ${sizeClasses[size]} rounded-full transition-all duration-300 ease-out`}
           style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
         />
       </div>
@@ -263,8 +263,8 @@ export function MobileRefreshIndicator({
 
   return (
     <div className="flex justify-center py-4">
-      <div className="flex items-center space-x-2 text-blue-600">
-        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center space-x-2 text-primary">
+        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         <span className="text-sm font-medium">Refreshing...</span>
       </div>
     </div>

@@ -55,26 +55,26 @@ export const AdminPaymentHistory: React.FC<AdminPaymentHistoryProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/20 text-success';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning/20 text-warning';
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'bg-destructive/20 text-destructive';
       case 'cancelled':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted/50 text-muted-foreground';
       case 'refunded':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-primary/20 text-primary';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted/50 text-muted-foreground';
     }
   };
 
   if (payments.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+      <div className="bg-background rounded-lg shadow-sm border border-border p-8">
         <div className="text-center">
           <svg
-            className="w-12 h-12 text-gray-400 mx-auto mb-4"
+            className="w-12 h-12 text-muted-foreground mx-auto mb-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -86,71 +86,71 @@ export const AdminPaymentHistory: React.FC<AdminPaymentHistoryProps> = ({
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <p className="text-lg font-medium text-gray-900 mb-2">No payment history</p>
-          <p className="text-gray-500">Payment transactions will appear here when available.</p>
+          <p className="text-lg font-medium text-foreground mb-2">No payment history</p>
+          <p className="text-muted-foreground">Payment transactions will appear here when available.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+    <div className="bg-background rounded-lg shadow-sm border border-border overflow-hidden">
+      <table className="min-w-full divide-y divide-border">
+        <thead className="bg-muted/50">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Date
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               User
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Description
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Amount
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Status
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Actions
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white divide-y divide-border">
           {payments.map((payment) => (
             <tr
               key={payment.id}
-              className={onViewDetails ? 'hover:bg-gray-50 cursor-pointer' : ''}
+              className={onViewDetails ? 'hover:bg-muted/30 cursor-pointer' : ''}
               onClick={() => onViewDetails && onViewDetails(payment)}
             >
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                 {formatDate(payment.paid_at || payment.created_at)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-foreground">
                     {payment.user?.name || 'Unknown User'}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {payment.user?.email || 'unknown@email.com'}
                   </p>
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-foreground">
                     {getPaymentDescription(payment)}
                   </p>
                   {payment.provider_payment_id && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       ID: {payment.provider_payment_id}
                     </p>
                   )}
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                 {formatCurrency(payment.amount)} {payment.currency}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
@@ -158,13 +158,13 @@ export const AdminPaymentHistory: React.FC<AdminPaymentHistoryProps> = ({
                   {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                 </Badge>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onViewDetails && onViewDetails(payment);
                   }}
-                  className="text-indigo-600 hover:text-indigo-900"
+                  className="text-primary hover:text-primary/80"
                 >
                   View Details
                 </button>

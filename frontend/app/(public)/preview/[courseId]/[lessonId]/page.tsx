@@ -71,15 +71,15 @@ const PreviewLessonPage = () => {
 
   if (error || !course || !lesson) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
             {typeof error === 'string' ? error : 'Preview Not Available'}
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             This lesson preview is not available or the lesson was not found.
           </p>
           <Button onClick={() => router.push(`/courses/${courseId}`)}>
@@ -91,7 +91,7 @@ const PreviewLessonPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
@@ -109,12 +109,12 @@ const PreviewLessonPage = () => {
               
               <div className="hidden md:block">
                 <h1 className="text-lg font-semibold">{course.title}</h1>
-                <p className="text-sm text-gray-600">{lesson.title}</p>
+                <p className="text-sm text-muted-foreground">{lesson.title}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
                 Preview Mode
               </Badge>
               
@@ -144,12 +144,12 @@ const PreviewLessonPage = () => {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h1 className="text-2xl font-bold mb-2">{lesson.title}</h1>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
                       <span>{formatDuration(lesson.video?.duration || 0)}</span>
                     </div>
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    <Badge variant="outline" className="bg-success/10 text-success border-success/30">
                       Free Preview
                     </Badge>
                   </div>
@@ -157,13 +157,13 @@ const PreviewLessonPage = () => {
               </div>
               
               {lesson.description && (
-                <p className="text-gray-700 mb-6">{lesson.description}</p>
+                <p className="text-foreground mb-6">{lesson.description}</p>
               )}
 
               {lesson.content && (
                 <div>
                   <h3 className="font-semibold mb-3">Lesson Notes</h3>
-                  <div className="prose prose-sm max-w-none text-gray-700">
+                  <div className="prose prose-sm max-w-none text-foreground">
                     {lesson.content}
                   </div>
                 </div>
@@ -179,11 +179,11 @@ const PreviewLessonPage = () => {
                 </h3>
                 <div className="space-y-3">
                   {lesson.resources.map((resource: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div>
                         <h4 className="font-medium">{resource.title}</h4>
                         {resource.description && (
-                          <p className="text-sm text-gray-600">{resource.description}</p>
+                          <p className="text-sm text-muted-foreground">{resource.description}</p>
                         )}
                       </div>
                       <Button
@@ -205,18 +205,18 @@ const PreviewLessonPage = () => {
             {/* Enrollment Prompt */}
             <Card className="p-6 mb-6">
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <PlayCircle className="w-8 h-8 text-blue-600" />
+                <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <PlayCircle className="w-8 h-8 text-primary" />
                 </div>
                 
                 <h3 className="font-semibold mb-2">Ready to learn more?</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   This is just a preview. Enroll to access all {course.total_lessons} lessons and earn your certificate.
                 </p>
                 
                 <div className="mb-4">
                   {course.pricing.is_free ? (
-                    <div className="text-2xl font-bold text-green-600">Free</div>
+                    <div className="text-2xl font-bold text-success">Free</div>
                   ) : (
                     <div className="text-2xl font-bold">${course.pricing.price}</div>
                   )}
@@ -236,24 +236,24 @@ const PreviewLessonPage = () => {
               <h3 className="font-semibold mb-4">Course Info</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Total Lessons:</span>
+                  <span className="text-muted-foreground">Total Lessons:</span>
                   <span className="font-medium">{course.total_lessons}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Duration:</span>
+                  <span className="text-muted-foreground">Duration:</span>
                   <span className="font-medium">{Math.floor(course.total_duration / 60)}h</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Level:</span>
+                  <span className="text-muted-foreground">Level:</span>
                   <span className="font-medium capitalize">{course.level}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Students:</span>
+                  <span className="text-muted-foreground">Students:</span>
                   <span className="font-medium">{course.stats.total_enrollments}</span>
                 </div>
                 {course.stats.average_rating > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Rating:</span>
+                    <span className="text-muted-foreground">Rating:</span>
                     <span className="font-medium">{course.stats.average_rating.toFixed(1)}/5</span>
                   </div>
                 )}

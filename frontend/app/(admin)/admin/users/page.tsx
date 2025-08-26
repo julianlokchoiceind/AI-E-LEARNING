@@ -197,13 +197,13 @@ export default function UserManagement() {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'bg-red-100 text-red-800';
+        return 'bg-destructive/20 text-destructive';
       case 'creator':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-primary/20 text-primary';
       case 'student':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary/20 text-primary';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -214,8 +214,8 @@ export default function UserManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600">Manage platform users, roles, and permissions</p>
+          <h1 className="text-2xl font-bold text-foreground">User Management</h1>
+          <p className="text-muted-foreground">Manage platform users, roles, and permissions</p>
         </div>
       </div>
 
@@ -224,14 +224,14 @@ export default function UserManagement() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => handleFilterChange(e.target.value, 'search')}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="pl-10 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
@@ -239,7 +239,7 @@ export default function UserManagement() {
           <select
             value={roleFilter}
             onChange={(e) => handleFilterChange(e.target.value, 'role')}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">All Roles</option>
             <option value="student">Students</option>
@@ -251,7 +251,7 @@ export default function UserManagement() {
           <select
             value={premiumFilter}
             onChange={(e) => handleFilterChange(e.target.value, 'premium')}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">All Users</option>
             <option value="premium">Premium Users</option>
@@ -276,8 +276,8 @@ export default function UserManagement() {
 
         {/* Bulk Actions */}
         {selectedUsers.size > 0 && (
-          <div className="mt-4 flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-            <span className="text-blue-700">
+          <div className="mt-4 flex items-center justify-between p-4 bg-primary/10 rounded-lg">
+            <span className="text-primary">
               {selectedUsers.size} user{selectedUsers.size > 1 ? 's' : ''} selected
             </span>
             <div className="flex gap-2">
@@ -292,7 +292,7 @@ export default function UserManagement() {
                 variant="outline"
                 size="sm"
                 onClick={handleBulkDelete}
-                className="text-red-600 hover:bg-red-50"
+                className="text-destructive hover:bg-destructive/10"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete Selected
@@ -304,7 +304,7 @@ export default function UserManagement() {
 
       {/* Users Table */}
       <Card className="overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
               Users ({totalItems})
@@ -333,8 +333,8 @@ export default function UserManagement() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
                 <tr>
                   <th className="px-4 py-3">
                     <input
@@ -344,29 +344,29 @@ export default function UserManagement() {
                       className="rounded"
                     />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     User
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Courses
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Last Login
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-border">
                 {users.map((user: any) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr key={user.id} className="hover:bg-muted/30">
                     <td className="px-4 py-4">
                       <input
                         type="checkbox"
@@ -378,14 +378,14 @@ export default function UserManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                          <User className="h-5 w-5 text-gray-600" />
+                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                          <User className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-foreground">
                             {user.name}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-muted-foreground">
                             {user.email}
                           </div>
                         </div>
@@ -397,31 +397,31 @@ export default function UserManagement() {
                           {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                         </Badge>
                         {user.premium_status && (
-                          <Crown className="h-4 w-4 text-yellow-500" />
+                          <Crown className="h-4 w-4 text-warning" />
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm">
-                        <div className={`font-medium ${user.subscription ? 'text-green-600' : 'text-gray-600'}`}>
+                        <div className={`font-medium ${user.subscription ? 'text-success' : 'text-muted-foreground'}`}>
                           {user.subscription ? 'Subscribed' : 'Free User'}
                         </div>
                         {user.subscription && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             {user.subscription.type} - {user.subscription.status}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       <div>
                         <div>{user.stats?.courses_enrolled || 0} enrolled</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {user.stats?.courses_completed || 0} completed
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                       {user.last_login ? 
                         new Date(user.last_login).toLocaleDateString('en-GB') : 
                         'Never'
@@ -447,7 +447,7 @@ export default function UserManagement() {
                           loading={actionLoading}
                           disabled={user.role === 'admin'}
                         >
-                          <Crown className={`h-4 w-4 ${user.premium_status ? 'text-yellow-500' : 'text-gray-400'}`} />
+                          <Crown className={`h-4 w-4 ${user.premium_status ? 'text-warning' : 'text-muted-foreground'}`} />
                         </Button>
                         
                         {user.role !== 'admin' && (
@@ -458,7 +458,7 @@ export default function UserManagement() {
                               setSelectedUser(user);
                               setShowDeleteModal(true);
                             }}
-                            className="text-red-600 hover:bg-red-50"
+                            className="text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -474,7 +474,7 @@ export default function UserManagement() {
 
         {/* Table Footer with Pagination */}
         {totalPages > 1 && (
-          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+          <div className="border-t border-border bg-muted/50 px-6 py-4">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -499,18 +499,18 @@ export default function UserManagement() {
           <div className="space-y-6">
             {/* User Info */}
             <div className="flex items-center space-x-4">
-              <div className="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center">
-                <User className="h-8 w-8 text-gray-600" />
+              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                <User className="h-8 w-8 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="text-lg font-medium text-gray-900">{selectedUser.name}</h3>
-                <p className="text-gray-500">{selectedUser.email}</p>
+                <h3 className="text-lg font-medium text-foreground">{selectedUser.name}</h3>
+                <p className="text-muted-foreground">{selectedUser.email}</p>
                 <div className="flex items-center space-x-2 mt-1">
                   <Badge className={getRoleBadgeColor(selectedUser.role)}>
                     {selectedUser.role.charAt(0).toUpperCase() + selectedUser.role.slice(1)}
                   </Badge>
                   {selectedUser.premium_status && (
-                    <Badge className="bg-yellow-100 text-yellow-800">Premium</Badge>
+                    <Badge className="bg-warning/20 text-warning">Premium</Badge>
                   )}
                 </div>
               </div>
@@ -519,35 +519,35 @@ export default function UserManagement() {
             {/* Statistics */}
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-foreground">
                   {selectedUser.stats?.courses_enrolled || 0}
                 </div>
-                <div className="text-sm text-gray-500">Courses Enrolled</div>
+                <div className="text-sm text-muted-foreground">Courses Enrolled</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-foreground">
                   {selectedUser.stats?.courses_completed || 0}
                 </div>
-                <div className="text-sm text-gray-500">Completed</div>
+                <div className="text-sm text-muted-foreground">Completed</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-foreground">
                   {selectedUser.stats?.certificates_earned || 0}
                 </div>
-                <div className="text-sm text-gray-500">Certificates</div>
+                <div className="text-sm text-muted-foreground">Certificates</div>
               </div>
             </div>
 
             {/* Role Management */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Change Role
               </label>
               <select
                 value={selectedUser.role}
                 onChange={(e) => handleRoleChange(selectedUser.id, e.target.value)}
                 disabled={selectedUser.role === 'admin'}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="student">Student</option>
                 <option value="creator">Content Creator</option>
@@ -586,7 +586,7 @@ export default function UserManagement() {
           title="Delete User"
         >
           <div className="space-y-4">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Are you sure you want to delete <strong>{selectedUser.name}</strong>? 
               This action cannot be undone and will remove all user data including courses, progress, and payments.
             </p>
@@ -596,7 +596,7 @@ export default function UserManagement() {
                 onClick={handleDeleteUser}
                 loading={actionLoading}
                 variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete User
@@ -625,15 +625,15 @@ export default function UserManagement() {
             {/* Warning Icon & Message */}
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-destructive" />
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   Confirm Bulk Deletion
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   You are about to permanently delete {selectedUsers.size} user{selectedUsers.size > 1 ? 's' : ''}. 
                   This action cannot be undone.
                 </p>
@@ -641,12 +641,12 @@ export default function UserManagement() {
             </div>
 
             {/* Warning Details */}
-            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+            <div className="bg-warning/10 border border-warning/30 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                <h4 className="font-medium text-yellow-800">Warning</h4>
+                <AlertTriangle className="w-5 h-5 text-warning" />
+                <h4 className="font-medium text-warning">Warning</h4>
               </div>
-              <p className="text-sm text-yellow-700">
+              <p className="text-sm text-warning">
                 All user data including courses, progress, certificates, and payments will be permanently deleted.
                 This action cannot be reversed.
               </p>

@@ -129,9 +129,9 @@ const NavigationGuard: React.FC<NavigationGuardProps> = ({
       >
         <div className="p-6">
           <div className="flex items-start space-x-3">
-            <AlertTriangle className="w-6 h-6 text-amber-500 flex-shrink-0 mt-1" />
+            <AlertTriangle className="w-6 h-6 text-warning flex-shrink-0 mt-1" />
             <div className="flex-1">
-              <p className="text-gray-700 mb-2">
+              <p className="text-foreground mb-2">
                 {saveStatus === 'error' ? (
                   <>
                     Your changes could not be saved{errorMessage ? `: ${errorMessage}` : '.'} 
@@ -143,8 +143,8 @@ const NavigationGuard: React.FC<NavigationGuardProps> = ({
               </p>
               
               {saveStatus === 'error' && errorMessage && (
-                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-700">
+                <div className="mt-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+                  <p className="text-sm text-destructive">
                     <strong>Error:</strong> {errorMessage}
                   </p>
                 </div>
@@ -165,7 +165,7 @@ const NavigationGuard: React.FC<NavigationGuardProps> = ({
               variant="outline"
               onClick={handleContinueWithoutSaving}
               disabled={isSaving}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
             >
               <X className="w-4 h-4 mr-1" />
               Leave Without Saving

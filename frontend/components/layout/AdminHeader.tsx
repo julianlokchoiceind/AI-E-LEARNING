@@ -73,14 +73,14 @@ export function AdminHeader() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6">
+    <header className="bg-card border-b border-border h-16 flex items-center justify-between px-6">
       {/* Left Section */}
       <div className="flex items-center space-x-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={handleBackToDashboard}
-          className="text-gray-600"
+          className="text-muted-foreground"
         >
           <Home className="h-4 w-4 mr-2" />
           Back to Dashboard
@@ -88,11 +88,11 @@ export function AdminHeader() {
         
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search users, courses, payments..."
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 w-80"
+            className="pl-10 pr-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary w-80"
           />
         </div>
       </div>
@@ -109,9 +109,9 @@ export function AdminHeader() {
             onClick={() => setShowNotifications(!showNotifications)}
           >
             <div className="relative inline-block">
-              <Bell className="h-5 w-5 text-gray-600" />
+              <Bell className="h-5 w-5 text-muted-foreground" />
               {unreadCount > 0 && (
-                <div className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-red-500 rounded-full flex items-center justify-center border-[1.5px] border-white shadow-sm px-0.5 transform translate-x-1/4 -translate-y-1/4">
+                <div className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-destructive rounded-full flex items-center justify-center border-[1.5px] border-card shadow-sm px-0.5 transform translate-x-1/4 -translate-y-1/4">
                   <span className="text-[9px] font-bold text-white leading-none">
                     {unreadCount}
                   </span>
@@ -122,9 +122,9 @@ export function AdminHeader() {
           
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
-              <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-900">Support Notifications</h3>
+            <div className="absolute right-0 mt-2 w-80 bg-card border border-border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">Support Notifications</h3>
                 {unreadCount > 0 && (
                   <Badge variant="destructive" size="sm">
                     {unreadCount}
@@ -142,18 +142,18 @@ export function AdminHeader() {
                           router.push(`/admin/support/${ticket.id}`);
                           setShowNotifications(false);
                         }}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 cursor-pointer transition-colors duration-150"
+                        className="w-full px-4 py-3 text-left hover:bg-accent border-b border-border last:border-b-0 cursor-pointer transition-colors duration-150"
                       >
                         <div className="flex items-start space-x-3">
-                          <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <div className="w-2 h-2 bg-destructive rounded-full mt-2 flex-shrink-0"></div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm font-medium text-foreground truncate">
                               {ticket.title}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               From: {ticket.user_name} • {getCategoryDisplayName(ticket.category)}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {new Date(ticket.created_at).toLocaleDateString()}
                             </p>
                           </div>
@@ -164,7 +164,7 @@ export function AdminHeader() {
                       </button>
                     ))}
                     
-                    <div className="px-4 py-3 border-t border-gray-200">
+                    <div className="px-4 py-3 border-t border-border">
                       <Button
                         size="sm"
                         variant="outline"
@@ -179,8 +179,8 @@ export function AdminHeader() {
                     </div>
                   </div>
                 ) : (
-                  <div className="px-4 py-8 text-center text-gray-500">
-                    <Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                  <div className="px-4 py-8 text-center text-muted-foreground">
+                    <Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm">No new support tickets</p>
                   </div>
                 )}
@@ -194,9 +194,9 @@ export function AdminHeader() {
         <div className="relative" ref={userMenuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900 focus:outline-none"
+            className="flex items-center space-x-2 text-sm text-muted-foreground hover:text-foreground focus:outline-none"
           >
-            <div className="h-8 w-8 rounded-full bg-red-600 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
               <User className="h-4 w-4 text-white" />
             </div>
             <span className="hidden md:block font-medium">{user?.name}</span>
@@ -204,17 +204,17 @@ export function AdminHeader() {
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-              <div className="px-4 py-3 border-b border-gray-200">
-                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                <p className="text-sm text-gray-500">{user?.email}</p>
-                <p className="text-xs text-red-600 font-medium">Administrator</p>
+            <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-lg shadow-lg z-50">
+              <div className="px-4 py-3 border-b border-border">
+                <p className="text-sm font-medium text-foreground">{user?.name}</p>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                <p className="text-xs text-destructive font-medium">Administrator</p>
               </div>
               
               <div className="py-2">
                 <button
                   onClick={() => router.push('/profile')}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="flex items-center w-full px-4 py-2 text-sm text-muted-foreground hover:bg-accent"
                 >
                   <User className="h-4 w-4 mr-3" />
                   Profile Settings
@@ -222,17 +222,17 @@ export function AdminHeader() {
                 
                 <button
                   onClick={() => router.push('/admin/settings')}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="flex items-center w-full px-4 py-2 text-sm text-muted-foreground hover:bg-accent"
                 >
                   <Settings className="h-4 w-4 mr-3" />
                   Admin Settings
                 </button>
                 
-                <div className="border-t border-gray-200 my-2"></div>
+                <div className="border-t border-border my-2"></div>
                 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  className="flex items-center w-full px-4 py-2 text-sm text-destructive hover:bg-destructive/10"
                 >
                   <LogOut className="h-4 w-4 mr-3" />
                   Sign Out

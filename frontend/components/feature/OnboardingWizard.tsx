@@ -308,35 +308,35 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
   const renderWelcomeStep = () => (
     <div className="text-center space-y-6">
-      <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
-        <Sparkles className="w-10 h-10 text-blue-600" />
+      <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
+        <Sparkles className="w-10 h-10 text-primary" />
       </div>
       
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">
+        <h2 className="text-2xl font-bold text-foreground mb-3">
           Welcome to AI E-Learning Platform! 🚀
         </h2>
-        <p className="text-gray-600 max-w-md mx-auto">
+        <p className="text-muted-foreground max-w-md mx-auto">
           Let's personalize your learning journey. We'll help you find the perfect courses 
           based on your goals, skill level, and interests.
         </p>
       </div>
       
       <div className="grid grid-cols-2 gap-4 max-w-md mx-auto text-sm">
-        <div className="flex items-center space-x-2 text-gray-600">
-          <CheckCircle className="w-4 h-4 text-green-500" />
+        <div className="flex items-center space-x-2 text-muted-foreground">
+          <CheckCircle className="w-4 h-4 text-success" />
           <span>Personalized recommendations</span>
         </div>
-        <div className="flex items-center space-x-2 text-gray-600">
-          <CheckCircle className="w-4 h-4 text-green-500" />
+        <div className="flex items-center space-x-2 text-muted-foreground">
+          <CheckCircle className="w-4 h-4 text-success" />
           <span>AI Study Buddy</span>
         </div>
-        <div className="flex items-center space-x-2 text-gray-600">
-          <CheckCircle className="w-4 h-4 text-green-500" />
+        <div className="flex items-center space-x-2 text-muted-foreground">
+          <CheckCircle className="w-4 h-4 text-success" />
           <span>Progress tracking</span>
         </div>
-        <div className="flex items-center space-x-2 text-gray-600">
-          <CheckCircle className="w-4 h-4 text-green-500" />
+        <div className="flex items-center space-x-2 text-muted-foreground">
+          <CheckCircle className="w-4 h-4 text-success" />
           <span>Certificates</span>
         </div>
       </div>
@@ -359,7 +359,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         </Button>
       </div>
       
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-muted-foreground">
         Takes 2-3 minutes • You can always change these later
       </p>
     </div>
@@ -391,15 +391,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <Target className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Choose Your Learning Path</h2>
-          <p className="text-gray-600">Select the areas you're most interested in learning</p>
+          <Target className="w-12 h-12 text-primary mx-auto mb-3" />
+          <h2 className="text-xl font-bold text-foreground mb-2">Choose Your Learning Path</h2>
+          <p className="text-muted-foreground">Select the areas you're most interested in learning</p>
         </div>
 
         {/* Learning Paths */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Learning Paths <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium text-muted-foreground mb-3">
+            Learning Paths <span className="text-destructive">*</span>
           </label>
           <div className="grid grid-cols-2 gap-3">
             {learningPaths.map((path) => (
@@ -413,13 +413,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 }}
                 className={`p-3 rounded-lg border text-left transition-colors ${
                   state.selectedPaths.includes(path.id)
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-border/80'
                 }`}
               >
                 <div className="text-lg mb-1">{path.icon}</div>
-                <div className="text-sm font-medium text-gray-900">{path.title}</div>
-                <div className="text-xs text-gray-500">{path.description}</div>
+                <div className="text-sm font-medium text-foreground">{path.title}</div>
+                <div className="text-xs text-muted-foreground">{path.description}</div>
               </button>
             ))}
           </div>
@@ -427,8 +427,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
         {/* Skill Level */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Current Skill Level <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium text-muted-foreground mb-3">
+            Current Skill Level <span className="text-destructive">*</span>
           </label>
           <div className="space-y-2">
             {skillLevels.map((level) => (
@@ -437,12 +437,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 onClick={() => setState(prev => ({ ...prev, skillLevel: level.id }))}
                 className={`w-full p-3 rounded-lg border text-left transition-colors ${
                   state.skillLevel === level.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-border/80'
                 }`}
               >
-                <div className="font-medium text-gray-900">{level.title}</div>
-                <div className="text-sm text-gray-500">{level.description}</div>
+                <div className="font-medium text-foreground">{level.title}</div>
+                <div className="text-sm text-muted-foreground">{level.description}</div>
               </button>
             ))}
           </div>
@@ -450,8 +450,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
         {/* Time Commitment */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Time Commitment <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium text-muted-foreground mb-3">
+            Time Commitment <span className="text-destructive">*</span>
           </label>
           <div className="grid grid-cols-3 gap-3">
             {timeCommitments.map((time) => (
@@ -460,13 +460,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 onClick={() => setState(prev => ({ ...prev, timeCommitment: time.id }))}
                 className={`p-3 rounded-lg border text-center transition-colors ${
                   state.timeCommitment === time.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-border/80'
                 }`}
               >
                 <div className="flex justify-center mb-2">{time.icon}</div>
-                <div className="text-sm font-medium text-gray-900">{time.title}</div>
-                <div className="text-xs text-gray-500">{time.description}</div>
+                <div className="text-sm font-medium text-foreground">{time.title}</div>
+                <div className="text-xs text-muted-foreground">{time.description}</div>
               </button>
             ))}
           </div>
@@ -489,66 +489,66 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   const renderProfileSetupStep = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <User className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Complete Your Profile</h2>
-        <p className="text-gray-600">Help us personalize your experience</p>
+        <User className="w-12 h-12 text-primary mx-auto mb-3" />
+        <h2 className="text-xl font-bold text-foreground mb-2">Complete Your Profile</h2>
+        <p className="text-muted-foreground">Help us personalize your experience</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Job Title</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-2">Job Title</label>
           <input
             type="text"
             value={state.title}
             onChange={(e) => setState(prev => ({ ...prev, title: e.target.value }))}
             placeholder="e.g. Software Developer"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-2">Location</label>
           <input
             type="text"
             value={state.location}
             onChange={(e) => setState(prev => ({ ...prev, location: e.target.value }))}
             placeholder="e.g. Ho Chi Minh City, Vietnam"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+        <label className="block text-sm font-medium text-muted-foreground mb-2">Bio</label>
         <textarea
           value={state.bio}
           onChange={(e) => setState(prev => ({ ...prev, bio: e.target.value }))}
           placeholder="Tell us about yourself and your learning goals..."
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn Profile</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-2">LinkedIn Profile</label>
           <input
             type="url"
             value={state.linkedin}
             onChange={(e) => setState(prev => ({ ...prev, linkedin: e.target.value }))}
             placeholder="https://linkedin.com/in/username"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">GitHub Profile</label>
+          <label className="block text-sm font-medium text-muted-foreground mb-2">GitHub Profile</label>
           <input
             type="url"
             value={state.github}
             onChange={(e) => setState(prev => ({ ...prev, github: e.target.value }))}
             placeholder="https://github.com/username"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
       </div>
@@ -577,9 +577,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   const renderRecommendationsStep = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <BookOpen className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Recommended for You</h2>
-        <p className="text-gray-600">Based on your preferences, here are some great courses to start with</p>
+        <BookOpen className="w-12 h-12 text-primary mx-auto mb-3" />
+        <h2 className="text-xl font-bold text-foreground mb-2">Recommended for You</h2>
+        <p className="text-muted-foreground">Based on your preferences, here are some great courses to start with</p>
       </div>
 
       {state.recommendations && (
@@ -590,8 +590,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 key={course.id}
                 className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                   state.selectedCourses.includes(course.id)
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-border/80'
                 }`}
                 onClick={() => {
                   const newSelected = state.selectedCourses.includes(course.id)
@@ -602,32 +602,32 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               >
                 <div className="flex items-start space-x-3">
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{course.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{course.description}</p>
-                    <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                    <h3 className="font-medium text-foreground">{course.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{course.description}</p>
+                    <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
                       <span>{course.level}</span>
                       <span>•</span>
                       <span>{course.total_lessons} lessons</span>
                       <span>•</span>
                       <span>{course.is_free ? 'Free' : `$${course.price}`}</span>
                     </div>
-                    <p className="text-xs text-blue-600 mt-1">{course.recommendation_reason}</p>
+                    <p className="text-xs text-primary mt-1">{course.recommendation_reason}</p>
                   </div>
                   {state.selectedCourses.includes(course.id) && (
-                    <CheckCircle className="w-5 h-5 text-blue-600" />
+                    <CheckCircle className="w-5 h-5 text-primary" />
                   )}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-2">Your Learning Timeline</h4>
-            <p className="text-sm text-gray-600">{state.recommendations.estimated_timeline}</p>
+          <div className="bg-muted/50 rounded-lg p-4">
+            <h4 className="font-medium text-foreground mb-2">Your Learning Timeline</h4>
+            <p className="text-sm text-muted-foreground">{state.recommendations.estimated_timeline}</p>
             <div className="mt-3 space-y-1">
               {state.recommendations.next_steps.slice(0, 3).map((step, index) => (
-                <div key={index} className="flex items-center space-x-2 text-sm text-gray-600">
-                  <CheckCircle className="w-3 h-3 text-green-500" />
+                <div key={index} className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <CheckCircle className="w-3 h-3 text-success" />
                   <span>{step}</span>
                 </div>
               ))}
@@ -659,23 +659,23 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
   const renderCompletedStep = () => (
     <div className="text-center space-y-6">
-      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-        <CheckCircle className="w-10 h-10 text-green-600" />
+      <div className="w-20 h-20 bg-success/20 rounded-full flex items-center justify-center mx-auto">
+        <CheckCircle className="w-10 h-10 text-success" />
       </div>
       
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">
+        <h2 className="text-2xl font-bold text-foreground mb-3">
           Welcome to the Platform! 🎉
         </h2>
-        <p className="text-gray-600 max-w-md mx-auto">
+        <p className="text-muted-foreground max-w-md mx-auto">
           Your learning journey is ready to begin. Start with your recommended courses
           and don't forget to use the AI Study Buddy for help along the way.
         </p>
       </div>
       
-      <div className="bg-blue-50 rounded-lg p-4">
-        <h3 className="font-medium text-blue-900 mb-2">What's Next?</h3>
-        <ul className="text-sm text-blue-800 space-y-1">
+      <div className="bg-primary/10 rounded-lg p-4">
+        <h3 className="font-medium text-primary mb-2">What's Next?</h3>
+        <ul className="text-sm text-primary space-y-1">
           <li>• Start your first recommended course</li>
           <li>• Set up your learning schedule</li>
           <li>• Join the community discussions</li>
@@ -714,17 +714,17 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         {state.currentStep !== 'welcome' && state.currentStep !== 'completed' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h1 className="text-lg font-semibold text-gray-900">Setup Your Account</h1>
+              <h1 className="text-lg font-semibold text-foreground">Setup Your Account</h1>
               <button
                 onClick={handleSkipOnboarding}
                 disabled={state.isLoading}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-muted-foreground hover:text-muted-foreground"
               >
                 Skip
               </button>
             </div>
             <ProgressBar value={state.progress} className="h-2" />
-            <p className="text-sm text-gray-500">Step {getStepNumber(state.currentStep)} of 3</p>
+            <p className="text-sm text-muted-foreground">Step {getStepNumber(state.currentStep)} of 3</p>
           </div>
         )}
 

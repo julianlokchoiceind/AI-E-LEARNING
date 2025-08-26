@@ -170,7 +170,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
       <div className={`${positionClasses[position]} ${className}`}>
         <Button
           onClick={() => setIsOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-transform hover:scale-105"
+          className="bg-primary hover:bg-primary/90 text-white rounded-full p-4 shadow-lg transition-transform hover:scale-105"
           aria-label="Open AI Assistant"
         >
           <MessageCircle className="w-6 h-6" />
@@ -181,9 +181,9 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
 
   return (
     <div className={`${position !== 'embedded' ? positionClasses[position] : ''} ${className}`}>
-      <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-80 h-96 flex flex-col">
+      <div className="bg-white border border-border rounded-lg shadow-xl w-80 h-96 flex flex-col">
         {/* Header */}
-        <div className="bg-blue-600 text-white p-3 rounded-t-lg flex items-center justify-between">
+        <div className="bg-primary text-white p-3 rounded-t-lg flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Bot className="w-5 h-5" />
             <div>
@@ -209,7 +209,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowSettings(!showSettings)}
-                className="text-white hover:bg-blue-700 p-1"
+                className="text-white hover:bg-primary/90 p-1"
                 title="AI Settings"
               >
                 <Settings className="w-4 h-4" />
@@ -221,7 +221,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsOpen(false)}
-                className="text-white hover:bg-blue-700 p-1"
+                className="text-white hover:bg-primary/90 p-1"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -231,11 +231,11 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
         
         {/* Settings Panel */}
         {enableEnhancedFeatures && showSettings && (
-          <div className="border-b border-gray-200 p-3 bg-gray-50">
+          <div className="border-b border-border p-3 bg-muted/50">
             <div className="space-y-3">
               {/* Difficulty Preference */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Response Style</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Response Style</label>
                 <div className="flex space-x-1">
                   {(['simple', 'detailed', 'technical'] as const).map((level) => (
                     <Button
@@ -253,7 +253,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
               
               {/* Language Preference */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Language</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Language</label>
                 <div className="flex space-x-1">
                   <Button
                     variant={languagePreference === 'en' ? 'primary' : 'ghost'}
@@ -279,7 +279,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
               {/* Learning Goals */}
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-medium text-gray-700">Learning Goals ({learningGoals.length})</label>
+                  <label className="text-xs font-medium text-muted-foreground">Learning Goals ({learningGoals.length})</label>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -294,12 +294,12 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                   <div className="space-y-1">
                     {learningGoals.map((goal, index) => (
                       <div key={index} className="flex items-center justify-between bg-white rounded p-1">
-                        <span className="text-xs text-gray-600 flex-1">{goal}</span>
+                        <span className="text-xs text-muted-foreground flex-1">{goal}</span>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => removeLearningGoal(goal)}
-                          className="text-xs p-1 h-auto text-red-500 hover:text-red-700"
+                          className="text-xs p-1 h-auto text-destructive hover:text-destructive/80"
                         >
                           <X className="w-3 h-3" />
                         </Button>
@@ -312,7 +312,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                         value={newGoal}
                         onChange={(e) => setNewGoal(e.target.value)}
                         placeholder="Add learning goal..."
-                        className="flex-1 text-xs border border-gray-300 rounded px-2 py-1"
+                        className="flex-1 text-xs border border-border rounded px-2 py-1"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter' && newGoal.trim()) {
                             addLearningGoal(newGoal.trim());
@@ -351,19 +351,19 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                 message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
               }`}>
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white flex-shrink-0 ${
-                  message.type === 'user' ? 'bg-gray-500' : 'bg-blue-600'
+                  message.type === 'user' ? 'bg-muted/500' : 'bg-primary'
                 }`}>
                   {message.type === 'user' ? <User className="w-3 h-3" /> : <Bot className="w-3 h-3" />}
                 </div>
                 
                 <div className={`rounded-lg p-2 ${
                   message.type === 'user' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100 text-gray-900'
+                    ? 'bg-primary text-white' 
+                    : 'bg-muted text-foreground'
                 }`}>
                   <div className="text-sm whitespace-pre-wrap">{message.content}</div>
                   <div className={`text-xs mt-1 ${
-                    message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                    message.type === 'user' ? 'text-primary-foreground' : 'text-muted-foreground'
                   }`}>
                     {formatTime(message.timestamp)}
                   </div>
@@ -376,14 +376,14 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
           {isTyping && (
             <div className="flex justify-start">
               <div className="flex items-start space-x-2 max-w-[85%]">
-                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white">
                   <Bot className="w-3 h-3" />
                 </div>
-                <div className="bg-gray-100 text-gray-900 rounded-lg p-2">
+                <div className="bg-muted text-foreground rounded-lg p-2">
                   <div className="flex space-x-1">
-                    <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce" />
-                    <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce delay-100" />
-                    <div className="w-1 h-1 bg-gray-400 rounded-full animate-bounce delay-200" />
+                    <div className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce" />
+                    <div className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce delay-100" />
+                    <div className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce delay-200" />
                   </div>
                 </div>
               </div>
@@ -395,8 +395,8 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
 
         {/* Quick Suggestions */}
         {showQuickSuggestions && quickSuggestions.length > 0 && (
-          <div className="border-t border-gray-100 p-2">
-            <p className="text-xs text-gray-500 mb-2">Quick questions:</p>
+          <div className="border-t border-border/50 p-2">
+            <p className="text-xs text-muted-foreground mb-2">Quick questions:</p>
             <div className="space-y-1">
               {quickSuggestions.map((suggestion: any, index: number) => (
                 <Button
@@ -414,7 +414,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                     sendMessage(suggestion);
                     setShowQuickSuggestions(false);
                   }}
-                  className="w-full text-left justify-start text-xs text-gray-600 hover:text-blue-600 hover:bg-blue-50 p-1 h-auto"
+                  className="w-full text-left justify-start text-xs text-muted-foreground hover:text-primary hover:bg-primary/10 p-1 h-auto"
                 >
                   {suggestion}
                 </Button>
@@ -433,21 +433,21 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask me anything..."
-              className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-2 py-1 text-sm border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent"
               disabled={isLoading}
             />
             <Button
               onClick={handleSend}
               disabled={!inputValue.trim() || isLoading}
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white p-1"
+              className="bg-primary hover:bg-primary/90 text-white p-1"
             >
               <Send className="w-4 h-4" />
             </Button>
           </div>
           
           <div className="flex justify-between items-center mt-1">
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               {enableEnhancedFeatures ? (
                 <div className="flex items-center space-x-2">
                   <span>
@@ -480,7 +480,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                     const goalText = learningGoals.join(', ');
                     sendMessage(`Help me with my learning goals: ${goalText}`);
                   }}
-                  className="text-xs text-blue-500 hover:text-blue-700 p-1"
+                  className="text-xs text-primary hover:text-primary/80 p-1"
                   title="Ask about learning goals"
                 >
                   <Lightbulb className="w-3 h-3" />
@@ -490,7 +490,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={clearMessages}
-                className="text-xs text-gray-500 hover:text-gray-700 p-1"
+                className="text-xs text-muted-foreground hover:text-muted-foreground p-1"
               >
                 Clear
               </Button>

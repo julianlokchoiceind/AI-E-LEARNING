@@ -23,7 +23,7 @@ export default function AuthLayout({
   // Show loading spinner while checking auth status
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-muted/50">
         <LoadingSpinner size="lg" message="Loading..." />
       </div>
     )
@@ -32,7 +32,7 @@ export default function AuthLayout({
   // Don't render auth pages if user is already logged in
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-muted/50">
         <LoadingSpinner size="lg" message="Redirecting to dashboard..." />
       </div>
     )

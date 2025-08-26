@@ -25,8 +25,8 @@ const CertificateViewPage = () => {
   const [updateData, setUpdateData] = useState<CertificateUpdate>({
     is_public: true,
     template_id: 'default',
-    background_color: '#1e40af',
-    accent_color: '#dbeafe',
+    background_color: 'hsl(var(--primary))',
+    accent_color: 'hsl(var(--primary-light))',
   });
 
   // React Query hook for fetching certificate
@@ -92,7 +92,7 @@ const CertificateViewPage = () => {
   if (!certificate) {
     return (
       <div className="text-center py-16">
-        <p className="text-gray-600 text-lg">Certificate not found</p>
+        <p className="text-muted-foreground text-lg">Certificate not found</p>
       </div>
     );
   }
@@ -115,7 +115,7 @@ const CertificateViewPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Certificate Details</h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {certificate.course_title}
             </p>
           </div>
@@ -139,44 +139,44 @@ const CertificateViewPage = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Certificate Number</p>
+              <p className="text-sm text-muted-foreground">Certificate Number</p>
               <p className="font-mono">{certificate.certificate_number}</p>
             </div>
             
             <div>
-              <p className="text-sm text-gray-600">Issue Date</p>
+              <p className="text-sm text-muted-foreground">Issue Date</p>
               <p>{new Date(certificate.issue_date).toLocaleDateString()}</p>
             </div>
             
             <div>
-              <p className="text-sm text-gray-600">Verification Code</p>
+              <p className="text-sm text-muted-foreground">Verification Code</p>
               <p className="font-mono">{certificate.verification_code}</p>
             </div>
             
             <div>
-              <p className="text-sm text-gray-600">Privacy Setting</p>
+              <p className="text-sm text-muted-foreground">Privacy Setting</p>
               <div className="flex items-center gap-2 mt-1">
                 {certificate.is_public ? (
                   <>
-                    <Globe className="h-4 w-4 text-green-600" />
-                    <span className="text-green-700">Public</span>
+                    <Globe className="h-4 w-4 text-success" />
+                    <span className="text-success">Public</span>
                   </>
                 ) : (
                   <>
-                    <Lock className="h-4 w-4 text-gray-600" />
-                    <span className="text-gray-700">Private</span>
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Private</span>
                   </>
                 )}
               </div>
             </div>
             
             <div>
-              <p className="text-sm text-gray-600">Course Category</p>
+              <p className="text-sm text-muted-foreground">Course Category</p>
               <p className="capitalize">{certificate.course_category.replace('-', ' ')}</p>
             </div>
             
             <div>
-              <p className="text-sm text-gray-600">Course Level</p>
+              <p className="text-sm text-muted-foreground">Course Level</p>
               <p className="capitalize">{certificate.course_level}</p>
             </div>
           </div>
@@ -192,7 +192,7 @@ const CertificateViewPage = () => {
         <div className="space-y-4">
           {/* Privacy Setting */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Privacy Setting
             </label>
             <div className="space-y-2">
@@ -201,11 +201,11 @@ const CertificateViewPage = () => {
                   type="radio"
                   checked={updateData.is_public === true}
                   onChange={() => setUpdateData({ ...updateData, is_public: true })}
-                  className="h-4 w-4 text-blue-600"
+                  className="h-4 w-4 text-primary"
                 />
                 <div>
                   <p className="font-medium">Public</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Anyone can view this certificate with the link
                   </p>
                 </div>
@@ -216,11 +216,11 @@ const CertificateViewPage = () => {
                   type="radio"
                   checked={updateData.is_public === false}
                   onChange={() => setUpdateData({ ...updateData, is_public: false })}
-                  className="h-4 w-4 text-blue-600"
+                  className="h-4 w-4 text-primary"
                 />
                 <div>
                   <p className="font-medium">Private</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Only you can view this certificate
                   </p>
                 </div>
@@ -230,7 +230,7 @@ const CertificateViewPage = () => {
 
           {/* Template */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Certificate Template
             </label>
             <select
@@ -247,12 +247,12 @@ const CertificateViewPage = () => {
 
           {/* Colors */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Certificate Colors
             </label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
+                <label className="block text-sm text-muted-foreground mb-1">
                   Primary Color
                 </label>
                 <input
@@ -264,7 +264,7 @@ const CertificateViewPage = () => {
               </div>
               
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
+                <label className="block text-sm text-muted-foreground mb-1">
                   Accent Color
                 </label>
                 <input

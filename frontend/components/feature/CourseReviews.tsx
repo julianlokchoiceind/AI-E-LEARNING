@@ -12,7 +12,7 @@ export function CourseReviews({ courseId, isEnrolled, isCreator }: CourseReviews
   return (
     <div className="space-y-6">
       <div className="text-center py-8">
-        <p className="text-gray-600">Course reviews functionality is temporarily disabled for performance testing.</p>
+        <p className="text-muted-foreground">Course reviews functionality is temporarily disabled for performance testing.</p>
       </div>
     </div>
   );

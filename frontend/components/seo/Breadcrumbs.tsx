@@ -46,7 +46,7 @@ export function Breadcrumbs({
     });
   }
 
-  const defaultSeparator = <ChevronRight className="h-4 w-4 text-gray-400" />;
+  const defaultSeparator = <ChevronRight className="h-4 w-4 text-muted-foreground" />;
 
   return (
     <>
@@ -59,7 +59,7 @@ export function Breadcrumbs({
               <li>
                 <Link 
                   href="/"
-                  className="text-gray-500 hover:text-gray-700 transition-colors flex items-center"
+                  className="text-muted-foreground hover:text-foreground transition-colors flex items-center"
                   aria-label={t('nav.home')}
                 >
                   <Home className="h-4 w-4" />
@@ -79,7 +79,7 @@ export function Breadcrumbs({
               <li>
                 {item.current || !item.href ? (
                   <span 
-                    className="font-medium text-gray-900"
+                    className="font-medium text-foreground"
                     aria-current={item.current ? 'page' : undefined}
                   >
                     {item.name}
@@ -87,7 +87,7 @@ export function Breadcrumbs({
                 ) : (
                   <Link 
                     href={item.href}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -270,10 +270,10 @@ export function MobileBreadcrumbs({
         {hasMore && (
           <>
             <li>
-              <span className="text-gray-400">...</span>
+              <span className="text-muted-foreground">...</span>
             </li>
             <li className="flex items-center">
-              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </li>
           </>
         )}
@@ -283,7 +283,7 @@ export function MobileBreadcrumbs({
             <li>
               {item.current || !item.href ? (
                 <span 
-                  className="font-medium text-gray-900 truncate max-w-[120px]"
+                  className="font-medium text-foreground truncate max-w-[120px]"
                   aria-current={item.current ? 'page' : undefined}
                   title={item.name}
                 >
@@ -292,7 +292,7 @@ export function MobileBreadcrumbs({
               ) : (
                 <Link 
                   href={item.href}
-                  className="text-gray-500 hover:text-gray-700 transition-colors truncate max-w-[120px]"
+                  className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[120px]"
                   title={item.name}
                 >
                   {item.name}
@@ -302,7 +302,7 @@ export function MobileBreadcrumbs({
             
             {index < mobileItems.length - 1 && (
               <li className="flex items-center">
-                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </li>
             )}
           </React.Fragment>

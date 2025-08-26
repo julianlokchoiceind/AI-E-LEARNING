@@ -362,7 +362,7 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
 
             <div className="space-y-6">
               {formData.questions.map((question, qIndex) => (
-                <div key={qIndex} className="border border-gray-200 rounded-lg p-4">
+                <div key={qIndex} className="border border-border rounded-lg p-4">
                   <div className="flex justify-between items-start mb-4">
                     <h4 className="font-medium">Question {qIndex + 1}</h4>
                     {formData.questions.length > 1 && (
@@ -371,7 +371,7 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => removeQuestion(qIndex)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                         disabled={loading}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -381,7 +381,7 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
 
                   {/* Question Type */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Question Type
                     </label>
                     <div className="flex gap-4">
@@ -426,18 +426,18 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
 
                   {/* Answer Options */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Answer Options
                     </label>
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="text-sm text-muted-foreground mb-3">
                       Select the correct answer by clicking the radio button next to it:
                     </p>
                     {question.type === 'true_false' ? (
                       <div className="space-y-2">
                         <label className={`flex items-center p-3 rounded-lg border transition-colors cursor-pointer ${
                           question.correct_answer === 0 
-                            ? 'bg-green-50 border-green-500 text-green-700' 
-                            : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                            ? 'bg-success/10 border-success text-success' 
+                            : 'bg-muted border-border hover:border-border'
                         }`}>
                           <input
                             type="radio"
@@ -450,14 +450,14 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
                           <span className="flex items-center gap-2">
                             True
                             {question.correct_answer === 0 && (
-                              <span className="text-green-600 font-medium">✓ Correct Answer</span>
+                              <span className="text-success font-medium">✓ Correct Answer</span>
                             )}
                           </span>
                         </label>
                         <label className={`flex items-center p-3 rounded-lg border transition-colors cursor-pointer ${
                           question.correct_answer === 1 
-                            ? 'bg-green-50 border-green-500 text-green-700' 
-                            : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                            ? 'bg-success/10 border-success text-success' 
+                            : 'bg-muted border-border hover:border-border'
                         }`}>
                           <input
                             type="radio"
@@ -470,7 +470,7 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
                           <span className="flex items-center gap-2">
                             False
                             {question.correct_answer === 1 && (
-                              <span className="text-green-600 font-medium">✓ Correct Answer</span>
+                              <span className="text-success font-medium">✓ Correct Answer</span>
                             )}
                           </span>
                         </label>
@@ -480,8 +480,8 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
                         {question.options.map((option, oIndex) => (
                           <div key={oIndex} className={`flex items-center gap-2 p-3 rounded-lg border transition-colors ${
                             question.correct_answer === oIndex 
-                              ? 'bg-green-50 border-green-500' 
-                              : 'bg-gray-50 border-gray-200'
+                              ? 'bg-success/10 border-success' 
+                              : 'bg-muted border-border'
                           }`}>
                             <input
                               type="radio"
@@ -496,25 +496,25 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
                               value={option}
                               onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
                               placeholder={`Option ${oIndex + 1}...`}
-                              className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
                                 question.correct_answer === oIndex 
-                                  ? 'border-green-300 bg-white' 
-                                  : 'border-gray-300'
+                                  ? 'border-success/50 bg-white' 
+                                  : 'border-border'
                               }`}
                               disabled={loading}
                             />
                             {question.correct_answer === oIndex && (
-                              <span className="text-green-600 font-medium flex-shrink-0">✓ Correct</span>
+                              <span className="text-success font-medium flex-shrink-0">✓ Correct</span>
                             )}
                           </div>
                         ))}
                       </div>
                     )}
                     {errors[`question_${qIndex}_options`] && (
-                      <p className="text-red-500 text-sm mt-1">{errors[`question_${qIndex}_options`]}</p>
+                      <p className="text-destructive text-sm mt-1">{errors[`question_${qIndex}_options`]}</p>
                     )}
                     {errors[`question_${qIndex}_correct`] && (
-                      <p className="text-red-500 text-sm mt-1">{errors[`question_${qIndex}_correct`]}</p>
+                      <p className="text-destructive text-sm mt-1">{errors[`question_${qIndex}_correct`]}</p>
                     )}
                   </div>
 
@@ -535,7 +535,7 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
           </div>
 
           {/* Quiz Settings */}
-          <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+          <div className="space-y-4 bg-muted p-4 rounded-lg">
             <h3 className="font-medium">Quiz Settings</h3>
             <div className="grid grid-cols-2 gap-4">
               <label className="flex items-center">

@@ -264,8 +264,8 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
   if (error || !quiz) {
     return (
       <div className="text-center py-8">
-        <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-        <p className="text-gray-600">No quiz available for this lesson.</p>
+        <AlertCircle className="w-12 h-12 text-warning mx-auto mb-4" />
+        <p className="text-muted-foreground">No quiz available for this lesson.</p>
       </div>
     );
   }
@@ -282,15 +282,15 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
             <div className="text-center">
               <h3 className="text-xl font-semibold mb-2">{quiz.title}</h3>
               
-              <div className="text-4xl font-bold my-4 text-blue-600">
+              <div className="text-4xl font-bold my-4 text-primary">
                 {(quiz as any)?.score !== undefined ? (quiz as any).score : score}%
               </div>
               
-              <p className="text-gray-600 mb-4">
+              <p className="text-muted-foreground mb-4">
                 {((quiz as any)?.score !== undefined ? (quiz as any).score : score) >= (quiz.config?.pass_percentage || 70) ? 'You passed!' : `Need ${quiz.config?.pass_percentage}% to pass`}
               </p>
               
-              <div className="text-gray-500 text-sm">
+              <div className="text-muted-foreground text-sm">
                 Quiz completed - Final result
               </div>
             </div>
@@ -301,7 +301,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
             <div className="space-y-4">
               <button
                 onClick={() => setIsReviewExpanded(!isReviewExpanded)}
-                className="flex items-center gap-2 text-lg font-semibold hover:text-blue-600 transition-colors"
+                className="flex items-center gap-2 text-lg font-semibold hover:text-primary transition-colors"
               >
                 <span>Review Your Answers:</span>
                 <ChevronDown 
@@ -316,7 +316,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
               }`}>
                 {/* Review Question Header */}
                 <div className="flex justify-between items-center mb-4">
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-muted-foreground">
                     Question {currentReviewIndex + 1} of {quiz.questions?.length}
                   </div>
                 </div>
@@ -335,7 +335,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
                         <h4 className="font-medium">
                           Q{currentReviewIndex + 1}: {question.question}
                         </h4>
-                        <span className={isCorrect ? 'text-green-600' : 'text-red-600'}>
+                        <span className={isCorrect ? 'text-success' : 'text-destructive'}>
                           {isCorrect ? '✓' : '✗'}
                         </span>
                       </div>
@@ -345,28 +345,28 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
                           ['True', 'False'].map((label, i) => (
                             <label key={i} className={`
                               flex items-center p-3 rounded-lg border cursor-not-allowed
-                              ${studentAnswer === i && isCorrect ? 'bg-green-50 border-green-500' : ''}
-                              ${studentAnswer === i && !isCorrect ? 'bg-red-50 border-red-500' : ''}
-                              ${question.correct_answer === i && studentAnswer !== i ? 'border-green-500 border-dashed' : ''}
-                              ${studentAnswer !== i && question.correct_answer !== i ? 'border-gray-200' : ''}
+                              ${studentAnswer === i && isCorrect ? 'bg-success/20 border-success' : ''}
+                              ${studentAnswer === i && !isCorrect ? 'bg-destructive/20 border-destructive' : ''}
+                              ${question.correct_answer === i && studentAnswer !== i ? 'border-success border-dashed' : ''}
+                              ${studentAnswer !== i && question.correct_answer !== i ? 'border-border' : ''}
                             `.trim()}>
                               <input type="radio" checked={studentAnswer === i} disabled className="mr-2" />
                               <span>{label}</span>
-                              {question.correct_answer === i && <span className="ml-auto text-green-600">✓</span>}
+                              {question.correct_answer === i && <span className="ml-auto text-success">✓</span>}
                             </label>
                           ))
                         ) : (
                           question.options?.map((option, i) => (
                             <label key={i} className={`
                               flex items-center p-3 rounded-lg border cursor-not-allowed
-                              ${studentAnswer === i && isCorrect ? 'bg-green-50 border-green-500' : ''}
-                              ${studentAnswer === i && !isCorrect ? 'bg-red-50 border-red-500' : ''}
-                              ${question.correct_answer === i && studentAnswer !== i ? 'border-green-500 border-dashed' : ''}
-                              ${studentAnswer !== i && question.correct_answer !== i ? 'border-gray-200' : ''}
+                              ${studentAnswer === i && isCorrect ? 'bg-success/20 border-success' : ''}
+                              ${studentAnswer === i && !isCorrect ? 'bg-destructive/20 border-destructive' : ''}
+                              ${question.correct_answer === i && studentAnswer !== i ? 'border-success border-dashed' : ''}
+                              ${studentAnswer !== i && question.correct_answer !== i ? 'border-border' : ''}
                             `.trim()}>
                               <input type="radio" checked={studentAnswer === i} disabled className="mr-2" />
                               <span>{option}</span>
-                              {question.correct_answer === i && <span className="ml-auto text-green-600">✓</span>}
+                              {question.correct_answer === i && <span className="ml-auto text-success">✓</span>}
                             </label>
                           ))
                         )}
@@ -406,24 +406,24 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
     return (
       <Card className="p-6">
         <div className="text-center">
-          <HelpCircle className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+          <HelpCircle className="w-16 h-16 text-primary mx-auto mb-4" />
           <h3 className="text-xl font-semibold mb-2 capitalize">{quiz.title}</h3>
           {quiz.description && (
-            <p className="text-gray-600 mb-4">{quiz.description}</p>
+            <p className="text-muted-foreground mb-4">{quiz.description}</p>
           )}
           
           <div className="grid grid-cols-2 gap-4 max-w-md mx-auto my-6 text-sm">
             <div className="text-left">
-              <span className="text-gray-500">Questions:</span>
+              <span className="text-muted-foreground">Questions:</span>
               <span className="ml-2 font-medium">{quiz.questions?.length || 0}</span>
             </div>
             <div className="text-left">
-              <span className="text-gray-500">Pass Score:</span>
+              <span className="text-muted-foreground">Pass Score:</span>
               <span className="ml-2 font-medium">{quiz.config?.pass_percentage}%</span>
             </div>
             {quiz.config?.time_limit && (
               <div className="text-left">
-                <span className="text-gray-500">Time Limit:</span>
+                <span className="text-muted-foreground">Time Limit:</span>
                 <span className="ml-2 font-medium">{Math.round(quiz.config.time_limit / 60)} min</span>
               </div>
             )}
@@ -455,13 +455,13 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
     <div className="space-y-4">
       {/* Quiz Header */}
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           Question {currentQuestionIndex + 1} of {quiz.questions?.length}
         </div>
         {timeRemaining && (
           <div className="flex items-center gap-2 text-sm">
             <Clock className="w-4 h-4" />
-            <span className={timeRemaining < 60 ? 'text-red-600 font-medium' : ''}>
+            <span className={timeRemaining < 60 ? 'text-destructive font-medium' : ''}>
               {formatTime(timeRemaining)}
             </span>
           </div>
@@ -481,8 +481,8 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
                 onClick={() => handleAnswerSelect(true)}
                 className={`w-full text-left p-4 rounded-lg border transition-colors ${
                   selectedAnswers[currentQuestionIndex] === true
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary bg-primary/20'
+                    : 'border-border hover:border-border'
                 }`}
               >
                 True
@@ -491,8 +491,8 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
                 onClick={() => handleAnswerSelect(false)}
                 className={`w-full text-left p-4 rounded-lg border transition-colors ${
                   selectedAnswers[currentQuestionIndex] === false
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary bg-primary/20'
+                    : 'border-border hover:border-border'
                 }`}
               >
                 False
@@ -505,8 +505,8 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
                 onClick={() => handleAnswerSelect(index.toString())}
                 className={`w-full text-left p-4 rounded-lg border transition-colors ${
                   selectedAnswers[currentQuestionIndex] === index.toString()
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-primary bg-primary/20'
+                    : 'border-border hover:border-border'
                 }`}
               >
                 {option}

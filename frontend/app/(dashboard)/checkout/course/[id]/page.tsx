@@ -70,13 +70,13 @@ export default function CourseCheckoutPage() {
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'beginner':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/20 text-success';
       case 'intermediate':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning/20 text-warning';
       case 'advanced':
-        return 'bg-red-100 text-red-800';
+        return 'bg-destructive/20 text-destructive';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-foreground';
     }
   };
 
@@ -91,14 +91,14 @@ export default function CourseCheckoutPage() {
   if (!course) {
     return (
       <div className="text-center py-16">
-        <p className="text-gray-600 text-lg">Course not found</p>
+        <p className="text-muted-foreground text-lg">Course not found</p>
       </div>
     );
   }
 
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-muted py-8">
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
@@ -110,8 +110,8 @@ export default function CourseCheckoutPage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Course
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900">Complete Your Purchase</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Complete Your Purchase</h1>
+          <p className="text-muted-foreground mt-2">
             You're one step away from accessing this amazing course!
           </p>
         </div>
@@ -133,7 +133,7 @@ export default function CourseCheckoutPage() {
                 
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg mb-2">{course.title}</h3>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                  <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
                     {course.description}
                   </p>
                   
@@ -142,17 +142,17 @@ export default function CourseCheckoutPage() {
                       {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
                     </Badge>
                     
-                    <div className="flex items-center gap-1 text-gray-600">
+                    <div className="flex items-center gap-1 text-muted-foreground">
                       <Clock className="w-4 h-4" />
                       <span>{formatDuration(course.total_duration)}</span>
                     </div>
                     
-                    <div className="flex items-center gap-1 text-gray-600">
+                    <div className="flex items-center gap-1 text-muted-foreground">
                       <BookOpen className="w-4 h-4" />
                       <span>{course.total_lessons} lessons</span>
                     </div>
                     
-                    <div className="flex items-center gap-1 text-gray-600">
+                    <div className="flex items-center gap-1 text-muted-foreground">
                       <Users className="w-4 h-4" />
                       <span>{course.stats.total_enrollments} students</span>
                     </div>
@@ -196,7 +196,7 @@ export default function CourseCheckoutPage() {
                 
                 {course.pricing.discount_price && (
                   <>
-                    <div className="flex justify-between text-green-600">
+                    <div className="flex justify-between text-success">
                       <span>Discount</span>
                       <span className="font-semibold">
                         -${(course.pricing.price - course.pricing.discount_price).toFixed(2)}
@@ -223,36 +223,36 @@ export default function CourseCheckoutPage() {
 
               <div className="mt-6 pt-6 border-t">
                 <h3 className="font-semibold mb-3">What's Included:</h3>
-                <ul className="space-y-2 text-sm text-gray-600">
+                <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
+                    <span className="text-success mr-2">✓</span>
                     Lifetime access to course content
                   </li>
                   <li className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
+                    <span className="text-success mr-2">✓</span>
                     {formatDuration(course.total_duration)} of video content
                   </li>
                   <li className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
+                    <span className="text-success mr-2">✓</span>
                     Interactive quizzes and assignments
                   </li>
                   <li className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
+                    <span className="text-success mr-2">✓</span>
                     Certificate of completion
                   </li>
                   <li className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
+                    <span className="text-success mr-2">✓</span>
                     AI Study Buddy assistance
                   </li>
                 </ul>
               </div>
 
               <div className="mt-6 pt-6 border-t">
-                <div className="flex items-center text-sm text-gray-600">
+                <div className="flex items-center text-sm text-muted-foreground">
                   <Shield className="w-4 h-4 mr-2" />
                   <span>Secure payment powered by Stripe</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   14-day money-back guarantee
                 </p>
               </div>

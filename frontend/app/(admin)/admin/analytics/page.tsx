@@ -57,16 +57,16 @@ export default function AdminAnalyticsPage() {
 
       // User distribution pie chart
       userDistribution: [
-        { name: 'Students', value: adminStats.total_students, fill: '#3B82F6' },
-        { name: 'Creators', value: adminStats.total_creators, fill: '#10B981' },
-        { name: 'Admins', value: adminStats.total_admins, fill: '#F59E0B' }
+        { name: 'Students', value: adminStats.total_students, fill: 'hsl(var(--primary))' },
+        { name: 'Creators', value: adminStats.total_creators, fill: 'hsl(var(--success))' },
+        { name: 'Admins', value: adminStats.total_admins, fill: 'hsl(var(--warning))' }
       ],
 
       // Course status distribution
       courseDistribution: [
-        { name: 'Published', value: adminStats.published_courses, fill: '#10B981' },
-        { name: 'Pending Review', value: adminStats.pending_review_courses, fill: '#F59E0B' },
-        { name: 'Draft', value: adminStats.draft_courses, fill: '#6B7280' }
+        { name: 'Published', value: adminStats.published_courses, fill: 'hsl(var(--success))' },
+        { name: 'Pending Review', value: adminStats.pending_review_courses, fill: 'hsl(var(--warning))' },
+        { name: 'Draft', value: adminStats.draft_courses, fill: 'hsl(var(--muted-foreground))' }
       ],
 
       // Weekly activity pattern (mock data based on available stats)
@@ -136,12 +136,12 @@ export default function AdminAnalyticsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-          <p className="text-gray-600">Comprehensive platform insights and trends</p>
+          <h1 className="text-2xl font-bold text-foreground">Analytics Dashboard</h1>
+          <p className="text-muted-foreground">Comprehensive platform insights and trends</p>
         </div>
         <div className="flex items-center gap-3">
           {/* Time Range Selector */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-muted rounded-lg p-1">
             <Button
               variant={timeRange === '7days' ? 'primary' : 'ghost'}
               size="sm"
@@ -174,16 +174,16 @@ export default function AdminAnalyticsPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-muted-foreground">Total Revenue</p>
+              <p className="text-2xl font-bold text-foreground">
                 ${paymentStats?.revenue?.total?.toLocaleString() || stats?.total_revenue?.toLocaleString() || '0'}
               </p>
-              <p className="text-sm text-green-600">
+              <p className="text-sm text-success">
                 ${paymentStats?.revenue?.this_month?.toLocaleString() || stats?.revenue_this_month?.toLocaleString() || '0'} this month
               </p>
             </div>
-            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-8 h-8 text-green-600" />
+            <div className="h-12 w-12 bg-success/20 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-8 h-8 text-success" />
             </div>
           </div>
         </Card>
@@ -191,16 +191,16 @@ export default function AdminAnalyticsPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Platform Users</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-muted-foreground">Platform Users</p>
+              <p className="text-2xl font-bold text-foreground">
                 {stats?.total_users?.toLocaleString() || '0'}
               </p>
-              <p className="text-sm text-blue-600">
+              <p className="text-sm text-primary">
                 +{stats?.new_users_today || 0} today
               </p>
             </div>
-            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="w-8 h-8 text-blue-600" />
+            <div className="h-12 w-12 bg-primary/20 rounded-lg flex items-center justify-center">
+              <Users className="w-8 h-8 text-primary" />
             </div>
           </div>
         </Card>
@@ -208,16 +208,16 @@ export default function AdminAnalyticsPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Published Courses</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-muted-foreground">Published Courses</p>
+              <p className="text-2xl font-bold text-foreground">
                 {stats?.published_courses || '0'}
               </p>
-              <p className="text-sm text-orange-600">
+              <p className="text-sm text-warning">
                 {stats?.pending_review_courses || 0} pending review
               </p>
             </div>
-            <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-8 h-8 text-purple-600" />
+            <div className="h-12 w-12 bg-secondary/20 rounded-lg flex items-center justify-center">
+              <BookOpen className="w-8 h-8 text-secondary" />
             </div>
           </div>
         </Card>
@@ -225,16 +225,16 @@ export default function AdminAnalyticsPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Enrollments</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-muted-foreground">Total Enrollments</p>
+              <p className="text-2xl font-bold text-foreground">
                 {stats?.total_enrollments?.toLocaleString() || '0'}
               </p>
-              <p className="text-sm text-indigo-600">
+              <p className="text-sm text-secondary">
                 {stats?.active_enrollments || 0} active
               </p>
             </div>
-            <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-8 h-8 text-indigo-600" />
+            <div className="h-12 w-12 bg-secondary/20 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-8 h-8 text-secondary" />
             </div>
           </div>
         </Card>
@@ -286,39 +286,39 @@ export default function AdminAnalyticsPage() {
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-success">
               {((stats?.completed_courses || 0) / Math.max(stats?.total_enrollments || 1, 1) * 100).toFixed(1)}%
             </p>
-            <p className="text-sm text-gray-600">Course Completion Rate</p>
+            <p className="text-sm text-muted-foreground">Course Completion Rate</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-blue-600">
+            <p className="text-2xl font-bold text-primary">
               ${((paymentStats?.revenue?.total || stats?.total_revenue || 0) / Math.max(stats?.total_users || 1, 1)).toFixed(0)}
             </p>
-            <p className="text-sm text-gray-600">Revenue per User</p>
+            <p className="text-sm text-muted-foreground">Revenue per User</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-purple-600">
+            <p className="text-2xl font-bold text-secondary">
               {(stats?.active_users_this_week || 0)}
             </p>
-            <p className="text-sm text-gray-600">Active Users (Week)</p>
+            <p className="text-sm text-muted-foreground">Active Users (Week)</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-indigo-600">
+            <p className="text-2xl font-bold text-secondary">
               {paymentStats?.success_rate?.toFixed(1) || '100.0'}%
             </p>
-            <p className="text-sm text-gray-600">Payment Success Rate</p>
+            <p className="text-sm text-muted-foreground">Payment Success Rate</p>
           </div>
         </div>
       </Card>
 
       {/* Info Note */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
         <div className="flex items-start">
-          <PieChart className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+          <PieChart className="w-5 h-5 text-primary mt-0.5 mr-3 flex-shrink-0" />
           <div>
-            <h3 className="text-sm font-medium text-blue-900">Analytics Dashboard</h3>
-            <p className="text-sm text-blue-700 mt-1">
+            <h3 className="text-sm font-medium text-primary">Analytics Dashboard</h3>
+            <p className="text-sm text-primary/90 mt-1">
               This dashboard provides comprehensive platform insights using real-time data from courses, users, and payments. 
               Data refreshes automatically and can be viewed across different time periods.
             </p>

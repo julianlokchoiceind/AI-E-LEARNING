@@ -35,13 +35,13 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   const isActive = status === SubscriptionStatus.ACTIVE;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-lg shadow-sm border border-border p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-foreground">
             {isPro ? 'Pro Subscription' : 'Free Plan'}
           </h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {isPro 
               ? 'Unlimited access to all courses and features' 
               : 'Limited access to free courses'}
@@ -55,12 +55,12 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       {isPro && (
         <div className="space-y-2 mb-6">
           <div className="flex items-center text-sm">
-            <span className="text-gray-500 w-24">Price:</span>
+            <span className="text-muted-foreground w-24">Price:</span>
             <span className="font-medium">$29/month</span>
           </div>
           {currentPeriodStart && currentPeriodEnd && (
             <div className="flex items-center text-sm">
-              <span className="text-gray-500 w-24">Billing Period:</span>
+              <span className="text-muted-foreground w-24">Billing Period:</span>
               <span className="font-medium">
                 {formatSubscriptionPeriod(currentPeriodStart, currentPeriodEnd)}
               </span>
@@ -68,8 +68,8 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           )}
           {cancelAtPeriodEnd && (
             <div className="flex items-center text-sm">
-              <span className="text-gray-500 w-24">Status:</span>
-              <span className="text-yellow-600 font-medium">
+              <span className="text-muted-foreground w-24">Status:</span>
+              <span className="text-warning font-medium">
                 Cancels at period end
               </span>
             </div>
@@ -105,8 +105,8 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       </div>
 
       {isPro && (
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <h4 className="font-medium text-gray-900 mb-3">Pro Benefits</h4>
+        <div className="mt-6 pt-6 border-t border-border">
+          <h4 className="font-medium text-foreground mb-3">Pro Benefits</h4>
           <ul className="space-y-2">
             {[
               'Unlimited access to all courses',
@@ -116,9 +116,9 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               'Ad-free experience',
               'Early access to new courses',
             ].map((benefit, index) => (
-              <li key={index} className="flex items-center text-sm text-gray-600">
+              <li key={index} className="flex items-center text-sm text-muted-foreground">
                 <svg 
-                  className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" 
+                  className="w-4 h-4 text-success mr-2 flex-shrink-0" 
                   fill="currentColor" 
                   viewBox="0 0 20 20"
                 >

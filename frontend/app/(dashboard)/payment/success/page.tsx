@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { CheckCircle, ArrowRight, Download, Clock } from 'lucide-react';
 import { useCourseQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
@@ -31,23 +32,23 @@ export default function PaymentSuccessPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Success Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-success/20 rounded-full mb-4">
+            <CheckCircle className="w-8 h-8 text-success" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Payment Successful!
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-muted-foreground text-lg">
             Welcome to your new course. You're all set to start learning!
           </p>
         </div>
@@ -69,10 +70,10 @@ export default function PaymentSuccessPage() {
                   )}
                   <div>
                     <h3 className="font-semibold text-lg mb-1">{course.title}</h3>
-                    <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+                    <p className="text-muted-foreground text-sm mb-2 line-clamp-2">
                       {course.description}
                     </p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
                         {formatDuration(course.total_duration)}
@@ -84,23 +85,23 @@ export default function PaymentSuccessPage() {
 
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    <CheckCircle className="w-4 h-4 text-success mr-2" />
                     <span>Lifetime access to course content</span>
                   </div>
                   <div className="flex items-center text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    <CheckCircle className="w-4 h-4 text-success mr-2" />
                     <span>All video lessons and materials</span>
                   </div>
                   <div className="flex items-center text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    <CheckCircle className="w-4 h-4 text-success mr-2" />
                     <span>Interactive quizzes and assignments</span>
                   </div>
                   <div className="flex items-center text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    <CheckCircle className="w-4 h-4 text-success mr-2" />
                     <span>Certificate of completion</span>
                   </div>
                   <div className="flex items-center text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                    <CheckCircle className="w-4 h-4 text-success mr-2" />
                     <span>AI Study Buddy assistance</span>
                   </div>
                 </div>
@@ -124,7 +125,7 @@ export default function PaymentSuccessPage() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-600">Course details will be available shortly.</p>
+                <p className="text-muted-foreground">Course details will be available shortly.</p>
                 <Button 
                   onClick={() => router.push('/my-courses')}
                   variant="outline"
@@ -142,48 +143,48 @@ export default function PaymentSuccessPage() {
             
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-blue-600 text-sm font-semibold">1</span>
+                <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-primary text-sm font-semibold">1</span>
                 </div>
                 <div>
                   <h3 className="font-medium mb-1">Start Your First Lesson</h3>
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Jump right into the course content and begin your learning journey.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-blue-600 text-sm font-semibold">2</span>
+                <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-primary text-sm font-semibold">2</span>
                 </div>
                 <div>
                   <h3 className="font-medium mb-1">Use AI Study Buddy</h3>
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Get instant help and explanations from our AI assistant throughout the course.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-blue-600 text-sm font-semibold">3</span>
+                <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-primary text-sm font-semibold">3</span>
                 </div>
                 <div>
                   <h3 className="font-medium mb-1">Complete Quizzes</h3>
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Test your knowledge with interactive quizzes after each lesson.
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-blue-600 text-sm font-semibold">4</span>
+                <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-primary text-sm font-semibold">4</span>
                 </div>
                 <div>
                   <h3 className="font-medium mb-1">Earn Your Certificate</h3>
-                  <p className="text-gray-600 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Complete the course to receive a verified certificate of completion.
                   </p>
                 </div>
@@ -230,7 +231,7 @@ export default function PaymentSuccessPage() {
         {paymentIntentId && (
           <Card className="mt-8 p-6">
             <h3 className="font-medium mb-2">Payment Details</h3>
-            <div className="text-sm text-gray-600 space-y-1">
+            <div className="text-sm text-muted-foreground space-y-1">
               <p>Payment ID: {paymentIntentId}</p>
               <p>Date: {new Date().toLocaleDateString()}</p>
               <p>Amount: ${course?.pricing?.discount_price || course?.pricing?.price || 'N/A'}</p>

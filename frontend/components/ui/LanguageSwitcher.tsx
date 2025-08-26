@@ -37,8 +37,8 @@ export function LanguageSwitcher({
             disabled={isLoading}
             className={`px-3 py-1 rounded-md text-sm transition-colors ${
               locale === loc
-                ? 'bg-blue-100 text-blue-700 font-medium'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                ? 'bg-primary/20 text-primary font-medium'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
             } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {showFlag && (
@@ -80,7 +80,7 @@ export function LanguageSwitcher({
           />
           
           {/* Dropdown */}
-          <div className="absolute right-0 top-full mt-2 z-20 min-w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+          <div className="absolute right-0 top-full mt-2 z-20 min-w-[160px] bg-background border border-border rounded-lg shadow-lg py-1">
             {SUPPORTED_LOCALES.map((loc) => (
               <button
                 key={loc}
@@ -88,14 +88,14 @@ export function LanguageSwitcher({
                 disabled={isLoading}
                 className={`w-full flex items-center gap-3 px-4 py-2 text-left text-sm transition-colors ${
                   locale === loc
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-50'
-                } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:bg-muted/30'
+                } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted/30'}`}
               >
                 <span className="text-lg">{LOCALE_FLAGS[loc]}</span>
                 <span>{LOCALE_NAMES[loc]}</span>
                 {locale === loc && (
-                  <div className="ml-auto h-2 w-2 bg-blue-600 rounded-full" />
+                  <div className="ml-auto h-2 w-2 bg-primary rounded-full" />
                 )}
               </button>
             ))}

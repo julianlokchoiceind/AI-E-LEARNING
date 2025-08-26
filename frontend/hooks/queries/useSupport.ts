@@ -23,6 +23,7 @@ interface SupportTicketCreateData {
   category: TicketCategory;
   priority: TicketPriority;
   user_id?: string;
+  attachments?: string[];
 }
 
 interface SupportTicketUpdateData {

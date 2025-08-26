@@ -102,7 +102,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
 
   return (
     <div 
-      className={`p-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${
+      className={`p-4 flex items-center justify-between hover:bg-muted/50 transition-colors ${
         isAccessible && !isEditable ? 'cursor-pointer' : ''
       } ${isLocked ? 'opacity-60' : ''}`}
       onClick={!isEditable ? handleClick : undefined}
@@ -110,7 +110,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
       <div className="flex items-center gap-3 flex-1">
         {/* Drag Handle */}
         {isDraggable && (
-          <div className="cursor-move text-gray-400 hover:text-gray-600">
+          <div className="cursor-move text-muted-foreground hover:text-foreground">
             <GripVertical className="w-4 h-4" />
           </div>
         )}
@@ -118,16 +118,16 @@ const LessonCard: React.FC<LessonCardProps> = ({
         {/* Lesson Status Icon */}
         <div className="flex-shrink-0">
           {lesson.is_completed && (!lesson.has_quiz || lesson.progress?.quiz_passed) ? (
-            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-success flex items-center justify-center">
               <CheckCircle className="w-5 h-5 text-white" />
             </div>
           ) : isLocked ? (
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-              <Lock className="w-4 h-4 text-gray-500" />
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+              <Lock className="w-4 h-4 text-muted-foreground" />
             </div>
           ) : (
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-              <PlayCircle className="w-5 h-5 text-blue-600" />
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+              <PlayCircle className="w-5 h-5 text-primary" />
             </div>
           )}
         </div>
@@ -135,7 +135,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
         {/* Lesson Info */}
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h4 className={`font-medium ${isLocked ? 'text-gray-500' : 'text-gray-900'}`}>
+            <h4 className={`font-medium ${isLocked ? 'text-muted-foreground' : 'text-foreground'}`}>
               {lesson.order}. {lesson.title}
             </h4>
             {lesson.is_free_preview && (
@@ -147,11 +147,11 @@ const LessonCard: React.FC<LessonCardProps> = ({
           </div>
           
           {lesson.description && (
-            <p className="text-sm text-gray-600 mt-1">{lesson.description}</p>
+            <p className="text-sm text-muted-foreground mt-1">{lesson.description}</p>
           )}
           
           {/* Lesson Meta */}
-          <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
+          <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <PlayCircle className="w-3 h-3" />
               <span>{formatDuration(lesson.video_duration)}</span>
@@ -227,7 +227,7 @@ const LessonCard: React.FC<LessonCardProps> = ({
                   onDelete(lesson.id);
                 }}
               >
-                <Trash2 className="w-4 h-4 text-red-500" />
+                <Trash2 className="w-4 h-4 text-destructive" />
               </Button>
             )}
           </>

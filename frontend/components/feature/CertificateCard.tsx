@@ -26,25 +26,25 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      'programming': 'bg-blue-100 text-blue-800',
-      'ai-fundamentals': 'bg-purple-100 text-purple-800',
-      'machine-learning': 'bg-green-100 text-green-800',
-      'ai-tools': 'bg-yellow-100 text-yellow-800',
-      'production-ai': 'bg-red-100 text-red-800',
+      'programming': 'bg-primary/20 text-primary',
+      'ai-fundamentals': 'bg-primary/20 text-primary',
+      'machine-learning': 'bg-success/20 text-success',
+      'ai-tools': 'bg-warning/20 text-warning',
+      'production-ai': 'bg-destructive/20 text-destructive',
     };
-    return colors[category] || 'bg-gray-100 text-gray-800';
+    return colors[category] || 'bg-muted/50 text-muted-foreground';
   };
 
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'beginner':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/20 text-success';
       case 'intermediate':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning/20 text-warning';
       case 'advanced':
-        return 'bg-red-100 text-red-800';
+        return 'bg-destructive/20 text-destructive';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted/50 text-muted-foreground';
     }
   };
 
@@ -95,7 +95,7 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
               {certificate.course_level}
             </Badge>
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Creator: {certificate.course_creator}
           </p>
         </div>
@@ -103,17 +103,17 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
         {/* Achievement Stats */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <p className="text-sm text-gray-500">Final Score</p>
+            <p className="text-sm text-muted-foreground">Final Score</p>
             <p className="text-lg font-semibold">{certificate.final_score}%</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Duration</p>
+            <p className="text-sm text-muted-foreground">Duration</p>
             <p className="text-lg font-semibold">{certificate.total_hours.toFixed(1)}h</p>
           </div>
         </div>
 
         {/* Dates */}
-        <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
           <div className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />
             <span>Issued {formatDate(certificate.issue_date)}</span>
@@ -123,8 +123,8 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
         {/* Status */}
         {certificate.is_active ? (
           <div className="flex items-center gap-2 mb-4">
-            <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-            <span className="text-sm text-green-700">Valid Certificate</span>
+            <div className="h-2 w-2 bg-success rounded-full"></div>
+            <span className="text-sm text-success">Valid Certificate</span>
             {certificate.is_public && (
               <Badge variant="outline">
                 Public
@@ -133,8 +133,8 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
           </div>
         ) : (
           <div className="flex items-center gap-2 mb-4">
-            <div className="h-2 w-2 bg-red-500 rounded-full"></div>
-            <span className="text-sm text-red-700">Revoked</span>
+            <div className="h-2 w-2 bg-destructive rounded-full"></div>
+            <span className="text-sm text-destructive">Revoked</span>
           </div>
         )}
 

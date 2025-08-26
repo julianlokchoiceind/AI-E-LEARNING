@@ -82,7 +82,7 @@ export function Pagination({
     <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
       {/* Information text */}
       {showInfo && (
-        <div className="text-sm text-gray-600 order-2 sm:order-1">
+        <div className="text-sm text-muted-foreground order-2 sm:order-1">
           Showing {startItem} to {endItem} of {totalItems} items
         </div>
       )}
@@ -108,7 +108,7 @@ export function Pagination({
             page === 'ellipsis' ? (
               <div
                 key={`ellipsis-${index}`}
-                className="flex items-center justify-center w-9 h-9 text-gray-400"
+                className="flex items-center justify-center w-9 h-9 text-muted-foreground"
                 aria-label="More pages"
               >
                 <MoreHorizontal className="h-4 w-4" />

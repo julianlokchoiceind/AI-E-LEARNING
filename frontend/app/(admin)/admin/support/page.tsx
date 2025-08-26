@@ -23,6 +23,7 @@ import {
   useCloseSupportTicket,
   useReopenSupportTicket
 } from '@/hooks/queries/useSupport';
+import { ToastService } from '@/lib/toast/ToastService';
 import {
   SupportTicket,
   TicketStats,
@@ -209,8 +210,8 @@ export default function AdminSupportPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Support Ticket Management</h1>
-          <p className="text-gray-600">Manage and respond to customer support tickets</p>
+          <h1 className="text-2xl font-bold text-foreground">Support Ticket Management</h1>
+          <p className="text-muted-foreground">Manage and respond to customer support tickets</p>
         </div>
       </div>
 
@@ -222,10 +223,10 @@ export default function AdminSupportPage() {
               <p className="text-2xl font-bold">
                 {statsLoading ? '...' : statGetters.getTotalTickets()}
               </p>
-              <p className="text-sm text-gray-600">Total Tickets</p>
+              <p className="text-sm text-muted-foreground">Total Tickets</p>
             </div>
-            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-8 h-8 text-blue-600" />
+            <div className="h-12 w-12 bg-primary/20 rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-8 h-8 text-primary" />
             </div>
           </div>
         </Card>
@@ -236,10 +237,10 @@ export default function AdminSupportPage() {
               <p className="text-2xl font-bold">
                 {statsLoading ? '...' : statGetters.getOpenTickets()}
               </p>
-              <p className="text-sm text-gray-600">Open Tickets</p>
+              <p className="text-sm text-muted-foreground">Open Tickets</p>
             </div>
-            <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <AlertCircle className="w-8 h-8 text-yellow-600" />
+            <div className="h-12 w-12 bg-warning/20 rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-warning" />
             </div>
           </div>
         </Card>
@@ -250,10 +251,10 @@ export default function AdminSupportPage() {
               <p className="text-2xl font-bold">
                 {statsLoading ? '...' : statGetters.getAvgResponseTime()}
               </p>
-              <p className="text-sm text-gray-600">Avg Response Time</p>
+              <p className="text-sm text-muted-foreground">Avg Response Time</p>
             </div>
-            <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Clock className="w-8 h-8 text-purple-600" />
+            <div className="h-12 w-12 bg-secondary/20 rounded-lg flex items-center justify-center">
+              <Clock className="w-8 h-8 text-secondary" />
             </div>
           </div>
         </Card>
@@ -262,10 +263,10 @@ export default function AdminSupportPage() {
 
       {/* Show stats error if any */}
       {statsError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-center">
-            <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
-            <span className="text-sm text-red-700">
+            <AlertCircle className="h-5 w-5 text-destructive mr-2" />
+            <span className="text-sm text-destructive/90">
               Error loading statistics: {statsError.message}
             </span>
           </div>
@@ -277,13 +278,13 @@ export default function AdminSupportPage() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Search */}
           <div className="relative md:col-span-2">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search tickets..."
               value={searchQuery}
               onChange={(e) => handleFilterChange(e.target.value, 'search')}
-              className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="pl-10 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
             />
           </div>
           
@@ -291,7 +292,7 @@ export default function AdminSupportPage() {
           <select
             value={filters.status}
             onChange={(e) => handleFilterChange(e.target.value, 'status')}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
           >
             <option value="">All Status</option>
             {TICKET_FILTER_OPTIONS.map(status => (
@@ -305,7 +306,7 @@ export default function AdminSupportPage() {
           <select
             value={filters.priority}
             onChange={(e) => handleFilterChange(e.target.value, 'priority')}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
           >
             <option value="">All Priority</option>
             {TICKET_PRIORITIES.map(priority => (
@@ -333,7 +334,7 @@ export default function AdminSupportPage() {
 
       {/* Tickets Table */}
       <Card className="overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
               Tickets ({computedValues.totalItems})
@@ -360,19 +361,19 @@ export default function AdminSupportPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Ticket</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Priority</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Created</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-background divide-y divide-border">
                 {computedValues.tickets.map((ticket: any, index: number) => {
                   // Use is_unread computed at DB level - much more efficient
                   const isUnread = ticket.is_unread === true;
@@ -380,19 +381,19 @@ export default function AdminSupportPage() {
                   return (
                     <tr 
                       key={ticket.id} 
-                      className={`hover:bg-gray-50 cursor-pointer ${isUnread ? 'bg-blue-50' : ''}`}
+                      className={`hover:bg-muted/50 cursor-pointer ${isUnread ? 'bg-primary/10' : ''}`}
                       onClick={() => router.push(`/admin/support/${ticket.id}`)}
                     >
-                      <td className={`px-6 py-4 whitespace-nowrap relative ${isUnread ? 'border-l-4 border-blue-500' : ''}`}>
+                      <td className={`px-6 py-4 whitespace-nowrap relative ${isUnread ? 'border-l-4 border-primary' : ''}`}>
                         <div className="flex items-center">
                           {isUnread && (
-                            <div className="w-3 h-3 bg-blue-500 rounded-full mr-3 animate-pulse" title="New messages"></div>
+                            <div className="w-3 h-3 bg-primary rounded-full mr-3 animate-pulse" title="New messages"></div>
                           )}
                           <div>
-                            <p className={`text-gray-900 ${isUnread ? 'font-bold' : 'font-normal'}`}>
+                            <p className={`text-foreground ${isUnread ? 'font-bold' : 'font-normal'}`}>
                               {ticket.title}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-muted-foreground">
                               #{ticket.id.slice(-8)}
                             </p>
                           </div>
@@ -402,11 +403,11 @@ export default function AdminSupportPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <p className="text-sm font-medium">{ticket.user_name}</p>
-                          <p className="text-xs text-gray-500">{ticket.user_email}</p>
+                          <p className="text-xs text-muted-foreground">{ticket.user_email}</p>
                         </div>
                       </td>
                       
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                         <span className="text-sm">
                           {categoryMap[ticket.category]?.label}
                         </span>
@@ -443,7 +444,7 @@ export default function AdminSupportPage() {
                         </Button>
                       </td>
                       
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {formatDate(ticket.created_at)}
                       </td>
                       
@@ -468,7 +469,7 @@ export default function AdminSupportPage() {
 
         {/* Table Footer with Pagination */}
         {computedValues.totalPages > 1 && (
-          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+          <div className="border-t border-border bg-muted/50 px-6 py-4">
             <Pagination
               currentPage={currentPage}
               totalPages={computedValues.totalPages}

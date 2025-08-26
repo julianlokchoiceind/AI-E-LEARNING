@@ -285,13 +285,13 @@ export default function CourseApproval() {
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'beginner':
-        return 'text-green-600';
+        return 'text-success';
       case 'intermediate':
-        return 'text-yellow-600';
+        return 'text-warning';
       case 'advanced':
-        return 'text-red-600';
+        return 'text-destructive';
       default:
-        return 'text-gray-600';
+        return 'text-muted-foreground';
     }
   };
 
@@ -303,13 +303,13 @@ export default function CourseApproval() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Course Management</h1>
-          <p className="text-gray-600">Review and approve courses from content creators</p>
+          <h1 className="text-2xl font-bold text-foreground">Course Management</h1>
+          <p className="text-muted-foreground">Review and approve courses from content creators</p>
         </div>
         <div className="flex space-x-3">
           <Button 
             onClick={handleCreateCourse}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-primary hover:bg-primary/90"
           >
             <BookOpen className="w-4 h-4 mr-2" />
             Create New Course
@@ -325,10 +325,10 @@ export default function CourseApproval() {
               <p className="text-2xl font-bold">
                 {statisticsLoading ? '...' : (statistics?.pending_review || 0)}
               </p>
-              <p className="text-sm text-gray-600">Pending Review</p>
+              <p className="text-sm text-muted-foreground">Pending Review</p>
             </div>
-            <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <Clock className="w-8 h-8 text-yellow-600" />
+            <div className="h-12 w-12 bg-warning/20 rounded-lg flex items-center justify-center">
+              <Clock className="w-8 h-8 text-warning" />
             </div>
           </div>
         </Card>
@@ -339,10 +339,10 @@ export default function CourseApproval() {
               <p className="text-2xl font-bold">
                 {statisticsLoading ? '...' : (statistics?.published || 0)}
               </p>
-              <p className="text-sm text-gray-600">Published</p>
+              <p className="text-sm text-muted-foreground">Published</p>
             </div>
-            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="h-12 w-12 bg-success/20 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-8 h-8 text-success" />
             </div>
           </div>
         </Card>
@@ -353,10 +353,10 @@ export default function CourseApproval() {
               <p className="text-2xl font-bold">
                 {statisticsLoading ? '...' : (statistics?.rejected || 0)}
               </p>
-              <p className="text-sm text-gray-600">Rejected</p>
+              <p className="text-sm text-muted-foreground">Rejected</p>
             </div>
-            <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
+            <div className="h-12 w-12 bg-destructive/20 rounded-lg flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-destructive" />
             </div>
           </div>
         </Card>
@@ -367,10 +367,10 @@ export default function CourseApproval() {
               <p className="text-2xl font-bold">
                 {statisticsLoading ? '...' : (statistics?.free_courses || 0)}
               </p>
-              <p className="text-sm text-gray-600">Free Courses</p>
+              <p className="text-sm text-muted-foreground">Free Courses</p>
             </div>
-            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Gift className="w-8 h-8 text-blue-600" />
+            <div className="h-12 w-12 bg-primary/20 rounded-lg flex items-center justify-center">
+              <Gift className="w-8 h-8 text-primary" />
             </div>
           </div>
         </Card>
@@ -381,13 +381,13 @@ export default function CourseApproval() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search courses..."
               value={searchTerm}
               onChange={(e) => handleFilterChange(e.target.value, 'search')}
-              className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="pl-10 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
             />
           </div>
 
@@ -395,7 +395,7 @@ export default function CourseApproval() {
           <select
             value={statusFilter}
             onChange={(e) => handleFilterChange(e.target.value, 'status')}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
           >
             <option value="">All Status</option>
             <option value="review">Pending Review</option>
@@ -408,7 +408,7 @@ export default function CourseApproval() {
           <select
             value={categoryFilter}
             onChange={(e) => handleFilterChange(e.target.value, 'category')}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
           >
             <option value="">All Categories</option>
             <option value="programming">Programming</option>
@@ -436,8 +436,8 @@ export default function CourseApproval() {
 
         {/* Bulk Actions */}
         {selectedCourses.size > 0 && (
-          <div className="mt-4 flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-            <span className="text-blue-700">
+          <div className="mt-4 flex items-center justify-between p-4 bg-primary/10 rounded-lg">
+            <span className="text-primary">
               {selectedCourses.size} course{selectedCourses.size > 1 ? 's' : ''} selected
             </span>
             <div className="flex gap-2">
@@ -452,7 +452,7 @@ export default function CourseApproval() {
                 variant="outline"
                 size="sm"
                 onClick={handleBulkDelete}
-                className="text-red-600 hover:bg-red-50"
+                className="text-destructive hover:bg-destructive/10"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete Selected
@@ -464,7 +464,7 @@ export default function CourseApproval() {
 
       {/* Courses Table */}
       <Card className="overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
               Courses ({totalItems})
@@ -491,8 +491,8 @@ export default function CourseApproval() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
                 <tr>
                   <th className="px-4 py-3">
                     <input
@@ -502,31 +502,31 @@ export default function CourseApproval() {
                       className="rounded"
                     />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Course
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Creator
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Content
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Pricing
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-background divide-y divide-border">
                 {filteredCourses.map((course: Course) => {
                   const courseId = course.id || course._id || '';
                   return (
-                  <tr key={courseId} className="hover:bg-gray-50">
+                  <tr key={courseId} className="hover:bg-muted/50">
                     <td className="px-4 py-4">
                       <input
                         type="checkbox"
@@ -544,40 +544,40 @@ export default function CourseApproval() {
                             className="h-12 w-16 object-cover rounded-lg mr-4"
                           />
                         ) : (
-                          <div className="h-12 w-16 bg-gray-200 rounded-lg mr-4 flex items-center justify-center">
-                            <BookOpen className="h-6 w-6 text-gray-400" />
+                          <div className="h-12 w-16 bg-muted rounded-lg mr-4 flex items-center justify-center">
+                            <BookOpen className="h-6 w-6 text-muted-foreground" />
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-gray-900 truncate">
+                          <div className="text-sm font-medium text-foreground truncate">
                             {course.title}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-muted-foreground">
                             {course.category} • <span className={getLevelColor(course.level)}>{course.level}</span>
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       {course.creator_name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(course.status)}
                       {course.pricing.is_free && (
-                        <Badge className="bg-blue-100 text-blue-800 ml-2">Free</Badge>
+                        <Badge className="bg-primary/20 text-primary ml-2">Free</Badge>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       <div>
                         <div>{course.total_lessons} lessons</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {course.total_chapters} chapters
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       {course.pricing.is_free ? (
-                        <span className="text-green-600 font-medium">Free</span>
+                        <span className="text-success font-medium">Free</span>
                       ) : (
                         <span className="font-medium">${course.pricing.price}</span>
                       )}
@@ -592,7 +592,7 @@ export default function CourseApproval() {
                             setSelectedCourse(course);
                             setShowCourseModal(true);
                           }}
-                          className="text-blue-600 hover:bg-blue-50"
+                          className="text-primary hover:bg-primary/10"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -605,7 +605,7 @@ export default function CourseApproval() {
                             const courseId = course.id;
                             router.push(`/admin/courses/${courseId}/edit`);
                           }}
-                          className="text-gray-600 hover:bg-gray-50"
+                          className="text-muted-foreground hover:bg-muted/50"
                         >
                           <Edit3 className="h-4 w-4" />
                         </Button>
@@ -615,7 +615,7 @@ export default function CourseApproval() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleDeleteCourse(course)}
-                          className="text-red-600 hover:bg-red-50"
+                          className="text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -627,7 +627,7 @@ export default function CourseApproval() {
                               variant="ghost"
                               onClick={() => handleApproveCourse(course)}
                               loading={actionLoading}
-                              className="text-green-600 hover:bg-green-50"
+                              className="text-success hover:bg-success/10"
                             >
                               <Check className="h-4 w-4" />
                             </Button>
@@ -639,7 +639,7 @@ export default function CourseApproval() {
                                 setSelectedCourse(course);
                                 setShowRejectModal(true);
                               }}
-                              className="text-red-600 hover:bg-red-50"
+                              className="text-destructive hover:bg-destructive/10"
                             >
                               <X className="h-4 w-4" />
                             </Button>
@@ -652,7 +652,7 @@ export default function CourseApproval() {
                             variant="ghost"
                             onClick={() => handleToggleFree(course, course.pricing.is_free)}
                             loading={actionLoading}
-                            className={`${course.pricing.is_free ? 'text-yellow-600' : 'text-blue-600'} hover:bg-blue-50`}
+                            className={`${course.pricing.is_free ? 'text-warning' : 'text-primary'} hover:bg-primary/10`}
                           >
                             <Gift className="h-4 w-4" />
                           </Button>
@@ -668,7 +668,7 @@ export default function CourseApproval() {
 
         {/* Table Footer with Pagination */}
         {totalPages > 1 && (
-          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+          <div className="border-t border-border bg-muted/50 px-6 py-4">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -701,19 +701,19 @@ export default function CourseApproval() {
                   className="h-24 w-32 object-cover rounded-lg"
                 />
               ) : (
-                <div className="h-24 w-32 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <BookOpen className="h-12 w-12 text-gray-400" />
+                <div className="h-24 w-32 bg-muted rounded-lg flex items-center justify-center">
+                  <BookOpen className="h-12 w-12 text-muted-foreground" />
                 </div>
               )}
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900">{selectedCourse.title}</h3>
-                <p className="text-gray-600 mt-1">{selectedCourse.description}</p>
+                <h3 className="text-xl font-bold text-foreground">{selectedCourse.title}</h3>
+                <p className="text-muted-foreground mt-1">{selectedCourse.description}</p>
                 <div className="flex items-center space-x-4 mt-3">
                   {getStatusBadge(selectedCourse.status)}
-                  <Badge className={`${selectedCourse.pricing.is_free ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
+                  <Badge className={`${selectedCourse.pricing.is_free ? 'bg-primary/20 text-primary' : 'bg-primary/20 text-primary'}`}>
                     {selectedCourse.pricing.is_free ? 'Free' : `$${selectedCourse.pricing.price}`}
                   </Badge>
-                  <span className="text-sm text-gray-500">by {selectedCourse.creator_name}</span>
+                  <span className="text-sm text-muted-foreground">by {selectedCourse.creator_name}</span>
                 </div>
               </div>
             </div>
@@ -721,28 +721,28 @@ export default function CourseApproval() {
             {/* Course Stats */}
             <div className="grid grid-cols-4 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{selectedCourse.total_lessons}</div>
-                <div className="text-sm text-gray-500">Lessons</div>
+                <div className="text-2xl font-bold text-foreground">{selectedCourse.total_lessons}</div>
+                <div className="text-sm text-muted-foreground">Lessons</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{selectedCourse.total_chapters}</div>
-                <div className="text-sm text-gray-500">Chapters</div>
+                <div className="text-2xl font-bold text-foreground">{selectedCourse.total_chapters}</div>
+                <div className="text-sm text-muted-foreground">Chapters</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{selectedCourse.stats.total_enrollments}</div>
-                <div className="text-sm text-gray-500">Enrollments</div>
+                <div className="text-2xl font-bold text-foreground">{selectedCourse.stats.total_enrollments}</div>
+                <div className="text-sm text-muted-foreground">Enrollments</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{selectedCourse.stats.average_rating || 0}</div>
-                <div className="text-sm text-gray-500">Rating</div>
+                <div className="text-2xl font-bold text-foreground">{selectedCourse.stats.average_rating || 0}</div>
+                <div className="text-sm text-muted-foreground">Rating</div>
               </div>
             </div>
 
             {/* Rejection Reason */}
             {selectedCourse.status === 'rejected' && selectedCourse.rejection_reason && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <h4 className="font-medium text-red-800 mb-2">Rejection Reason:</h4>
-                <p className="text-red-700">{selectedCourse.rejection_reason}</p>
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
+                <h4 className="font-medium text-destructive mb-2">Rejection Reason:</h4>
+                <p className="text-destructive">{selectedCourse.rejection_reason}</p>
               </div>
             )}
 
@@ -753,7 +753,7 @@ export default function CourseApproval() {
                   <Button
                     onClick={() => handleApproveCourse(selectedCourse)}
                     loading={actionLoading}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-success hover:bg-success/80"
                   >
                     <Check className="h-4 w-4 mr-2" />
                     Approve Course
@@ -762,7 +762,7 @@ export default function CourseApproval() {
                   <Button
                     onClick={() => setShowRejectModal(true)}
                     variant="outline"
-                    className="text-red-600 border-red-200 hover:bg-red-50"
+                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
                   >
                     <X className="h-4 w-4 mr-2" />
                     Reject Course
@@ -800,7 +800,7 @@ export default function CourseApproval() {
           title="Reject Course"
         >
           <div className="space-y-4">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Please provide a reason for rejecting <strong>{selectedCourse.title}</strong>. 
               This feedback will be sent to the content creator.
             </p>
@@ -809,7 +809,7 @@ export default function CourseApproval() {
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               placeholder="Explain why this course is being rejected..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
               rows={4}
             />
             
@@ -818,7 +818,7 @@ export default function CourseApproval() {
                 onClick={handleRejectCourse}
                 loading={actionLoading}
                 variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
                 disabled={!rejectionReason.trim()}
               >
                 <X className="h-4 w-4 mr-2" />
@@ -856,15 +856,15 @@ export default function CourseApproval() {
             {/* Warning Icon & Message */}
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-destructive" />
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   Confirm Bulk Deletion
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   You are about to permanently delete {selectedCourses.size} course{selectedCourses.size > 1 ? 's' : ''}. 
                   This action cannot be undone.
                 </p>
@@ -872,12 +872,12 @@ export default function CourseApproval() {
             </div>
 
             {/* Warning Details */}
-            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+            <div className="bg-warning/10 border border-warning/30 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                <h4 className="font-medium text-yellow-800">Warning</h4>
+                <AlertTriangle className="w-5 h-5 text-warning" />
+                <h4 className="font-medium text-warning">Warning</h4>
               </div>
-              <p className="text-sm text-yellow-700">
+              <p className="text-sm text-warning">
                 All course content, chapters, lessons, and student progress for these courses will be permanently deleted.
                 This includes all enrollments, reviews, and associated data.
               </p>

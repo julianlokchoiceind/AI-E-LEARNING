@@ -23,9 +23,9 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   return (
     <div className={`flex flex-col items-center justify-center ${className}`}>
-      <Loader2 className={`animate-spin text-blue-600 ${sizeClasses[size]}`} />
+      <Loader2 className={`animate-spin text-primary ${sizeClasses[size]}`} />
       {message && (
-        <p className="mt-4 text-sm text-gray-600">{message}</p>
+        <p className="mt-4 text-sm text-muted-foreground">{message}</p>
       )}
     </div>
   );
@@ -38,7 +38,7 @@ interface LoadingOverlayProps {
 export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ message = 'Loading...' }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 shadow-xl">
+      <div className="bg-background rounded-lg p-6 shadow-xl">
         <LoadingSpinner size="lg" message={message} />
       </div>
     </div>
@@ -56,14 +56,14 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 }) => {
   return (
     <div
-      className={`bg-gray-200 rounded ${animate ? 'animate-pulse' : ''} ${className}`}
+      className={`bg-muted rounded ${animate ? 'animate-pulse' : ''} ${className}`}
     />
   );
 };
 
 export const CourseCardSkeleton: React.FC = () => {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-background rounded-lg shadow p-6">
       <Skeleton className="h-48 w-full mb-4" />
       <Skeleton className="h-6 w-3/4 mb-2" />
       <Skeleton className="h-4 w-full mb-2" />
@@ -108,8 +108,8 @@ export const TableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
 export const AdCoursesTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="min-w-full divide-y divide-border">
+        <thead className="bg-muted">
           <tr>
             {/* Checkbox column */}
             <th className="px-4 py-3">
@@ -135,9 +135,9 @@ export const AdCoursesTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-background divide-y divide-border">
           {Array.from({ length: rows }).map((_, index) => (
-            <tr key={index} className="hover:bg-gray-50">
+            <tr key={index} className="hover:bg-muted">
               {/* Checkbox */}
               <td className="px-4 py-4">
                 <Skeleton className="h-4 w-4" />
@@ -197,8 +197,8 @@ export const AdCoursesTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }
 export const AdUsersTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="min-w-full divide-y divide-border">
+        <thead className="bg-muted">
           <tr>
             {/* Checkbox column */}
             <th className="px-4 py-3">
@@ -224,9 +224,9 @@ export const AdUsersTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) 
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-background divide-y divide-border">
           {Array.from({ length: rows }).map((_, index) => (
-            <tr key={index} className="hover:bg-gray-50">
+            <tr key={index} className="hover:bg-muted">
               {/* Checkbox */}
               <td className="px-4 py-4">
                 <Skeleton className="h-4 w-4" />
@@ -292,9 +292,9 @@ export const ButtonSkeleton: React.FC<{
   variant = 'primary'
 }) => {
   const variantClasses = {
-    primary: 'bg-blue-50 border-blue-200',
-    danger: 'bg-red-50 border-red-200', 
-    outline: 'bg-gray-50 border-gray-200'
+    primary: 'bg-primary/10 border-primary/30',
+    danger: 'bg-destructive/10 border-destructive/30', 
+    outline: 'bg-muted border-border'
   };
 
   return (
@@ -322,7 +322,7 @@ export const AdAnalyticsSkeleton: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           {/* Time Range Selector */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-muted rounded-lg p-1">
             <Skeleton className="h-8 w-16 mr-1" />
             <Skeleton className="h-8 w-20 mr-1" />
             <Skeleton className="h-8 w-20" />
@@ -333,7 +333,7 @@ export const AdAnalyticsSkeleton: React.FC = () => {
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="bg-white rounded-lg border p-6">
+          <div key={index} className="bg-background rounded-lg border p-6">
             <div className="flex items-center justify-between">
               <div>
                 <Skeleton className="h-4 w-24 mb-2" />
@@ -348,16 +348,16 @@ export const AdAnalyticsSkeleton: React.FC = () => {
 
       {/* Charts Section 1: Revenue & User Growth */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border p-6">
+        <div className="bg-background rounded-lg border p-6">
           <Skeleton className="h-6 w-32 mb-4" />
-          <div className="h-72 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="h-72 bg-muted rounded-lg flex items-center justify-center">
             <Skeleton className="h-40 w-full" />
           </div>
         </div>
         
-        <div className="bg-white rounded-lg border p-6">
+        <div className="bg-background rounded-lg border p-6">
           <Skeleton className="h-6 w-36 mb-4" />
-          <div className="h-72 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="h-72 bg-muted rounded-lg flex items-center justify-center">
             <Skeleton className="h-48 w-48 rounded-full mx-auto" />
           </div>
         </div>
@@ -365,16 +365,16 @@ export const AdAnalyticsSkeleton: React.FC = () => {
 
       {/* Charts Section 2: Course & Activity Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border p-6">
+        <div className="bg-background rounded-lg border p-6">
           <Skeleton className="h-6 w-48 mb-4" />
-          <div className="h-72 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="h-72 bg-muted rounded-lg flex items-center justify-center">
             <Skeleton className="h-48 w-48 rounded-full mx-auto" />
           </div>
         </div>
         
-        <div className="bg-white rounded-lg border p-6">
+        <div className="bg-background rounded-lg border p-6">
           <Skeleton className="h-6 w-44 mb-4" />
-          <div className="h-72 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="h-72 bg-muted rounded-lg flex items-center justify-center">
             <div className="flex items-end space-x-2 w-full h-40">
               {Array.from({ length: 7 }).map((_, index) => (
                 <Skeleton key={index} className={`w-8 ${index % 2 === 0 ? 'h-20' : 'h-16'}`} />
@@ -385,7 +385,7 @@ export const AdAnalyticsSkeleton: React.FC = () => {
       </div>
 
       {/* Summary Stats */}
-      <div className="bg-white rounded-lg border p-6">
+      <div className="bg-background rounded-lg border p-6">
         <div className="flex items-center mb-4">
           <Skeleton className="h-5 w-5 mr-2" />
           <Skeleton className="h-6 w-40" />
@@ -401,7 +401,7 @@ export const AdAnalyticsSkeleton: React.FC = () => {
       </div>
 
       {/* Info Note */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
         <div className="flex items-start">
           <Skeleton className="w-5 h-5 mt-0.5 mr-3 flex-shrink-0" />
           <div className="flex-1">
@@ -422,9 +422,9 @@ export const AdAnalyticsSkeleton: React.FC = () => {
  */
 export const AdMainPageSkeleton: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       {/* Admin Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-background border-b border-border">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center">
             <Skeleton className="h-8 w-8 mr-3" />
@@ -440,7 +440,7 @@ export const AdMainPageSkeleton: React.FC = () => {
       
       <div className="flex">
         {/* Sidebar */}
-        <div className="w-64 bg-white h-screen shadow-sm">
+        <div className="w-64 bg-background h-screen shadow-sm">
           <div className="p-6">
             <Skeleton className="h-6 w-32 mb-6" />
             <div className="space-y-2">
@@ -463,7 +463,7 @@ export const AdMainPageSkeleton: React.FC = () => {
           
           {/* Content Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white rounded-lg border p-6">
+            <div className="bg-background rounded-lg border p-6">
               <Skeleton className="h-6 w-40 mb-4" />
               <div className="space-y-3">
                 {Array.from({ length: 4 }).map((_, index) => (
@@ -475,7 +475,7 @@ export const AdMainPageSkeleton: React.FC = () => {
               </div>
             </div>
             
-            <div className="bg-white rounded-lg border p-6">
+            <div className="bg-background rounded-lg border p-6">
               <Skeleton className="h-6 w-36 mb-4" />
               <div className="grid grid-cols-2 gap-3">
                 {Array.from({ length: 4 }).map((_, index) => (
@@ -545,19 +545,19 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     <div className="text-center py-12">
       {icon && (
         <div className="flex justify-center mb-4">
-          <div className="bg-gray-100 p-3 rounded-full">
+          <div className="bg-muted p-3 rounded-full">
             {icon}
           </div>
         </div>
       )}
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+      <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
       {description && (
-        <p className="text-gray-600 mb-4">{description}</p>
+        <p className="text-muted-foreground mb-4">{description}</p>
       )}
       {action && (
         <button
           onClick={action.onClick}
-          className="text-blue-600 hover:text-blue-700 font-medium"
+          className="text-primary hover:text-primary/80 font-medium"
         >
           {action.label}
         </button>
@@ -593,7 +593,7 @@ export const MyCoursesGridSkeleton: React.FC<{ courses?: number }> = ({ courses 
       {/* Courses Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {Array.from({ length: courses }).map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow overflow-hidden">
+          <div key={index} className="bg-background rounded-lg shadow overflow-hidden">
             {/* Course Thumbnail */}
             <div className="relative h-48">
               <Skeleton className="w-full h-full" />
@@ -648,7 +648,7 @@ export const MyCoursesGridSkeleton: React.FC<{ courses?: number }> = ({ courses 
       </div>
 
       {/* Summary Stats */}
-      <div className="p-6 bg-gray-50 rounded-lg">
+      <div className="p-6 bg-muted rounded-lg">
         <Skeleton className="h-6 w-32 mb-4" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
           {Array.from({ length: 4 }).map((_, index) => (
@@ -670,7 +670,7 @@ export const MyCoursesGridSkeleton: React.FC<{ courses?: number }> = ({ courses 
  */
 export const FAQListSkeleton: React.FC<{ faqs?: number }> = ({ faqs = 8 }) => {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-muted py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -698,7 +698,7 @@ export const FAQListSkeleton: React.FC<{ faqs?: number }> = ({ faqs = 8 }) => {
         {/* FAQ List */}
         <div className="space-y-4 mb-8">
           {Array.from({ length: faqs }).map((_, index) => (
-            <div key={index} className="bg-white rounded-lg shadow overflow-hidden">
+            <div key={index} className="bg-background rounded-lg shadow overflow-hidden">
               <div className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 pr-4">
@@ -730,7 +730,7 @@ export const FAQListSkeleton: React.FC<{ faqs?: number }> = ({ faqs = 8 }) => {
         </div>
 
         {/* Contact Support */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-background rounded-lg shadow">
           <div className="py-8 text-center">
             <Skeleton className="h-6 w-48 mx-auto mb-2" />
             <Skeleton className="h-4 w-80 mx-auto mb-4" />
@@ -758,7 +758,7 @@ export const AdFAQTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 8 }) =>
       </div>
 
       {/* Filters and Actions */}
-      <div className="bg-white rounded-lg shadow mb-6 p-4">
+      <div className="bg-background rounded-lg shadow mb-6 p-4">
         <div className="flex flex-col gap-4">
           {/* Search and Category Filter */}
           <div className="flex gap-4">
@@ -769,7 +769,7 @@ export const AdFAQTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 8 }) =>
           </div>
 
           {/* Bulk Actions (when items selected) */}
-          <div className="p-4 bg-blue-50 rounded-lg">
+          <div className="p-4 bg-primary/10 rounded-lg">
             <div className="flex items-center gap-4">
               <Skeleton className="h-4 w-32" />
               <div className="flex gap-2">
@@ -783,10 +783,10 @@ export const AdFAQTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 8 }) =>
       </div>
 
       {/* FAQ Table */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-background rounded-lg shadow">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-muted border-b">
               <tr>
                 <th className="p-4 text-left">
                   <Skeleton className="h-4 w-4" />
@@ -813,7 +813,7 @@ export const AdFAQTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 8 }) =>
             </thead>
             <tbody className="divide-y">
               {Array.from({ length: rows }).map((_, index) => (
-                <tr key={index} className="hover:bg-gray-50">
+                <tr key={index} className="hover:bg-muted">
                   {/* Checkbox */}
                   <td className="p-4">
                     <Skeleton className="h-4 w-4" />
@@ -868,9 +868,9 @@ export const AdFAQTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 8 }) =>
  */
 export const AdPaymentsTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 6 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+    <div className="bg-background rounded-lg shadow-sm border border-border overflow-hidden">
+      <table className="min-w-full divide-y divide-border">
+        <thead className="bg-muted">
           <tr>
             <th className="px-6 py-3 text-left">
               <Skeleton className="h-4 w-8" />
@@ -892,9 +892,9 @@ export const AdPaymentsTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 6 
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-background divide-y divide-border">
           {Array.from({ length: rows }).map((_, index) => (
-            <tr key={index} className="hover:bg-gray-50">
+            <tr key={index} className="hover:bg-muted">
               {/* Date */}
               <td className="px-6 py-4">
                 <Skeleton className="h-4 w-20" />
@@ -958,13 +958,13 @@ export const CertificatesGridSkeleton: React.FC<{ certificates?: number }> = ({ 
       {/* Certificates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {Array.from({ length: certificates }).map((_, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div key={index} className="bg-background rounded-lg shadow-lg overflow-hidden">
             {/* Certificate Header */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
+            <div className="bg-gradient-to-r from-primary to-primary/80 p-6 text-white">
               <div className="text-center">
-                <Skeleton className="h-6 w-32 mx-auto mb-2 bg-white bg-opacity-20" />
-                <Skeleton className="h-8 w-48 mx-auto mb-4 bg-white bg-opacity-20" />
-                <Skeleton className="h-4 w-40 mx-auto bg-white bg-opacity-20" />
+                <Skeleton className="h-6 w-32 mx-auto mb-2 bg-background bg-opacity-20" />
+                <Skeleton className="h-8 w-48 mx-auto mb-4 bg-background bg-opacity-20" />
+                <Skeleton className="h-4 w-40 mx-auto bg-background bg-opacity-20" />
               </div>
             </div>
 
@@ -1004,7 +1004,7 @@ export const CertificatesGridSkeleton: React.FC<{ certificates?: number }> = ({ 
       </div>
 
       {/* Summary Stats */}
-      <div className="bg-gray-50 rounded-lg p-6">
+      <div className="bg-muted rounded-lg p-6">
         <Skeleton className="h-6 w-40 mb-4" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, index) => (
@@ -1026,15 +1026,15 @@ export const AdSupportTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }
   return (
     <div className="overflow-hidden">
       {/* Table Header */}
-      <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+      <div className="bg-muted px-6 py-3 border-b border-border">
         <div className="flex items-center justify-between">
           <Skeleton className="h-4 w-32" />
         </div>
       </div>
       
       {/* Table Body */}
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="min-w-full divide-y divide-border">
+        <thead className="bg-muted">
           <tr>
             <th className="px-6 py-3"><Skeleton className="h-3 w-12" /></th>
             <th className="px-6 py-3"><Skeleton className="h-3 w-8" /></th>
@@ -1045,9 +1045,9 @@ export const AdSupportTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }
             <th className="px-6 py-3"><Skeleton className="h-3 w-14" /></th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-background divide-y divide-border">
           {Array.from({ length: rows }).map((_, index) => (
-            <tr key={index} className="hover:bg-gray-50">
+            <tr key={index} className="hover:bg-muted">
               {/* Ticket */}
               <td className="px-6 py-4">
                 <Skeleton className="h-4 w-40 mb-1" />
@@ -1085,6 +1085,131 @@ export const AdSupportTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }
           ))}
         </tbody>
       </table>
+    </div>
+  );
+};
+
+// Course Detail Skeleton - Matches course detail page structure
+export const CourseDetailSkeleton = () => {
+  return (
+    <div className="max-w-6xl mx-auto space-y-8 p-6">
+      {/* Video Player */}
+      <div className="aspect-video bg-muted rounded-lg animate-pulse" />
+      
+      {/* Course Header */}
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="lg:w-2/3 space-y-4">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+          
+          {/* Instructor Info */}
+          <div className="flex items-center gap-3 pt-4">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div>
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-3 w-16 mt-1" />
+            </div>
+          </div>
+        </div>
+        
+        {/* Sidebar */}
+        <div className="lg:w-1/3">
+          <div className="bg-background border rounded-lg p-6 space-y-4">
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-10 w-full rounded" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Course Content Tabs */}
+      <div className="space-y-6">
+        <div className="flex space-x-6 border-b">
+          {Array.from({ length: 3 }, (_, i) => (
+            <Skeleton key={i} className="h-4 w-16" />
+          ))}
+        </div>
+        
+        <div className="space-y-4">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="flex items-center gap-3 p-3 border rounded">
+              <Skeleton className="h-4 w-4 rounded" />
+              <Skeleton className="h-4 flex-1" />
+              <Skeleton className="h-4 w-12" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * DashboardSkeleton - Loading skeleton for dashboard page
+ */
+export const DashboardSkeleton: React.FC = () => {
+  return (
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-32 rounded" />
+      </div>
+      
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="bg-background rounded-lg border p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-16" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Activity */}
+        <div className="lg:col-span-2 bg-background rounded-lg border p-6">
+          <Skeleton className="h-6 w-32 mb-4" />
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="flex items-center gap-4">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="flex-1 space-y-1">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+                <Skeleton className="h-3 w-16" />
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Sidebar */}
+        <div className="space-y-6">
+          <div className="bg-background rounded-lg border p-6">
+            <Skeleton className="h-6 w-28 mb-4" />
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-8" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

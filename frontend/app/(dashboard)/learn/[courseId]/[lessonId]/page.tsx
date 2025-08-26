@@ -156,14 +156,14 @@ const VideoSection = React.memo<VideoSectionProps>(({
           />
           
           {/* Enhanced Video Info Bar */}
-          <div className="px-4 md:px-6 py-3 md:py-4 border-t border-gray-200 bg-gray-50">
+          <div className="px-4 md:px-6 py-3 md:py-4 border-t border-border bg-muted">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-sm">
               {/* Duration */}
               <div className="flex items-center">
-                <Clock className="w-4 h-4 text-gray-500 mr-2" />
+                <Clock className="w-4 h-4 text-muted-foreground mr-2" />
                 <div>
-                  <div className="text-gray-500 text-xs">Duration</div>
-                  <div className="font-medium text-gray-900">
+                  <div className="text-muted-foreground text-xs">Duration</div>
+                  <div className="font-medium text-foreground">
                     {formatDuration(currentVideoDuration || lesson.video.duration || 0)}
                   </div>
                 </div>
@@ -172,13 +172,13 @@ const VideoSection = React.memo<VideoSectionProps>(({
               {/* Progress - FIXED consistency issue */}
               <div className="flex items-center">
                 <div className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
-                  actualVideoProgress >= 95 ? 'bg-green-500' : 'bg-blue-500'
+                  actualVideoProgress >= 95 ? 'bg-success/200' : 'bg-primary/200'
                 }`}>
                   <div className="w-2 h-2 bg-white rounded-full"></div>
                 </div>
                 <div>
-                  <div className="text-gray-500 text-xs">Progress</div>
-                  <div className="font-medium text-gray-900">
+                  <div className="text-muted-foreground text-xs">Progress</div>
+                  <div className="font-medium text-foreground">
                     {Math.round(actualVideoProgress)}%
                   </div>
                 </div>
@@ -186,10 +186,10 @@ const VideoSection = React.memo<VideoSectionProps>(({
               
               {/* Current Position */}
               <div className="flex items-center">
-                <BookOpen className="w-4 h-4 text-gray-500 mr-2" />
+                <BookOpen className="w-4 h-4 text-muted-foreground mr-2" />
                 <div>
-                  <div className="text-gray-500 text-xs">Current Time</div>
-                  <div className="font-medium text-gray-900">
+                  <div className="text-muted-foreground text-xs">Current Time</div>
+                  <div className="font-medium text-foreground">
                     {formatDuration(currentVideoTime)}
                   </div>
                 </div>
@@ -198,16 +198,16 @@ const VideoSection = React.memo<VideoSectionProps>(({
               {/* Status */}
               <div className="flex items-center">
                 {actualVideoProgress >= 95 ? (
-                  <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                  <CheckCircle className="w-4 h-4 mr-2 text-success" />
                 ) : (
-                  <PlayCircle className="w-4 h-4 mr-2 text-blue-500" />
+                  <PlayCircle className="w-4 h-4 mr-2 text-primary" />
                 )}
                 <div>
-                  <div className="text-gray-500 text-xs">Status</div>
+                  <div className="text-muted-foreground text-xs">Status</div>
                   <div className={`font-medium text-sm ${
                     actualVideoProgress >= 95
-                      ? 'text-green-600' 
-                      : 'text-gray-600'
+                      ? 'text-success' 
+                      : 'text-muted-foreground'
                   }`}>
                     {actualVideoProgress >= 95
                       ? 'Completed' 
@@ -220,7 +220,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
             
             {/* Progress Bar - FIXED to use consistent videoProgress */}
             <div className="mt-6">
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
                 <span>Watch Progress</span>
                 <span>{Math.round(actualVideoProgress)}% watched</span>
               </div>
@@ -230,13 +230,13 @@ const VideoSection = React.memo<VideoSectionProps>(({
               />
               {/* Sequential Learning Notice - Below progress bar */}
               {actualVideoProgress < 95 && (
-                <div className="mt-2 text-xs text-amber-600 flex items-center">
+                <div className="mt-2 text-xs text-warning flex items-center">
                   <Info className="w-3 h-3 mr-1" />
                   Watch 95% of the video to unlock the next lesson
                 </div>
               )}
               {actualVideoProgress >= 95 && !progress?.is_completed && (
-                <div className="mt-2 text-xs text-yellow-600 flex items-center">
+                <div className="mt-2 text-xs text-warning flex items-center">
                   <Info className="w-3 h-3 mr-1" />
                   Complete the quiz below to finish this lesson
                 </div>
@@ -245,13 +245,13 @@ const VideoSection = React.memo<VideoSectionProps>(({
           </div>
         </>
       ) : (
-        <div className="aspect-video bg-gray-100 flex items-center justify-center">
+        <div className="aspect-video bg-muted flex items-center justify-center">
           <div className="text-center">
-            <VideoOff className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <VideoOff className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
               Video content is being prepared
             </h3>
-            <p className="text-gray-600 max-w-sm mx-auto">
+            <p className="text-muted-foreground max-w-sm mx-auto">
               The video for this lesson will be available soon. 
               Please check back later or continue with the lesson materials below.
             </p>
@@ -314,13 +314,13 @@ const QuizSection = React.memo<QuizSectionProps>(({
   }
 
   return (
-    <section className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-yellow-50">
-        <h2 className="text-base md:text-lg font-semibold text-gray-900 flex items-center">
-          <CheckCircle className="w-4 md:w-5 h-4 md:h-5 mr-2 text-yellow-600" />
+    <section className="bg-white rounded-lg shadow-sm border border-border">
+      <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-warning/20">
+        <h2 className="text-base md:text-lg font-semibold text-foreground flex items-center">
+          <CheckCircle className="w-4 md:w-5 h-4 md:h-5 mr-2 text-warning" />
           Quiz - Test Your Knowledge
         </h2>
-        <p className="text-xs md:text-sm text-gray-600 mt-1">
+        <p className="text-xs md:text-sm text-muted-foreground mt-1">
           Check your understanding immediately after learning.
         </p>
       </div>
@@ -665,10 +665,10 @@ export default function OptimizedLessonPlayerPage() {
   // Early return for loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading lesson...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading lesson...</p>
         </div>
       </div>
     );
@@ -677,13 +677,13 @@ export default function OptimizedLessonPlayerPage() {
   // Early return for error state
   if (learnDataError || !lesson) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Lesson not found</h1>
-          <p className="text-gray-600 mb-6">The lesson you're looking for doesn't exist or you don't have access to it.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-4">Lesson not found</h1>
+          <p className="text-muted-foreground mb-6">The lesson you're looking for doesn't exist or you don't have access to it.</p>
           <button
             onClick={() => router.back()}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/80 transition-colors"
           >
             Go Back
           </button>
@@ -693,14 +693,14 @@ export default function OptimizedLessonPlayerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       {/* Header Bar */}
-      <header className="h-16 bg-white border-b border-gray-200 sticky top-0 z-40">
+      <header className="h-16 bg-white border-b border-border sticky top-0 z-40">
         <div className="h-full px-4 flex items-center">
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileDrawerOpen(true)}
-            className="lg:hidden flex items-center text-gray-600 hover:text-gray-900 mr-4"
+            className="lg:hidden flex items-center text-muted-foreground hover:text-foreground mr-4"
           >
             <Menu className="w-5 h-5" />
             <span className="sr-only">Open navigation</span>
@@ -726,10 +726,10 @@ export default function OptimizedLessonPlayerPage() {
 
       {/* Preview Mode Banner */}
       {isPreviewMode && (
-        <div className="bg-yellow-100 border-b border-yellow-300 px-4 py-2">
+        <div className="bg-warning/20 border-b border-warning/60 px-4 py-2">
           <div className="flex items-center justify-center text-center">
-            <Info className="w-5 h-5 text-yellow-700 mr-2 flex-shrink-0" />
-            <span className="text-yellow-800 font-medium text-sm md:text-base">
+            <Info className="w-5 h-5 text-warning mr-2 flex-shrink-0" />
+            <span className="text-warning font-medium text-sm md:text-base">
               Preview Mode - Progress will not be saved
             </span>
           </div>
@@ -740,7 +740,7 @@ export default function OptimizedLessonPlayerPage() {
       <div className="flex h-[calc(100vh-64px)]">
         {/* Enhanced Sidebar - Desktop Only */}
         <aside className={`
-          bg-white border-r border-gray-200 transition-all duration-300
+          bg-white border-r border-border transition-all duration-300
           ${sidebarCollapsed ? 'w-16' : 'w-80'}
           hidden lg:block flex-shrink-0 relative
         `}>
@@ -749,28 +749,28 @@ export default function OptimizedLessonPlayerPage() {
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className={`
               absolute -right-3 top-6 z-10
-              w-6 h-6 bg-white border border-gray-200 rounded-full
-              hover:bg-gray-50 transition-all duration-200
+              w-6 h-6 bg-white border border-border rounded-full
+              hover:bg-muted transition-all duration-200
               flex items-center justify-center shadow-sm hover:shadow-md
               ${sidebarCollapsed ? 'rotate-180' : ''}
             `}
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <ChevronLeft className="w-3 h-3 text-gray-600" />
+            <ChevronLeft className="w-3 h-3 text-muted-foreground" />
           </button>
 
           {!sidebarCollapsed && (
             <>
               {/* Course Info & Progress */}
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-3">
+              <div className="p-4 border-b border-border">
+                <h3 className="font-semibold text-foreground mb-3">
                   Course Progress
                 </h3>
                 
                 {/* Progress Bar */}
                 <div className="mb-3">
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                  <div className="flex justify-between text-sm text-muted-foreground mb-1">
                     <span>Overall Progress</span>
                     <span>{courseProgress.percentage}%</span>
                   </div>
@@ -781,16 +781,16 @@ export default function OptimizedLessonPlayerPage() {
                 </div>
                 
                 {/* Stats */}
-                <div className="text-sm text-gray-600 space-y-1">
+                <div className="text-sm text-muted-foreground space-y-1">
                   <div className="flex items-center">
-                    <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                    <CheckCircle className="w-4 h-4 mr-2 text-success" />
                     {courseProgress.completedLessons} of {courseProgress.totalLessons} lessons completed
                   </div>
                   <div className="flex items-center">
                     <Clock className="w-4 h-4 mr-2" />
                     {courseProgress.remainingTime} remaining
                   </div>
-                  <div className="flex items-center text-xs text-gray-500">
+                  <div className="flex items-center text-xs text-muted-foreground">
                     <BookOpen className="w-3 h-3 mr-2" />
                     Total duration: {courseProgress.totalTime}
                   </div>
@@ -800,27 +800,27 @@ export default function OptimizedLessonPlayerPage() {
               {/* Chapters & Lessons Navigation */}
               <div className="overflow-y-auto h-[calc(100%-200px)]">
                 {chapters.length === 0 ? (
-                  <div className="p-4 text-center text-gray-500">
-                    <BookOpen className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                  <div className="p-4 text-center text-muted-foreground">
+                    <BookOpen className="w-8 h-8 mx-auto mb-2 text-muted-foreground/60" />
                     <p className="text-sm">No chapters available</p>
                     {isPreviewMode && (
                       <p className="text-xs mt-1">Course content may be limited in preview mode</p>
                     )}
                   </div>
                 ) : chapters.map((chapter: ChapterData) => (
-                  <div key={chapter.id} className="border-b border-gray-100">
+                  <div key={chapter.id} className="border-b border-border/50">
                     {/* Clickable Chapter Header with Accordion */}
                     <button
                       onClick={() => toggleChapter(chapter.id)}
-                      className="w-full px-4 py-3 bg-gray-50 text-left hover:bg-gray-100 transition-colors"
+                      className="w-full px-4 py-3 bg-muted text-left hover:bg-muted transition-colors"
                     >
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900 flex items-center">
+                        <h4 className="font-medium text-foreground flex items-center">
                           <BookOpen className="w-4 h-4 mr-2" />
                           Chapter {chapter.order}: {chapter.title}
                         </h4>
                         <ChevronRight 
-                          className={`w-4 h-4 text-gray-500 transition-transform ${
+                          className={`w-4 h-4 text-muted-foreground transition-transform ${
                             expandedChapters.has(chapter.id) ? 'rotate-90' : ''
                           }`} 
                         />
@@ -852,16 +852,16 @@ export default function OptimizedLessonPlayerPage() {
                               flex items-center justify-between group
                               border-l-4 border-transparent
                               ${isCurrentLesson && actualVideoProgress >= 95
-                                ? 'bg-green-50 text-green-700 border-green-600'
+                                ? 'bg-success/20 text-success border-success'
                                 : isCurrentLesson && actualVideoProgress >= 95
-                                ? 'bg-yellow-50 text-yellow-700 border-yellow-600'
+                                ? 'bg-warning/20 text-warning border-warning'
                                 : isCurrentLesson
-                                ? 'bg-blue-50 text-blue-700 border-blue-600'
+                                ? 'bg-primary/20 text-primary border-primary'
                                 : isCompleted
-                                ? 'hover:bg-green-50 cursor-pointer'
+                                ? 'hover:bg-success/20 cursor-pointer'
                                 : isUnlocked || isPreviewMode
-                                ? 'hover:bg-gray-50 cursor-pointer'
-                                : 'opacity-60 cursor-not-allowed bg-gray-50'
+                                ? 'hover:bg-muted cursor-pointer'
+                                : 'opacity-60 cursor-not-allowed bg-muted'
                               }
                             `}
                           >
@@ -870,27 +870,27 @@ export default function OptimizedLessonPlayerPage() {
                               <div className="mr-3 flex-shrink-0">
                                 {lessonProgress?.is_completed && (!isCurrentLesson || actualVideoProgress >= 95) ? (
                                   // Completed: Green checkmark
-                                  <CheckCircle className="w-5 h-5 text-green-600" />
+                                  <CheckCircle className="w-5 h-5 text-success" />
                                 ) : isCurrentLesson && actualVideoProgress >= 95 ? (
                                   // Almost complete: Yellow clock
-                                  <Clock className="w-5 h-5 text-yellow-500" />
+                                  <Clock className="w-5 h-5 text-warning" />
                                 ) : isCurrentLesson && actualVideoProgress > 0 ? (
                                   // In progress: Blue play circle
-                                  <PlayCircle className="w-5 h-5 text-blue-500" />
+                                  <PlayCircle className="w-5 h-5 text-primary" />
                                 ) : !isUnlocked && !isPreviewMode ? (
                                   // Locked: Gray lock icon
                                   <div className="w-5 h-5 flex items-center justify-center">
-                                    <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg className="w-4 h-4 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
                                       <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                                     </svg>
                                   </div>
                                 ) : (
                                   // Unlocked but not started: Circle with dot inside (same color)
                                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                    isCurrentLesson ? 'border-blue-600' : 'border-gray-400'
+                                    isCurrentLesson ? 'border-primary' : 'border-muted-foreground'
                                   }`}>
                                     <div className={`w-2 h-2 rounded-full ${
-                                      isCurrentLesson ? 'bg-blue-600' : 'bg-gray-400'
+                                      isCurrentLesson ? 'bg-primary' : 'bg-muted-foreground'
                                     }`} />
                                   </div>
                                 )}
@@ -901,9 +901,9 @@ export default function OptimizedLessonPlayerPage() {
                                 <div className="text-sm font-medium truncate">
                                   {chapterLesson.title}
                                 </div>
-                                <div className="flex items-center text-xs text-gray-500 mt-1">
+                                <div className="flex items-center text-xs text-muted-foreground mt-1">
                                   <Clock className="w-3 h-3 mr-1" />
-                                  <span className={!isUnlocked && !isPreviewMode ? 'text-gray-400' : ''}>
+                                  <span className={!isUnlocked && !isPreviewMode ? 'text-muted-foreground' : ''}>
                                     {chapterLesson.video?.youtube_url
                                       ? (
                                           // Always show duration for all lessons (best practice)
@@ -920,9 +920,9 @@ export default function OptimizedLessonPlayerPage() {
                                   {(isCompleted || (isCurrentLesson && actualVideoProgress > 0) || (!isCurrentLesson && (lessonProgress?.video_progress?.watch_percentage ?? 0) > 0)) && (
                                     <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
                                       isCompleted || (isCurrentLesson && actualVideoProgress >= 95)
-                                        ? 'bg-green-100 text-green-700'
+                                        ? 'bg-success/20 text-success'
                                         : isCurrentLesson
-                                        ? 'bg-blue-100 text-blue-700'
+                                        ? 'bg-primary/20 text-primary'
                                         : ''
                                     }`}>
                                       {isCompleted || (isCurrentLesson && actualVideoProgress >= 95)
@@ -942,12 +942,12 @@ export default function OptimizedLessonPlayerPage() {
                               <div className="ml-2 flex-shrink-0">
                                 <div className={`w-12 text-right text-xs font-medium ${
                                   isCompleted
-                                    ? 'text-green-600'
+                                    ? 'text-success'
                                     : isCurrentLesson
-                                    ? 'text-blue-600'
+                                    ? 'text-primary'
                                     : (lessonProgress?.video_progress?.watch_percentage ?? 0) > 0
-                                    ? 'text-blue-600'
-                                    : 'text-gray-600'
+                                    ? 'text-primary'
+                                    : 'text-muted-foreground'
                                 }`}>
                                   {/* Current lesson: realtime %, Others: DB % */}
                                   {isCurrentLesson
@@ -974,11 +974,11 @@ export default function OptimizedLessonPlayerPage() {
               {/* Progress Indicator */}
               <div className="mb-4">
                 <div 
-                  className="w-10 h-10 rounded-full border-4 border-gray-200 relative"
+                  className="w-10 h-10 rounded-full border-4 border-border relative"
                   title={`${courseProgress.percentage}% Complete`}
                 >
                   <div 
-                    className="absolute inset-0 rounded-full border-4 border-blue-600 transition-all duration-300"
+                    className="absolute inset-0 rounded-full border-4 border-primary transition-all duration-300"
                     style={{
                       clipPath: `polygon(0 0, 100% 0, 100% ${100 - courseProgress.percentage}%, 0 ${100 - courseProgress.percentage}%)`
                     }}
@@ -992,14 +992,14 @@ export default function OptimizedLessonPlayerPage() {
               {/* Vertical Icons */}
               <div className="flex flex-col gap-3 items-center">
                 <div title={`${courseProgress.completedLessons}/${courseProgress.totalLessons} Lessons`}>
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span className="text-xs text-gray-600 mt-1">
+                  <CheckCircle className="w-5 h-5 text-success" />
+                  <span className="text-xs text-muted-foreground mt-1">
                     {courseProgress.completedLessons}/{courseProgress.totalLessons}
                   </span>
                 </div>
                 <div title={`${courseProgress.remainingTime} remaining`}>
-                  <Clock className="w-5 h-5 text-gray-600" />
-                  <span className="text-xs text-gray-600 mt-1">
+                  <Clock className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground mt-1">
                     {courseProgress.remainingTime}
                   </span>
                 </div>
@@ -1031,22 +1031,22 @@ export default function OptimizedLessonPlayerPage() {
             />
 
             {/* Lesson Information */}
-            <section className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-gray-50">
-                <h2 className="text-base md:text-lg font-semibold text-gray-900 flex items-center">
-                  <Info className="w-4 md:w-5 h-4 md:h-5 mr-2 text-blue-600" />
+            <section className="bg-white rounded-lg shadow-sm border border-border">
+              <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted">
+                <h2 className="text-base md:text-lg font-semibold text-foreground flex items-center">
+                  <Info className="w-4 md:w-5 h-4 md:h-5 mr-2 text-primary" />
                   About this lesson
                 </h2>
               </div>
               <div className="p-4 md:p-6">
                 {lesson.description ? (
-                  <div className="prose max-w-none text-gray-700 leading-relaxed">
+                  <div className="prose max-w-none text-foreground leading-relaxed">
                     {lesson.description}
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 text-sm">
+                    <BookOpen className="w-12 h-12 text-muted-foreground/60 mx-auto mb-3" />
+                    <p className="text-muted-foreground text-sm">
                       No description available for this lesson.
                     </p>
                   </div>
@@ -1056,10 +1056,10 @@ export default function OptimizedLessonPlayerPage() {
 
             {/* Learning Resources */}
             {lesson.resources && lesson.resources.length > 0 && (
-              <section className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-gray-50">
-                  <h2 className="text-base md:text-lg font-semibold text-gray-900 flex items-center">
-                    <BookOpen className="w-4 md:w-5 h-4 md:h-5 mr-2 text-green-600" />
+              <section className="bg-white rounded-lg shadow-sm border border-border">
+                <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted">
+                  <h2 className="text-base md:text-lg font-semibold text-foreground flex items-center">
+                    <BookOpen className="w-4 md:w-5 h-4 md:h-5 mr-2 text-success" />
                     Learning Resources
                   </h2>
                 </div>

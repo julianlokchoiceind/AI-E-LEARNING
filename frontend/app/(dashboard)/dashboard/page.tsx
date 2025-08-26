@@ -13,7 +13,7 @@ import { OnboardingWizard } from '@/components/feature/OnboardingWizard';
 import { useStudentDashboardQuery } from '@/hooks/queries/useStudent';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { formatDistanceToNow } from '@/lib/utils/formatters';
-import { LoadingSpinner, EmptyState, CourseCardSkeleton } from '@/components/ui/LoadingStates';
+import { DashboardSkeleton, EmptyState, CourseCardSkeleton } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
@@ -132,11 +132,7 @@ export default function DashboardPage() {
   };
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" message="Loading your dashboard..." />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!dashboardData) {
@@ -161,7 +157,7 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold mb-2">
           Welcome back, {dashboardData.user.name}!
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Continue your learning journey and track your progress
         </p>
       </div>
@@ -171,7 +167,7 @@ export default function DashboardPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Enrolled Courses</p>
+              <p className="text-sm text-muted-foreground">Enrolled Courses</p>
               <p className="text-2xl font-bold">{dashboardData.stats.total_courses}</p>
             </div>
             <div className="text-4xl">📚</div>
@@ -181,7 +177,7 @@ export default function DashboardPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Completed</p>
+              <p className="text-sm text-muted-foreground">Completed</p>
               <p className="text-2xl font-bold">{dashboardData.stats.completed_courses}</p>
             </div>
             <div className="text-4xl">✅</div>
@@ -191,7 +187,7 @@ export default function DashboardPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Hours Learned</p>
+              <p className="text-sm text-muted-foreground">Hours Learned</p>
               <p className="text-2xl font-bold">{dashboardData.stats.total_hours_learned}</p>
             </div>
             <div className="text-4xl">⏱️</div>
@@ -201,7 +197,7 @@ export default function DashboardPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Current Streak</p>
+              <p className="text-sm text-muted-foreground">Current Streak</p>
               <p className="text-2xl font-bold">{dashboardData.stats.current_streak} days</p>
             </div>
             <div className="text-4xl">🔥</div>
@@ -245,8 +241,8 @@ export default function DashboardPage() {
                         className="w-24 h-16 object-cover rounded"
                       />
                     ) : (
-                      <div className="w-24 h-16 bg-gray-200 rounded flex items-center justify-center">
-                        <span className="text-gray-400">📚</span>
+                      <div className="w-24 h-16 bg-muted rounded flex items-center justify-center">
+                        <span className="text-muted-foreground">📚</span>
                       </div>
                     )}
                     
@@ -255,7 +251,7 @@ export default function DashboardPage() {
                       <div className="mb-2">
                         <ProgressBar value={course.progress} />
                       </div>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         {course.progress}% complete
                         {course.last_accessed_display && (
                           <span> • Last accessed {course.last_accessed_display}</span>
@@ -289,14 +285,14 @@ export default function DashboardPage() {
             <h3 className="text-lg font-bold mb-3">Upcoming Lessons</h3>
             {dashboardData.upcoming_lessons.length === 0 ? (
               <Card className="p-4">
-                <p className="text-sm text-gray-500">No upcoming lessons</p>
+                <p className="text-sm text-muted-foreground">No upcoming lessons</p>
               </Card>
             ) : (
               <div className="space-y-3">
                 {dashboardData.upcoming_lessons.map((lesson: any, index: number) => (
                   <Card 
                     key={index} 
-                    className={`p-4 ${lesson.lesson_id ? 'hover:bg-gray-50 cursor-pointer transition-colors' : ''}`}
+                    className={`p-4 ${lesson.lesson_id ? 'hover:bg-muted/50 cursor-pointer transition-colors' : ''}`}
                     onClick={() => {
                       if (lesson.lesson_id) {
                         router.push(`/learn/${lesson.course_id}/${lesson.lesson_id}`);
@@ -308,7 +304,7 @@ export default function DashboardPage() {
                         <p className="font-medium text-sm">
                           {lesson.lesson_title}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           {lesson.course_title}
                           {lesson.chapter_title && (
                             <span> • {lesson.chapter_title}</span>
@@ -349,31 +345,31 @@ export default function DashboardPage() {
             <div className="space-y-2">
               <Link
                 href="/courses"
-                className="block w-full text-center bg-gray-100 hover:bg-gray-200 py-2 rounded transition-colors"
+                className="block w-full text-center bg-muted hover:bg-muted/80 py-2 rounded transition-colors"
               >
                 Browse New Courses
               </Link>
               <Link
                 href="/certificates"
-                className="block w-full text-center bg-gray-100 hover:bg-gray-200 py-2 rounded transition-colors"
+                className="block w-full text-center bg-muted hover:bg-muted/80 py-2 rounded transition-colors"
               >
                 View Certificates
               </Link>
               <Link
                 href="/profile"
-                className="block w-full text-center bg-gray-100 hover:bg-gray-200 py-2 rounded transition-colors"
+                className="block w-full text-center bg-muted hover:bg-muted/80 py-2 rounded transition-colors"
               >
                 Edit Profile
               </Link>
               <button
                 onClick={() => setShowExportModal(true)}
-                className="block w-full text-center bg-blue-100 hover:bg-blue-200 py-2 rounded transition-colors text-blue-700"
+                className="block w-full text-center bg-primary/20 hover:bg-primary/30 py-2 rounded transition-colors text-primary"
               >
                 📊 Export Progress
               </button>
               <button
                 onClick={() => setShowOnboardingModal(true)}
-                className="block w-full text-center bg-purple-100 hover:bg-purple-200 py-2 rounded transition-colors text-purple-700"
+                className="block w-full text-center bg-secondary/20 hover:bg-secondary/30 py-2 rounded transition-colors text-secondary"
               >
                 🚀 Platform Tour
               </button>

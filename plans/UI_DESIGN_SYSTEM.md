@@ -1101,7 +1101,7 @@ className="text-gray-500" // Secondary text
 ```css
 /* 12-column responsive grid */
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
 }

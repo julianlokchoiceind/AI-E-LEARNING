@@ -3,32 +3,32 @@
 export default function PrivacyPage() {
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
               Privacy Policy
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Last updated: January 20, 2025
             </p>
           </div>
 
           {/* Privacy Content */}
           <div className="prose prose-gray max-w-none">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               1. Introduction
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               AI E-Learning Platform ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our online learning platform and related services.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               2. Information We Collect
             </h2>
-            <div className="mb-6 text-gray-700 leading-relaxed">
+            <div className="mb-6 text-muted-foreground leading-relaxed">
               <h3 className="text-lg font-medium mb-3">
                 Personal Information
               </h3>
@@ -65,10 +65,10 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               3. How We Use Your Information
             </h2>
-            <div className="mb-6 text-gray-700 leading-relaxed">
+            <div className="mb-6 text-muted-foreground leading-relaxed">
               <p className="mb-4">
                 We use the information we collect to:
               </p>
@@ -83,10 +83,10 @@ export default function PrivacyPage() {
               </ul>
             </div>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               4. Information Sharing
             </h2>
-            <div className="mb-6 text-gray-700 leading-relaxed">
+            <div className="mb-6 text-muted-foreground leading-relaxed">
               <p className="mb-4">
                 We do not sell your personal information. We may share your information in the following circumstances:
               </p>
@@ -99,10 +99,10 @@ export default function PrivacyPage() {
               </ul>
             </div>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               5. Third-Party Services
             </h2>
-            <div className="mb-6 text-gray-700 leading-relaxed">
+            <div className="mb-6 text-muted-foreground leading-relaxed">
               <p className="mb-4">
                 Our platform integrates with the following third-party services:
               </p>
@@ -117,24 +117,24 @@ export default function PrivacyPage() {
               </ul>
             </div>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               6. Data Security
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               We implement appropriate technical and organizational security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. This includes encryption of data in transit and at rest, secure authentication, and regular security audits.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               7. Data Retention
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               We retain your personal information for as long as necessary to provide our services, comply with legal obligations, resolve disputes, and enforce our agreements. Course progress data is retained indefinitely to maintain learning continuity. You may request deletion of your account and associated data at any time.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               8. Your Privacy Rights
             </h2>
-            <div className="mb-6 text-gray-700 leading-relaxed">
+            <div className="mb-6 text-muted-foreground leading-relaxed">
               <p className="mb-4">
                 You have the following rights regarding your personal information:
               </p>
@@ -150,10 +150,10 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               9. Cookies and Tracking
             </h2>
-            <div className="mb-6 text-gray-700 leading-relaxed">
+            <div className="mb-6 text-muted-foreground leading-relaxed">
               <p className="mb-4">
                 We use cookies and similar technologies to:
               </p>
@@ -168,31 +168,31 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               10. Children's Privacy
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               Our platform is not intended for children under 13 years of age. We do not knowingly collect personal information from children under 13. If you become aware that a child has provided us with personal information, please contact us, and we will take steps to remove such information.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               11. International Data Transfers
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               Your information may be transferred to and processed in countries other than Vietnam. We ensure that such transfers comply with applicable data protection laws and implement appropriate safeguards to protect your information.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               12. Changes to This Policy
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new Privacy Policy on this page and updating the "Last updated" date. We encourage you to review this Privacy Policy periodically.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               13. Contact Us
             </h2>
-            <div className="mb-6 text-gray-700 leading-relaxed">
+            <div className="mb-6 text-muted-foreground leading-relaxed">
               <p className="mb-4">
                 If you have any questions about this Privacy Policy or our data practices, please contact us:
               </p>
@@ -202,8 +202,8 @@ export default function PrivacyPage() {
               </ul>
             </div>
 
-            <div className="bg-blue-50 rounded-lg p-6 mt-8">
-              <p className="text-sm text-gray-600">
+            <div className="bg-primary/10 rounded-lg p-6 mt-8">
+              <p className="text-sm text-muted-foreground">
                 This Privacy Policy is governed by Vietnamese law. For users in the European Union, additional rights may apply under the General Data Protection Regulation (GDPR).
               </p>
             </div>

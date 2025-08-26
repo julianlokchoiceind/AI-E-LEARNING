@@ -109,14 +109,14 @@ export default function FAQPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-muted py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
             Frequently Asked Questions
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-muted-foreground">
             Find answers to common questions about our AI E-Learning platform
           </p>
         </div>
@@ -125,7 +125,7 @@ export default function FAQPage() {
         <div className="mb-8 space-y-4">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search FAQs..."
@@ -163,11 +163,11 @@ export default function FAQPage() {
         {faqs.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
-              <HelpCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <HelpCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 No FAQs found
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Try adjusting your search or filter criteria
               </p>
             </CardContent>
@@ -184,14 +184,14 @@ export default function FAQPage() {
                   <CardContent className="p-0">
                     <button
                       onClick={() => toggleExpanded(faq.id)}
-                      className="w-full text-left p-6 hover:bg-gray-50 transition-colors"
+                      className="w-full text-left p-6 hover:bg-muted transition-colors"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 pr-4">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          <h3 className="text-lg font-semibold text-foreground mb-2">
                             {faq.question}
                           </h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               {categoryInfo?.name || 'General'}
                             </span>
@@ -199,15 +199,15 @@ export default function FAQPage() {
                           </div>
                         </div>
                         {isExpanded ? (
-                          <ChevronUp className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                          <ChevronUp className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                         ) : (
-                          <ChevronDown className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                          <ChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                         )}
                       </div>
                     </button>
                     
                     {isExpanded && (
-                      <div className="px-6 pb-6 border-t border-gray-100">
+                      <div className="px-6 pb-6 border-t border-border/50">
                         <div className="pt-4">
                           <div
                             className="prose prose-gray max-w-none"
@@ -217,7 +217,7 @@ export default function FAQPage() {
                           
                           {/* Vote Section */}
                           <div className="mt-6 flex items-center justify-between">
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-muted-foreground">
                               Was this answer helpful?
                             </div>
                             <div className="flex items-center gap-4">
@@ -226,8 +226,8 @@ export default function FAQPage() {
                                 disabled={hasVoted || isVoting}
                                 className={`flex items-center gap-1 px-3 py-1 rounded-md transition-colors ${
                                   hasVoted || isVoting
-                                    ? 'text-gray-400 cursor-not-allowed'
-                                    : 'text-gray-600 hover:bg-green-50 hover:text-green-600'
+                                    ? 'text-muted-foreground cursor-not-allowed'
+                                    : 'text-muted-foreground hover:bg-success/20 hover:text-success'
                                 }`}
                               >
                                 <ThumbsUp className="h-4 w-4" />
@@ -238,8 +238,8 @@ export default function FAQPage() {
                                 disabled={hasVoted || isVoting}
                                 className={`flex items-center gap-1 px-3 py-1 rounded-md transition-colors ${
                                   hasVoted || isVoting
-                                    ? 'text-gray-400 cursor-not-allowed'
-                                    : 'text-gray-600 hover:bg-red-50 hover:text-red-600'
+                                    ? 'text-muted-foreground cursor-not-allowed'
+                                    : 'text-muted-foreground hover:bg-destructive/20 hover:text-destructive'
                                 }`}
                               >
                                 <ThumbsDown className="h-4 w-4" />
@@ -284,10 +284,10 @@ export default function FAQPage() {
         <div className="mt-16 text-center">
           <Card>
             <CardContent className="py-8">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 Still have questions?
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-muted-foreground mb-4">
                 Can't find what you're looking for? Our support team is here to help.
               </p>
               <Button>

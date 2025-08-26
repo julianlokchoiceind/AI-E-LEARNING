@@ -13,8 +13,16 @@ class ApiClient {
   private defaultTimeout: number = 15000; // 15 seconds timeout for course operations
 
   constructor(baseUrl?: string) {
-    // Use the provided baseUrl or fall back to API_ENDPOINTS.BASE_URL
-    this.baseUrl = baseUrl || API_ENDPOINTS.BASE_URL;
+    // Use the provided baseUrl or API_ENDPOINTS.BASE_URL
+    if (baseUrl) {
+      this.baseUrl = baseUrl;
+    } else if (API_ENDPOINTS.BASE_URL) {
+      this.baseUrl = API_ENDPOINTS.BASE_URL;
+    } else {
+      throw new Error(
+        'API_ENDPOINTS.BASE_URL is not defined. Please ensure NEXT_PUBLIC_API_URL environment variable is set.'
+      );
+    }
     log('API-CLIENT', 'Constructor - baseUrl:', this.baseUrl);
   }
 

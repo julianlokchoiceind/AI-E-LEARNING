@@ -112,12 +112,12 @@ export function AdminSidebar() {
   };
 
   return (
-    <div className="bg-white w-64 h-full shadow-lg border-r border-gray-200 flex flex-col">
+    <div className="bg-card w-64 h-full shadow-lg border-r border-border flex flex-col">
       {/* Header - Fixed */}
-      <div className="h-16 flex-shrink-0 flex items-center justify-center border-b border-gray-200">
+      <div className="h-16 flex-shrink-0 flex items-center justify-center border-b border-border">
         <div className="flex items-center space-x-2">
-          <Shield className="h-8 w-8 text-red-600" />
-          <span className="text-xl font-bold text-gray-900">Admin Panel</span>
+          <Shield className="h-8 w-8 text-primary" />
+          <span className="text-xl font-bold text-foreground">Admin Panel</span>
         </div>
       </div>
 
@@ -137,15 +137,15 @@ export function AdminSidebar() {
                   className={`
                     group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
                     ${isActive
-                      ? 'bg-red-100 text-red-900 border-r-2 border-red-600'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'bg-primary/10 text-primary border-r-2 border-primary'
+                      : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                     }
                   `}
                 >
                   <item.icon
                     className={`
                       mr-3 h-5 w-5 flex-shrink-0
-                      ${isActive ? 'text-red-600' : 'text-gray-400 group-hover:text-gray-500'}
+                      ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}
                     `}
                   />
                   {item.name}
@@ -164,8 +164,8 @@ export function AdminSidebar() {
                 headerClassName={`
                   group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors w-full text-left
                   ${isActive
-                    ? 'bg-red-50 text-red-900'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-primary/5 text-primary'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                   }
                 `}
                 contentClassName="ml-8 space-y-1 mt-1"
@@ -175,7 +175,7 @@ export function AdminSidebar() {
                     <item.icon
                       className={`
                         mr-3 h-5 w-5 flex-shrink-0
-                        ${isActive ? 'text-red-600' : 'text-gray-400 group-hover:text-gray-500'}
+                        ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}
                       `}
                     />
                     <span className="flex-1">{item.name}</span>
@@ -192,8 +192,8 @@ export function AdminSidebar() {
                       className={`
                         block px-3 py-2 text-sm rounded-md transition-colors
                         ${isSubActive
-                          ? 'bg-red-100 text-red-900 font-medium'
-                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                         }
                       `}
                     >
@@ -211,16 +211,16 @@ export function AdminSidebar() {
       </nav>
 
       {/* Bottom Info - Fixed */}
-      <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-gray-50">
+      <div className="flex-shrink-0 p-4 border-t border-border bg-muted/50">
         <div className="flex items-center">
           <div className="flex-shrink-0">
-            <div className="h-8 w-8 rounded-full bg-red-600 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
               <Shield className="h-4 w-4 text-white" />
             </div>
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium text-gray-900">Administrator</p>
-            <p className="text-xs text-gray-500">Full system access</p>
+            <p className="text-sm font-medium text-foreground">Administrator</p>
+            <p className="text-xs text-muted-foreground">Full system access</p>
           </div>
         </div>
       </div>

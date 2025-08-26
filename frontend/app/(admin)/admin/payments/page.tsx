@@ -98,8 +98,8 @@ export default function AdminPaymentsPage() {
       {/* Header - Đồng nhất với admin pages khác */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payment Management</h1>
-          <p className="text-gray-600">Manage platform payments and analytics</p>
+          <h1 className="text-2xl font-bold text-foreground">Payment Management</h1>
+          <p className="text-muted-foreground">Manage platform payments and analytics</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -125,60 +125,60 @@ export default function AdminPaymentsPage() {
             <Card className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-muted-foreground">Total Revenue</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {formatCurrency(summaryData.revenue.total)}
                   </p>
-                  <p className="text-sm text-green-600">
+                  <p className="text-sm text-success">
                     +{formatCurrency(summaryData.revenue.this_month)} this month
                   </p>
                 </div>
-                <DollarSign className="w-8 h-8 text-green-500" />
+                <DollarSign className="w-8 h-8 text-success" />
               </div>
             </Card>
 
             <Card className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Payments</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-muted-foreground">Total Payments</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {summaryData.payments.total_count}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Avg: {formatCurrency(summaryData.revenue.average_payment)}
                   </p>
                 </div>
-                <CreditCard className="w-8 h-8 text-blue-500" />
+                <CreditCard className="w-8 h-8 text-primary" />
               </div>
             </Card>
 
             <Card className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Success Rate</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-muted-foreground">Success Rate</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {trendsData?.payment_stats?.success_rate?.toFixed(1) || 0}%
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Payment success rate
                   </p>
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
+                <CheckCircle className="w-8 h-8 text-success" />
               </div>
             </Card>
 
             <Card className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Active Subscriptions</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-muted-foreground">Active Subscriptions</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {summaryData.subscriptions.active_count}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Pro subscribers
                   </p>
                 </div>
-                <Users className="w-8 h-8 text-indigo-500" />
+                <Users className="w-8 h-8 text-secondary" />
               </div>
             </Card>
         </div>
@@ -191,13 +191,13 @@ export default function AdminPaymentsPage() {
               <h2 className="text-xl font-semibold mb-4">Payment Types</h2>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">Course Purchases</span>
+                  <span className="text-foreground">Course Purchases</span>
                   <span className="font-semibold">
                     {summaryData.payments.by_type.course_purchases} payments
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700">Subscriptions</span>
+                  <span className="text-foreground">Subscriptions</span>
                   <span className="font-semibold">
                     {summaryData.payments.by_type.subscriptions} payments
                   </span>
@@ -210,7 +210,7 @@ export default function AdminPaymentsPage() {
               <div className="space-y-3">
                 {Object.entries(summaryData.payments.by_status).map(([status, count]) => (
                   <div key={status} className="flex items-center justify-between">
-                    <span className="text-gray-700 capitalize">{status}</span>
+                    <span className="text-foreground capitalize">{status}</span>
                     <span className="font-semibold">
                       {String(count)} payments
                     </span>
@@ -228,17 +228,17 @@ export default function AdminPaymentsPage() {
             <div className="grid grid-cols-7 gap-2 text-xs">
               {trendsData.daily_revenue.slice(-7).map((day: any, index: number) => (
                 <div key={index} className="text-center">
-                  <div className="text-gray-500 mb-1">
+                  <div className="text-muted-foreground mb-1">
                     {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
                   </div>
-                  <div className="bg-blue-100 rounded p-2">
-                    <div className="font-semibold text-blue-600">
+                  <div className="bg-primary/20 rounded p-2">
+                    <div className="font-semibold text-primary">
                       {formatCurrency(day.total_revenue)}
                     </div>
-                    <div className="text-gray-500 text-xs">
+                    <div className="text-muted-foreground text-xs">
                       {day.payment_count} payments
                     </div>
-                    <div className="text-green-600 text-xs">
+                    <div className="text-success text-xs">
                       {day.success_rate.toFixed(1)}%
                     </div>
                   </div>
@@ -252,11 +252,11 @@ export default function AdminPaymentsPage() {
       <Card className="p-6">
         <div className="flex items-center gap-4">
           <div className="flex-1 relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search payments..."
-              className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="pl-10 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
               value={searchQuery}
               onChange={(e) => {
                 setCurrentPage(1); // Reset to first page when search changes
@@ -265,7 +265,7 @@ export default function AdminPaymentsPage() {
             />
           </div>
           <select
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
             value={statusFilter}
             onChange={(e) => {
               setCurrentPage(1); // Reset to first page when filter changes
@@ -279,7 +279,7 @@ export default function AdminPaymentsPage() {
             <option value="refunded">Refunded</option>
           </select>
           <select
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
             value={typeFilter}
             onChange={(e) => {
               setCurrentPage(1); // Reset to first page when filter changes  
@@ -295,7 +295,7 @@ export default function AdminPaymentsPage() {
 
       {/* Payment History Table - Thống nhất layout với modules khác */}
       <Card className="overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
               Payments ({totalItems})
@@ -327,7 +327,7 @@ export default function AdminPaymentsPage() {
 
         {/* Table Footer with Pagination - Thống nhất với modules khác */}
         {totalPages > 1 && (
-          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+          <div className="border-t border-border bg-muted/50 px-6 py-4">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}

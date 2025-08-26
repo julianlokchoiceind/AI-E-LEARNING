@@ -107,7 +107,7 @@ export default function TicketDetailPage() {
                   await supportAPI.uploadAttachment(ticketId, file);
                 }
                 // Invalidate to show attachments immediately
-                await queryClient.invalidateQueries(['support-ticket', ticketId]);
+                await queryClient.invalidateQueries({ queryKey: ['support-ticket', ticketId] });
               } catch (uploadError) {
                 console.error('File upload error:', uploadError);
               }
@@ -126,7 +126,7 @@ export default function TicketDetailPage() {
           await supportAPI.uploadAttachment(ticketId, file);
         }
         // Invalidate to show attachments immediately
-        await queryClient.invalidateQueries(['support-ticket', ticketId]);
+        await queryClient.invalidateQueries({ queryKey: ['support-ticket', ticketId] });
         
         setSelectedFiles([]);
         refetchTicket(); // Refresh to get new messages
@@ -160,15 +160,15 @@ export default function TicketDetailPage() {
     const ext = filename.split('.').pop()?.toLowerCase();
     
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) {
-      return <ImageIcon className="h-4 w-4 text-green-500" />;
+      return <ImageIcon className="h-4 w-4 text-success" />;
     }
     if (['pdf'].includes(ext || '')) {
-      return <FileText className="h-4 w-4 text-red-500" />;
+      return <FileText className="h-4 w-4 text-destructive" />;
     }
     if (['zip', 'rar', '7z'].includes(ext || '')) {
-      return <FileArchive className="h-4 w-4 text-purple-500" />;
+      return <FileArchive className="h-4 w-4 text-primary" />;
     }
-    return <FileText className="h-4 w-4 text-blue-500" />;
+    return <FileText className="h-4 w-4 text-primary" />;
   };
 
 
@@ -188,7 +188,7 @@ export default function TicketDetailPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -217,10 +217,10 @@ export default function TicketDetailPage() {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-bold text-gray-900">{ticket.title}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{ticket.title}</h1>
             </div>
             
-            <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <Badge variant={statusInfo?.color as any}>
                 {statusInfo?.label}
               </Badge>
@@ -255,8 +255,8 @@ export default function TicketDetailPage() {
                   <div
                     className={`max-w-[70%] rounded-lg p-4 ${
                       isSupport
-                        ? 'bg-gray-100 text-gray-900'
-                        : 'bg-blue-600 text-white'
+                        ? 'bg-muted/50 text-foreground'
+                        : 'bg-primary text-primary-foreground'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-2">
@@ -267,7 +267,7 @@ export default function TicketDetailPage() {
                       )}
                       <span className="font-medium">{msg.sender_name}</span>
                       <span className={`text-xs ${
-                        isSupport ? 'text-gray-500' : 'text-blue-100'
+                        isSupport ? 'text-muted-foreground' : 'text-primary-foreground/80'
                       }`}>
                         {formatDate(msg.created_at)}
                       </span>
@@ -293,7 +293,7 @@ export default function TicketDetailPage() {
                                     onClick={() => window.open(getAttachmentUrl(attachment), '_blank')}
                                     style={{ cursor: 'pointer' }}
                                   />
-                                  <p className="text-xs mt-1 text-gray-500">{filename}</p>
+                                  <p className="text-xs mt-1 text-muted-foreground">{filename}</p>
                                 </div>
                               ) : (
                                 <a
@@ -302,8 +302,8 @@ export default function TicketDetailPage() {
                                   rel="noopener noreferrer"
                                   className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm hover:bg-opacity-80 ${
                                     isSupport 
-                                      ? 'bg-white text-gray-700 border-gray-200' 
-                                      : 'bg-blue-500 text-white border-blue-400'
+                                      ? 'bg-background text-foreground border-border' 
+                                      : 'bg-primary text-primary-foreground border-primary/60'
                                   }`}
                                 >
                                   {getFileIcon(filename)}
@@ -317,7 +317,7 @@ export default function TicketDetailPage() {
                     )}
                     
                     {msg.is_internal_note && (
-                      <p className="text-xs mt-2 text-gray-500 italic">
+                      <p className="text-xs mt-2 text-muted-foreground italic">
                         Internal Note
                       </p>
                     )}
@@ -334,22 +334,22 @@ export default function TicketDetailPage() {
               {/* Selected Files Preview */}
               {selectedFiles.length > 0 && (
                 <div className="mb-3 space-y-2">
-                  <p className="text-sm font-medium text-gray-700">Attachments:</p>
+                  <p className="text-sm font-medium text-foreground">Attachments:</p>
                   {selectedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                    <div key={index} className="flex items-center gap-3 bg-muted/50 p-2 rounded-md">
                       {getFileIcon(file.name)}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {file.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           {(file.size / (1024 * 1024)).toFixed(1)} MB
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => removeFile(index)}
-                        className="text-red-500 hover:text-red-700 p-1"
+                        className="text-destructive hover:text-destructive/80 p-1"
                       >
                         ×
                       </button>
@@ -410,7 +410,7 @@ export default function TicketDetailPage() {
           )}
           
           {ticket.status === 'closed' && (
-            <div className="border-t p-4 text-center text-gray-600">
+            <div className="border-t p-4 text-center text-muted-foreground">
               This ticket has been closed. Create a new ticket if you need further assistance.
             </div>
           )}
@@ -422,12 +422,12 @@ export default function TicketDetailPage() {
         <Card>
           <CardHeader className="pb-3">
             <h3 className="font-semibold flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-success" />
               Resolution
             </h3>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-700">{ticket.resolution_note}</p>
+            <p className="text-foreground">{ticket.resolution_note}</p>
           </CardContent>
         </Card>
       )}

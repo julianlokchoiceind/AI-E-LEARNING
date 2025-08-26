@@ -70,7 +70,7 @@ export default function BillingPage() {
   if (authLoading || loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -83,14 +83,14 @@ export default function BillingPage() {
   const isPremiumUser = user.premiumStatus;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Billing & Subscription
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Manage your subscription and payment methods
           </p>
         </div>
@@ -102,16 +102,16 @@ export default function BillingPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Current Plan</h2>
               {hasActiveSubscription && (
-                <Crown className="w-5 h-5 text-purple-600" />
+                <Crown className="w-5 h-5 text-secondary" />
               )}
             </div>
             
             {isPremiumUser ? (
               <div>
-                <Badge className="bg-gold-100 text-gold-800 mb-2">
+                <Badge className="bg-warning/20 text-warning mb-2">
                   Premium User
                 </Badge>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   You have premium access granted by admin
                 </p>
               </div>
@@ -121,8 +121,8 @@ export default function BillingPage() {
                   {subscriptionStatus?.data?.type?.toUpperCase() || 'FREE'} - {subscriptionStatus?.data?.status?.toUpperCase() || 'INACTIVE'}
                 </Badge>
                 <div className="mt-3">
-                  <p className="text-2xl font-bold text-gray-900">$29/month</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-2xl font-bold text-foreground">$29/month</p>
+                  <p className="text-sm text-muted-foreground">
                     {subscriptionStatus?.data?.cancel_at_period_end 
                       ? `Cancels on ${new Date(subscriptionStatus?.data?.current_period_end || Date.now()).toLocaleDateString()}`
                       : `Renews on ${new Date(subscriptionStatus?.data?.current_period_end || Date.now()).toLocaleDateString()}`
@@ -132,10 +132,10 @@ export default function BillingPage() {
               </div>
             ) : (
               <div>
-                <Badge className="bg-gray-100 text-gray-800 mb-2">
+                <Badge className="bg-muted text-muted-foreground mb-2">
                   Free Plan
                 </Badge>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                   Upgrade to Pro for unlimited access to all courses
                 </p>
                 <Button 
@@ -154,18 +154,18 @@ export default function BillingPage() {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Usage</h2>
-              <TrendingUp className="w-5 h-5 text-green-600" />
+              <TrendingUp className="w-5 h-5 text-success" />
             </div>
             <div className="space-y-3">
               <div>
-                <p className="text-sm text-gray-600">Courses Enrolled</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-muted-foreground">Courses Enrolled</p>
+                <p className="text-2xl font-bold text-foreground">
                   0
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Certificates Earned</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-muted-foreground">Certificates Earned</p>
+                <p className="text-2xl font-bold text-foreground">
                   0
                 </p>
               </div>
@@ -176,19 +176,19 @@ export default function BillingPage() {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Next Billing</h2>
-              <Calendar className="w-5 h-5 text-blue-600" />
+              <Calendar className="w-5 h-5 text-primary" />
             </div>
             {hasActiveSubscription && !subscriptionStatus?.data?.cancel_at_period_end ? (
               <div>
-                <p className="text-2xl font-bold text-gray-900">$29.00</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-2xl font-bold text-foreground">$29.00</p>
+                <p className="text-sm text-muted-foreground">
                   Due {new Date(subscriptionStatus?.data?.current_period_end || Date.now()).toLocaleDateString()}
                 </p>
               </div>
             ) : (
               <div>
-                <p className="text-lg text-gray-500">No upcoming billing</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-lg text-muted-foreground">No upcoming billing</p>
+                <p className="text-sm text-muted-foreground">
                   {hasActiveSubscription 
                     ? 'Subscription will end after current period'
                     : 'Subscribe to Pro for unlimited access'
@@ -206,8 +206,8 @@ export default function BillingPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h3 className="font-medium text-gray-900 mb-2">Pro Subscription</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <h3 className="font-medium text-foreground mb-2">Pro Subscription</h3>
+                <p className="text-sm text-muted-foreground mb-4">
                   Full access to all courses, AI assistant, and premium features
                 </p>
                 <div className="space-y-2 text-sm">
@@ -230,14 +230,14 @@ export default function BillingPage() {
               
               <div className="space-y-3">
                 {subscriptionStatus?.data?.cancel_at_period_end ? (
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="p-4 bg-warning/20 border border-warning rounded-lg">
                     <div className="flex items-center">
-                      <AlertCircle className="w-5 h-5 text-yellow-600 mr-2" />
-                      <span className="text-sm font-medium text-yellow-800">
+                      <AlertCircle className="w-5 h-5 text-warning mr-2" />
+                      <span className="text-sm font-medium text-warning">
                         Subscription Scheduled for Cancellation
                       </span>
                     </div>
-                    <p className="text-sm text-yellow-700 mt-1">
+                    <p className="text-sm text-warning mt-1">
                       Your subscription will end on {new Date(subscriptionStatus?.data?.current_period_end || Date.now()).toLocaleDateString()}
                     </p>
                   </div>
@@ -246,7 +246,7 @@ export default function BillingPage() {
                     variant="outline"
                     onClick={handleCancelSubscription}
                     loading={canceling}
-                    className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                    className="w-full text-destructive border-destructive hover:bg-destructive/20"
                   >
                     Cancel Subscription
                   </Button>
@@ -269,25 +269,25 @@ export default function BillingPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold">Payment History</h2>
-            <CreditCard className="w-5 h-5 text-gray-400" />
+            <CreditCard className="w-5 h-5 text-muted-foreground" />
           </div>
           
           {paymentHistory?.data?.payments ? (
             <PaymentHistory payments={paymentHistory.data.payments} />
           ) : (
             <div className="text-center py-8">
-              <CreditCard className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500">No payment history available</p>
+              <CreditCard className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">No payment history available</p>
             </div>
           )}
         </Card>
 
         {/* Billing Support */}
-        <Card className="mt-8 p-6 bg-blue-50 border-blue-200">
-          <h2 className="text-lg font-semibold text-blue-900 mb-2">
+        <Card className="mt-8 p-6 bg-primary/20 border-primary">
+          <h2 className="text-lg font-semibold text-primary mb-2">
             Need Help?
           </h2>
-          <p className="text-blue-800 text-sm mb-4">
+          <p className="text-primary text-sm mb-4">
             Have questions about your billing or need to make changes to your subscription?
           </p>
           <div className="flex flex-wrap gap-3">

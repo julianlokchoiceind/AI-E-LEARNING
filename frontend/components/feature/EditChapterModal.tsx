@@ -181,7 +181,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
         <MobileForm onSubmit={handleSubmit}>
           <div className="space-y-6">
             {/* Chapter Info */}
-            <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-600">
+            <div className="bg-muted p-3 rounded-lg text-sm text-muted-foreground">
               <p><strong>Chapter Order:</strong> {chapter.order}</p>
               <p><strong>Course:</strong> {chapter.course_name || chapter.course_id}</p>
             </div>
@@ -199,7 +199,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
                 maxLength={100}
                 autoFocus
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.title.length}/100 characters
               </p>
             </div>
@@ -216,26 +216,26 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
                 rows={3}
                 maxLength={500}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.description.length}/500 characters
               </p>
             </div>
 
             {/* Chapter Status */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Chapter Status
               </label>
               <select
                 value={formData.status}
                 onChange={(e) => handleInputChange('status', e.target.value)}
                 disabled={loading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-muted disabled:cursor-not-allowed"
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.status === 'draft' 
                   ? 'Chapter is visible only to creators and admins' 
                   : 'Chapter is visible to enrolled students'
@@ -244,7 +244,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
             </div>
 
             {/* Helper Text */}
-            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+            <div className="text-sm text-muted-foreground bg-primary/10 p-3 rounded-lg">
               <p className="font-medium mb-1">Editing Tips:</p>
               <ul className="text-xs space-y-1 ml-4 list-disc">
                 <li>Use clear, descriptive titles for better organization</li>
@@ -280,7 +280,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
           </MobileFormActions>
 
           {/* Keyboard Shortcut Hint */}
-          <p className="text-xs text-gray-500 text-center mt-2">
+          <p className="text-xs text-muted-foreground text-center mt-2">
             Press ⌘ + Enter to update chapter
           </p>
         </MobileForm>

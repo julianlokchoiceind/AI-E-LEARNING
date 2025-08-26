@@ -273,7 +273,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
         <MobileForm onSubmit={handleSubmit}>
           <div className="space-y-6">
             {/* Lesson Info */}
-            <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-600">
+            <div className="bg-muted p-3 rounded-lg text-sm text-muted-foreground">
               <p><strong>Lesson Order:</strong> {lesson.order}</p>
               <p><strong>Chapter:</strong> {lesson.chapter_name || lesson.chapter_id}</p>
               <p><strong>Course:</strong> {lesson.course_name || lesson.course_id}</p>
@@ -292,7 +292,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
                 maxLength={200}
                 autoFocus
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.title.length}/200 characters
               </p>
             </div>
@@ -309,7 +309,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
                 rows={3}
                 maxLength={1000}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.description.length}/1000 characters
               </p>
             </div>
@@ -325,7 +325,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
                 disabled={loading}
                 type="url"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Supports YouTube and Vimeo URLs
               </p>
             </div>
@@ -344,7 +344,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
                 max="600"
                 step="0.1"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Duration in minutes (e.g., 15.5 for 15 minutes 30 seconds)
               </p>
             </div>
@@ -361,33 +361,33 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
                 rows={6}
                 maxLength={50000}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.content.length}/50,000 characters
               </p>
             </div>
 
             {/* Status */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Lesson Status
               </label>
               <select
                 value={formData.status}
                 onChange={(e) => handleInputChange('status', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 disabled={loading}
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Only published lessons are visible to students
               </p>
               
               {/* Status validation info */}
               {formData.status === 'published' && (
-                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-xs text-yellow-700">
+                <div className="mt-2 p-2 bg-warning/10 border border-warning rounded-lg">
+                  <p className="text-xs text-warning">
                     <strong>Note:</strong> Publishing a lesson requires the parent chapter to be published first. 
                     The system will validate this when you save.
                   </p>
@@ -396,7 +396,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
             </div>
 
             {/* Helper Text */}
-            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+            <div className="text-sm text-muted-foreground bg-primary/10 p-3 rounded-lg">
               <p className="font-medium mb-1">Editing Tips:</p>
               <ul className="text-xs space-y-1 ml-4 list-disc">
                 <li>Video URL will automatically extract YouTube/Vimeo IDs</li>
@@ -443,7 +443,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
           </MobileFormActions>
 
           {/* Keyboard Shortcut Hint */}
-          <p className="text-xs text-gray-500 text-center mt-2">
+          <p className="text-xs text-muted-foreground text-center mt-2">
             Press ⌘ + Enter to update lesson
           </p>
         </MobileForm>

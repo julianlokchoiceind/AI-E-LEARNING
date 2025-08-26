@@ -41,7 +41,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-muted">
       {/* Sidebar */}
       <AdminSidebar />
       
@@ -51,7 +51,7 @@ export default function AdminLayout({
         <AdminHeader />
         
         {/* Page Content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-6">
           {children}
         </main>
       </div>

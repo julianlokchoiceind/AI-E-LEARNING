@@ -48,59 +48,59 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-muted py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
             Choose Your Learning Path
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-muted-foreground">
             Flexible pricing options to match your learning needs
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {/* Free Plan */}
-          <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
+          <div className="bg-white rounded-lg shadow-lg p-8 border border-border">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Free</h2>
-              <p className="text-gray-500">Get started with basics</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Free</h2>
+              <p className="text-muted-foreground">Get started with basics</p>
               <div className="mt-4">
                 <span className="text-4xl font-bold">$0</span>
-                <span className="text-gray-500">/month</span>
+                <span className="text-muted-foreground">/month</span>
               </div>
             </div>
 
             <ul className="space-y-3 mb-8">
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600">Access to free courses</span>
+                <span className="text-muted-foreground">Access to free courses</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600">Basic AI assistant support</span>
+                <span className="text-muted-foreground">Basic AI assistant support</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600">Course completion certificates</span>
+                <span className="text-muted-foreground">Course completion certificates</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-gray-300 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-muted-foreground/60 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-400">Limited course access</span>
+                <span className="text-muted-foreground">Limited course access</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-gray-300 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-muted-foreground/60 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-400">Ads supported</span>
+                <span className="text-muted-foreground">Ads supported</span>
               </li>
             </ul>
 
@@ -115,60 +115,60 @@ export default function PricingPage() {
           </div>
 
           {/* Pro Plan */}
-          <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-blue-500 relative">
-            <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white">
+          <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-primary relative">
+            <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white">
               Most Popular
             </Badge>
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Pro</h2>
-              <p className="text-gray-500">Everything you need to succeed</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Pro</h2>
+              <p className="text-muted-foreground">Everything you need to succeed</p>
               <div className="mt-4">
                 <span className="text-4xl font-bold">$29</span>
-                <span className="text-gray-500">/month</span>
+                <span className="text-muted-foreground">/month</span>
               </div>
             </div>
 
             <ul className="space-y-3 mb-8">
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600 font-medium">Unlimited access to all courses</span>
+                <span className="text-muted-foreground font-medium">Unlimited access to all courses</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600 font-medium">Priority AI assistant support</span>
+                <span className="text-muted-foreground font-medium">Priority AI assistant support</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600 font-medium">Download courses for offline</span>
+                <span className="text-muted-foreground font-medium">Download courses for offline</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600 font-medium">Exclusive Pro content</span>
+                <span className="text-muted-foreground font-medium">Exclusive Pro content</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600 font-medium">Ad-free experience</span>
+                <span className="text-muted-foreground font-medium">Ad-free experience</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600 font-medium">Early access to new courses</span>
+                <span className="text-muted-foreground font-medium">Early access to new courses</span>
               </li>
             </ul>
 
             <Button
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-primary hover:bg-primary/80"
               onClick={handleProSubscription}
               disabled={isProcessing || user?.premiumStatus}
             >
@@ -179,46 +179,46 @@ export default function PricingPage() {
           </div>
 
           {/* Pay Per Course */}
-          <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-200">
+          <div className="bg-white rounded-lg shadow-lg p-8 border border-border">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Pay Per Course</h2>
-              <p className="text-gray-500">Choose what you learn</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Pay Per Course</h2>
+              <p className="text-muted-foreground">Choose what you learn</p>
               <div className="mt-4">
                 <span className="text-4xl font-bold">$19-99</span>
-                <span className="text-gray-500">/course</span>
+                <span className="text-muted-foreground">/course</span>
               </div>
             </div>
 
             <ul className="space-y-3 mb-8">
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600">Lifetime access to purchased courses</span>
+                <span className="text-muted-foreground">Lifetime access to purchased courses</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600">Pay only for what you need</span>
+                <span className="text-muted-foreground">Pay only for what you need</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600">Course completion certificates</span>
+                <span className="text-muted-foreground">Course completion certificates</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-success mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-600">Basic AI assistant support</span>
+                <span className="text-muted-foreground">Basic AI assistant support</span>
               </li>
               <li className="flex items-start">
-                <svg className="w-5 h-5 text-gray-300 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-muted-foreground/60 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
-                <span className="text-gray-400">No monthly commitment</span>
+                <span className="text-muted-foreground">No monthly commitment</span>
               </li>
             </ul>
 
@@ -239,21 +239,21 @@ export default function PricingPage() {
           <div className="space-y-6">
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="font-semibold text-lg mb-2">Can I switch between plans?</h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Yes! You can upgrade to Pro at any time. If you cancel Pro, you'll still have access until the end of your billing period.
               </p>
             </div>
             
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="font-semibold text-lg mb-2">What payment methods do you accept?</h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 We accept all major credit cards, debit cards, and popular e-wallets through our secure payment processor Stripe.
               </p>
             </div>
             
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="font-semibold text-lg mb-2">Is there a refund policy?</h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Yes, we offer a 14-day money-back guarantee for Pro subscriptions and individual course purchases if you're not satisfied.
               </p>
             </div>

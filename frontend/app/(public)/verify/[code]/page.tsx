@@ -50,12 +50,12 @@ const CertificateVerificationPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-muted/50 py-12">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Certificate Verification</h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-muted-foreground text-lg">
             Verify the authenticity of certificates issued by AI E-Learning Platform
           </p>
         </div>
@@ -75,7 +75,7 @@ const CertificateVerificationPage = () => {
                     className="w-full px-3 py-2 border rounded-md uppercase"
                     maxLength={8}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     You can find the verification code on the certificate
                   </p>
                 </div>
@@ -102,21 +102,21 @@ const CertificateVerificationPage = () => {
                 <div className="flex items-center justify-center">
                   {verification.is_valid ? (
                     <div className="text-center">
-                      <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                      <h2 className="text-2xl font-bold text-green-700 mb-2">
+                      <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
+                      <h2 className="text-2xl font-bold text-success mb-2">
                         Certificate Verified
                       </h2>
-                      <p className="text-green-600">
+                      <p className="text-success">
                         This certificate is authentic and valid
                       </p>
                     </div>
                   ) : (
                     <div className="text-center">
-                      <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                      <h2 className="text-2xl font-bold text-red-700 mb-2">
+                      <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+                      <h2 className="text-2xl font-bold text-destructive mb-2">
                         Verification Failed
                       </h2>
-                      <p className="text-red-600">{verification.message}</p>
+                      <p className="text-destructive">{verification.message}</p>
                     </div>
                   )}
                 </div>
@@ -144,19 +144,19 @@ const CertificateVerificationPage = () => {
                       <h4 className="font-medium mb-2">Certificate Information</h4>
                       <div className="space-y-2 text-sm">
                         <div>
-                          <span className="text-gray-600">Certificate Number:</span>
+                          <span className="text-muted-foreground">Certificate Number:</span>
                           <span className="ml-2 font-mono">
                             {verification.certificate.certificate_number}
                           </span>
                         </div>
                         <div>
-                          <span className="text-gray-600">Issue Date:</span>
+                          <span className="text-muted-foreground">Issue Date:</span>
                           <span className="ml-2">
                             {new Date(verification.certificate.issue_date).toLocaleDateString()}
                           </span>
                         </div>
                         <div>
-                          <span className="text-gray-600">Verification Code:</span>
+                          <span className="text-muted-foreground">Verification Code:</span>
                           <span className="ml-2 font-mono">
                             {verification.certificate.verification_code}
                           </span>
@@ -168,21 +168,21 @@ const CertificateVerificationPage = () => {
                       <h4 className="font-medium mb-2">Course Information</h4>
                       <div className="space-y-2 text-sm">
                         <div>
-                          <span className="text-gray-600">Course Title:</span>
+                          <span className="text-muted-foreground">Course Title:</span>
                           <span className="ml-2">{verification.certificate.course_title}</span>
                         </div>
                         <div>
-                          <span className="text-gray-600">Creator:</span>
+                          <span className="text-muted-foreground">Creator:</span>
                           <span className="ml-2">{verification.certificate.course_creator}</span>
                         </div>
                         <div>
-                          <span className="text-gray-600">Level:</span>
+                          <span className="text-muted-foreground">Level:</span>
                           <span className="ml-2 capitalize">
                             {verification.certificate.course_level}
                           </span>
                         </div>
                         <div>
-                          <span className="text-gray-600">Final Score:</span>
+                          <span className="text-muted-foreground">Final Score:</span>
                           <span className="ml-2">{verification.certificate.final_score}%</span>
                         </div>
                       </div>
@@ -226,11 +226,11 @@ const CertificateVerificationPage = () => {
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4">About Certificate Verification</h3>
               
-              <div className="space-y-4 text-sm text-gray-600">
+              <div className="space-y-4 text-sm text-muted-foreground">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <AlertTriangle className="h-5 w-5 text-warning mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-900">How to verify</p>
+                    <p className="font-medium text-foreground">How to verify</p>
                     <p>
                       Enter the 8-character verification code found on the certificate, 
                       or use the direct verification link provided with the certificate.
@@ -239,9 +239,9 @@ const CertificateVerificationPage = () => {
                 </div>
                 
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-900">Security</p>
+                    <p className="font-medium text-foreground">Security</p>
                     <p>
                       All certificates are cryptographically secured and stored in our 
                       database. Each certificate has a unique verification code that 
@@ -251,13 +251,13 @@ const CertificateVerificationPage = () => {
                 </div>
                 
                 <div className="flex items-start gap-3">
-                  <Search className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <Search className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-900">Support</p>
+                    <p className="font-medium text-foreground">Support</p>
                     <p>
                       If you have questions about certificate verification, please contact 
                       our support team at{' '}
-                      <a href="mailto:support@ai-elearning.com" className="text-blue-600">
+                      <a href="mailto:support@ai-elearning.com" className="text-primary">
                         support@ai-elearning.com
                       </a>
                     </p>

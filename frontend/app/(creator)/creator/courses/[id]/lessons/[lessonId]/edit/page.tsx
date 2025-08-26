@@ -308,7 +308,7 @@ const LessonEditPage = () => {
       errorMessage={error}
       onForceSave={forceSave}
     >
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-muted/50">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-10">
           <div className="container mx-auto px-4 py-4">
@@ -331,12 +331,12 @@ const LessonEditPage = () => {
                     onChange={(e) => setTitleInput(e.target.value)}
                     onBlur={handleTitleSave}
                     onKeyPress={(e) => e.key === 'Enter' && handleTitleSave()}
-                    className="text-2xl font-bold px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="text-2xl font-bold px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                     autoFocus
                   />
                 ) : (
                   <h1
-                    className="text-2xl font-bold cursor-pointer hover:text-blue-600 flex items-center gap-2"
+                    className="text-2xl font-bold cursor-pointer hover:text-primary flex items-center gap-2"
                     onClick={() => setIsEditingTitle(true)}
                   >
                     <BookOpen className="w-6 h-6" />
@@ -344,7 +344,7 @@ const LessonEditPage = () => {
                   </h1>
                 )}
 
-                <Badge className={lessonData.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                <Badge className={lessonData.status === 'published' ? 'bg-success/20 text-success' : 'bg-muted/50 text-foreground'}>
                   {lessonData.status}
                 </Badge>
               </div>
@@ -394,8 +394,8 @@ const LessonEditPage = () => {
                   className={`
                     flex items-center gap-2 py-4 px-2 border-b-2 transition-colors
                     ${activeTab === tab.id 
-                      ? 'border-blue-500 text-blue-600' 
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                      ? 'border-primary text-primary' 
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
                     }
                   `}
                 >
@@ -418,26 +418,26 @@ const LessonEditPage = () => {
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         Description
                       </label>
                       <textarea
                         value={lessonData.description || ''}
                         onChange={(e) => setLessonData((prev: Lesson | null) => ({ ...prev!, description: e.target.value }))}
-                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         rows={3}
                         placeholder="Brief description of what students will learn..."
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         Lesson Content (Markdown)
                       </label>
                       <textarea
                         value={lessonData.content || ''}
                         onChange={(e) => setLessonData((prev: Lesson | null) => ({ ...prev!, content: e.target.value }))}
-                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                         rows={15}
                         placeholder="Detailed lesson content in markdown format..."
                       />
@@ -452,7 +452,7 @@ const LessonEditPage = () => {
                   <select
                     value={lessonData.status}
                     onChange={(e) => setLessonData((prev: Lesson | null) => ({ ...prev!, status: e.target.value as 'draft' | 'published' }))}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="draft">Draft</option>
                     <option value="published">Published</option>
@@ -463,15 +463,15 @@ const LessonEditPage = () => {
                   <h3 className="font-semibold mb-4">Quick Stats</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Chapter</span>
+                      <span className="text-muted-foreground">Chapter</span>
                       <span>{chapterResponse?.data?.title || lessonData.chapter_id}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Order</span>
+                      <span className="text-muted-foreground">Order</span>
                       <span>{lessonData.order}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Duration</span>
+                      <span className="text-muted-foreground">Duration</span>
                       <span>{lessonData.video?.duration || 0} min</span>
                     </div>
                   </div>
@@ -487,11 +487,11 @@ const LessonEditPage = () => {
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Video URL (YouTube/Vimeo)
                   </label>
                   <div className="flex gap-2">
-                    <Youtube className="w-5 h-5 text-gray-400 mt-2" />
+                    <Youtube className="w-5 h-5 text-muted-foreground mt-2" />
                     <Input
                       value={lessonData.video?.url || ''}
                       onChange={(e) => handleVideoUrlChange(e.target.value)}
@@ -500,18 +500,18 @@ const LessonEditPage = () => {
                     />
                   </div>
                   {lessonData.video?.youtube_id && (
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       YouTube ID: {lessonData.video.youtube_id}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Duration (minutes)
                   </label>
                   <div className="flex gap-2">
-                    <Clock className="w-5 h-5 text-gray-400 mt-2" />
+                    <Clock className="w-5 h-5 text-muted-foreground mt-2" />
                     <Input
                       type="number"
                       value={lessonData.video?.duration || ''}
@@ -529,7 +529,7 @@ const LessonEditPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Video Transcript
                   </label>
                   <textarea
@@ -542,7 +542,7 @@ const LessonEditPage = () => {
                         transcript: e.target.value 
                       }
                     }))}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     rows={10}
                     placeholder="Video transcript for accessibility and AI features..."
                   />
@@ -552,7 +552,7 @@ const LessonEditPage = () => {
                 {lessonData.video?.youtube_id && (
                   <div className="mt-6">
                     <h3 className="font-semibold mb-2">Video Preview</h3>
-                    <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="aspect-video bg-muted/50 rounded-lg overflow-hidden">
                       <iframe
                         src={`https://www.youtube.com/embed/${lessonData.video.youtube_id}`}
                         className="w-full h-full"
@@ -586,11 +586,11 @@ const LessonEditPage = () => {
               ) : (
                 <div className="space-y-4">
                   {resources.map((resource, index) => (
-                    <div key={index} className="border rounded-lg p-4 hover:border-gray-300 transition-colors">
+                    <div key={index} className="border rounded-lg p-4 hover:border-border transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-medium text-gray-900">{resource.title}</h3>
+                            <h3 className="font-medium text-foreground">{resource.title}</h3>
                             <Badge 
                               variant={resource.type === 'link' ? 'secondary' : 'default'}
                               className="text-xs"
@@ -600,14 +600,14 @@ const LessonEditPage = () => {
                           </div>
                           
                           {resource.description && (
-                            <p className="text-sm text-gray-600 mb-2">{resource.description}</p>
+                            <p className="text-sm text-muted-foreground mb-2">{resource.description}</p>
                           )}
                           
                           <a
                             href={getAttachmentUrl(resource.url)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                            className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
                           >
                             <ExternalLink className="w-3 h-3" />
                             {resource.url}
@@ -618,7 +618,7 @@ const LessonEditPage = () => {
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleDeleteResource(index)}
-                          className="text-red-600 hover:text-red-700 ml-4"
+                          className="text-destructive hover:text-destructive/80 ml-4"
                         >
                           Remove
                         </Button>
@@ -691,7 +691,7 @@ const LessonEditPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Minimum Watch Percentage for Completion
                   </label>
                   <div className="flex items-center gap-2">
@@ -709,7 +709,7 @@ const LessonEditPage = () => {
                       min="0"
                       max="100"
                     />
-                    <span className="text-sm text-gray-600">%</span>
+                    <span className="text-sm text-muted-foreground">%</span>
                   </div>
                 </div>
 
@@ -726,7 +726,7 @@ const LessonEditPage = () => {
                     />
                     <span className="text-sm font-medium">Free Preview</span>
                   </label>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Allow non-enrolled users to preview this lesson
                   </p>
                 </div>
@@ -763,15 +763,15 @@ const LessonEditPage = () => {
           title="Delete Resource"
         >
           <div className="space-y-4">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Are you sure you want to delete this resource? This action cannot be undone.
             </p>
             
             {resources[selectedResourceIndex] && (
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="bg-muted/50 p-3 rounded-lg">
                 <p className="font-medium text-sm">{resources[selectedResourceIndex].title}</p>
                 {resources[selectedResourceIndex].description && (
-                  <p className="text-sm text-gray-600 mt-1">{resources[selectedResourceIndex].description}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{resources[selectedResourceIndex].description}</p>
                 )}
               </div>
             )}
@@ -780,7 +780,7 @@ const LessonEditPage = () => {
               <Button
                 onClick={confirmDeleteResource}
                 variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
               >
                 Delete Resource
               </Button>

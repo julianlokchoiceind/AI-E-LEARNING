@@ -82,7 +82,7 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
     >
       <div className="space-y-6">
         <div>
-          <p className="text-gray-600 mb-4">
+          <p className="text-muted-foreground mb-4">
             Export your complete learning progress including course enrollments, lesson completion, 
             quiz scores, certificates, and learning statistics.
           </p>
@@ -90,7 +90,7 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
 
         {/* Format Selection */}
         <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-3">Choose Export Format</h3>
+          <h3 className="text-lg font-medium text-foreground mb-3">Choose Export Format</h3>
           <div className="space-y-3">
             {formatOptions.map((option) => {
               const IconComponent = option.icon;
@@ -99,8 +99,8 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
                   key={option.value}
                   className={`border rounded-lg p-4 cursor-pointer transition-colors ${
                     selectedFormat === option.value
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-border'
                   }`}
                   onClick={() => setSelectedFormat(option.value)}
                 >
@@ -112,18 +112,18 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
                         value={option.value}
                         checked={selectedFormat === option.value}
                         onChange={(e) => setSelectedFormat(e.target.value as ExportFormat)}
-                        className="text-blue-600 focus:ring-blue-500"
+                        className="text-primary focus:ring-primary"
                       />
                     </div>
-                    <IconComponent className="h-6 w-6 text-gray-400 mt-1" />
+                    <IconComponent className="h-6 w-6 text-muted-foreground mt-1" />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium text-gray-900">
+                        <h4 className="text-sm font-medium text-foreground">
                           {option.label}
                         </h4>
-                        <span className="text-xs text-gray-500">{option.fileSize}</span>
+                        <span className="text-xs text-muted-foreground">{option.fileSize}</span>
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {option.description}
                       </p>
                     </div>
@@ -135,9 +135,9 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
         </div>
 
         {/* Export Content Info */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">Export Includes:</h4>
-          <ul className="text-sm text-gray-600 space-y-1">
+        <div className="bg-muted rounded-lg p-4">
+          <h4 className="text-sm font-medium text-foreground mb-2">Export Includes:</h4>
+          <ul className="text-sm text-muted-foreground space-y-1">
             <li>• Course enrollment details and completion status</li>
             <li>• Individual lesson progress and watch time</li>
             <li>• Quiz attempts and scores</li>
@@ -174,7 +174,7 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
         </div>
 
         {/* Privacy Note */}
-        <div className="text-xs text-gray-500 border-t pt-3">
+        <div className="text-xs text-muted-foreground border-t border-border pt-3">
           <p>
             📋 <strong>Privacy:</strong> Your export contains personal learning data. 
             Keep it secure and don't share with unauthorized parties.

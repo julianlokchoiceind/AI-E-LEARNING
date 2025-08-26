@@ -78,9 +78,9 @@ const CourseCatalogPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+      <div className="bg-gradient-to-r from-primary to-primary/80 text-white py-16">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold mb-4">Explore Our Courses</h1>
           <p className="text-xl mb-8">Learn AI programming from industry experts</p>
@@ -93,11 +93,11 @@ const CourseCatalogPage = () => {
                 placeholder="Search for courses..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-6 py-4 pr-12 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-6 py-4 pr-12 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <button
                 type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-600 hover:text-gray-900"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground"
               >
                 <Search className="w-6 h-6" />
               </button>
@@ -116,7 +116,7 @@ const CourseCatalogPage = () => {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {categories.map((category) => (
                   <option key={category.value} value={category.value}>
@@ -129,7 +129,7 @@ const CourseCatalogPage = () => {
               <select
                 value={selectedLevel}
                 onChange={(e) => setSelectedLevel(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {levels.map((level) => (
                   <option key={level.value} value={level.value}>
@@ -142,7 +142,7 @@ const CourseCatalogPage = () => {
               <select
                 value={priceFilter}
                 onChange={(e) => setPriceFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {priceOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -154,7 +154,7 @@ const CourseCatalogPage = () => {
               {/* Mobile Filter Toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg"
+                className="lg:hidden flex items-center gap-2 px-4 py-2 border border-border rounded-lg"
               >
                 <Filter className="w-4 h-4" />
                 Filters
@@ -165,7 +165,7 @@ const CourseCatalogPage = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -178,7 +178,7 @@ const CourseCatalogPage = () => {
 
         {/* Results Count */}
         <div className="mb-6">
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {loading ? 'Loading...' : `Found ${courses.length} courses`}
           </p>
         </div>

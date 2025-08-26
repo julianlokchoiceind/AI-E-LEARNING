@@ -700,15 +700,15 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   // Error state UI
   if (playerError || !videoId) {
     return (
-      <div className="bg-gray-900 rounded-lg p-8 text-center">
-        <p className="text-red-500">{playerError || 'Invalid video URL'}</p>
+      <div className="bg-card rounded-lg p-8 text-center">
+        <p className="text-destructive">{playerError || 'Invalid video URL'}</p>
         {playerError && (
           <button
             onClick={() => {
               setPlayerError(null);
               setIsLoading(true);
             }}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
           >
             Try Again
           </button>
@@ -752,7 +752,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
               <div className="flex items-center justify-between text-white">
                 <button
                   onClick={() => router.back()}
-                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                  className="p-2 hover:bg-accent/20 rounded-full transition-colors"
                   aria-label="Go back"
                 >
                   <X className="w-6 h-6" />
@@ -762,7 +762,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                 </div>
                 <button
                   onClick={() => setShowSettings(!showSettings)}
-                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                  className="p-2 hover:bg-accent/20 rounded-full transition-colors"
                   aria-label="Settings"
                 >
                   <Settings className="w-6 h-6" />
@@ -776,10 +776,10 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
             <div className="absolute inset-0 flex items-center justify-center">
               <button
                 onClick={handlePlayPause}
-                className="bg-white/90 hover:bg-white rounded-full p-6 transition-all duration-200 transform hover:scale-110"
+                className="bg-background/90 hover:bg-background rounded-full p-6 transition-all duration-200 transform hover:scale-110"
                 aria-label="Play video"
               >
-                <Play className="w-12 h-12 text-gray-900 ml-1" />
+                <Play className="w-12 h-12 text-foreground ml-1" />
               </button>
             </div>
           )}
@@ -797,7 +797,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                 )}
               </div>
               <div 
-                className={`progress-bar-draggable w-full bg-gray-700 rounded-full transition-all relative select-none ${
+                className={`progress-bar-draggable w-full bg-muted rounded-full transition-all relative select-none ${
                   isDragging ? 'h-4 cursor-grabbing' : 'h-2 cursor-pointer hover:h-3'
                 }`}
                 onMouseDown={handleMouseDown}
@@ -821,16 +821,16 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
               >
                 {/* Max watched indicator */}
                 <div 
-                  className="absolute top-0 left-0 h-full bg-blue-400/30 rounded-full"
+                  className="absolute top-0 left-0 h-full bg-primary/30 rounded-full"
                   style={{ width: `${Math.max(initialProgress, (maxWatchedTime / duration) * 100)}%` }}
                 />
                 {/* Current position */}
                 <div 
-                  className="bg-blue-600 h-full rounded-full transition-all duration-300 relative"
+                  className="bg-primary h-full rounded-full transition-all duration-300 relative"
                   style={{ width: `${watchPercentage}%` }}
                 >
                   {/* Draggable thumb */}
-                  <div className={`absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-blue-600 border-2 border-white shadow-lg transition-all duration-200 ${
+                  <div className={`absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-primary border-2 border-white shadow-lg transition-all duration-200 ${
                     isDragging 
                       ? 'w-4 h-4 -mr-2' 
                       : 'w-3 h-3 -mr-1.5 hover:w-4 hover:h-4 hover:-mr-2'
@@ -844,7 +844,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
               <div className="flex items-center space-x-2 md:space-x-4">
                 <button
                   onClick={handlePlayPause}
-                  className="text-white hover:text-blue-400 transition-colors p-2"
+                  className="text-white hover:text-primary transition-colors p-2"
                   aria-label="Play/Pause"
                 >
                   {isPlaying ? (
@@ -856,7 +856,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                 
                 <button
                   onClick={handleRewind}
-                  className="text-white hover:text-blue-400 transition-colors p-2"
+                  className="text-white hover:text-primary transition-colors p-2"
                   aria-label="Rewind 10s"
                 >
                   <SkipBack className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
@@ -864,7 +864,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
 
                 <button
                   onClick={handleForward}
-                  className="text-white hover:text-blue-400 transition-colors p-2"
+                  className="text-white hover:text-primary transition-colors p-2"
                   aria-label="Forward 10s"
                 >
                   <SkipForward className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
@@ -875,7 +875,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={handleMute}
-                      className="text-white hover:text-blue-400 transition-colors p-2"
+                      className="text-white hover:text-primary transition-colors p-2"
                       aria-label={isMuted ? 'Unmute' : 'Mute'}
                     >
                       {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
@@ -887,7 +887,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                       step="0.1"
                       value={isMuted ? 0 : volume}
                       onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                      className="w-20 accent-blue-600"
+                      className="w-20 accent-primary"
                     />
                   </div>
                 )}
@@ -899,7 +899,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                   <div className="relative">
                     <button
                       onClick={() => setShowSettings(!showSettings)}
-                      className="text-white hover:text-blue-400 transition-colors p-2"
+                      className="text-white hover:text-primary transition-colors p-2"
                       aria-label="Settings"
                     >
                       <Settings className="w-6 h-6" />
@@ -907,7 +907,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                     
                     {/* Settings Dropdown */}
                     {showSettings && (
-                      <div className="absolute bottom-full right-0 mb-2 bg-gray-900 border border-gray-700 rounded-lg p-4 min-w-[200px]">
+                      <div className="absolute bottom-full right-0 mb-2 bg-card border border-border rounded-lg p-4 min-w-[200px]">
                         <div className="text-white text-sm space-y-3">
                           <div>
                             <label className="block mb-2">Playback Speed</label>
@@ -918,8 +918,8 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                                   onClick={() => handleSpeedChange(speed)}
                                   className={`px-2 py-1 rounded text-xs transition-colors ${
                                     playbackRate === speed
-                                      ? 'bg-blue-600 text-white'
-                                      : 'bg-gray-700 hover:bg-gray-600'
+                                      ? 'bg-primary text-white'
+                                      : 'bg-muted hover:bg-muted/80'
                                   }`}
                                 >
                                   {speed}x
@@ -937,7 +937,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                 {!isMobile && (
                   <button
                     onClick={handleFullscreen}
-                    className="text-white hover:text-blue-400 transition-colors p-2"
+                    className="text-white hover:text-primary transition-colors p-2"
                     aria-label="Fullscreen"
                   >
                     <Maximize className="w-6 h-6" />
@@ -948,7 +948,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                 {nextLessonId && actualVideoProgress >= 95 && (
                   <button
                     onClick={handleNextLesson}
-                    className={`bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors ${
+                    className={`bg-primary text-white rounded hover:bg-primary/90 transition-colors ${
                       isMobile ? 'px-3 py-2 text-sm' : 'px-4 py-2'
                     }`}
                   >
@@ -962,12 +962,12 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           {/* Mobile Settings Panel */}
           {isMobile && showSettings && (
             <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
-              <div className="bg-gray-900 rounded-lg p-6 max-w-sm w-full mx-4">
+              <div className="bg-card rounded-lg p-6 max-w-sm w-full mx-4">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-white text-lg font-semibold">Settings</h3>
                   <button
                     onClick={() => setShowSettings(false)}
-                    className="text-white hover:text-gray-400 transition-colors"
+                    className="text-white hover:text-muted-foreground transition-colors"
                   >
                     <X className="w-6 h-6" />
                   </button>
@@ -984,8 +984,8 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                           onClick={() => handleSpeedChange(speed)}
                           className={`px-3 py-2 rounded text-sm transition-colors ${
                             playbackRate === speed
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-700 text-white hover:bg-gray-600'
+                              ? 'bg-primary text-white'
+                              : 'bg-muted text-white hover:bg-muted/80'
                           }`}
                         >
                           {speed}x
@@ -1000,7 +1000,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                     <div className="flex items-center space-x-3">
                       <button
                         onClick={handleMute}
-                        className="text-white hover:text-blue-400 transition-colors"
+                        className="text-white hover:text-primary transition-colors"
                       >
                         {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
                       </button>
@@ -1011,7 +1011,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                         step="0.1"
                         value={isMuted ? 0 : volume}
                         onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                        className="flex-1 accent-blue-600"
+                        className="flex-1 accent-primary"
                       />
                     </div>
                   </div>

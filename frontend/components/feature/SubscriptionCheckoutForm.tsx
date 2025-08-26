@@ -50,10 +50,10 @@ export function SubscriptionCheckoutForm({
     style: {
       base: {
         fontSize: '16px',
-        color: '#1f2937',
+        color: '#0f172a',
         fontFamily: 'Inter, system-ui, sans-serif',
         '::placeholder': {
-          color: '#9ca3af',
+          color: '#64748b',
         },
       },
       invalid: {
@@ -186,28 +186,28 @@ export function SubscriptionCheckoutForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Customer Information */}
       <div className="space-y-4">
-        <h3 className="font-medium text-gray-900">Account Information</h3>
+        <h3 className="font-medium text-foreground">Account Information</h3>
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Email
             </label>
             <input
               type="email"
               value={user?.email || ''}
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+              className="w-full px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Name
             </label>
             <input
               type="text"
               value={user?.name || ''}
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+              className="w-full px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground"
             />
           </div>
         </div>
@@ -215,8 +215,8 @@ export function SubscriptionCheckoutForm({
 
       {/* Payment Information */}
       <div className="space-y-4">
-        <h3 className="font-medium text-gray-900">Payment Information</h3>
-        <div className="p-4 border border-gray-300 rounded-lg bg-white">
+        <h3 className="font-medium text-foreground">Payment Information</h3>
+        <div className="p-4 border border-border rounded-lg bg-white">
           <CardElement
             options={cardElementOptions}
             onChange={handleCardChange}
@@ -226,19 +226,19 @@ export function SubscriptionCheckoutForm({
 
       {/* Error Display */}
       {paymentError && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
           <div className="flex items-start">
-            <AlertTriangle className="w-5 h-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-destructive mr-3 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-red-600 text-sm font-medium mb-2">{paymentError}</p>
+              <p className="text-destructive text-sm font-medium mb-2">{paymentError}</p>
               
               {recoveryStrategy && (
                 <div className="mt-3">
-                  <p className="text-red-700 text-sm font-medium mb-2">What you can try:</p>
+                  <p className="text-destructive text-sm font-medium mb-2">What you can try:</p>
                   <ul className="space-y-1">
                     {recoveryStrategy.actions.map((action: string, index: number) => (
-                      <li key={index} className="flex items-start text-sm text-red-600">
-                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                      <li key={index} className="flex items-start text-sm text-destructive">
+                        <span className="w-1.5 h-1.5 bg-destructive rounded-full mt-2 mr-2 flex-shrink-0"></span>
                         <span>{action}</span>
                       </li>
                     ))}
@@ -247,7 +247,7 @@ export function SubscriptionCheckoutForm({
               )}
               
               {retryCount > 0 && (
-                <div className="mt-2 text-xs text-red-500">
+                <div className="mt-2 text-xs text-destructive">
                   Retry attempt: {retryCount}
                 </div>
               )}
@@ -257,25 +257,25 @@ export function SubscriptionCheckoutForm({
       )}
 
       {/* Subscription Summary */}
-      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+      <div className="bg-primary/10 p-4 rounded-lg border border-primary/30">
         <div className="flex items-center mb-3">
-          <Crown className="w-5 h-5 text-purple-600 mr-2" />
-          <h3 className="font-medium text-purple-900">Subscription Summary</h3>
+          <Crown className="w-5 h-5 text-primary mr-2" />
+          <h3 className="font-medium text-primary">Subscription Summary</h3>
         </div>
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-purple-700">Plan:</span>
-            <span className="text-sm font-medium text-purple-900">
+            <span className="text-sm text-primary">Plan:</span>
+            <span className="text-sm font-medium text-primary">
               {plan.name} ({plan.interval}ly)
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-purple-700">Price:</span>
-            <span className="font-bold text-lg text-purple-900">
+            <span className="text-sm text-primary">Price:</span>
+            <span className="font-bold text-lg text-primary">
               ${plan.price}/{plan.interval}
             </span>
           </div>
-          <div className="flex justify-between items-center text-xs text-purple-600">
+          <div className="flex justify-between items-center text-xs text-primary">
             <span>Billing:</span>
             <span>Recurring monthly • Cancel anytime</span>
           </div>
@@ -287,7 +287,7 @@ export function SubscriptionCheckoutForm({
         type="submit"
         loading={isLoading}
         disabled={!stripe || !elements || isLoading || !cardComplete}
-        className="w-full bg-purple-600 hover:bg-purple-700"
+        className="w-full bg-primary hover:bg-primary/80"
         size="lg"
       >
         <Lock className="w-4 h-4 mr-2" />
@@ -296,16 +296,16 @@ export function SubscriptionCheckoutForm({
 
       {/* Subscription Benefits Reminder */}
       <div className="border-t pt-4">
-        <h4 className="font-medium text-gray-900 mb-2">Your Pro benefits:</h4>
+        <h4 className="font-medium text-foreground mb-2">Your Pro benefits:</h4>
         <div className="grid grid-cols-1 gap-1">
           {plan.features.slice(0, 4).map((feature, index) => (
-            <div key={index} className="flex items-center text-sm text-gray-600">
-              <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+            <div key={index} className="flex items-center text-sm text-muted-foreground">
+              <CheckCircle className="w-4 h-4 text-success mr-2 flex-shrink-0" />
               <span>{feature}</span>
             </div>
           ))}
           {plan.features.length > 4 && (
-            <div className="text-sm text-gray-500 mt-1">
+            <div className="text-sm text-muted-foreground mt-1">
               + {plan.features.length - 4} more benefits
             </div>
           )}
@@ -313,7 +313,7 @@ export function SubscriptionCheckoutForm({
       </div>
 
       {/* Terms */}
-      <div className="text-center text-xs text-gray-500 border-t pt-4">
+      <div className="text-center text-xs text-muted-foreground border-t pt-4">
         <p>
           By subscribing, you agree to our Terms of Service and Privacy Policy.
         </p>

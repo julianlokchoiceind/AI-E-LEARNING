@@ -79,10 +79,10 @@ export default function SupportPage() {
     // Simple approach: Create ticket first, then upload files
     createTicket({
       ...formData,
-      priority: formData.priority || 'medium',
-      attachments: [] // Start with empty attachments
+      priority: formData.priority || 'medium'
     }, {
       onSuccess: async (response) => {
+        if (!response.data) return;
         const ticketId = response.data.id;
         
         // Upload files after ticket creation if any selected
@@ -92,7 +92,7 @@ export default function SupportPage() {
               await supportAPI.uploadAttachment(ticketId, file);
             }
             // CRITICAL: Invalidate cache after uploads complete
-            await queryClient.invalidateQueries(['support-tickets']);
+            await queryClient.invalidateQueries({ queryKey: ['support-tickets'] });
           } catch (uploadError) {
             console.error('File upload error:', uploadError);
           }
@@ -120,12 +120,12 @@ export default function SupportPage() {
 
   const getStatusColor = (status: string) => {
     const statusInfo = TICKET_STATUSES.find(s => s.value === status);
-    return statusInfo?.color || 'gray';
+    return statusInfo?.color || 'muted-foreground';
   };
 
   const getPriorityColor = (priority: string) => {
     const priorityInfo = TICKET_PRIORITIES.find(p => p.value === priority);
-    return priorityInfo?.color || 'gray';
+    return priorityInfo?.color || 'muted-foreground';
   };
 
   const formatDate = (date: string) => {
@@ -164,15 +164,15 @@ export default function SupportPage() {
     const ext = file.name.split('.').pop()?.toLowerCase();
     
     if (type.startsWith('image/')) {
-      return <Image className="h-4 w-4 text-green-500" />;
+      return <Image className="h-4 w-4 text-success" />;
     }
     if (type === 'application/pdf' || ext === 'pdf') {
-      return <FileText className="h-4 w-4 text-red-500" />;
+      return <FileText className="h-4 w-4 text-destructive" />;
     }
     if (type.includes('zip') || type.includes('rar') || ['zip', 'rar', '7z'].includes(ext || '')) {
-      return <FileArchive className="h-4 w-4 text-purple-500" />;
+      return <FileArchive className="h-4 w-4 text-primary" />;
     }
-    return <FileText className="h-4 w-4 text-blue-500" />;
+    return <FileText className="h-4 w-4 text-primary" />;
   };
 
   const formatFileSize = (bytes: number) => {
@@ -188,8 +188,8 @@ export default function SupportPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Support Center</h1>
-          <p className="text-gray-600 mt-2">Get help with any issues or questions</p>
+          <h1 className="text-3xl font-bold text-foreground">Support Center</h1>
+          <p className="text-muted-foreground mt-2">Get help with any issues or questions</p>
         </div>
         <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
@@ -202,7 +202,7 @@ export default function SupportPage() {
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Search tickets..."
@@ -230,16 +230,16 @@ export default function SupportPage() {
       {/* Tickets List */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : tickets.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
-            <MessageCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <MessageCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
               No support tickets yet
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               Create a ticket to get help from our support team
             </p>
             <Button onClick={() => setShowCreateModal(true)}>
@@ -259,7 +259,7 @@ export default function SupportPage() {
               <Card 
                 key={ticket.id} 
                 className={`hover:shadow-lg transition-shadow cursor-pointer ${
-                  isUnread ? 'bg-blue-50 border-l-4 border-blue-500 shadow-md' : ''
+                  isUnread ? 'bg-primary/20 border-l-4 border-primary shadow-md' : ''
                 }`}
                 onClick={() => router.push(`/support/${ticket.id}`)}
               >
@@ -268,14 +268,14 @@ export default function SupportPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         {isUnread && (
-                          <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse flex-shrink-0" title="New messages"></div>
+                          <div className="w-3 h-3 bg-primary/200 rounded-full animate-pulse flex-shrink-0" title="New messages"></div>
                         )}
-                        <h3 className={`text-lg font-semibold text-gray-900 ${isUnread ? 'font-bold' : ''}`}>
+                        <h3 className={`text-lg font-semibold text-foreground ${isUnread ? 'font-bold' : ''}`}>
                           {ticket.title}
                         </h3>
                       </div>
                       
-                      <p className="text-gray-600 mb-3 line-clamp-2">
+                      <p className="text-muted-foreground mb-3 line-clamp-2">
                         {ticket.description}
                       </p>
                       
@@ -288,12 +288,12 @@ export default function SupportPage() {
                           {TICKET_PRIORITIES.find(p => p.value === ticket.priority)?.label} Priority
                         </Badge>
                         
-                        <span className="text-gray-500 flex items-center gap-1">
+                        <span className="text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {formatDate(ticket.created_at)}
                         </span>
                         
-                        <span className="text-gray-500 flex items-center gap-1">
+                        <span className="text-muted-foreground flex items-center gap-1">
                           <MessageCircle className="h-3 w-3" />
                           {ticket.response_count} messages
                         </span>
@@ -302,9 +302,9 @@ export default function SupportPage() {
                     
                     <div className="ml-4">
                       {ticket.status === 'closed' ? (
-                        <CheckCircle className="h-6 w-6 text-green-500" />
+                        <CheckCircle className="h-6 w-6 text-success" />
                       ) : (
-                        <Clock className="h-6 w-6 text-blue-500" />
+                        <Clock className="h-6 w-6 text-primary" />
                       )}
                     </div>
                   </div>
@@ -350,7 +350,7 @@ export default function SupportPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Category *
             </label>
             <select
@@ -367,7 +367,7 @@ export default function SupportPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Priority
             </label>
             <select
@@ -384,7 +384,7 @@ export default function SupportPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Subject *
             </label>
             <Input
@@ -395,7 +395,7 @@ export default function SupportPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Description *
             </label>
             <textarea
@@ -409,12 +409,12 @@ export default function SupportPage() {
 
           {/* File Upload Section */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Attachments <span className="text-gray-500 text-xs">(Optional, max 10MB per file)</span>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Attachments <span className="text-muted-foreground text-xs">(Optional, max 10MB per file)</span>
             </label>
             
             {/* File Upload Input */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+            <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-border/60 transition-colors">
               <input
                 type="file"
                 id="file-upload"
@@ -427,11 +427,11 @@ export default function SupportPage() {
                 htmlFor="file-upload" 
                 className="cursor-pointer flex flex-col items-center gap-2"
               >
-                <Upload className="h-8 w-8 text-gray-400" />
-                <span className="text-sm text-gray-600">
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
                   Click to upload files or drag and drop
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   Supports: Images, PDFs, Documents, Archives
                 </span>
               </label>
@@ -440,22 +440,22 @@ export default function SupportPage() {
             {/* Selected Files List */}
             {selectedFiles.length > 0 && (
               <div className="mt-3 space-y-2">
-                <p className="text-sm font-medium text-gray-700">Selected files:</p>
+                <p className="text-sm font-medium text-foreground">Selected files:</p>
                 {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center gap-3 bg-gray-50 p-2 rounded-md">
+                  <div key={index} className="flex items-center gap-3 bg-muted p-2 rounded-md">
                     {getFileIcon(file)}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-foreground truncate">
                         {file.name}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {formatFileSize(file.size)}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeFile(index)}
-                      className="text-red-500 hover:text-red-700 p-1"
+                      className="text-destructive hover:text-destructive p-1"
                     >
                       <X className="h-4 w-4" />
                     </button>

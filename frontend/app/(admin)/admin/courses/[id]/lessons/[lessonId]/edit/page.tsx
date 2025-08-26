@@ -317,21 +317,21 @@ const LessonEditPage = () => {
   const getResourceIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case 'pdf':
-        return <FileText className="w-5 h-5 text-red-600" />;
+        return <FileText className="w-5 h-5 text-destructive" />;
       case 'doc':
-        return <FileText className="w-5 h-5 text-blue-700" />;
+        return <FileText className="w-5 h-5 text-primary" />;
       case 'code':
-        return <FileCode className="w-5 h-5 text-green-600" />;
+        return <FileCode className="w-5 h-5 text-success" />;
       case 'zip':
-        return <FileArchive className="w-5 h-5 text-purple-600" />;
+        return <FileArchive className="w-5 h-5 text-primary" />;
       case 'exercise':
-        return <FileText className="w-5 h-5 text-orange-600" />;
+        return <FileText className="w-5 h-5 text-warning" />;
       case 'link':
-        return <Link className="w-5 h-5 text-blue-600" />;
+        return <Link className="w-5 h-5 text-primary" />;
       case 'other':
       default:
         // For 'other' type (images, etc)
-        return <Image className="w-5 h-5 text-gray-600" />;
+        return <Image className="w-5 h-5 text-muted-foreground" />;
     }
   };
 
@@ -413,7 +413,7 @@ const LessonEditPage = () => {
       errorMessage={error}
       onForceSave={forceSave}
     >
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-muted/50">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-10">
           <div className="container mx-auto px-4 py-4">
@@ -436,12 +436,12 @@ const LessonEditPage = () => {
                     onChange={(e) => setTitleInput(e.target.value)}
                     onBlur={handleTitleSave}
                     onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
-                    className="text-2xl font-bold px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="text-2xl font-bold px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                     autoFocus
                   />
                 ) : (
                   <h1
-                    className="text-2xl font-bold cursor-pointer hover:text-blue-600 flex items-center gap-2"
+                    className="text-2xl font-bold cursor-pointer hover:text-primary flex items-center gap-2"
                     onClick={() => setIsEditingTitle(true)}
                   >
                     <BookOpen className="w-6 h-6" />
@@ -500,8 +500,8 @@ const LessonEditPage = () => {
                   className={`
                     flex items-center gap-2 py-4 px-2 border-b-2 transition-colors
                     ${activeTab === tab.id 
-                      ? 'border-blue-500 text-blue-600' 
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                      ? 'border-primary text-primary' 
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
                     }
                   `}
                 >
@@ -524,7 +524,7 @@ const LessonEditPage = () => {
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         Description
                       </label>
                       <textarea
@@ -533,14 +533,14 @@ const LessonEditPage = () => {
                           if (!prev) return null;
                           return { ...prev, description: e.target.value };
                         })}
-                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         rows={3}
                         placeholder="Brief description of what students will learn..."
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         Lesson Content (Markdown)
                       </label>
                       <textarea
@@ -549,7 +549,7 @@ const LessonEditPage = () => {
                           if (!prev) return null;
                           return { ...prev, content: e.target.value };
                         })}
-                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                         rows={15}
                         placeholder="Detailed lesson content in markdown format..."
                       />
@@ -563,7 +563,7 @@ const LessonEditPage = () => {
                   <h3 className="font-semibold mb-4">Status</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Lesson Status
                       </label>
                       <select
@@ -575,12 +575,12 @@ const LessonEditPage = () => {
                             return { ...prev, status: newStatus };
                           });
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="draft">Draft</option>
                         <option value="published">Published</option>
                       </select>
-                      <p className="text-sm text-gray-500 mt-2">
+                      <p className="text-sm text-muted-foreground mt-2">
                         Published lessons require parent chapter to be published
                       </p>
                     </div>
@@ -592,15 +592,15 @@ const LessonEditPage = () => {
                   <h3 className="font-semibold mb-4">Quick Stats</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Chapter</span>
+                      <span className="text-muted-foreground">Chapter</span>
                       <span>{chapterResponse?.data?.title || lessonData.chapter_id}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Order</span>
+                      <span className="text-muted-foreground">Order</span>
                       <span>{lessonData.order}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Duration</span>
+                      <span className="text-muted-foreground">Duration</span>
                       <span>{lessonData.video?.duration || 0} min</span>
                     </div>
                   </div>
@@ -616,11 +616,11 @@ const LessonEditPage = () => {
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Video URL (YouTube/Vimeo)
                   </label>
                   <div className="flex gap-2">
-                    <Play className="w-5 h-5 text-gray-400 mt-2" />
+                    <Play className="w-5 h-5 text-muted-foreground mt-2" />
                     <Input
                       value={lessonData.video?.url || ''}
                       onChange={(e) => handleVideoUrlChange(e.target.value)}
@@ -631,11 +631,11 @@ const LessonEditPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Duration (minutes)
                   </label>
                   <div className="flex gap-2">
-                    <Clock className="w-5 h-5 text-gray-400 mt-2" />
+                    <Clock className="w-5 h-5 text-muted-foreground mt-2" />
                     <Input
                       type="number"
                       value={lessonData.video?.duration || ''}
@@ -656,7 +656,7 @@ const LessonEditPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Video Transcript
                   </label>
                   <textarea
@@ -671,7 +671,7 @@ const LessonEditPage = () => {
                         }
                       };
                     })}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     rows={10}
                     placeholder="Video transcript for accessibility and AI features..."
                   />
@@ -681,7 +681,7 @@ const LessonEditPage = () => {
                 {lessonData.video?.youtube_id && (
                   <div className="mt-6">
                     <h3 className="font-semibold mb-2">Video Preview</h3>
-                    <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="aspect-video bg-muted/20 rounded-lg overflow-hidden">
                       <iframe
                         src={`https://www.youtube.com/embed/${lessonData.video.youtube_id}`}
                         className="w-full h-full"
@@ -715,27 +715,27 @@ const LessonEditPage = () => {
               ) : (
                 <div className="space-y-4">
                   {resources.map((resource, index) => (
-                    <div key={index} className="border rounded-lg p-4 hover:border-gray-300 transition-colors">
+                    <div key={index} className="border rounded-lg p-4 hover:border-border transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3 flex-1">
                           {getResourceIcon(resource.type)}
                           
                           <div className="flex-1">
                             <div className="mb-2">
-                              <h3 className="font-medium text-gray-900">
+                              <h3 className="font-medium text-foreground">
                                 {resource.title}
                               </h3>
                             </div>
                           
                           {resource.description && (
-                            <p className="text-sm text-gray-600 mb-2">{resource.description}</p>
+                            <p className="text-sm text-muted-foreground mb-2">{resource.description}</p>
                           )}
                           
                           <a
                             href={getAttachmentUrl(resource.url)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:text-blue-800"
+                            className="text-sm text-primary hover:text-primary"
                           >
                             {resource.url}
                           </a>
@@ -746,7 +746,7 @@ const LessonEditPage = () => {
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleDeleteResource(index)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 ml-4 p-1"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 ml-4 p-1"
                           title="Remove resource"
                         >
                           <X className="w-4 h-4" />
@@ -826,7 +826,7 @@ const LessonEditPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Minimum Watch Percentage for Completion
                   </label>
                   <div className="flex items-center gap-2">
@@ -847,7 +847,7 @@ const LessonEditPage = () => {
                       min="0"
                       max="100"
                     />
-                    <span className="text-sm text-gray-600">%</span>
+                    <span className="text-sm text-muted-foreground">%</span>
                   </div>
                 </div>
 
@@ -864,7 +864,7 @@ const LessonEditPage = () => {
                     />
                     <span className="text-sm font-medium">Free Preview</span>
                   </label>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Allow non-enrolled users to preview this lesson
                   </p>
                 </div>
@@ -901,15 +901,15 @@ const LessonEditPage = () => {
           title="Delete Resource"
         >
           <div className="space-y-4">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Are you sure you want to delete this resource? This action cannot be undone.
             </p>
             
             {resources[selectedResourceIndex] && (
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="bg-muted/50 p-3 rounded-lg">
                 <p className="font-medium text-sm">{resources[selectedResourceIndex].title}</p>
                 {resources[selectedResourceIndex].description && (
-                  <p className="text-sm text-gray-600 mt-1">{resources[selectedResourceIndex].description}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{resources[selectedResourceIndex].description}</p>
                 )}
               </div>
             )}
@@ -918,7 +918,7 @@ const LessonEditPage = () => {
               <Button
                 onClick={confirmDeleteResource}
                 variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                className="text-destructive border-destructive/20 hover:bg-destructive/10"
               >
                 Delete Resource
               </Button>

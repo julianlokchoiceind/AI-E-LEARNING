@@ -53,7 +53,7 @@ export function MobileInput({
       
       <div className="relative">
         {icon && (
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
             {icon}
           </div>
         )}
@@ -66,9 +66,9 @@ export function MobileInput({
           } ${
             (clearable && props.value) || isPasswordType ? 'pr-10' : ''
           } ${
-            error ? 'border-red-500 focus:ring-red-500' : ''
+            error ? 'border-destructive focus:ring-destructive' : ''
           } ${
-            isFocused ? 'ring-2 ring-blue-500 border-blue-500' : ''
+            isFocused ? 'ring-2 ring-primary border-primary' : ''
           }`}
           onFocus={(e) => {
             setIsFocused(true);
@@ -86,7 +86,7 @@ export function MobileInput({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 touch-target"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground touch-target"
             aria-label="Clear input"
           >
             <X className="w-4 h-4" />
@@ -98,7 +98,7 @@ export function MobileInput({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 touch-target"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground touch-target"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -107,11 +107,11 @@ export function MobileInput({
       </div>
       
       {error && (
-        <p className="text-sm text-red-600 mt-1">{error}</p>
+        <p className="text-sm text-destructive mt-1">{error}</p>
       )}
       
       {hint && !error && (
-        <p className="text-xs text-gray-500 mt-1">{hint}</p>
+        <p className="text-xs text-muted-foreground mt-1">{hint}</p>
       )}
     </div>
   );
@@ -157,7 +157,7 @@ export function MobileTextarea({
       <textarea
         ref={textareaRef}
         className={`input-mobile resize-none ${
-          error ? 'border-red-500 focus:ring-red-500' : ''
+          error ? 'border-destructive focus:ring-destructive' : ''
         } ${
           keyboardVisible ? 'min-h-[120px]' : 'min-h-[100px]'
         }`}
@@ -166,11 +166,11 @@ export function MobileTextarea({
       />
       
       {error && (
-        <p className="text-sm text-red-600 mt-1">{error}</p>
+        <p className="text-sm text-destructive mt-1">{error}</p>
       )}
       
       {hint && !error && (
-        <p className="text-xs text-gray-500 mt-1">{hint}</p>
+        <p className="text-xs text-muted-foreground mt-1">{hint}</p>
       )}
     </div>
   );
@@ -206,7 +206,7 @@ export function MobileSelect({
       
       <select
         className={`input-mobile appearance-none bg-white cursor-pointer ${
-          error ? 'border-red-500 focus:ring-red-500' : ''
+          error ? 'border-destructive focus:ring-destructive' : ''
         }`}
         {...props}
       >
@@ -227,11 +227,11 @@ export function MobileSelect({
       </select>
       
       {error && (
-        <p className="text-sm text-red-600 mt-1">{error}</p>
+        <p className="text-sm text-destructive mt-1">{error}</p>
       )}
       
       {hint && !error && (
-        <p className="text-xs text-gray-500 mt-1">{hint}</p>
+        <p className="text-xs text-muted-foreground mt-1">{hint}</p>
       )}
     </div>
   );
@@ -271,11 +271,11 @@ export function MobileCheckbox({
           <div className={`
             w-5 h-5 border-2 rounded transition-colors touch-target
             ${checked 
-              ? 'bg-blue-600 border-blue-600' 
-              : 'bg-white border-gray-300'
+              ? 'bg-primary border-primary' 
+              : 'bg-white border-border'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-            ${error ? 'border-red-500' : ''}
+            ${error ? 'border-destructive' : ''}
           `}>
             {checked && (
               <Check className="w-3 h-3 text-white absolute top-0.5 left-0.5" />
@@ -283,14 +283,14 @@ export function MobileCheckbox({
           </div>
         </div>
         <span className={`text-sm leading-5 ${
-          disabled ? 'text-gray-400' : 'text-gray-700'
+          disabled ? 'text-muted-foreground' : 'text-foreground'
         }`}>
           {label}
         </span>
       </label>
       
       {error && (
-        <p className="text-sm text-red-600 ml-8">{error}</p>
+        <p className="text-sm text-destructive ml-8">{error}</p>
       )}
     </div>
   );
@@ -338,7 +338,7 @@ export function MobileFormActions({
   if (sticky && isMobile) {
     return (
       <div className={`
-        fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 safe-area-bottom z-40
+        fixed bottom-0 left-0 right-0 bg-white border-t border-border p-4 safe-area-bottom z-40
         ${keyboardVisible ? 'translate-y-0' : 'translate-y-0'}
         transition-transform duration-200
         ${className}

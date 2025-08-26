@@ -14,7 +14,14 @@ interface ChartProps {
   colors?: string[];
 }
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+const COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--success))', 
+  'hsl(var(--warning))',
+  'hsl(var(--destructive))',
+  'hsl(var(--chart-purple))', // Purple for extended charts
+  'hsl(var(--chart-pink))'   // Pink for extended charts
+];
 
 export const AnalyticsChart: React.FC<ChartProps> = ({
   data,
@@ -79,7 +86,7 @@ export const AnalyticsChart: React.FC<ChartProps> = ({
                 labelLine={false}
                 label={renderLabel}
                 outerRadius={80}
-                fill="#8884d8"
+                fill="hsl(var(--muted-foreground))"
                 dataKey={dataKey}
               >
                 {data.map((entry, index) => (

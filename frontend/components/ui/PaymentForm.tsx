@@ -93,9 +93,9 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {productName && (
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="font-medium text-gray-900">{productName}</h3>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+        <div className="bg-muted p-4 rounded-lg">
+          <h3 className="font-medium text-foreground">{productName}</h3>
+          <p className="text-2xl font-bold text-foreground mt-1">
             {formatAmount(amount, currency)}
           </p>
         </div>
@@ -112,7 +112,7 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
       />
 
       {errorMessage && (
-        <div className="text-red-600 text-sm mt-2">{errorMessage}</div>
+        <div className="text-destructive text-sm mt-2">{errorMessage}</div>
       )}
 
       <div className="flex gap-3">
@@ -139,7 +139,7 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
         )}
       </div>
 
-      <p className="text-xs text-gray-500 text-center">
+      <p className="text-xs text-muted-foreground text-center">
         Powered by Stripe. Your payment information is secure and encrypted.
       </p>
     </form>
@@ -150,7 +150,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = (props) => {
   if (!props.clientSecret) {
     return (
       <div className="text-center p-8">
-        <p className="text-gray-500">No payment session available</p>
+        <p className="text-muted-foreground">No payment session available</p>
       </div>
     );
   }
@@ -165,7 +165,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = (props) => {
           variables: {
             colorPrimary: '#3b82f6',
             colorBackground: '#ffffff',
-            colorText: '#1f2937',
+            colorText: '#0f172a',
             colorDanger: '#ef4444',
             fontFamily: 'Inter, system-ui, sans-serif',
             borderRadius: '8px',

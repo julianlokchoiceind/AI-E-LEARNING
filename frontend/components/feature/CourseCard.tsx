@@ -73,13 +73,13 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'beginner':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/20 text-success';
       case 'intermediate':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning/20 text-warning';
       case 'advanced':
-        return 'bg-red-100 text-red-800';
+        return 'bg-destructive/20 text-destructive';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -99,7 +99,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
       className="hover:shadow-lg transition-shadow duration-300"
     >
       {/* Course Thumbnail */}
-      <div className="relative h-40 sm:h-48 bg-gray-200 rounded-t-lg overflow-hidden">
+      <div className="relative h-40 sm:h-48 bg-muted rounded-t-lg overflow-hidden">
         {course.thumbnail ? (
           <img
             src={getAttachmentUrl(course.thumbnail)}
@@ -107,7 +107,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-primary/80">
             <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
           </div>
         )}
@@ -115,9 +115,9 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
         {/* Pricing Badge */}
         <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
           {course.pricing.is_free ? (
-            <Badge className="bg-green-500 text-white text-xs sm:text-sm">Free</Badge>
+            <Badge className="bg-success text-white text-xs sm:text-sm">Free</Badge>
           ) : (
-            <Badge className="bg-blue-600 text-white text-xs sm:text-sm">
+            <Badge className="bg-primary text-white text-xs sm:text-sm">
               {course.pricing.discount_price ? (
                 <>
                   <span className="line-through mr-1">${course.pricing.price}</span>
@@ -141,21 +141,21 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
       {/* Course Content */}
       <div className="p-4 sm:p-6">
         {/* Category */}
-        <p className="text-xs sm:text-sm text-gray-500 mb-2">{getCategoryDisplay(course.category)}</p>
+        <p className="text-xs sm:text-sm text-muted-foreground mb-2">{getCategoryDisplay(course.category)}</p>
 
         {/* Title */}
         <h3 className="text-lg sm:text-xl font-semibold mb-2 line-clamp-2 leading-tight">{course.title}</h3>
 
         {/* Description */}
-        <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 line-clamp-2">
+        <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4 line-clamp-2">
           {course.short_description || course.description}
         </p>
 
         {/* Creator */}
-        <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">by {course.creator_name}</p>
+        <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">by {course.creator_name}</p>
 
         {/* Course Stats - Mobile: Stack vertically, Desktop: Horizontal */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm text-gray-600">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
             <span>{formatDuration(course.total_duration)}</span>

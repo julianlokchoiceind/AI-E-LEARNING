@@ -32,9 +32,9 @@ export function CourseCheckoutForm({ course, onSuccess, onError }: CourseCheckou
   const appearance = {
     theme: 'stripe' as const,
     variables: {
-      colorPrimary: '#2563eb',
+      colorPrimary: '#3b82f6',
       colorBackground: '#ffffff',
-      colorText: '#1f2937',
+      colorText: '#0f172a',
       colorDanger: '#ef4444',
       fontFamily: 'Inter, system-ui, sans-serif',
       spacingUnit: '6px',
@@ -82,10 +82,10 @@ function CheckoutForm({
     style: {
       base: {
         fontSize: '16px',
-        color: '#1f2937',
+        color: '#0f172a',
         fontFamily: 'Inter, system-ui, sans-serif',
         '::placeholder': {
-          color: '#9ca3af',
+          color: '#64748b',
         },
       },
       invalid: {
@@ -225,28 +225,28 @@ function CheckoutForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Customer Information */}
       <div className="space-y-4">
-        <h3 className="font-medium text-gray-900">Customer Information</h3>
+        <h3 className="font-medium text-foreground">Customer Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Email
             </label>
             <input
               type="email"
               value={user?.email || ''}
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+              className="w-full px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Name
             </label>
             <input
               type="text"
               value={user?.name || ''}
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
+              className="w-full px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground"
             />
           </div>
         </div>
@@ -254,8 +254,8 @@ function CheckoutForm({
 
       {/* Payment Information */}
       <div className="space-y-4">
-        <h3 className="font-medium text-gray-900">Payment Information</h3>
-        <div className="p-4 border border-gray-300 rounded-lg bg-white">
+        <h3 className="font-medium text-foreground">Payment Information</h3>
+        <div className="p-4 border border-border rounded-lg bg-white">
           <CardElement
             options={cardElementOptions}
             onChange={handleCardChange}
@@ -265,19 +265,19 @@ function CheckoutForm({
 
       {/* Error Display */}
       {paymentError && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="p-4 bg-destructive/20 border border-destructive/30 rounded-lg">
           <div className="flex items-start">
-            <AlertTriangle className="w-5 h-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-destructive mr-3 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-red-600 text-sm font-medium mb-2">{paymentError}</p>
+              <p className="text-destructive text-sm font-medium mb-2">{paymentError}</p>
               
               {recoveryStrategy && (
                 <div className="mt-3">
-                  <p className="text-red-700 text-sm font-medium mb-2">What you can try:</p>
+                  <p className="text-destructive text-sm font-medium mb-2">What you can try:</p>
                   <ul className="space-y-1">
                     {recoveryStrategy.actions.map((action: string, index: number) => (
-                      <li key={index} className="flex items-start text-sm text-red-600">
-                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                      <li key={index} className="flex items-start text-sm text-destructive">
+                        <span className="w-1.5 h-1.5 bg-destructive/200 rounded-full mt-2 mr-2 flex-shrink-0"></span>
                         <span>{action}</span>
                       </li>
                     ))}
@@ -286,7 +286,7 @@ function CheckoutForm({
               )}
               
               {retryCount > 0 && (
-                <div className="mt-2 text-xs text-red-500">
+                <div className="mt-2 text-xs text-destructive">
                   Retry attempt: {retryCount}
                 </div>
               )}
@@ -296,23 +296,23 @@ function CheckoutForm({
       )}
 
       {/* Purchase Summary */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="font-medium text-gray-900 mb-3">Order Summary</h3>
+      <div className="bg-muted p-4 rounded-lg">
+        <h3 className="font-medium text-foreground mb-3">Order Summary</h3>
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Course:</span>
+            <span className="text-sm text-muted-foreground">Course:</span>
             <span className="text-sm font-medium">{course.title}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Price:</span>
+            <span className="text-sm text-muted-foreground">Price:</span>
             <span className="font-bold text-lg">
               ${course.pricing.discount_price || course.pricing.price}
             </span>
           </div>
           {course.pricing.discount_price && (
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-600">Original Price:</span>
-              <span className="line-through text-gray-500">
+              <span className="text-muted-foreground">Original Price:</span>
+              <span className="line-through text-muted-foreground">
                 ${course.pricing.price}
               </span>
             </div>
@@ -340,29 +340,29 @@ function CheckoutForm({
 
       {/* Features Included */}
       <div className="border-t pt-4">
-        <h4 className="font-medium text-gray-900 mb-2">This purchase includes:</h4>
+        <h4 className="font-medium text-foreground mb-2">This purchase includes:</h4>
         <div className="space-y-1">
-          <div className="flex items-center text-sm text-gray-600">
-            <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+          <div className="flex items-center text-sm text-muted-foreground">
+            <CheckCircle className="w-4 h-4 text-success mr-2" />
             <span>Lifetime access to course content</span>
           </div>
-          <div className="flex items-center text-sm text-gray-600">
-            <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+          <div className="flex items-center text-sm text-muted-foreground">
+            <CheckCircle className="w-4 h-4 text-success mr-2" />
             <span>Interactive quizzes and assignments</span>
           </div>
-          <div className="flex items-center text-sm text-gray-600">
-            <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+          <div className="flex items-center text-sm text-muted-foreground">
+            <CheckCircle className="w-4 h-4 text-success mr-2" />
             <span>Certificate of completion</span>
           </div>
-          <div className="flex items-center text-sm text-gray-600">
-            <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+          <div className="flex items-center text-sm text-muted-foreground">
+            <CheckCircle className="w-4 h-4 text-success mr-2" />
             <span>AI Study Buddy assistance</span>
           </div>
         </div>
       </div>
 
       {/* Security Notice */}
-      <div className="text-center text-sm text-gray-500 border-t pt-4">
+      <div className="text-center text-sm text-muted-foreground border-t pt-4">
         <p>Your payment information is secure and encrypted.</p>
         <p>Powered by Stripe • 14-day money-back guarantee</p>
       </div>

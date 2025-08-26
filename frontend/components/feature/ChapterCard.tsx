@@ -81,7 +81,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
     <Card className="overflow-hidden mb-4">
       {/* Chapter Header */}
       <div 
-        className={`p-4 ${isChapterLocked ? 'bg-gray-50' : 'bg-white'} cursor-pointer hover:bg-gray-50 transition-colors`}
+        className={`p-4 ${isChapterLocked ? 'bg-muted' : 'bg-background'} cursor-pointer hover:bg-muted transition-colors`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
@@ -89,9 +89,9 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
             {/* Chapter Number */}
             <div className="flex-shrink-0">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                isChapterLocked ? 'bg-gray-200 text-gray-500' : 
-                completionPercentage === 100 ? 'bg-green-500 text-white' : 
-                'bg-blue-100 text-blue-600'
+                isChapterLocked ? 'bg-muted text-muted-foreground' : 
+                completionPercentage === 100 ? 'bg-success text-white' : 
+                'bg-primary/20 text-primary'
               }`}>
                 {completionPercentage === 100 ? (
                   <CheckCircle className="w-5 h-5" />
@@ -105,15 +105,15 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
 
             {/* Chapter Info */}
             <div className="flex-1">
-              <h3 className={`font-semibold text-lg ${isChapterLocked ? 'text-gray-500' : 'text-gray-900'}`}>
+              <h3 className={`font-semibold text-lg ${isChapterLocked ? 'text-muted-foreground' : 'text-foreground'}`}>
                 Chapter {chapter.order}: {chapter.title}
               </h3>
               {chapter.description && (
-                <p className="text-sm text-gray-600 mt-1">{chapter.description}</p>
+                <p className="text-sm text-muted-foreground mt-1">{chapter.description}</p>
               )}
               
               {/* Chapter Stats */}
-              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <BookOpen className="w-4 h-4" />
                   <span>{chapter.total_lessons} lessons</span>
@@ -133,9 +133,9 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
             {/* Expand/Collapse Icon */}
             <div className="flex-shrink-0">
               {isExpanded ? (
-                <ChevronUp className="w-5 h-5 text-gray-400" />
+                <ChevronUp className="w-5 h-5 text-muted-foreground" />
               ) : (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
+                <ChevronDown className="w-5 h-5 text-muted-foreground" />
               )}
             </div>
           </div>
@@ -187,9 +187,9 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
         {/* Progress Bar */}
         {completionPercentage > 0 && completionPercentage < 100 && (
           <div className="mt-3">
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-2">
               <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="bg-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${completionPercentage}%` }}
               />
             </div>
@@ -201,8 +201,8 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
       {isExpanded && (
         <div className="border-t">
           {chapter.lessons.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <div className="p-8 text-center text-muted-foreground">
+              <BookOpen className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
               <p>No lessons in this chapter yet</p>
               {isEditable && (
                 <Button

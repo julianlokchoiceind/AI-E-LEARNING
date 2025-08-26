@@ -6,39 +6,39 @@ export default function TermsPage() {
   
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
               Terms of Service
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Last updated: January 20, 2025
             </p>
           </div>
 
           {/* Terms Content */}
           <div className="prose prose-gray max-w-none">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               1. Acceptance of Terms
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               By accessing and using the AI E-Learning Platform ("the Service"), you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to abide by the above, please do not use this service.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               2. Service Description
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               AI E-Learning Platform is an online education platform that provides video courses, AI-powered learning assistance, and interactive content for programming and artificial intelligence education. The platform offers both free and paid content, with subscription options available.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               3. User Accounts
             </h2>
-            <div className="mb-6 text-gray-700 leading-relaxed">
+            <div className="mb-6 text-muted-foreground leading-relaxed">
               <p className="mb-4">
                 To access certain features of our Service, you must register for an account. When you register, you agree to:
               </p>
@@ -50,10 +50,10 @@ export default function TermsPage() {
               </ul>
             </div>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               4. Payment and Subscriptions
             </h2>
-            <div className="mb-6 text-gray-700 leading-relaxed">
+            <div className="mb-6 text-muted-foreground leading-relaxed">
               <p className="mb-4">
                 Our platform offers both free and paid content:
               </p>
@@ -66,10 +66,10 @@ export default function TermsPage() {
               </ul>
             </div>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               5. Content and Intellectual Property
             </h2>
-            <div className="mb-6 text-gray-700 leading-relaxed">
+            <div className="mb-6 text-muted-foreground leading-relaxed">
               <p className="mb-4">
                 All content on the platform, including videos, text, graphics, and software, is owned by AI E-Learning Platform or its content creators. You agree to:
               </p>
@@ -81,10 +81,10 @@ export default function TermsPage() {
               </ul>
             </div>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               6. User Conduct
             </h2>
-            <div className="mb-6 text-gray-700 leading-relaxed">
+            <div className="mb-6 text-muted-foreground leading-relaxed">
               <p className="mb-4">
                 You agree not to use the Service to:
               </p>
@@ -97,43 +97,43 @@ export default function TermsPage() {
               </ul>
             </div>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               7. AI Services
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               Our platform uses AI technology to provide learning assistance and personalized recommendations. AI responses are generated automatically and should be used as educational guidance only. While we strive for accuracy, AI responses may contain errors and should not be considered as professional advice.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               8. Privacy
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               Your privacy is important to us. Please review our Privacy Policy, which also governs your use of the Service, to understand our practices regarding the collection and use of your personal information.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               9. Termination
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               We may terminate or suspend your account and access to the Service immediately, without prior notice, for any reason, including breach of these Terms. Upon termination, your right to use the Service will cease immediately.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               10. Changes to Terms
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               We reserve the right to modify these terms at any time. We will notify users of any material changes via email or through the platform. Your continued use of the Service after such modifications constitutes acceptance of the updated terms.
             </p>
 
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               11. Contact Information
             </h2>
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <p className="mb-6 text-muted-foreground leading-relaxed">
               If you have any questions about these Terms of Service, please contact us at info@choiceind.com.
             </p>
 
-            <div className="bg-blue-50 rounded-lg p-6 mt-8">
-              <p className="text-sm text-gray-600">
+            <div className="bg-primary/10 rounded-lg p-6 mt-8">
+              <p className="text-sm text-muted-foreground">
                 These terms constitute the entire agreement between you and AI E-Learning Platform regarding the use of the Service. These terms are governed by Vietnamese law and any disputes will be resolved in Vietnamese courts.
               </p>
             </div>

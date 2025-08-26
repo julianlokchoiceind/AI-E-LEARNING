@@ -63,7 +63,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   if (loading) {
     return (
       <div className="animate-pulse">
-        <div className="h-2 bg-gray-200 rounded w-full"></div>
+        <div className="h-2 bg-muted rounded w-full"></div>
       </div>
     );
   }
@@ -84,7 +84,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   // Detailed variant - full progress info
   if (variant === 'detailed') {
     return (
-      <div className="bg-gray-50 rounded-lg p-4">
+      <div className="bg-muted rounded-lg p-4">
         <h3 className="font-semibold mb-3">Course Progress</h3>
         
         <div className="space-y-3">
@@ -98,21 +98,21 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-gray-600">Completed Lessons</p>
+              <p className="text-muted-foreground">Completed Lessons</p>
               <p className="font-semibold text-lg">{progress.completed_lessons}</p>
             </div>
             <div>
-              <p className="text-gray-600">Total Lessons</p>
+              <p className="text-muted-foreground">Total Lessons</p>
               <p className="font-semibold text-lg">{progress.total_lessons}</p>
             </div>
           </div>
 
           {progress.is_completed ? (
-            <div className="bg-green-50 text-green-700 p-3 rounded text-sm">
+            <div className="bg-success/20 text-success p-3 rounded text-sm">
               🎉 Congratulations! You've completed this course.
             </div>
           ) : (
-            <div className="bg-blue-50 text-blue-700 p-3 rounded text-sm">
+            <div className="bg-primary/20 text-primary p-3 rounded text-sm">
               Keep going! You're {progress.completion_percentage}% of the way there.
             </div>
           )}
@@ -131,7 +131,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
         </span>
       </div>
       <ProgressBar value={progress.completion_percentage} />
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-muted-foreground">
         {progress.completion_percentage}% complete
       </p>
     </div>

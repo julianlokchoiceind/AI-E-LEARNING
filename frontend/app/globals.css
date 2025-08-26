@@ -10,8 +10,11 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 221 83% 53%; /* #3b82f6 - Blue-500 */
     --primary-foreground: 210 40% 98%;
+    --primary-hover: 221 83% 45%; /* #2563eb - Blue-600 */
+    --primary-light: 214 100% 92%; /* #dbeafe - Blue-100 */
+    --primary-dark: 221 83% 40%; /* #1d4ed8 - Blue-700 */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
@@ -24,6 +27,37 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+    
+    /* Status Colors - Design System */
+    --success: 160 84% 39%; /* #10b981 - Green-500 */
+    --success-light: 142 76% 73%; /* #86efac - Green-300 */
+    --success-dark: 158 64% 20%; /* #064E3B - Green-900 */
+    --warning: 32 95% 44%; /* #f59e0b - Amber-500 */
+    --warning-light: 48 96% 53%; /* #fbbf24 - Amber-400 */
+    --warning-dark: 23 88% 24%; /* #78350F - Amber-900 */
+    --error: 0 84% 60%; /* #ef4444 - Red-500 */
+    --error-light: 0 93% 94%; /* #fee2e2 - Red-100 */
+    --error-dark: 0 63% 31%; /* #7F1D1D - Red-900 */
+    
+    /* Extended Chart Colors */
+    --chart-purple: 264 83% 57%; /* #8b5cf6 - Purple-500 */
+    --chart-pink: 333 71% 51%; /* #ec4899 - Pink-500 */
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-dark)) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--chart-purple)) 100%);
+    --gradient-subtle: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--primary-light)) 100%);
+    
+    /* Animation Timings */
+    --transition-fast: 150ms;
+    --transition-base: 250ms;
+    --transition-slow: 350ms;
+    
+    /* Shadow System */
+    --shadow-sm: 0 1px 2px hsl(var(--foreground) / 0.05);
+    --shadow-md: 0 4px 6px hsl(var(--foreground) / 0.1);
+    --shadow-lg: 0 10px 15px hsl(var(--foreground) / 0.1);
+    --shadow-xl: 0 20px 25px hsl(var(--foreground) / 0.1);
   }
 
   .dark {
@@ -100,7 +134,7 @@
 
 @layer components {
   .gradient-text {
-    @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent;
   }
   
   .card-hover {
@@ -152,7 +186,7 @@
   
   /* Mobile-first card component */
   .mobile-card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 transition-shadow duration-200;
+    @apply bg-background rounded-lg shadow-sm border border-border transition-shadow duration-200;
   }
   
   /* Mobile: reduce padding and adjust shadows */
@@ -175,7 +209,7 @@
   
   /* Mobile navigation styles */
   .mobile-nav {
-    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-bottom;
+    @apply fixed bottom-0 left-0 right-0 bg-background border-t border-border safe-area-bottom;
   }
   
   /* Only show on mobile */
@@ -287,13 +321,13 @@
   
   /* Loading states optimized for mobile */
   .loading-skeleton {
-    @apply animate-pulse bg-gray-200 rounded;
+    @apply animate-pulse bg-muted rounded;
   }
   
   /* Reduce animation on low-power devices */
   @media (prefers-reduced-motion: reduce) {
     .loading-skeleton {
-      @apply animate-none bg-gray-100;
+      @apply animate-none bg-muted/50;
     }
   }
   
@@ -313,7 +347,7 @@
   }
   
   .form-label-mobile {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    @apply block text-sm font-medium text-muted-foreground mb-1;
   }
   
   @media (max-width: 768px) {

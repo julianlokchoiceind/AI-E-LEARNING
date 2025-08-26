@@ -289,8 +289,8 @@ export default function FAQCategoriesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">FAQ Categories</h1>
-          <p className="text-gray-600">Manage FAQ categories and their organization</p>
+          <h1 className="text-2xl font-bold text-foreground">FAQ Categories</h1>
+          <p className="text-muted-foreground">Manage FAQ categories and their organization</p>
         </div>
         <Button
           onClick={() => {
@@ -309,10 +309,10 @@ export default function FAQCategoriesPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
-              <FolderOpen className="h-8 w-8 text-blue-600" />
+              <FolderOpen className="h-8 w-8 text-primary" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Categories</p>
-                <p className="text-2xl font-bold text-gray-900">{totalCategories}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Categories</p>
+                <p className="text-2xl font-bold text-foreground">{totalCategories}</p>
               </div>
             </div>
           </CardContent>
@@ -321,10 +321,10 @@ export default function FAQCategoriesPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
-              <Eye className="h-8 w-8 text-green-600" />
+              <Eye className="h-8 w-8 text-success" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Categories</p>
-                <p className="text-2xl font-bold text-gray-900">{totalActive}</p>
+                <p className="text-sm font-medium text-muted-foreground">Active Categories</p>
+                <p className="text-2xl font-bold text-foreground">{totalActive}</p>
               </div>
             </div>
           </CardContent>
@@ -333,10 +333,10 @@ export default function FAQCategoriesPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
-              <EyeOff className="h-8 w-8 text-gray-600" />
+              <EyeOff className="h-8 w-8 text-muted-foreground" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Inactive Categories</p>
-                <p className="text-2xl font-bold text-gray-900">{totalInactive}</p>
+                <p className="text-sm font-medium text-muted-foreground">Inactive Categories</p>
+                <p className="text-2xl font-bold text-foreground">{totalInactive}</p>
               </div>
             </div>
           </CardContent>
@@ -349,7 +349,7 @@ export default function FAQCategoriesPage() {
           <div className="flex flex-col gap-4">
             <div className="flex gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Search categories..."
@@ -371,8 +371,8 @@ export default function FAQCategoriesPage() {
 
             {/* Bulk Actions */}
             {selectedCategories.size > 0 && (
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                <span className="text-blue-700">
+              <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg">
+                <span className="text-primary">
                   {selectedCategories.size} categor{selectedCategories.size > 1 ? 'ies' : 'y'} selected
                 </span>
                 <div className="flex gap-2">
@@ -406,7 +406,7 @@ export default function FAQCategoriesPage() {
                     variant="outline"
                     onClick={handleBulkDelete}
                     disabled={actionLoading}
-                    className="text-red-600 hover:bg-red-50"
+                    className="text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete
@@ -420,7 +420,7 @@ export default function FAQCategoriesPage() {
 
       {/* Categories Table */}
       <Card className="overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-border">
           <h2 className="text-lg font-semibold">
             Categories ({totalCategories})
           </h2>
@@ -455,8 +455,8 @@ export default function FAQCategoriesPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-muted/50">
                     <tr>
                       <th className="px-4 py-3">
                         <input
@@ -466,18 +466,18 @@ export default function FAQCategoriesPage() {
                           className="rounded"
                         />
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slug</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FAQs</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Order</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Category</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Slug</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">FAQs</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Views</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-border">
                     {filteredCategories.map((category: FAQCategoryData, index: number) => (
-                      <tr key={category.id} className="hover:bg-gray-50">
+                      <tr key={category.id} className="hover:bg-muted/30">
                         <td className="px-4 py-4">
                           <input
                             type="checkbox"
@@ -514,11 +514,11 @@ export default function FAQCategoriesPage() {
                         <td className="px-6 py-4">
                           <div>
                             <div className="flex items-center gap-2">
-                              <Folder className="h-4 w-4 text-gray-500" />
-                              <span className="font-medium text-gray-900">{category.name}</span>
+                              <Folder className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium text-foreground">{category.name}</span>
                             </div>
                             {category.description && (
-                              <p className="text-sm text-gray-500 mt-1">
+                              <p className="text-sm text-muted-foreground mt-1">
                                 {category.description.length > 60
                                   ? category.description.substring(0, 60) + '...'
                                   : category.description}
@@ -527,24 +527,24 @@ export default function FAQCategoriesPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                          <code className="text-sm bg-muted/50 px-2 py-1 rounded">
                             {category.slug}
                           </code>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                           <div className="text-center">
-                            <div className="text-lg font-semibold text-gray-900">
+                            <div className="text-lg font-semibold text-foreground">
                               {category.faq_count || 0}
                             </div>
-                            <div className="text-xs text-gray-500">FAQs</div>
+                            <div className="text-xs text-muted-foreground">FAQs</div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                           <div className="text-center">
-                            <div className="text-lg font-semibold text-gray-900">
+                            <div className="text-lg font-semibold text-foreground">
                               {category.total_views || 0}
                             </div>
-                            <div className="text-xs text-gray-500">views</div>
+                            <div className="text-xs text-muted-foreground">views</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -565,7 +565,7 @@ export default function FAQCategoriesPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-red-600 hover:bg-red-50"
+                              className="text-destructive hover:bg-destructive/10"
                               onClick={() => handleDelete(category)}
                               disabled={actionLoading || (Number(category.faq_count) > 0)}
                               title={Number(category.faq_count) > 0 ? 'Cannot delete category with FAQs' : 'Delete category'}
@@ -594,12 +594,12 @@ export default function FAQCategoriesPage() {
         <div className="space-y-4">
           {/* Form Errors */}
           {formErrors.length > 0 && (
-            <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+            <div className="bg-destructive/10 border border-destructive/30 p-3 rounded-lg">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-red-800">Please fix the following errors:</h4>
-                  <ul className="mt-1 text-sm text-red-700 list-disc list-inside">
+                  <h4 className="font-medium text-destructive">Please fix the following errors:</h4>
+                  <ul className="mt-1 text-sm text-destructive list-disc list-inside">
                     {formErrors.map((error, index) => (
                       <li key={index}>{error}</li>
                     ))}
@@ -610,7 +610,7 @@ export default function FAQCategoriesPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Category Name *
             </label>
             <Input
@@ -631,7 +631,7 @@ export default function FAQCategoriesPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Slug *
             </label>
             <Input
@@ -640,13 +640,13 @@ export default function FAQCategoriesPage() {
               placeholder="e.g., general-questions"
               pattern="[a-z0-9-]+"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               URL-friendly identifier (lowercase letters, numbers, and hyphens only)
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Description
             </label>
             <textarea
@@ -660,7 +660,7 @@ export default function FAQCategoriesPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Display Order
               </label>
               <Input
@@ -671,13 +671,13 @@ export default function FAQCategoriesPage() {
                 max="999"
                 placeholder="0"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Lower numbers appear first
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Status
               </label>
               <div className="flex items-center mt-3">
@@ -688,7 +688,7 @@ export default function FAQCategoriesPage() {
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                   className="rounded mr-2"
                 />
-                <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
+                <label htmlFor="is_active" className="text-sm font-medium text-foreground">
                   Active (visible to users)
                 </label>
               </div>
@@ -725,25 +725,25 @@ export default function FAQCategoriesPage() {
             {/* Warning */}
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-destructive" />
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   Delete "{categoryToDelete.name}"?
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   This will permanently delete the FAQ category. This action cannot be undone.
                 </p>
                 
                 {Number(categoryToDelete.faq_count) > 0 && (
-                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="mt-4 p-3 bg-warning/10 border border-warning/30 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                      <span className="font-medium text-yellow-800">Cannot Delete</span>
+                      <AlertTriangle className="w-5 h-5 text-warning" />
+                      <span className="font-medium text-warning">Cannot Delete</span>
                     </div>
-                    <p className="text-sm text-yellow-700 mt-1">
+                    <p className="text-sm text-warning mt-1">
                       This category contains {categoryToDelete.faq_count} FAQ{Number(categoryToDelete.faq_count) > 1 ? 's' : ''}. 
                       Please move or delete all FAQs before deleting the category.
                     </p>
@@ -791,30 +791,30 @@ export default function FAQCategoriesPage() {
             {/* Warning Icon & Message */}
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+                <AlertTriangle className="h-6 w-6 text-destructive" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-medium text-foreground">
                   Are you sure you want to delete {selectedCategories.size} categories?
                 </h3>
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-muted-foreground">
                   This action cannot be undone. All selected categories will be permanently deleted.
                 </p>
-                <p className="mt-1 text-sm text-red-600">
+                <p className="mt-1 text-sm text-destructive">
                   Note: Categories with FAQs cannot be deleted.
                 </p>
               </div>
             </div>
 
             {/* Selected Categories List */}
-            <div className="max-h-40 overflow-y-auto border rounded-md p-3 bg-gray-50">
+            <div className="max-h-40 overflow-y-auto border rounded-md p-3 bg-muted/50">
               <ul className="text-sm space-y-1">
                 {Array.from(selectedCategories).map(categoryId => {
                   const category = categories.find((c: FAQCategoryData) => c.id === categoryId);
                   return category ? (
-                    <li key={categoryId} className="text-gray-700">
+                    <li key={categoryId} className="text-foreground">
                       • {category.name} {Number(category.faq_count) > 0 && (
-                        <span className="text-red-600 text-xs">
+                        <span className="text-destructive text-xs">
                           ({category.faq_count} FAQs - cannot delete)
                         </span>
                       )}

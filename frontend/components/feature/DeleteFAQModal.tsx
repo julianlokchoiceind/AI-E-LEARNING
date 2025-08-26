@@ -56,36 +56,36 @@ export const DeleteFAQModal: React.FC<DeleteFAQModalProps> = ({
         {/* Warning Icon & Message */}
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-red-600" />
+            <div className="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6 text-destructive" />
             </div>
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Confirm FAQ Deletion
             </h3>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Are you sure you want to delete this FAQ? This action cannot be undone.
             </p>
           </div>
         </div>
 
         {/* FAQ Details */}
-        <div className="bg-gray-50 p-4 rounded-lg border">
+        <div className="bg-muted p-4 rounded-lg border border-border">
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-medium text-gray-700">Question:</p>
-              <p className="text-sm text-gray-900">{faq.question}</p>
+              <p className="text-sm font-medium text-foreground">Question:</p>
+              <p className="text-sm text-foreground">{faq.question}</p>
             </div>
             
             <div>
-              <p className="text-sm font-medium text-gray-700">Answer:</p>
-              <p className="text-sm text-gray-900 line-clamp-3">{faq.answer}</p>
+              <p className="text-sm font-medium text-foreground">Answer:</p>
+              <p className="text-sm text-foreground line-clamp-3">{faq.answer}</p>
             </div>
             
             <div>
-              <p className="text-sm font-medium text-gray-700">Category:</p>
-              <p className="text-sm text-gray-900 capitalize">{faq.category_id || 'Uncategorized'}</p>
+              <p className="text-sm font-medium text-foreground">Category:</p>
+              <p className="text-sm text-foreground capitalize">{faq.category_id || 'Uncategorized'}</p>
             </div>
           </div>
         </div>

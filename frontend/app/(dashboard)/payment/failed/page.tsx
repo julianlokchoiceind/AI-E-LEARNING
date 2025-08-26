@@ -62,23 +62,23 @@ export default function PaymentFailedPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Error Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-            <XCircle className="w-8 h-8 text-red-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-destructive/20 rounded-full mb-4">
+            <XCircle className="w-8 h-8 text-destructive" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Payment Failed
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-muted-foreground text-lg">
             We couldn't process your payment. Don't worry, you can try again.
           </p>
         </div>
@@ -87,12 +87,12 @@ export default function PaymentFailedPage() {
           {/* Error Details */}
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              <AlertTriangle className="w-5 h-5 text-warning" />
               <h2 className="text-xl font-semibold">What Happened?</h2>
             </div>
             
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <p className="text-red-700 text-sm">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
+              <p className="text-destructive/90 text-sm">
                 {getErrorMessageDisplay()}
               </p>
             </div>
@@ -100,7 +100,7 @@ export default function PaymentFailedPage() {
             {course && (
               <div>
                 <h3 className="font-semibold mb-3">Course You Were Purchasing:</h3>
-                <div className="flex gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="flex gap-3 p-3 bg-muted rounded-lg">
                   {course.thumbnail && (
                     <img
                       src={getAttachmentUrl(course.thumbnail)}
@@ -110,7 +110,7 @@ export default function PaymentFailedPage() {
                   )}
                   <div>
                     <h4 className="font-medium text-sm">{course.title}</h4>
-                    <p className="text-gray-600 text-xs line-clamp-2">
+                    <p className="text-muted-foreground text-xs line-clamp-2">
                       {course.description}
                     </p>
                     <p className="text-lg font-bold mt-1">
@@ -145,43 +145,43 @@ export default function PaymentFailedPage() {
           {/* Troubleshooting */}
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <HelpCircle className="w-5 h-5 text-blue-500" />
+              <HelpCircle className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-semibold">Troubleshooting Tips</h2>
             </div>
             
             <div className="space-y-4">
-              <div className="border-l-4 border-blue-200 pl-4">
+              <div className="border-l-4 border-primary pl-4">
                 <h3 className="font-medium mb-1">Check Your Payment Details</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-muted-foreground text-sm">
                   Ensure your card number, expiry date, and security code are correct.
                 </p>
               </div>
 
-              <div className="border-l-4 border-blue-200 pl-4">
+              <div className="border-l-4 border-primary pl-4">
                 <h3 className="font-medium mb-1">Try a Different Card</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-muted-foreground text-sm">
                   If one card doesn't work, try using a different payment method.
                 </p>
               </div>
 
-              <div className="border-l-4 border-blue-200 pl-4">
+              <div className="border-l-4 border-primary pl-4">
                 <h3 className="font-medium mb-1">Check with Your Bank</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-muted-foreground text-sm">
                   Your bank might be blocking the transaction for security reasons.
                 </p>
               </div>
 
-              <div className="border-l-4 border-blue-200 pl-4">
+              <div className="border-l-4 border-primary pl-4">
                 <h3 className="font-medium mb-1">Clear Browser Cache</h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-muted-foreground text-sm">
                   Sometimes clearing your browser cache can resolve payment issues.
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-6 p-4 bg-muted rounded-lg">
               <h3 className="font-medium mb-2">Still Having Issues?</h3>
-              <p className="text-gray-600 text-sm mb-3">
+              <p className="text-muted-foreground text-sm mb-3">
                 Our support team is here to help you complete your purchase.
               </p>
               <Button 
@@ -202,9 +202,9 @@ export default function PaymentFailedPage() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
-              <CreditCard className="w-8 h-8 mx-auto mb-2 text-blue-500" />
+              <CreditCard className="w-8 h-8 mx-auto mb-2 text-primary" />
               <h3 className="font-medium mb-1">Try Different Payment</h3>
-              <p className="text-gray-600 text-sm mb-3">
+              <p className="text-muted-foreground text-sm mb-3">
                 Use a different credit card or payment method
               </p>
               <Button variant="outline" size="sm" onClick={handleRetryPayment}>
@@ -213,11 +213,11 @@ export default function PaymentFailedPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-8 h-8 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-purple-600 font-bold text-sm">Pro</span>
+              <div className="w-8 h-8 mx-auto mb-2 bg-primary/20 rounded-full flex items-center justify-center">
+                <span className="text-primary font-bold text-sm">Pro</span>
               </div>
               <h3 className="font-medium mb-1">Subscribe to Pro</h3>
-              <p className="text-gray-600 text-sm mb-3">
+              <p className="text-muted-foreground text-sm mb-3">
                 Get unlimited access to all courses for $29/month
               </p>
               <Button variant="outline" size="sm" onClick={() => router.push('/pricing')}>
@@ -226,11 +226,11 @@ export default function PaymentFailedPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-8 h-8 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-green-600 font-bold text-sm">Free</span>
+              <div className="w-8 h-8 mx-auto mb-2 bg-success/20 rounded-full flex items-center justify-center">
+                <span className="text-success font-bold text-sm">Free</span>
               </div>
               <h3 className="font-medium mb-1">Try Free Courses</h3>
-              <p className="text-gray-600 text-sm mb-3">
+              <p className="text-muted-foreground text-sm mb-3">
                 Start with our free courses while you resolve payment issues
               </p>
               <Button variant="outline" size="sm" onClick={() => router.push('/courses?filter=free')}>
@@ -244,7 +244,7 @@ export default function PaymentFailedPage() {
         {paymentIntentId && (
           <Card className="mt-8 p-6">
             <h3 className="font-medium mb-2">Payment Reference</h3>
-            <div className="text-sm text-gray-600 space-y-1">
+            <div className="text-sm text-muted-foreground space-y-1">
               <p>Payment ID: {paymentIntentId}</p>
               <p>Attempted: {new Date().toLocaleDateString()}</p>
               <p>Status: Failed</p>

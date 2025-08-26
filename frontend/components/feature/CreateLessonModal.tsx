@@ -262,7 +262,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
                 maxLength={150}
                 autoFocus
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.title.length}/150 characters
               </p>
             </div>
@@ -279,7 +279,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
                 rows={3}
                 maxLength={1000}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {formData.description.length}/1000 characters
               </p>
             </div>
@@ -295,7 +295,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
                 disabled={loading}
                 type="url"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Supports YouTube and Vimeo links
               </p>
             </div>
@@ -314,13 +314,13 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
                 max="300"
                 step="0.5"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Duration in minutes (e.g., 15.5 for 15 minutes 30 seconds)
               </p>
             </div>
 
             {/* Helper Text */}
-            <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+            <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
               <p className="font-medium mb-1">Tips:</p>
               <ul className="text-xs space-y-1 ml-4 list-disc">
                 <li>Use clear, descriptive titles that explain what students will learn</li>
@@ -356,7 +356,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
           </MobileFormActions>
 
           {/* Keyboard Shortcut Hint */}
-          <p className="text-xs text-gray-500 text-center mt-2">
+          <p className="text-xs text-muted-foreground text-center mt-2">
             Press ⌘ + Enter to create lesson
           </p>
         </MobileForm>

@@ -44,11 +44,9 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
       className={cn(
         'flex items-center gap-2 text-sm',
         {
-          'text-gray-400': status === 'saving',
-          'text-gray-500': status === 'saved', // Light grey for saved status
-          'text-red-500': status === 'error',
-          'text-orange-500': status === 'conflict',
-          'text-gray-600': status === 'offline',
+          'text-muted-foreground': status === 'saving' || status === 'saved' || status === 'offline',
+          'text-destructive': status === 'error',
+          'text-warning': status === 'conflict',
         },
         className
       )}
@@ -85,15 +83,15 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
       
       {status === 'idle' && lastSavedAt && (
         <>
-          <Check className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-400">
+          <Check className="w-4 h-4 text-muted-foreground" />
+          <span className="text-muted-foreground">
             Last saved at {formatTime(lastSavedAt)}
           </span>
         </>
       )}
       
       {status === 'idle' && !lastSavedAt && (
-        <span className="text-gray-400">Not saved yet</span>
+        <span className="text-muted-foreground">Not saved yet</span>
       )}
       
       {status === 'offline' && (

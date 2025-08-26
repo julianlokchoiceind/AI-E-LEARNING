@@ -468,7 +468,7 @@ const CourseBuilderPage = () => {
       errorMessage={error}
       onForceSave={forceSave}
     >
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-muted/50">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-40">
           <div className="container mx-auto px-4 py-4">
@@ -491,12 +491,12 @@ const CourseBuilderPage = () => {
                     onChange={(e) => setTitleInput(e.target.value)}
                     onBlur={handleTitleSave}
                     onKeyPress={(e) => e.key === 'Enter' && handleTitleSave()}
-                    className="text-2xl font-bold px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="text-2xl font-bold px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                     autoFocus
                   />
                 ) : (
                   <h1
-                    className="text-2xl font-bold cursor-pointer hover:text-blue-600"
+                    className="text-2xl font-bold cursor-pointer hover:text-primary"
                     onClick={() => setIsEditingTitle(true)}
                   >
                     {courseData.title}
@@ -557,8 +557,8 @@ const CourseBuilderPage = () => {
                     }}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'general'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'hover:bg-gray-100'
+                        ? 'bg-primary/20 text-primary'
+                        : 'hover:bg-muted/30'
                     }`}
                   >
                     <BookOpen className="w-4 h-4 inline mr-2" />
@@ -569,8 +569,8 @@ const CourseBuilderPage = () => {
                     onClick={() => setActiveTab('chapters')}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'chapters'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'hover:bg-gray-100'
+                        ? 'bg-primary/20 text-primary'
+                        : 'hover:bg-muted/30'
                     }`}
                   >
                     <BookOpen className="w-4 h-4 inline mr-2" />
@@ -581,8 +581,8 @@ const CourseBuilderPage = () => {
                     onClick={() => setActiveTab('settings')}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'settings'
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'hover:bg-gray-100'
+                        ? 'bg-primary/20 text-primary'
+                        : 'hover:bg-muted/30'
                     }`}
                   >
                     <Settings className="w-4 h-4 inline mr-2" />
@@ -609,41 +609,41 @@ const CourseBuilderPage = () => {
 
                     {/* Description */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Description
                       </label>
                       <textarea
                         value={courseData.description || ''}
                         onChange={(e) => updateCourseData({ description: e.target.value })}
                         rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="Enter course description..."
                       />
                     </div>
 
                     {/* Short Description */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Short Description
                       </label>
                       <input
                         type="text"
                         value={courseData.short_description || ''}
                         onChange={(e) => updateCourseData({ short_description: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="Brief description for course cards..."
                       />
                     </div>
 
                     {/* Category */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Category
                       </label>
                       <select
                         value={courseData.category || ''}
                         onChange={(e) => updateCourseData({ category: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="">Select category</option>
                         <option value="programming">Programming</option>
@@ -656,13 +656,13 @@ const CourseBuilderPage = () => {
 
                     {/* Level */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Level
                       </label>
                       <select
                         value={courseData.level || ''}
                         onChange={(e) => updateCourseData({ level: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="">Select level</option>
                         <option value="beginner">Beginner</option>
@@ -673,7 +673,7 @@ const CourseBuilderPage = () => {
 
                     {/* Syllabus */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         What students will learn (one per line)
                       </label>
                       <textarea
@@ -683,14 +683,14 @@ const CourseBuilderPage = () => {
                           updateCourseData({ syllabus: lines });
                         }}
                         rows={6}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="Build real-world AI applications&#10;Master machine learning fundamentals&#10;Deploy models to production"
                       />
                     </div>
 
                     {/* Prerequisites */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Prerequisites (one per line)
                       </label>
                       <textarea
@@ -700,7 +700,7 @@ const CourseBuilderPage = () => {
                           updateCourseData({ prerequisites: lines });
                         }}
                         rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="Basic programming knowledge&#10;Familiarity with Python"
                       />
                     </div>
@@ -723,9 +723,9 @@ const CourseBuilderPage = () => {
 
                   {chapters.length === 0 ? (
                     <Card className="p-12 text-center">
-                      <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                      <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
                       <h3 className="text-lg font-semibold mb-2">No chapters yet</h3>
-                      <p className="text-gray-600 mb-4">
+                      <p className="text-muted-foreground mb-4">
                         Start building your course by adding chapters and lessons
                       </p>
                       <Button
@@ -760,7 +760,7 @@ const CourseBuilderPage = () => {
                   <div className="space-y-6">
                     {/* Pricing */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Pricing
                       </label>
                       <div className="space-y-3">
@@ -791,7 +791,7 @@ const CourseBuilderPage = () => {
                         {!courseData.pricing?.is_free && (
                           <div className="ml-6 space-y-3">
                             <div>
-                              <label className="block text-sm text-gray-600 mb-1">
+                              <label className="block text-sm text-muted-foreground mb-1">
                                 Price (USD)
                               </label>
                               <input
@@ -802,7 +802,7 @@ const CourseBuilderPage = () => {
                                 })}
                                 min="0"
                                 step="0.01"
-                                className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-32 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                               />
                             </div>
                           </div>
@@ -812,27 +812,27 @@ const CourseBuilderPage = () => {
 
                     {/* Status */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Course Status
                       </label>
                       <select
                         value={courseData.status || 'draft'}
                         onChange={(e) => updateCourseData({ status: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="draft">Draft</option>
                         <option value="review">Ready for Review</option>
                         <option value="published">Published</option>
                         <option value="archived">Archived</option>
                       </select>
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         Only published courses are visible to students
                       </p>
                     </div>
 
                     {/* Target Audience */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Target Audience (one per line)
                       </label>
                       <textarea
@@ -842,7 +842,7 @@ const CourseBuilderPage = () => {
                           updateCourseData({ target_audience: lines });
                         }}
                         rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="Beginner programmers&#10;Students interested in AI&#10;Professional developers"
                       />
                     </div>

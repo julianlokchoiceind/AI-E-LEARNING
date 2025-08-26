@@ -118,7 +118,7 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
           </div>
 
           {/* Main Content */}
-          <div className="bg-white/95 text-gray-900 rounded-lg p-8 mb-8">
+          <div className="bg-white/95 text-foreground rounded-lg p-8 mb-8">
             <div className="text-center">
               <p className="text-lg mb-4">This is to certify that</p>
               <h2 className="text-3xl font-bold mb-4">{certificate.user_name}</h2>
@@ -127,20 +127,20 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 mb-8">
                 <div>
-                  <p className="text-sm text-gray-600">Course Level</p>
+                  <p className="text-sm text-muted-foreground">Course Level</p>
                   <p className="font-semibold capitalize">{certificate.course_level}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Final Score</p>
+                  <p className="text-sm text-muted-foreground">Final Score</p>
                   <p className="font-semibold">{certificate.final_score}%</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Total Hours</p>
+                  <p className="text-sm text-muted-foreground">Total Hours</p>
                   <p className="font-semibold">{certificate.total_hours.toFixed(1)} hours</p>
                 </div>
               </div>
               
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Issued on {formatDate(certificate.issue_date)}
               </p>
             </div>
@@ -209,12 +209,12 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
 
       {/* Status */}
       {!certificate.is_active && (
-        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 font-semibold">
+        <div className="mt-6 p-4 bg-destructive/20 border border-destructive/30 rounded-lg">
+          <p className="text-destructive font-semibold">
             This certificate has been revoked
           </p>
           {certificate.revoke_reason && (
-            <p className="text-red-600 text-sm mt-1">
+            <p className="text-destructive text-sm mt-1">
               Reason: {certificate.revoke_reason}
             </p>
           )}

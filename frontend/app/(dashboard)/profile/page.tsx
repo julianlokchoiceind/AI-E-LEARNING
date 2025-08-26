@@ -111,7 +111,7 @@ export default function ProfilePage() {
           <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
                 Name
               </label>
               <Input
@@ -125,7 +125,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
                 Email
               </label>
               <Input
@@ -134,13 +134,13 @@ export default function ProfilePage() {
                 type="email"
                 value={profileData.email}
                 disabled
-                className="bg-gray-50"
+                className="bg-muted"
               />
-              <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
+              <p className="text-sm text-muted-foreground mt-1">Email cannot be changed</p>
             </div>
 
             <div>
-              <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="bio" className="block text-sm font-medium text-foreground mb-1">
                 Bio
               </label>
               <textarea
@@ -149,13 +149,13 @@ export default function ProfilePage() {
                 rows={4}
                 value={profileData.bio}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Tell us about yourself"
               />
             </div>
 
             <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="location" className="block text-sm font-medium text-foreground mb-1">
                 Location
               </label>
               <Input
@@ -175,7 +175,7 @@ export default function ProfilePage() {
           <h2 className="text-xl font-semibold mb-4">Social Links</h2>
           <div className="space-y-4">
             <div>
-              <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="website" className="block text-sm font-medium text-foreground mb-1">
                 Website
               </label>
               <Input
@@ -189,7 +189,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label htmlFor="github" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="github" className="block text-sm font-medium text-foreground mb-1">
                 GitHub
               </label>
               <Input
@@ -203,7 +203,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label htmlFor="linkedin" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="linkedin" className="block text-sm font-medium text-foreground mb-1">
                 LinkedIn
               </label>
               <Input
@@ -225,7 +225,7 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium">Role</h3>
-                <p className="text-sm text-gray-500">{user.role}</p>
+                <p className="text-sm text-muted-foreground">{user.role}</p>
               </div>
             </div>
 
@@ -233,7 +233,7 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium">Premium Status</h3>
-                  <p className="text-sm text-green-600">Active</p>
+                  <p className="text-sm text-success">Active</p>
                 </div>
               </div>
             )}

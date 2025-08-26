@@ -16,17 +16,17 @@ export default function Error({
   }, [error])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-muted/50">
       <div className="max-w-md w-full space-y-8 text-center">
         <div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-3xl font-extrabold text-foreground">
             Oops! Something went wrong
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             We encountered an unexpected error. Please try again.
           </p>
           {error.digest && (
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               Error ID: {error.digest}
             </p>
           )}
@@ -46,7 +46,7 @@ export default function Error({
             Go to Homepage
           </Button>
         </div>
-        <p className="mt-2 text-xs text-gray-500">
+        <p className="mt-2 text-xs text-muted-foreground">
           If this problem persists, please contact support.
         </p>
       </div>

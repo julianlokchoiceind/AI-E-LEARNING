@@ -90,7 +90,7 @@ export class PaymentErrorBoundary extends Component<
         return {
           title: 'Card Declined',
           message: 'Your card was declined. Please try a different payment method.',
-          icon: <CreditCard className="w-8 h-8 text-red-500" />,
+          icon: <CreditCard className="w-8 h-8 text-destructive" />,
           canRetry: true,
           suggestions: [
             'Check that your card details are correct',
@@ -104,7 +104,7 @@ export class PaymentErrorBoundary extends Component<
         return {
           title: 'Insufficient Funds',
           message: 'Your card has insufficient funds for this transaction.',
-          icon: <CreditCard className="w-8 h-8 text-red-500" />,
+          icon: <CreditCard className="w-8 h-8 text-destructive" />,
           canRetry: true,
           suggestions: [
             'Add funds to your account',
@@ -117,7 +117,7 @@ export class PaymentErrorBoundary extends Component<
         return {
           title: 'Card Expired',
           message: 'Your card has expired. Please use a different payment method.',
-          icon: <CreditCard className="w-8 h-8 text-red-500" />,
+          icon: <CreditCard className="w-8 h-8 text-destructive" />,
           canRetry: true,
           suggestions: [
             'Use a different, valid card',
@@ -130,7 +130,7 @@ export class PaymentErrorBoundary extends Component<
         return {
           title: 'Processing Error',
           message: 'There was an error processing your payment. Please try again.',
-          icon: <RefreshCw className="w-8 h-8 text-orange-500" />,
+          icon: <RefreshCw className="w-8 h-8 text-warning" />,
           canRetry: true,
           suggestions: [
             'Try again in a few moments',
@@ -144,7 +144,7 @@ export class PaymentErrorBoundary extends Component<
         return {
           title: 'Authentication Required',
           message: 'Your bank requires additional authentication for this payment.',
-          icon: <AlertTriangle className="w-8 h-8 text-yellow-500" />,
+          icon: <AlertTriangle className="w-8 h-8 text-warning" />,
           canRetry: true,
           suggestions: [
             'Complete the authentication with your bank',
@@ -157,7 +157,7 @@ export class PaymentErrorBoundary extends Component<
         return {
           title: 'Payment Error',
           message: errorMessage || 'An unexpected payment error occurred.',
-          icon: <AlertTriangle className="w-8 h-8 text-red-500" />,
+          icon: <AlertTriangle className="w-8 h-8 text-destructive" />,
           canRetry: true,
           suggestions: [
             'Try refreshing the page',
@@ -181,27 +181,27 @@ export class PaymentErrorBoundary extends Component<
     const errorDetails = this.getErrorDetails();
 
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-muted flex items-center justify-center p-4">
         <Card className="max-w-lg w-full p-8 text-center">
           <div className="mb-6">
             {errorDetails.icon}
           </div>
           
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             {errorDetails.title}
           </h1>
           
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             {errorDetails.message}
           </p>
 
           {errorDetails.suggestions && (
             <div className="mb-6 text-left">
-              <h3 className="font-semibold text-gray-900 mb-3">What you can try:</h3>
+              <h3 className="font-semibold text-foreground mb-3">What you can try:</h3>
               <ul className="space-y-2">
                 {errorDetails.suggestions.map((suggestion, index) => (
-                  <li key={index} className="flex items-start text-sm text-gray-600">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  <li key={index} className="flex items-start text-sm text-muted-foreground">
+                    <span className="w-2 h-2 bg-primary rounded-full mt-2 mr-3 flex-shrink-0"></span>
                     <span>{suggestion}</span>
                   </li>
                 ))}
@@ -232,7 +232,7 @@ export class PaymentErrorBoundary extends Component<
             </Button>
           </div>
 
-          <div className="mt-6 pt-6 border-t text-xs text-gray-500">
+          <div className="mt-6 pt-6 border-t text-xs text-muted-foreground">
             <p>Error Code: {this.state.errorCode}</p>
             <p>If this problem persists, please contact our support team.</p>
           </div>

@@ -120,22 +120,22 @@ export default function AdminTicketDetailPage() {
     const ext = filename.split('.').pop()?.toLowerCase();
     
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) {
-      return <ImageIcon className="h-4 w-4 text-green-500" />;
+      return <ImageIcon className="h-4 w-4 text-success" />;
     }
     if (['pdf'].includes(ext || '')) {
-      return <FileText className="h-4 w-4 text-red-500" />;
+      return <FileText className="h-4 w-4 text-destructive" />;
     }
     if (['zip', 'rar', '7z'].includes(ext || '')) {
-      return <FileArchive className="h-4 w-4 text-purple-500" />;
+      return <FileArchive className="h-4 w-4 text-primary" />;
     }
-    return <FileText className="h-4 w-4 text-blue-500" />;
+    return <FileText className="h-4 w-4 text-primary" />;
   };
 
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-destructive"></div>
       </div>
     );
   }
@@ -164,11 +164,11 @@ export default function AdminTicketDetailPage() {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-bold text-gray-900">{ticket.title}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{ticket.title}</h1>
               <Badge variant="outline" size="sm">Admin View</Badge>
             </div>
             
-            <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <Badge variant={statusInfo?.color as any}>
                 {statusInfo?.label}
               </Badge>
@@ -205,8 +205,8 @@ export default function AdminTicketDetailPage() {
                   <div
                     className={`max-w-[70%] rounded-lg p-4 ${
                       isSupport
-                        ? 'bg-red-600 text-white'
-                        : 'bg-gray-100 text-gray-900'
+                        ? 'bg-destructive text-destructive-foreground'
+                        : 'bg-muted/50 text-foreground'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-2">
@@ -217,7 +217,7 @@ export default function AdminTicketDetailPage() {
                       )}
                       <span className="font-medium">{msg.sender_name}</span>
                       <span className={`text-xs ${
-                        isSupport ? 'text-red-100' : 'text-gray-500'
+                        isSupport ? 'text-destructive-foreground/80' : 'text-muted-foreground'
                       }`}>
                         {formatDate(msg.created_at)}
                       </span>
@@ -243,7 +243,7 @@ export default function AdminTicketDetailPage() {
                                     onClick={() => window.open(getAttachmentUrl(attachment), '_blank')}
                                     style={{ cursor: 'pointer' }}
                                   />
-                                  <p className="text-xs mt-1 text-gray-500">{filename}</p>
+                                  <p className="text-xs mt-1 text-muted-foreground">{filename}</p>
                                 </div>
                               ) : (
                                 <a
@@ -252,8 +252,8 @@ export default function AdminTicketDetailPage() {
                                   rel="noopener noreferrer"
                                   className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm hover:bg-opacity-80 ${
                                     isSupport 
-                                      ? 'bg-gray-100 text-gray-700 border-gray-300' 
-                                      : 'bg-blue-100 text-blue-700 border-blue-300'
+                                      ? 'bg-muted/50 text-foreground border-border' 
+                                      : 'bg-primary/20 text-primary border-primary/30'
                                   }`}
                                 >
                                   {getFileIcon(filename)}
@@ -267,7 +267,7 @@ export default function AdminTicketDetailPage() {
                     )}
                     
                     {msg.is_internal_note && (
-                      <p className="text-xs mt-2 text-red-200 italic">
+                      <p className="text-xs mt-2 text-destructive-foreground/60 italic">
                         Internal Note
                       </p>
                     )}
@@ -306,7 +306,7 @@ export default function AdminTicketDetailPage() {
           )}
           
           {ticket.status === 'closed' && (
-            <div className="border-t p-4 text-center text-gray-600">
+            <div className="border-t p-4 text-center text-muted-foreground">
               This ticket has been closed. You can still add internal notes or reopen if needed.
             </div>
           )}
@@ -318,12 +318,12 @@ export default function AdminTicketDetailPage() {
         <Card>
           <CardHeader className="pb-3">
             <h3 className="font-semibold flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-success" />
               Resolution
             </h3>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-700">{ticket.resolution_note}</p>
+            <p className="text-foreground">{ticket.resolution_note}</p>
           </CardContent>
         </Card>
       )}

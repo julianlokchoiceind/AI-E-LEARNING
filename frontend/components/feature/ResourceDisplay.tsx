@@ -27,21 +27,21 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
   const getResourceIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case 'pdf':
-        return <FileText className="w-5 h-5 text-red-600" />;
+        return <FileText className="w-5 h-5 text-destructive" />;
       case 'doc':
-        return <FileText className="w-5 h-5 text-blue-700" />;
+        return <FileText className="w-5 h-5 text-primary" />;
       case 'code':
-        return <FileCode className="w-5 h-5 text-green-600" />;
+        return <FileCode className="w-5 h-5 text-success" />;
       case 'zip':
-        return <FileArchive className="w-5 h-5 text-purple-600" />;
+        return <FileArchive className="w-5 h-5 text-primary" />;
       case 'exercise':
-        return <FileText className="w-5 h-5 text-orange-600" />;
+        return <FileText className="w-5 h-5 text-warning" />;
       case 'link':
-        return <Link className="w-5 h-5 text-blue-600" />;
+        return <Link className="w-5 h-5 text-primary" />;
       case 'other':
       default:
         // For 'other' type (images, etc)
-        return <Image className="w-5 h-5 text-gray-600" />;
+        return <Image className="w-5 h-5 text-muted-foreground" />;
     }
   };
 
@@ -66,7 +66,7 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
         <a
           href={downloadUrl}
           download={filename}
-          className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+          className="text-sm text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
           title="Download file"
         >
           <Download className="w-4 h-4" />
@@ -79,7 +79,7 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
           href={getAttachmentUrl(resource.url)}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+          className="text-sm text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
           title="Open in new tab"
         >
           <ExternalLink className="w-4 h-4" />
@@ -94,25 +94,25 @@ export const ResourceDisplay: React.FC<ResourceDisplayProps> = ({
       {resources.map((resource, index) => (
           <div 
             key={index}
-            className="flex items-start justify-between p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors bg-gray-50"
+            className="flex items-start justify-between p-4 border border-border rounded-lg hover:border-border/80 transition-colors bg-muted/50"
           >
             <div className="flex items-start gap-3 flex-1">
               {getResourceIcon(resource.type)}
               
               <div className="flex-1 min-w-0">
                 <div className="mb-1">
-                  <h3 className="font-medium text-gray-900 truncate">
+                  <h3 className="font-medium text-foreground truncate">
                     {resource.title}
                   </h3>
                 </div>
                 
                 {resource.description && (
-                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                  <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                     {resource.description}
                   </p>
                 )}
                 
-                <p className="text-xs text-gray-500 truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   {resource.url}
                 </p>
               </div>

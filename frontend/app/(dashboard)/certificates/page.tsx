@@ -59,7 +59,7 @@ const CertificatesPage = () => {
       <div className="container mx-auto px-4 py-8">
         <Card>
           <CardContent className="text-center py-12">
-            <p className="text-red-600">Something went wrong</p>
+            <p className="text-destructive">Something went wrong</p>
             <Button 
               variant="outline" 
               onClick={() => window.location.reload()}
@@ -83,7 +83,7 @@ const CertificatesPage = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">My Certificates</h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           View and manage your course completion certificates
         </p>
       </div>
@@ -95,10 +95,10 @@ const CertificatesPage = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Total Certificates</p>
+                  <p className="text-sm text-muted-foreground">Total Certificates</p>
                   <p className="text-2xl font-bold">{stats.total_certificates}</p>
                 </div>
-                <Trophy className="h-8 w-8 text-yellow-500" />
+                <Trophy className="h-8 w-8 text-warning" />
               </div>
             </CardContent>
           </Card>
@@ -107,10 +107,10 @@ const CertificatesPage = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Courses Completed</p>
+                  <p className="text-sm text-muted-foreground">Courses Completed</p>
                   <p className="text-2xl font-bold">{stats.courses_completed}</p>
                 </div>
-                <BookOpen className="h-8 w-8 text-blue-500" />
+                <BookOpen className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -119,10 +119,10 @@ const CertificatesPage = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Hours Learned</p>
+                  <p className="text-sm text-muted-foreground">Hours Learned</p>
                   <p className="text-2xl font-bold">{stats.total_hours_learned.toFixed(0)}</p>
                 </div>
-                <Clock className="h-8 w-8 text-green-500" />
+                <Clock className="h-8 w-8 text-success" />
               </div>
             </CardContent>
           </Card>
@@ -131,10 +131,10 @@ const CertificatesPage = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Average Score</p>
+                  <p className="text-sm text-muted-foreground">Average Score</p>
                   <p className="text-2xl font-bold">{stats.average_score.toFixed(1)}%</p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-purple-500" />
+                <TrendingUp className="h-8 w-8 text-secondary" />
               </div>
             </CardContent>
           </Card>
@@ -170,9 +170,9 @@ const CertificatesPage = () => {
       {filteredCertificates.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
-            <Award className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <Award className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">No Certificates Yet</h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               Complete courses to earn certificates and showcase your achievements
             </p>
             <Button onClick={() => window.location.href = '/courses'}>
@@ -223,11 +223,11 @@ const CertificatesPage = () => {
                 .sort(([a], [b]) => Number(b) - Number(a))
                 .map(([year, count]) => (
                   <div key={year} className="flex items-center justify-between">
-                    <span className="text-gray-600">{year}</span>
+                    <span className="text-muted-foreground">{year}</span>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-2 w-32">
+                      <div className="flex-1 bg-muted rounded-full h-2 w-32">
                         <div
-                          className="bg-blue-600 h-2 rounded-full"
+                          className="bg-primary h-2 rounded-full"
                           style={{
                             width: `${((count as number) / stats.total_certificates) * 100}%`
                           }}

@@ -237,8 +237,8 @@ export default function AdminFAQPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">FAQ Management</h1>
-          <p className="text-gray-600">Manage frequently asked questions and their organization</p>
+          <h1 className="text-2xl font-bold text-foreground">FAQ Management</h1>
+          <p className="text-muted-foreground">Manage frequently asked questions and their organization</p>
         </div>
         <Button
           onClick={() => {
@@ -258,7 +258,7 @@ export default function AdminFAQPage() {
             {/* Search and Category Filter */}
             <div className="flex gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Search FAQs..."
@@ -283,8 +283,8 @@ export default function AdminFAQPage() {
 
             {/* Bulk Actions */}
             {selectedFaqs.size > 0 && (
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                <span className="text-blue-700">
+              <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg">
+                <span className="text-primary">
                   {selectedFaqs.size} FAQ{selectedFaqs.size > 1 ? 's' : ''} selected
                 </span>
                 <div className="flex gap-2">
@@ -309,7 +309,7 @@ export default function AdminFAQPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-red-600 hover:bg-red-50"
+                    className="text-destructive hover:bg-destructive/10"
                     onClick={() => handleBulkAction('delete')}
                     loading={bulkLoading}
                   >
@@ -325,7 +325,7 @@ export default function AdminFAQPage() {
 
       {/* FAQ Table */}
       <Card className="overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
               FAQs ({totalItems})
@@ -358,8 +358,8 @@ export default function AdminFAQPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-border">
+                <thead className="bg-muted/50">
                   <tr>
                     <th className="px-4 py-3">
                       <input
@@ -369,19 +369,19 @@ export default function AdminFAQPage() {
                         className="rounded"
                       />
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Question</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Category</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Priority</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Views</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-border">
                   {faqs.map((faq: any) => {
                     const categoryInfo = categories.find((c: any) => c.id === faq.category_id);
                     return (
-                      <tr key={faq.id} className="hover:bg-gray-50">
+                      <tr key={faq.id} className="hover:bg-muted/30">
                         <td className="px-4 py-4">
                           <input
                             type="checkbox"
@@ -392,8 +392,8 @@ export default function AdminFAQPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div>
-                            <p className="font-medium text-gray-900">{faq.question}</p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="font-medium text-foreground">{faq.question}</p>
+                            <p className="text-sm text-muted-foreground mt-1">
                               {faq.answer.length > 100
                                 ? faq.answer.substring(0, 100) + '...'
                                 : faq.answer}
@@ -401,7 +401,7 @@ export default function AdminFAQPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">
+                          <span className="text-sm text-foreground">
                             {categoryInfo?.name || 'Uncategorized'}
                           </span>
                         </td>
@@ -410,7 +410,7 @@ export default function AdminFAQPage() {
                             {faq.priority}
                           </Badge>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                           {faq.view_count}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -431,7 +431,7 @@ export default function AdminFAQPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-red-600 hover:bg-red-50"
+                              className="text-destructive hover:bg-destructive/10"
                               onClick={() => handleDelete(faq)}
                               loading={deleteLoading}
                             >
@@ -449,7 +449,7 @@ export default function AdminFAQPage() {
 
           {/* Table Footer with Pagination */}
           {totalPages > 1 && (
-            <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
+            <div className="border-t border-border bg-muted/50 px-6 py-4">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -473,7 +473,7 @@ export default function AdminFAQPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Question *
             </label>
             <Input
@@ -484,7 +484,7 @@ export default function AdminFAQPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Answer *
             </label>
             <textarea
@@ -498,7 +498,7 @@ export default function AdminFAQPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Category
               </label>
               <select
@@ -516,7 +516,7 @@ export default function AdminFAQPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Priority (0-100)
               </label>
               <Input
@@ -531,7 +531,7 @@ export default function AdminFAQPage() {
 
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Slug (optional)
             </label>
             <Input
@@ -549,7 +549,7 @@ export default function AdminFAQPage() {
               onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
               className="rounded mr-2"
             />
-            <label htmlFor="is_published" className="text-sm font-medium text-gray-700">
+            <label htmlFor="is_published" className="text-sm font-medium text-foreground">
               Published
             </label>
           </div>
@@ -592,15 +592,15 @@ export default function AdminFAQPage() {
             {/* Warning Icon & Message */}
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-destructive" />
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   Confirm Bulk Deletion
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   You are about to permanently delete {selectedFaqs.size} FAQ{selectedFaqs.size > 1 ? 's' : ''}. 
                   This action cannot be undone.
                 </p>
@@ -608,12 +608,12 @@ export default function AdminFAQPage() {
             </div>
 
             {/* Selected FAQs Info */}
-            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+            <div className="bg-warning/10 border border-warning/30 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                <h4 className="font-medium text-yellow-800">Warning</h4>
+                <AlertTriangle className="w-5 h-5 text-warning" />
+                <h4 className="font-medium text-warning">Warning</h4>
               </div>
-              <p className="text-sm text-yellow-700">
+              <p className="text-sm text-warning">
                 All selected FAQs and their associated data will be permanently deleted. 
                 This includes view counts, helpful votes, and any related links.
               </p>

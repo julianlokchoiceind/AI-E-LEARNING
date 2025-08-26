@@ -63,17 +63,17 @@ export function Modal({
         {/* Modal */}
         <div
           ref={modalRef}
-          className={`relative bg-white rounded-lg sm:rounded-xl shadow-xl transform transition-all w-full ${sizeClasses[size]} mx-2 sm:mx-0 my-4 sm:my-8 max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col`}
+          className={`relative bg-card rounded-lg sm:rounded-xl shadow-xl transform transition-all w-full ${sizeClasses[size]} mx-2 sm:mx-0 my-4 sm:my-8 max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col`}
         >
           {/* Header */}
           {title && (
             <div className="border-b px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 pr-8">
+              <h3 className="text-base sm:text-lg font-semibold text-card-foreground pr-8">
                 {title}
               </h3>
               <button
                 onClick={onClose}
-                className="absolute right-3 sm:right-4 top-3 sm:top-4 text-gray-400 hover:text-gray-500 touch-manipulation p-1 rounded-full hover:bg-gray-100 transition-colors"
+                className="absolute right-3 sm:right-4 top-3 sm:top-4 text-muted-foreground hover:text-foreground touch-manipulation p-1 rounded-full hover:bg-muted transition-colors"
                 aria-label="Close modal"
               >
                 <X className="h-5 w-5 sm:h-6 sm:w-6" />

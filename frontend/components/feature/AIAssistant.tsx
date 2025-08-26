@@ -194,7 +194,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       <div className={`fixed bottom-4 right-4 z-50 ${className}`}>
         <Button
           onClick={() => setIsOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg"
+          className="bg-primary hover:bg-primary/80 text-white rounded-full p-4 shadow-lg"
           aria-label="Open AI Assistant"
         >
           <MessageCircle className="w-6 h-6" />
@@ -210,7 +210,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
         isMinimized ? 'h-14' : 'h-[600px]'
       }`}>
         {/* Header */}
-        <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
+        <div className="bg-primary text-white p-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Bot className="w-5 h-5" />
             <h3 className="font-medium">AI Study Buddy</h3>
@@ -228,7 +228,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsMinimized(!isMinimized)}
-              className="text-white hover:bg-blue-700 p-1"
+              className="text-white hover:bg-primary/80 p-1"
             >
               {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
             </Button>
@@ -236,7 +236,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
               variant="ghost"
               size="sm"
               onClick={() => setIsOpen(false)}
-              className="text-white hover:bg-blue-700 p-1"
+              className="text-white hover:bg-primary/80 p-1"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -258,7 +258,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                   }`}>
                     {/* Avatar */}
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${
-                      message.type === 'user' ? 'bg-gray-500' : 'bg-blue-600'
+                      message.type === 'user' ? 'bg-muted-foreground' : 'bg-primary'
                     }`}>
                       {message.type === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                     </div>
@@ -266,12 +266,12 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                     {/* Message bubble */}
                     <div className={`rounded-lg p-3 ${
                       message.type === 'user' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-100 text-gray-900'
+                        ? 'bg-primary text-white' 
+                        : 'bg-muted text-foreground'
                     }`}>
                       <div className="text-sm whitespace-pre-wrap">{message.content}</div>
                       <div className={`text-xs mt-1 ${
-                        message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                        message.type === 'user' ? 'text-primary/80' : 'text-muted-foreground'
                       }`}>
                         {formatTime(message.timestamp)}
                       </div>
@@ -284,14 +284,14 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
               {isTyping && (
                 <div className="flex justify-start">
                   <div className="flex items-start space-x-2 max-w-[80%]">
-                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
                       <Bot className="w-4 h-4" />
                     </div>
-                    <div className="bg-gray-100 text-gray-900 rounded-lg p-3">
+                    <div className="bg-muted text-foreground rounded-lg p-3">
                       <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-100" />
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce delay-200" />
                       </div>
                     </div>
                   </div>
@@ -311,13 +311,13 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Ask me anything..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   disabled={isLoading}
                 />
                 <Button
                   onClick={sendMessage}
                   disabled={!inputValue.trim() || isLoading}
-                  className="bg-blue-600 hover:bg-blue-700 text-white p-2"
+                  className="bg-primary hover:bg-primary/80 text-white p-2"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -325,14 +325,14 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
               
               {/* Quick actions */}
               <div className="flex justify-between items-center mt-2">
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   {courseId && lessonId ? 'Context: Current lesson' : courseId ? 'Context: Current course' : 'General chat'}
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={clearConversation}
-                  className="text-xs text-gray-500 hover:text-gray-700"
+                  className="text-xs text-muted-foreground hover:text-foreground"
                 >
                   Clear
                 </Button>

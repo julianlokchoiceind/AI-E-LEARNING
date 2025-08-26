@@ -104,7 +104,16 @@ export const AILearningAnalytics: React.FC<AILearningAnalyticsProps> = ({
     }
   };
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+  const getColorClasses = (index: number) => {
+    const colorMap = [
+      'bg-primary',
+      'bg-success', 
+      'bg-warning',
+      'bg-warning/80',
+      'bg-primary/60'
+    ];
+    return colorMap[index % colorMap.length];
+  };
 
   if (loading) {
     return (
@@ -112,8 +121,8 @@ export const AILearningAnalytics: React.FC<AILearningAnalyticsProps> = ({
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="p-6">
             <div className="animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-              <div className="h-32 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-muted rounded w-1/4 mb-4"></div>
+              <div className="h-32 bg-muted rounded"></div>
             </div>
           </Card>
         ))}
@@ -124,9 +133,9 @@ export const AILearningAnalytics: React.FC<AILearningAnalyticsProps> = ({
   if (!analyticsData) {
     return (
       <div className={`text-center py-8 ${className}`}>
-        <Brain className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600">No analytics data available yet.</p>
-        <p className="text-sm text-gray-500">Start chatting with your AI Study Buddy to see insights!</p>
+        <Brain className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground">No analytics data available yet.</p>
+        <p className="text-sm text-muted-foreground">Start chatting with your AI Study Buddy to see insights!</p>
       </div>
     );
   }
@@ -135,8 +144,8 @@ export const AILearningAnalytics: React.FC<AILearningAnalyticsProps> = ({
     <div className={`space-y-6 ${className}`}>
       {/* Header with Time Range Selector */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Brain className="w-8 h-8 text-blue-600" />
+        <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <Brain className="w-8 h-8 text-primary" />
           AI Learning Analytics
         </h2>
         
@@ -160,40 +169,40 @@ export const AILearningAnalytics: React.FC<AILearningAnalyticsProps> = ({
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Questions</p>
-              <p className="text-2xl font-bold text-gray-900">{analyticsData.totalQuestions}</p>
+              <p className="text-sm text-muted-foreground">Total Questions</p>
+              <p className="text-2xl font-bold text-foreground">{analyticsData.totalQuestions}</p>
             </div>
-            <MessageSquare className="w-8 h-8 text-blue-600" />
+            <MessageSquare className="w-8 h-8 text-primary" />
           </div>
         </Card>
         
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Questions Today</p>
-              <p className="text-2xl font-bold text-green-600">{analyticsData.questionsToday}</p>
+              <p className="text-sm text-muted-foreground">Questions Today</p>
+              <p className="text-2xl font-bold text-success">{analyticsData.questionsToday}</p>
             </div>
-            <TrendingUp className="w-8 h-8 text-green-600" />
+            <TrendingUp className="w-8 h-8 text-success" />
           </div>
         </Card>
         
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Learning Goals</p>
-              <p className="text-2xl font-bold text-purple-600">{analyticsData.learningGoals.length}</p>
+              <p className="text-sm text-muted-foreground">Learning Goals</p>
+              <p className="text-2xl font-bold text-primary">{analyticsData.learningGoals.length}</p>
             </div>
-            <Target className="w-8 h-8 text-purple-600" />
+            <Target className="w-8 h-8 text-primary" />
           </div>
         </Card>
         
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Avg Response Time</p>
-              <p className="text-2xl font-bold text-orange-600">{analyticsData.averageResponseTime}s</p>
+              <p className="text-sm text-muted-foreground">Avg Response Time</p>
+              <p className="text-2xl font-bold text-warning">{analyticsData.averageResponseTime}s</p>
             </div>
-            <Clock className="w-8 h-8 text-orange-600" />
+            <Clock className="w-8 h-8 text-warning" />
           </div>
         </Card>
       </div>
@@ -207,8 +216,8 @@ export const AILearningAnalytics: React.FC<AILearningAnalyticsProps> = ({
             <XAxis dataKey="day" />
             <YAxis />
             <Tooltip />
-            <Bar dataKey="questions" fill="#3B82F6" name="Questions Asked" />
-            <Bar dataKey="goals" fill="#10B981" name="Goals Added" />
+            <Bar dataKey="questions" fill="hsl(var(--primary))" name="Questions Asked" />
+            <Bar dataKey="goals" fill="hsl(var(--success))" name="Goals Added" />
           </BarChart>
         </ResponsiveContainer>
       </Card>
@@ -217,23 +226,23 @@ export const AILearningAnalytics: React.FC<AILearningAnalyticsProps> = ({
         {/* Learning Goals Progress */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Target className="w-5 h-5 text-purple-600" />
+            <Target className="w-5 h-5 text-primary" />
             Learning Goals Progress
           </h3>
           <div className="space-y-4">
             {analyticsData.learningGoals.map((goal, index) => (
               <div key={index} className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">{goal.goal}</span>
-                  <span className="text-sm text-gray-500">{goal.progress}%</span>
+                  <span className="text-sm font-medium text-foreground">{goal.goal}</span>
+                  <span className="text-sm text-muted-foreground">{goal.progress}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-muted rounded-full h-2">
                   <div 
-                    className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
                     style={{ width: `${goal.progress}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-gray-500">{goal.questionsAsked} questions asked</p>
+                <p className="text-xs text-muted-foreground">{goal.questionsAsked} questions asked</p>
               </div>
             ))}
           </div>
@@ -247,19 +256,17 @@ export const AILearningAnalytics: React.FC<AILearningAnalyticsProps> = ({
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    className={`w-3 h-3 rounded-full ${getColorClasses(index)}`}
                   ></div>
-                  <span className="text-sm font-medium text-gray-700">{topic.topic}</span>
+                  <span className="text-sm font-medium text-foreground">{topic.topic}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">{topic.count}</span>
-                  <div className="w-16 bg-gray-200 rounded-full h-2">
+                  <span className="text-sm text-muted-foreground">{topic.count}</span>
+                  <div className="w-16 bg-muted rounded-full h-2">
                     <div 
-                      className="h-2 rounded-full transition-all duration-300"
+                      className={`h-2 rounded-full transition-all duration-300 ${getColorClasses(index)}`}
                       style={{ 
-                        width: `${(topic.count / Math.max(...analyticsData.topicsDiscussed.map(t => t.count))) * 100}%`,
-                        backgroundColor: COLORS[index % COLORS.length]
+                        width: `${(topic.count / Math.max(...analyticsData.topicsDiscussed.map(t => t.count))) * 100}%`
                       }}
                     ></div>
                   </div>
@@ -275,42 +282,42 @@ export const AILearningAnalytics: React.FC<AILearningAnalyticsProps> = ({
         <h3 className="text-lg font-semibold mb-4">Response Style Preferences</h3>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{analyticsData.difficultyDistribution.simple}%</div>
-            <div className="text-sm text-gray-600">Simple</div>
+            <div className="text-2xl font-bold text-success">{analyticsData.difficultyDistribution.simple}%</div>
+            <div className="text-sm text-muted-foreground">Simple</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{analyticsData.difficultyDistribution.detailed}%</div>
-            <div className="text-sm text-gray-600">Detailed</div>
+            <div className="text-2xl font-bold text-primary">{analyticsData.difficultyDistribution.detailed}%</div>
+            <div className="text-sm text-muted-foreground">Detailed</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">{analyticsData.difficultyDistribution.technical}%</div>
-            <div className="text-sm text-gray-600">Technical</div>
+            <div className="text-2xl font-bold text-primary">{analyticsData.difficultyDistribution.technical}%</div>
+            <div className="text-sm text-muted-foreground">Technical</div>
           </div>
         </div>
       </Card>
 
       {/* Insights and Recommendations */}
-      <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <Card className="p-6 bg-gradient-to-r from-primary/10 to-primary/5">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Award className="w-5 h-5 text-blue-600" />
+          <Award className="w-5 h-5 text-primary" />
           AI Learning Insights
         </h3>
         <div className="space-y-3 text-sm">
           <div className="flex items-start gap-3">
-            <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-            <p className="text-gray-700">
+            <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+            <p className="text-foreground">
               You're most active on <strong>Tuesday and Friday</strong> - consider scheduling important study sessions on these days.
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
-            <p className="text-gray-700">
+            <div className="w-2 h-2 bg-success rounded-full mt-2"></div>
+            <p className="text-foreground">
               Your <strong>Machine Learning</strong> questions show great depth - you're ready for advanced topics in this area.
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <div className="w-2 h-2 bg-purple-600 rounded-full mt-2"></div>
-            <p className="text-gray-700">
+            <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+            <p className="text-foreground">
               Consider adding more specific learning goals to track your progress in <strong>API Development</strong>.
             </p>
           </div>

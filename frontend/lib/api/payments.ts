@@ -281,17 +281,17 @@ export const getSubscriptionStatusColor = (status: SubscriptionStatus | string):
   switch (statusStr) {
     case SubscriptionStatus.ACTIVE:
     case 'active':
-      return 'bg-green-100 text-green-800';
+      return 'bg-success/20 text-success';
     case SubscriptionStatus.CANCELLED:
     case 'cancelled':
-      return 'bg-red-100 text-red-800';
+      return 'bg-destructive/20 text-destructive';
     case SubscriptionStatus.PAST_DUE:
     case 'past_due':
-      return 'bg-yellow-100 text-yellow-800';
+      return 'bg-warning/20 text-warning';
     case SubscriptionStatus.INACTIVE:
     case 'inactive':
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-muted/50 text-foreground';
   }
 };
 
@@ -301,16 +301,16 @@ export const getSubscriptionStatusColor = (status: SubscriptionStatus | string):
 export const getPaymentStatusColor = (status: PaymentStatus): string => {
   switch (status) {
     case PaymentStatus.COMPLETED:
-      return 'bg-green-100 text-green-800';
+      return 'bg-success/20 text-success';
     case PaymentStatus.FAILED:
-      return 'bg-red-100 text-red-800';
+      return 'bg-destructive/20 text-destructive';
     case PaymentStatus.PENDING:
-      return 'bg-yellow-100 text-yellow-800';
+      return 'bg-warning/20 text-warning';
     case PaymentStatus.REFUNDED:
-      return 'bg-purple-100 text-purple-800';
+      return 'bg-primary/20 text-primary';
     case PaymentStatus.CANCELLED:
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-muted/50 text-foreground';
   }
 };
 

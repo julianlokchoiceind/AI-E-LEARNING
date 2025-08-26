@@ -166,13 +166,13 @@ const CourseDetailPage = () => {
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'beginner':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success/20 text-success';
       case 'intermediate':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-warning/20 text-warning';
       case 'advanced':
-        return 'bg-red-100 text-red-800';
+        return 'bg-destructive/20 text-destructive';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted text-foreground';
     }
   };
 
@@ -200,9 +200,9 @@ const CourseDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <div className="bg-gradient-to-r from-primary to-primary/80 text-white">
         <div className="container mx-auto px-4 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Course Info - Left Side */}
@@ -250,8 +250,8 @@ const CourseDetailPage = () => {
                         key={star}
                         className={`w-5 h-5 ${
                           star <= course.stats.average_rating
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
+                            ? 'text-warning fill-current'
+                            : 'text-muted-foreground/60'
                         }`}
                       />
                     ))}
@@ -268,7 +268,7 @@ const CourseDetailPage = () => {
 
             {/* Enrollment Card - Right Side */}
             <div className="lg:col-span-1">
-              <Card className="bg-white text-gray-900 p-6">
+              <Card className="bg-white text-foreground p-6">
                 {/* Course Preview Video or Thumbnail */}
                 {course.preview_video ? (
                   <PreviewVideoPlayer
@@ -283,8 +283,8 @@ const CourseDetailPage = () => {
                     className="w-full h-48 object-cover rounded-lg mb-6"
                   />
                 ) : (
-                  <div className="w-full h-48 bg-gray-200 rounded-lg mb-6 flex items-center justify-center">
-                    <div className="text-center text-gray-500">
+                  <div className="w-full h-48 bg-muted rounded-lg mb-6 flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
                       <PlayCircle className="w-12 h-12 mx-auto mb-2" />
                       <p className="text-sm">No preview available</p>
                     </div>
@@ -294,7 +294,7 @@ const CourseDetailPage = () => {
                 {/* Price */}
                 <div className="mb-6">
                   {course.pricing.is_free ? (
-                    <div className="text-3xl font-bold text-green-600">Free</div>
+                    <div className="text-3xl font-bold text-success">Free</div>
                   ) : (
                     <div>
                       {course.pricing.discount_price ? (
@@ -302,7 +302,7 @@ const CourseDetailPage = () => {
                           <span className="text-3xl font-bold">
                             ${course.pricing.discount_price}
                           </span>
-                          <span className="text-xl text-gray-500 line-through ml-2">
+                          <span className="text-xl text-muted-foreground line-through ml-2">
                             ${course.pricing.price}
                           </span>
                         </div>
@@ -381,19 +381,19 @@ const CourseDetailPage = () => {
                 <div className="space-y-3">
                   <h3 className="font-semibold text-lg mb-2">This course includes:</h3>
                   <div className="flex items-center gap-2 text-sm">
-                    <PlayCircle className="w-4 h-4 text-gray-500" />
+                    <PlayCircle className="w-4 h-4 text-muted-foreground" />
                     <span>{formatDuration(course.total_duration)} on-demand video</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <BookOpen className="w-4 h-4 text-gray-500" />
+                    <BookOpen className="w-4 h-4 text-muted-foreground" />
                     <span>{course.total_lessons} lessons</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-gray-500" />
+                    <Check className="w-4 h-4 text-muted-foreground" />
                     <span>Full lifetime access</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-gray-500" />
+                    <Check className="w-4 h-4 text-muted-foreground" />
                     <span>Certificate of completion</span>
                   </div>
                 </div>
@@ -414,8 +414,8 @@ const CourseDetailPage = () => {
                 onClick={() => setActiveTab(tab)}
                 className={`pb-4 capitalize font-medium transition-colors ${
                   activeTab === tab
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {tab}
@@ -432,7 +432,7 @@ const CourseDetailPage = () => {
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
                 {course.syllabus?.map((item: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
-                    <Check className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -442,7 +442,7 @@ const CourseDetailPage = () => {
               <ul className="space-y-2 mb-8">
                 {course.prerequisites?.map((item: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
-                    <span className="text-gray-500">•</span>
+                    <span className="text-muted-foreground">•</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -452,7 +452,7 @@ const CourseDetailPage = () => {
               <ul className="space-y-2">
                 {course.target_audience?.map((item: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
-                    <span className="text-gray-500">•</span>
+                    <span className="text-muted-foreground">•</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -465,7 +465,7 @@ const CourseDetailPage = () => {
           <div className="max-w-4xl">
             <h2 className="text-2xl font-bold mb-6">Course Curriculum</h2>
             {chapters.length === 0 ? (
-              <div className="text-gray-500 text-center py-8">
+              <div className="text-muted-foreground text-center py-8">
                 <p>No curriculum available yet.</p>
                 <p className="text-sm mt-2">Chapters and lessons will appear here once added.</p>
               </div>
@@ -473,9 +473,9 @@ const CourseDetailPage = () => {
               <div className="space-y-4">
                 {chapters.map((chapter: any) => (
                   <Card key={chapter.id} className="overflow-hidden">
-                    <div className="p-4 bg-gray-50">
+                    <div className="p-4 bg-muted">
                       <h3 className="font-semibold text-lg">{chapter.title}</h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {chapter.total_lessons} lessons • {formatDuration(chapter.total_duration)}
                       </p>
                     </div>
@@ -483,19 +483,19 @@ const CourseDetailPage = () => {
                       {(chapter.lessons || []).map((lesson: any) => (
                         <div
                           key={lesson.id}
-                          className="p-4 flex items-center justify-between hover:bg-gray-50"
+                          className="p-4 flex items-center justify-between hover:bg-muted"
                         >
                           <div className="flex items-center gap-3">
                             {lesson.is_locked ? (
-                              <Lock className="w-5 h-5 text-gray-400" />
+                              <Lock className="w-5 h-5 text-muted-foreground" />
                             ) : lesson.is_completed ? (
-                              <Check className="w-5 h-5 text-green-500" />
+                              <Check className="w-5 h-5 text-success" />
                             ) : (
-                              <PlayCircle className="w-5 h-5 text-blue-600" />
+                              <PlayCircle className="w-5 h-5 text-primary" />
                             )}
                             <div>
                               <h4 className="font-medium">{lesson.title}</h4>
-                              <div className="flex items-center gap-3 text-sm text-gray-600">
+                              <div className="flex items-center gap-3 text-sm text-muted-foreground">
                                 <span>
                                   {formatDuration(Math.floor(lesson.video.duration / 60))}
                                 </span>
@@ -532,11 +532,11 @@ const CourseDetailPage = () => {
             <h2 className="text-2xl font-bold mb-6">About the Creator</h2>
             <Card className="p-6">
               <div className="flex items-start gap-4">
-                <div className="w-20 h-20 bg-gray-200 rounded-full flex-shrink-0"></div>
+                <div className="w-20 h-20 bg-muted rounded-full flex-shrink-0"></div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2">{course.creator_name}</h3>
-                  <p className="text-gray-600 mb-4">AI/ML Expert & Educator</p>
-                  <p className="text-gray-700">
+                  <p className="text-muted-foreground mb-4">AI/ML Expert & Educator</p>
+                  <p className="text-foreground">
                     Experienced creator with expertise in AI and machine learning. Passionate about
                     teaching and helping students master complex concepts.
                   </p>

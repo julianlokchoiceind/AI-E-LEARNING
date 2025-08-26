@@ -188,20 +188,20 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className={`bg-white rounded-lg shadow-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto ${className}`}>
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center space-x-3">
             {mode === 'upload' ? (
-              <Upload className="w-6 h-6 text-blue-600" />
+              <Upload className="w-6 h-6 text-primary" />
             ) : (
-              <Link className="w-6 h-6 text-green-600" />
+              <Link className="w-6 h-6 text-success" />
             )}
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-foreground">
               {mode === 'upload' ? 'Upload File Resource' : 'Add URL Resource'}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Close modal"
           >
             <X className="w-6 h-6" />
@@ -217,10 +217,10 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
               <div
                 className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                   dragActive 
-                    ? 'border-blue-400 bg-blue-50' 
+                    ? 'border-primary bg-primary/20' 
                     : errors.file 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-destructive bg-destructive/20' 
+                      : 'border-border hover:border-border'
                 }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -238,22 +238,22 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
                 
                 {file ? (
                   <div className="flex items-center justify-center space-x-3">
-                    <FileText className="w-8 h-8 text-blue-600" />
+                    <FileText className="w-8 h-8 text-primary" />
                     <div className="text-left">
-                      <p className="font-medium text-gray-900">{file.name}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="font-medium text-foreground">{file.name}</p>
+                      <p className="text-sm text-muted-foreground">
                         {(file.size / 1024 / 1024).toFixed(1)} MB
                       </p>
                     </div>
-                    <CheckCircle className="w-6 h-6 text-green-600" />
+                    <CheckCircle className="w-6 h-6 text-success" />
                   </div>
                 ) : (
                   <div>
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-2">
+                    <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-2">
                       Click to select or drag and drop a file
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Max 10MB • PDF, DOC, ZIP, Images, etc.
                     </p>
                   </div>
@@ -261,7 +261,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
               </div>
               
               {errors.file && (
-                <div className="flex items-center space-x-2 text-red-600 text-sm">
+                <div className="flex items-center space-x-2 text-destructive text-sm">
                   <AlertCircle className="w-4 h-4" />
                   <span>{errors.file}</span>
                 </div>
@@ -272,20 +272,20 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
           {/* URL Input Section */}
           {mode === 'url' && (
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                URL <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-foreground">
+                URL <span className="text-destructive">*</span>
               </label>
               <input
                 type="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com/resource"
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.url ? 'border-red-300' : 'border-gray-300'
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary ${
+                  errors.url ? 'border-destructive' : 'border-border'
                 }`}
               />
               {errors.url && (
-                <div className="flex items-center space-x-2 text-red-600 text-sm">
+                <div className="flex items-center space-x-2 text-destructive text-sm">
                   <AlertCircle className="w-4 h-4" />
                   <span>{errors.url}</span>
                 </div>
@@ -295,20 +295,20 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
 
           {/* Title Input */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Title {mode === 'url' && <span className="text-red-500">*</span>}
+            <label className="block text-sm font-medium text-foreground">
+              Title {mode === 'url' && <span className="text-destructive">*</span>}
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={mode === 'upload' ? 'Auto-generated from filename' : 'Enter resource title'}
-              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.title ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary ${
+                errors.title ? 'border-destructive' : 'border-border'
               }`}
             />
             {errors.title && (
-              <div className="flex items-center space-x-2 text-red-600 text-sm">
+              <div className="flex items-center space-x-2 text-destructive text-sm">
                 <AlertCircle className="w-4 h-4" />
                 <span>{errors.title}</span>
               </div>
@@ -317,7 +317,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
 
           {/* Description Input */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-foreground">
               Description
             </label>
             <textarea
@@ -325,7 +325,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description for this resource"
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         </div>
@@ -336,7 +336,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
             onClick={onClose}
             variant="outline"
             disabled={isLoading}
-            className="px-6 py-2 text-gray-700 border-gray-300 hover:bg-gray-50"
+            className="px-6 py-2 text-foreground border-border hover:bg-muted/50"
           >
             Cancel
           </Button>
@@ -344,7 +344,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
             onClick={handleSubmit}
             loading={isLoading}
             disabled={isLoading}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white"
+            className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {mode === 'upload' ? 'Upload File' : 'Add URL'}
           </Button>

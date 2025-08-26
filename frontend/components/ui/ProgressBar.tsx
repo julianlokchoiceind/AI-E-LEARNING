@@ -32,27 +32,27 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
     
     const variantClasses = {
       default: 'bg-primary',
-      success: 'bg-green-500',
-      warning: 'bg-yellow-500',
-      error: 'bg-red-500'
+      success: 'bg-success',
+      warning: 'bg-warning',
+      error: 'bg-destructive'
     }
 
     return (
       <div className={cn("w-full", className)} ref={ref} {...props}>
         {(showLabel || label) && (
           <div className="flex justify-between items-center mb-1">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-foreground">
               {label || `${Math.round(percentage)}%`}
             </span>
             {showLabel && !label && (
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 {value}/{max}
               </span>
             )}
           </div>
         )}
         <div className={cn(
-          "w-full bg-gray-200 rounded-full overflow-hidden",
+          "w-full bg-muted rounded-full overflow-hidden",
           sizeClasses[size]
         )}>
           <div

@@ -120,13 +120,13 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
       <div 
         className={`flex items-center p-3 border rounded-lg transition-all duration-200 ${ 
           isDragging || isActiveItem 
-            ? 'shadow-lg border-blue-300 bg-blue-50/50' 
-            : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+            ? 'shadow-lg border-primary bg-primary/10' 
+            : 'border-border hover:border-border hover:shadow-sm'
         } ${
           isLocked 
-            ? 'bg-gray-50' 
+            ? 'bg-muted' 
             : lesson.is_completed 
-              ? 'bg-green-50' 
+              ? 'bg-success/20' 
               : 'bg-white'
         }`}
       >
@@ -134,7 +134,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
         {isEditable && !isOverlay && (
           <div 
             className={`flex-shrink-0 mr-3 cursor-grab active:cursor-grabbing transition-colors duration-200 ${
-              isDragging || isActiveItem ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+              isDragging || isActiveItem ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
             }`}
             {...attributes}
             {...listeners}
@@ -146,11 +146,11 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
         {/* Lesson Icon */}
         <div className="flex-shrink-0 mr-3">
           {isLocked ? (
-            <Lock className="w-5 h-5 text-gray-400" />
+            <Lock className="w-5 h-5 text-muted-foreground" />
           ) : lesson.is_completed ? (
-            <CheckCircle className="w-5 h-5 text-green-500" />
+            <CheckCircle className="w-5 h-5 text-success" />
           ) : (
-            <PlayCircle className="w-5 h-5 text-blue-500" />
+            <PlayCircle className="w-5 h-5 text-primary" />
           )}
         </div>
 
@@ -182,19 +182,19 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
                 )}
 
                 {lesson.has_quiz && (
-                  <FileQuestion className="w-4 h-4 text-purple-500" />
+                  <FileQuestion className="w-4 h-4 text-primary" />
                 )}
               </div>
               
               <h4 className={`font-medium mb-1 break-words ${
-                isLocked ? 'text-gray-500' : 'text-gray-900'
+                isLocked ? 'text-muted-foreground' : 'text-foreground'
               }`}>
                 {lesson.title}
               </h4>
               
               {lesson.description && (
                 <p className={`text-sm mb-2 break-words ${
-                  isLocked ? 'text-gray-400' : 'text-gray-600'
+                  isLocked ? 'text-muted-foreground' : 'text-muted-foreground'
                 }`}>
                   {lesson.description}
                 </p>
@@ -202,7 +202,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
 
               {/* Duration */}
               {lesson.video?.duration && (
-                <div className="flex items-center gap-1 text-sm text-gray-500">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Clock className="w-3 h-3" />
                   <span>{formatDuration(lesson.video.duration)}</span>
                 </div>
@@ -219,7 +219,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
                     e.stopPropagation();
                     onEdit?.(lesson.id);
                   }}
-                  className="text-gray-600 hover:text-blue-600 h-8 w-8 p-0"
+                  className="text-muted-foreground hover:text-primary h-8 w-8 p-0"
                   title="Quick edit"
                 >
                   <Edit3 className="w-3 h-3" />
@@ -233,7 +233,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
                       e.stopPropagation();
                       onEditDetailed(lesson.id);
                     }}
-                    className="text-gray-600 hover:text-blue-600 h-8 w-8 p-0"
+                    className="text-muted-foreground hover:text-primary h-8 w-8 p-0"
                     title="Advanced edit"
                   >
                     <Settings className="w-3 h-3" />
@@ -247,7 +247,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
                     e.stopPropagation();
                     onDelete?.(lesson.id);
                   }}
-                  className="text-gray-600 hover:text-red-600 h-8 w-8 p-0"
+                  className="text-muted-foreground hover:text-destructive h-8 w-8 p-0"
                 >
                   <Trash2 className="w-3 h-3" />
                 </Button>
@@ -260,7 +260,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
                       e.stopPropagation();
                       onPreviewClick?.(lesson.id);
                     }}
-                    className="text-gray-600 hover:text-green-600 h-8 w-8 p-0"
+                    className="text-muted-foreground hover:text-success h-8 w-8 p-0"
                   >
                     <Eye className="w-3 h-3" />
                   </Button>
@@ -272,7 +272,7 @@ const SortableLessonCard: React.FC<SortableLessonCardProps> = ({
 
         {/* Drag Indicator */}
         {(isDragging || isActiveItem) && !isOverlay && (
-          <div className="absolute inset-0 bg-blue-100/20 border-2 border-blue-300 border-dashed rounded-lg pointer-events-none" />
+          <div className="absolute inset-0 bg-primary/10 border-2 border-primary border-dashed rounded-lg pointer-events-none" />
         )}
       </div>
     </div>
