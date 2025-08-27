@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
-import { LoadingSpinner } from '@/components/ui/LoadingStates';
+import { ProfilePageSkeleton } from '@/components/ui/LoadingStates';
 import { useUserProfileManagement } from '@/hooks/queries/useUserProfile';
 import { useI18n } from '@/lib/i18n/context';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -90,11 +90,7 @@ export default function ProfilePage() {
   };
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner />
-      </div>
-    );
+    return <ProfilePageSkeleton />;
   }
 
   if (!user) {

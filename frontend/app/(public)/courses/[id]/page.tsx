@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
-import { LoadingSpinner, EmptyState, ErrorState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, ErrorState, CourseDetailSkeleton } from '@/components/ui/LoadingStates';
 
 const CourseDetailPage = () => {
   const params = useParams();
@@ -177,11 +177,7 @@ const CourseDetailPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" message="Loading course details..." />
-      </div>
-    );
+    return <CourseDetailSkeleton />;
   }
 
   if (!course) {

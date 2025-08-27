@@ -10,7 +10,7 @@ import { ToastService } from '@/lib/toast/ToastService';
 import { useCreatorCoursesQuery } from '@/hooks/queries/useCourses';
 import { usePaymentAnalyticsQuery } from '@/hooks/queries/usePayments';
 import { formatCurrency, formatDate } from '@/lib/utils/formatters';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, CreatorAnalyticsSkeleton } from '@/components/ui/LoadingStates';
 
 const CreatorAnalyticsPage = () => {
   const router = useRouter();
@@ -122,11 +122,7 @@ const CreatorAnalyticsPage = () => {
   }, [user, router]);
 
   if (coursesLoading || analyticsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" message="Loading analytics..." />
-      </div>
-    );
+    return <CreatorAnalyticsSkeleton />;
   }
 
   // Show error if analytics failed but continue with course data

@@ -15,6 +15,7 @@ import {
 import { useBillingDashboardQuery, useCancelSubscription } from '@/hooks/queries/usePayments';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
+import { BillingPageSkeleton } from '@/components/ui/LoadingStates';
 import { 
   CreditCard, 
   Calendar, 
@@ -68,11 +69,7 @@ export default function BillingPage() {
   };
 
   if (authLoading || loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <BillingPageSkeleton />;
   }
 
   if (!user) {

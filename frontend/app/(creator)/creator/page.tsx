@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { useCreatorCoursesQuery, useCreateCourse } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, CreatorDashboardSkeleton } from '@/components/ui/LoadingStates';
 import { formatCurrency } from '@/lib/utils/formatters';
 
 const CreatorDashboard = () => {
@@ -120,11 +120,7 @@ const CreatorDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" message="Loading creator dashboard..." />
-      </div>
-    );
+    return <CreatorDashboardSkeleton />;
   }
 
   if (!coursesResponse && !loading) {

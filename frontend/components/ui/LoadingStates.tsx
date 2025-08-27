@@ -1139,60 +1139,171 @@ export const AdSupportTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }
   );
 };
 
-// Course Detail Skeleton - Matches course detail page structure
+// Course Detail Skeleton - Matches actual course detail page structure
 export const CourseDetailSkeleton = () => {
   return (
-    <div className="max-w-6xl mx-auto space-y-8 p-6">
-      {/* Video Player */}
-      <div className="aspect-video bg-muted rounded-lg animate-pulse" />
-      
-      {/* Course Header */}
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="lg:w-2/3 space-y-4">
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
-          
-          {/* Instructor Info */}
-          <div className="flex items-center gap-3 pt-4">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div>
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-3 w-16 mt-1" />
+    <div className="min-h-screen bg-muted animate-pulse">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-primary to-primary/80 text-white">
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Course Info - Left Side (2 columns) */}
+            <div className="lg:col-span-2">
+              {/* Breadcrumb */}
+              <nav className="mb-4 text-sm">
+                <div className="flex items-center space-x-2">
+                  <Skeleton className="h-4 w-16 bg-white/20" />
+                  <span className="text-white/60">/</span>
+                  <Skeleton className="h-4 w-20 bg-white/20" />
+                </div>
+              </nav>
+
+              {/* Course Title & Description */}
+              <Skeleton className="h-10 w-3/4 mb-4 bg-white/20" />
+              <Skeleton className="h-6 w-full mb-2 bg-white/20" />
+              <Skeleton className="h-6 w-2/3 mb-6 bg-white/20" />
+
+              {/* Course Meta */}
+              <div className="flex flex-wrap items-center gap-4 mb-6">
+                <Skeleton className="h-6 w-20 rounded-full bg-white/20" />
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-5 bg-white/20" />
+                  <Skeleton className="h-4 w-16 bg-white/20" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-5 bg-white/20" />
+                  <Skeleton className="h-4 w-20 bg-white/20" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-5 bg-white/20" />
+                  <Skeleton className="h-4 w-24 bg-white/20" />
+                </div>
+              </div>
+
+              {/* Rating */}
+              <div className="flex items-center gap-2 mb-6">
+                <div className="flex space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Skeleton key={star} className="h-5 w-5 bg-white/20" />
+                  ))}
+                </div>
+                <Skeleton className="h-4 w-8 bg-white/20" />
+                <Skeleton className="h-4 w-20 bg-white/20" />
+              </div>
+
+              {/* Creator */}
+              <Skeleton className="h-5 w-48 bg-white/20" />
             </div>
-          </div>
-        </div>
-        
-        {/* Sidebar */}
-        <div className="lg:w-1/3">
-          <div className="bg-background border rounded-lg p-6 space-y-4">
-            <Skeleton className="h-6 w-20" />
-            <Skeleton className="h-10 w-full rounded" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
+
+            {/* Enrollment Card - Right Side (1 column) */}
+            <div className="lg:col-span-1">
+              <div className="bg-white text-foreground rounded-lg p-6">
+                {/* Course Preview/Thumbnail */}
+                <Skeleton className="w-full h-48 rounded-lg mb-6" />
+
+                {/* Price */}
+                <div className="mb-6">
+                  <Skeleton className="h-8 w-20 mb-2" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-3 mb-6">
+                  <Skeleton className="h-12 w-full rounded" />
+                  <Skeleton className="h-10 w-full rounded" />
+                </div>
+
+                {/* Course Includes */}
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-32 mb-3" />
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-4" />
+                      <Skeleton className="h-4 flex-1" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      
-      {/* Course Content Tabs */}
-      <div className="space-y-6">
-        <div className="flex space-x-6 border-b">
-          {Array.from({ length: 3 }, (_, i) => (
-            <Skeleton key={i} className="h-4 w-16" />
-          ))}
-        </div>
-        
-        <div className="space-y-4">
-          {Array.from({ length: 6 }, (_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 border rounded">
-              <Skeleton className="h-4 w-4 rounded" />
-              <Skeleton className="h-4 flex-1" />
-              <Skeleton className="h-4 w-12" />
+
+      {/* Main Content with Tabs */}
+      <div className="bg-background">
+        <div className="container mx-auto px-4 py-8">
+          {/* Tab Navigation */}
+          <div className="border-b mb-8">
+            <div className="flex space-x-8">
+              {['Overview', 'Curriculum', 'Creator', 'Reviews'].map((tab, index) => (
+                <div key={index} className="pb-4">
+                  <Skeleton className="h-5 w-20" />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Tab Content Area */}
+          <div className="max-w-6xl">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Main Content */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+                
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-56" />
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <Skeleton className="h-5 w-40" />
+                          <Skeleton className="h-4 w-12" />
+                        </div>
+                        <div className="space-y-2">
+                          {Array.from({ length: 2 }).map((_, lessonIndex) => (
+                            <div key={lessonIndex} className="flex items-center gap-3 pl-4">
+                              <Skeleton className="h-4 w-4" />
+                              <Skeleton className="h-4 flex-1" />
+                              <Skeleton className="h-4 w-16" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Sidebar Content */}
+              <div className="space-y-6">
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <Skeleton className="h-5 w-32 mb-3" />
+                  <div className="space-y-2">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-12" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <Skeleton className="h-5 w-28 mb-3" />
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <Skeleton key={index} className="h-4 w-full" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1254,6 +1365,517 @@ export const DashboardSkeleton: React.FC = () => {
                 <div key={index} className="flex items-center justify-between">
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-4 w-8" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Profile Page Skeleton - Form-based layout
+export const ProfilePageSkeleton = () => {
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-4xl animate-pulse">
+      {/* Page Title */}
+      <div className="mb-8">
+        <Skeleton className="h-9 w-32" />
+      </div>
+
+      {/* Form Sections */}
+      <div className="space-y-6">
+        {/* Basic Information Card */}
+        <div className="bg-background border border-border rounded-lg p-6">
+          <Skeleton className="h-7 w-40 mb-4" />
+          <div className="space-y-4">
+            {/* Name Field */}
+            <div>
+              <Skeleton className="h-4 w-12 mb-1" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            {/* Email Field */}
+            <div>
+              <Skeleton className="h-4 w-12 mb-1" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-3 w-36 mt-1" />
+            </div>
+            {/* Bio Field */}
+            <div>
+              <Skeleton className="h-4 w-8 mb-1" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+            {/* Location Field */}
+            <div>
+              <Skeleton className="h-4 w-16 mb-1" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        </div>
+
+        {/* Social Links Card */}
+        <div className="bg-background border border-border rounded-lg p-6">
+          <Skeleton className="h-7 w-28 mb-4" />
+          <div className="space-y-4">
+            {/* Website Field */}
+            <div>
+              <Skeleton className="h-4 w-16 mb-1" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            {/* GitHub Field */}
+            <div>
+              <Skeleton className="h-4 w-16 mb-1" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            {/* LinkedIn Field */}
+            <div>
+              <Skeleton className="h-4 w-18 mb-1" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        </div>
+
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <Skeleton className="h-10 w-28" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Billing Page Skeleton - Dashboard-style layout
+export const BillingPageSkeleton = () => {
+  return (
+    <div className="min-h-screen bg-background py-8 animate-pulse">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
+        <div className="mb-8">
+          <Skeleton className="h-9 w-64 mb-2" />
+          <Skeleton className="h-5 w-80" />
+        </div>
+
+        {/* 3-Column Stats Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Current Plan Card */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-5 w-5 rounded-full" />
+            </div>
+            <Skeleton className="h-6 w-20 mb-2" />
+            <Skeleton className="h-4 w-32 mb-3" />
+            <Skeleton className="h-8 w-16 mb-2" />
+            <Skeleton className="h-4 w-36" />
+          </div>
+
+          {/* Usage Card */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-5 w-5" />
+            </div>
+            <div className="space-y-3">
+              <div>
+                <Skeleton className="h-4 w-32 mb-1" />
+                <Skeleton className="h-8 w-8" />
+              </div>
+              <div>
+                <Skeleton className="h-4 w-36 mb-1" />
+                <Skeleton className="h-8 w-8" />
+              </div>
+            </div>
+          </div>
+
+          {/* Next Billing Card */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-5 w-5" />
+            </div>
+            <Skeleton className="h-8 w-20 mb-2" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        </div>
+
+        {/* Subscription Management Card */}
+        <div className="bg-background border border-border rounded-lg p-6 mb-8">
+          <Skeleton className="h-6 w-48 mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Column - Subscription Details */}
+            <div>
+              <Skeleton className="h-5 w-36 mb-2" />
+              <Skeleton className="h-4 w-64 mb-4" />
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="flex justify-between">
+                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Right Column - Action Buttons */}
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        </div>
+
+        {/* Payment History Card */}
+        <div className="bg-background border border-border rounded-lg p-6">
+          <div className="flex items-center justify-between mb-6">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-5 w-5" />
+          </div>
+          
+          {/* Payment History Table Skeleton */}
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="flex items-center justify-between py-3 border-b border-border last:border-b-0">
+                <div className="flex items-center space-x-3">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Billing Support Card */}
+        <div className="mt-8 bg-primary/20 border border-primary rounded-lg p-6">
+          <Skeleton className="h-6 w-24 mb-2" />
+          <Skeleton className="h-4 w-80 mb-4" />
+          <div className="flex flex-wrap gap-3">
+            <Skeleton className="h-9 w-32" />
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-9 w-36" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Creator Analytics Skeleton - Analytics dashboard layout
+export const CreatorAnalyticsSkeleton = () => {
+  return (
+    <div className="min-h-screen bg-muted/50 animate-pulse">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-5 w-80" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="container mx-auto px-4 py-8">
+        {/* Overview Stats - 4 Column Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Total Revenue Card */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1">
+                <Skeleton className="h-4 w-20 mb-2" />
+                <Skeleton className="h-8 w-24 mb-2" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded" />
+            </div>
+          </div>
+
+          {/* Total Payments Card */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded" />
+            </div>
+          </div>
+
+          {/* Success Rate Card */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1">
+                <Skeleton className="h-4 w-20 mb-2" />
+                <Skeleton className="h-8 w-20 mb-2" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded" />
+            </div>
+          </div>
+
+          {/* Total Students Card */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-12 mb-2" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded" />
+            </div>
+          </div>
+        </div>
+
+        {/* Charts Section: Top Revenue & Most Popular Courses */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Top Revenue Courses */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <Skeleton className="h-6 w-40 mb-4" />
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Most Popular Courses */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <Skeleton className="h-6 w-40 mb-4" />
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-4 w-28" />
+                  </div>
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Revenue Trends Chart (Full Width) */}
+        <div className="bg-background border border-border rounded-lg p-6 mb-8">
+          <Skeleton className="h-6 w-56 mb-4" />
+          <div className="space-y-4">
+            {/* 7-day chart representation */}
+            <div className="grid grid-cols-7 gap-2 text-xs">
+              {Array.from({ length: 7 }).map((_, index) => (
+                <div key={index} className="text-center">
+                  <Skeleton className="h-4 w-8 mx-auto mb-1" />
+                  <div className="bg-primary/20 rounded p-2">
+                    <Skeleton className="h-5 w-12 mb-1" />
+                    <Skeleton className="h-3 w-16 mb-1" />
+                    <Skeleton className="h-3 w-14" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Summary stats */}
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+              <div className="text-center">
+                <Skeleton className="h-4 w-20 mb-1 mx-auto" />
+                <Skeleton className="h-6 w-16 mx-auto" />
+              </div>
+              <div className="text-center">
+                <Skeleton className="h-4 w-24 mb-1 mx-auto" />
+                <Skeleton className="h-6 w-12 mx-auto" />
+              </div>
+              <div className="text-center">
+                <Skeleton className="h-4 w-28 mb-1 mx-auto" />
+                <Skeleton className="h-6 w-16 mx-auto" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Course Performance Details Table */}
+        <div className="bg-background border border-border rounded-lg p-6">
+          <Skeleton className="h-6 w-48 mb-4" />
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b">
+                <tr>
+                  <th className="text-left py-3 px-4"><Skeleton className="h-4 w-16" /></th>
+                  <th className="text-left py-3 px-4"><Skeleton className="h-4 w-12" /></th>
+                  <th className="text-right py-3 px-4"><Skeleton className="h-4 w-16" /></th>
+                  <th className="text-right py-3 px-4"><Skeleton className="h-4 w-16" /></th>
+                  <th className="text-right py-3 px-4"><Skeleton className="h-4 w-12" /></th>
+                  <th className="text-right py-3 px-4"><Skeleton className="h-4 w-20" /></th>
+                  <th className="text-center py-3 px-4"><Skeleton className="h-4 w-16" /></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <tr key={index} className="hover:bg-muted/50">
+                    <td className="py-3 px-4">
+                      <Skeleton className="h-4 w-32" />
+                    </td>
+                    <td className="py-3 px-4">
+                      <Skeleton className="h-6 w-16 rounded-full" />
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <Skeleton className="h-4 w-8" />
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <Skeleton className="h-4 w-16" />
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <Skeleton className="h-4 w-20" />
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <Skeleton className="h-4 w-20" />
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <Skeleton className="h-8 w-8 rounded" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Info Message */}
+        <div className="mt-8 p-4 bg-primary/10 rounded-lg">
+          <div className="flex items-start">
+            <Skeleton className="h-4 w-12 mt-0.5 mr-2" />
+            <div className="flex-1">
+              <Skeleton className="h-4 w-full mb-1" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Creator Dashboard Skeleton - Dashboard-style layout  
+export const CreatorDashboardSkeleton = () => {
+  return (
+    <div className="min-h-screen bg-muted animate-pulse">
+      {/* Header */}
+      <div className="bg-background border-b">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Skeleton className="h-8 w-40 mb-2" />
+              <Skeleton className="h-5 w-48" />
+            </div>
+            <Skeleton className="h-10 w-40" />
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Section */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Total Revenue Card */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-20 mb-2" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded" />
+            </div>
+          </div>
+
+          {/* Total Students Card */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-12 mb-2" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded" />
+            </div>
+          </div>
+
+          {/* Total Courses Card */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-8 mb-2" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded" />
+            </div>
+          </div>
+
+          {/* Average Rating Card */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <Skeleton className="h-4 w-28 mb-2" />
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded" />
+            </div>
+          </div>
+        </div>
+
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Top Performing Courses */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-5 w-5" />
+            </div>
+            <div className="space-y-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="flex items-center justify-between py-3 border-b border-border last:border-b-0">
+                  <div className="flex items-center space-x-3">
+                    <Skeleton className="h-12 w-20 rounded" />
+                    <div>
+                      <Skeleton className="h-4 w-32 mb-2" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Skeleton className="h-4 w-12 mb-1" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-5 w-5" />
+            </div>
+            <div className="space-y-4">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-full mb-1" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
                 </div>
               ))}
             </div>
