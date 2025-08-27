@@ -81,9 +81,7 @@ export default function AdminPaymentsPage() {
   };
 
 
-  if (analyticsError) {
-    console.warn('Payment analytics error:', analyticsError);
-  }
+  // useApiQuery automatically handles errors via Toast notifications
 
   const summaryData = paymentSummary?.data;
   const trendsData = paymentTrends?.data;

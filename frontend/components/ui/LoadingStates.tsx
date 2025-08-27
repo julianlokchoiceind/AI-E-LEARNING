@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -283,11 +283,9 @@ export const AdUsersTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) 
  * Replaces inline loading spinners in modals and forms for consistency
  */
 export const ButtonSkeleton: React.FC<{ 
-  text?: string;
   className?: string;
   variant?: 'primary' | 'danger' | 'outline';
 }> = ({ 
-  text = 'Loading...', 
   className = '',
   variant = 'primary'
 }) => {
@@ -558,6 +556,58 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <button
           onClick={action.onClick}
           className="text-primary hover:text-primary/80 font-medium"
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  );
+};
+
+interface ErrorStateProps {
+  title?: string;
+  error?: Error | string | null;
+  description?: string;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+  className?: string;
+}
+
+export const ErrorState: React.FC<ErrorStateProps> = ({
+  title = "Something went wrong",
+  error,
+  description,
+  action,
+  className = ""
+}) => {
+  return (
+    <div className={`text-center py-12 ${className}`}>
+      {/* Error Icon */}
+      <div className="flex justify-center mb-4">
+        <div className="bg-destructive/10 p-3 rounded-full">
+          <AlertCircle className="w-6 h-6 text-destructive" />
+        </div>
+      </div>
+      
+      {/* Title */}
+      <h3 className="text-lg font-semibold text-foreground mb-2">
+        {title}
+      </h3>
+      
+      {/* Error Message */}
+      {(description || error) && (
+        <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+          {description || (error instanceof Error ? error.message : String(error))}
+        </p>
+      )}
+      
+      {/* Action Button */}
+      {action && (
+        <button
+          onClick={action.onClick}
+          className="bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 transition-colors"
         >
           {action.label}
         </button>

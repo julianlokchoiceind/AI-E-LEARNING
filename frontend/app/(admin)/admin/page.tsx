@@ -132,25 +132,8 @@ export default function AdminDashboard() {
     return <AdMainPageSkeleton />;
   }
 
-  // Show warning if analytics failed but continue with existing data
-  if (analyticsError) {
-    console.warn('Payment analytics failed, using fallback data:', analyticsError);
-  }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <EmptyState
-          title="Failed to load dashboard"
-          description={error.message || 'Something went wrong while loading the admin dashboard'}
-          action={{
-            label: 'Try Again',
-            onClick: handleRefresh
-          }}
-        />
-      </div>
-    );
-  }
+  // useApiQuery automatically handles errors via Toast notifications
+  // Continue with graceful degradation - show page structure with fallback values
 
   return (
     <div className="space-y-6">

@@ -31,7 +31,7 @@ import {
 } from '@/hooks/queries/useLessons';
 import { useChapterQuery } from '@/hooks/queries/useChapters';
 import { useDeleteLessonResource } from '@/hooks/queries/useLessonResources';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, ErrorState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 import { Lesson, LessonResource } from '@/lib/types/course';
 import { StandardResponse } from '@/lib/types/api';
@@ -289,7 +289,7 @@ const LessonEditPage = () => {
   if (!lessonData) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <EmptyState
+        <ErrorState
           title="Lesson not found"
           description="The lesson you're looking for doesn't exist or you don't have permission to edit it."
           action={{

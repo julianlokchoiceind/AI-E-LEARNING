@@ -10,6 +10,7 @@ import { ResourceDisplay } from '@/components/feature/ResourceDisplay';
 import { MobileNavigationDrawer } from '@/components/feature/MobileNavigationDrawer';
 import { LessonBreadcrumbs } from '@/components/seo/Breadcrumbs';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { ErrorState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 import { formatDuration, formatDurationHuman } from '@/lib/utils/time';
 import { api } from '@/lib/api/api-client';
@@ -678,16 +679,15 @@ export default function OptimizedLessonPlayerPage() {
   if (learnDataError || !lesson) {
     return (
       <div className="min-h-screen bg-muted flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Lesson not found</h1>
-          <p className="text-muted-foreground mb-6">The lesson you're looking for doesn't exist or you don't have access to it.</p>
-          <button
-            onClick={() => router.back()}
-            className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/80 transition-colors"
-          >
-            Go Back
-          </button>
-        </div>
+        <ErrorState
+          title="Lesson not found"
+          error={learnDataError}
+          description="The lesson you're looking for doesn't exist or you don't have access to it."
+          action={{
+            label: 'Go Back',
+            onClick: () => router.back()
+          }}
+        />
       </div>
     );
   }

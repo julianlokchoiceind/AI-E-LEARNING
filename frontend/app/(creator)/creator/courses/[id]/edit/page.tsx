@@ -27,6 +27,7 @@ import {
 } from '@/hooks/queries/useCourses';
 import { useDeleteChapter } from '@/hooks/queries/useChapters';
 import { useDeleteLesson } from '@/hooks/queries/useLessons';
+import { ErrorState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 
 // Type for chapters with lessons
@@ -376,8 +377,15 @@ const CourseBuilderPage = () => {
 
   if (!loading && !courseData && !courseResponse?.data) {
     return (
-      <div className="text-center py-16">
-        <p className="text-muted-foreground text-lg">Course not found</p>
+      <div className="flex justify-center items-center min-h-screen">
+        <ErrorState
+          title="Course not found"
+          description="The course you're looking for doesn't exist or you don't have permission to edit it."
+          action={{
+            label: 'Back to Courses',
+            onClick: () => router.push('/creator/courses')
+          }}
+        />
       </div>
     );
   }

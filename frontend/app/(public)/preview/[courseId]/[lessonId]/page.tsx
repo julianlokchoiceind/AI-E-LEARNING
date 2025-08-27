@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { PreviewVideoPlayer } from '@/components/feature/PreviewVideoPlayer';
 import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
-import { LoadingSpinner } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, ErrorState } from '@/components/ui/LoadingStates';
 import { useCourseQuery } from '@/hooks/queries/useCourses';
 import { usePreviewLessonQuery } from '@/hooks/queries/useLessons';
 import { useAuth } from '@/hooks/useAuth';
@@ -72,20 +72,14 @@ const PreviewLessonPage = () => {
   if (error || !course || !lesson) {
     return (
       <div className="min-h-screen bg-muted/50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            {typeof error === 'string' ? error : 'Preview Not Available'}
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            This lesson preview is not available or the lesson was not found.
-          </p>
-          <Button onClick={() => router.push(`/courses/${courseId}`)}>
-            View Course Details
-          </Button>
-        </div>
+        <ErrorState
+          title={typeof error === 'string' ? error : 'Preview Not Available'}
+          description="This lesson preview is not available or the lesson was not found."
+          action={{
+            label: 'View Course Details',
+            onClick: () => router.push(`/courses/${courseId}`)
+          }}
+        />
       </div>
     );
   }

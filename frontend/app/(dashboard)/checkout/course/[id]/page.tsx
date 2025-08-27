@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { CourseCheckoutForm } from '@/components/feature/CourseCheckoutForm';
-import { LoadingSpinner } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, ErrorState } from '@/components/ui/LoadingStates';
 import { useCourseQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -90,8 +90,15 @@ export default function CourseCheckoutPage() {
 
   if (!course) {
     return (
-      <div className="text-center py-16">
-        <p className="text-muted-foreground text-lg">Course not found</p>
+      <div className="flex justify-center items-center min-h-screen">
+        <ErrorState
+          title="Course not found"
+          description="The course you're trying to purchase doesn't exist or is no longer available."
+          action={{
+            label: 'Browse Courses',
+            onClick: () => router.push('/courses')
+          }}
+        />
       </div>
     );
   }

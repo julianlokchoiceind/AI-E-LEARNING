@@ -28,7 +28,7 @@ import {
 import { CourseDetailData } from '@/lib/api/courses';
 import { useDeleteChapter } from '@/hooks/queries/useChapters';
 import { useDeleteLesson } from '@/hooks/queries/useLessons';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, ErrorState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 import { StandardResponse } from '@/lib/types/api';
 
@@ -449,7 +449,7 @@ const CourseBuilderPage = () => {
   if (!courseData) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <EmptyState
+        <ErrorState
           title="Course not found"
           description="The course you're looking for doesn't exist or you don't have permission to edit it."
           action={{

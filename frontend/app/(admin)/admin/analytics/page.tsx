@@ -98,20 +98,8 @@ export default function AdminAnalyticsPage() {
     return <AdAnalyticsSkeleton />;
   }
 
-  if (adminError || paymentError) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <EmptyState
-          title="Failed to load analytics"
-          description={adminError?.message || paymentError?.message || 'Something went wrong while loading the analytics dashboard'}
-          action={{
-            label: 'Try Again',
-            onClick: handleRefresh
-          }}
-        />
-      </div>
-    );
-  }
+  // useApiQuery automatically handles errors via Toast notifications
+  // Continue with graceful degradation - show page structure with fallback values
 
   if (!chartData) {
     return (

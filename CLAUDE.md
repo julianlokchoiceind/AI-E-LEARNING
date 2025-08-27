@@ -90,6 +90,45 @@ The documentation has been organized into focused modules for better readability
 - **MongoDB IDs:** Backend MUST convert `_id` to `id` for frontend
 - 🚀 **Learn Page:** Use consolidated `useLearnPage` hook instead of individual hooks
 
+### 🚨 Error Handling Strategy
+**ErrorState vs Toast Decision Matrix:**
+
+**✅ USE ErrorState for:**
+- **Resource-Dependent Pages**: Pages with dynamic [id] segments that require specific resources
+  - `/courses/[id]/edit` - Course must exist to edit
+  - `/learn/[courseId]/[lessonId]` - Lesson must exist to display
+  - `/certificates/[id]` - Certificate must exist to view
+- **Critical Page-Breaking Errors**: When the page cannot function without the data
+- **Navigation Errors**: When user lands on non-existent resource
+
+**✅ USE Toast for:**
+- **Dashboard/List Pages**: Pages that can show structure even with failed data
+  - `/admin/page` - Show dashboard structure with fallback values (0)
+  - `/admin/analytics` - Show analytics structure with empty charts
+  - `/admin/faq` - Show FAQ management interface with empty list
+- **Optional Data Failures**: When page can still be useful without the data
+- **Transient Network Errors**: Temporary API failures that don't break core functionality
+
+**🔧 Implementation Patterns:**
+```typescript
+// ❌ DON'T: Block entire dashboard with ErrorState
+if (error) return <ErrorState />
+
+// ❌ DON'T: Manual error handling (useApiQuery already handles this)
+if (error) console.warn('Data failed, using fallbacks:', error);
+
+// ✅ DO: Trust useApiQuery automatic Toast handling
+// No explicit error handling needed - useApiQuery shows Toast automatically
+if (loading) return <LoadingSkeleton />;
+return <DashboardStructure stats={stats || fallbackStats} />
+```
+
+**Key Pattern Understanding:**
+- **useApiQuery AUTO-SHOWS Toast**: `handleError(error, showToast=true)` → `ToastService.error()`
+- **No Manual Toast Needed**: Trust the hook's built-in error handling
+- **No Console.warn Needed**: Toast notifications already inform users
+- **Just Graceful Degradation**: Show page structure with fallback data (0 values)
+
 ### 📡 API Response Pattern
 **Decision Rule for API Responses:**
 - Pydantic validation error? → Use dictionary

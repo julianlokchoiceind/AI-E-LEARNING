@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, ErrorState } from '@/components/ui/LoadingStates';
 
 const CourseDetailPage = () => {
   const params = useParams();
@@ -187,7 +187,7 @@ const CourseDetailPage = () => {
   if (!course) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <EmptyState
+        <ErrorState
           title="Course not found"
           description="The course you're looking for doesn't exist or has been removed."
           action={{
