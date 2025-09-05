@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
-import { EmptyState, AdCoursesTableSkeleton } from '@/components/ui/LoadingStates';
+import { EmptyState, SkeletonBox, SkeletonText } from '@/components/ui/LoadingStates';
 import { Pagination } from '@/components/ui/Pagination';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
@@ -37,6 +37,7 @@ import { formatDate, formatCurrency } from '@/lib/utils/formatters';
 import DeleteCourseModal, { CourseDeleteData } from '@/components/feature/DeleteCourseModal';
 import { StandardResponse } from '@/lib/types/api';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
+import { Container } from '@/components/ui/Container';
 
 interface Course {
   _id?: string;      // Optional since API might return id instead
@@ -311,7 +312,7 @@ const CreatorCoursesPage = () => {
       <div className="min-h-screen bg-muted">
         {/* Header */}
         <div className="bg-white border-b">
-          <div className="container mx-auto px-4 py-6">
+          <Container variant="admin" className="py-6">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold">My Courses</h1>
               <Button variant="primary" disabled>
@@ -319,12 +320,30 @@ const CreatorCoursesPage = () => {
                 Create New Course
               </Button>
             </div>
-          </div>
+          </Container>
         </div>
         {/* Skeleton Loader */}
-        <div className="container mx-auto px-4 py-8">
-          <AdCoursesTableSkeleton rows={6} />
-        </div>
+        <Container variant="admin" className="py-8">
+          <div className="space-y-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="p-6">
+                <div className="flex items-center space-x-4">
+                  <SkeletonBox className="h-16 w-16 rounded-lg" />
+                  <div className="flex-1">
+                    <SkeletonBox className="h-6 w-48 mb-2" />
+                    <SkeletonText lines={2} className="mb-2" />
+                    <div className="flex space-x-4">
+                      <SkeletonBox className="h-4 w-20" />
+                      <SkeletonBox className="h-4 w-24" />
+                      <SkeletonBox className="h-4 w-16" />
+                    </div>
+                  </div>
+                  <SkeletonBox className="h-8 w-24 rounded" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        </Container>
       </div>
     );
   }
@@ -334,7 +353,7 @@ const CreatorCoursesPage = () => {
       <div className="min-h-screen bg-muted">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6">
+        <Container variant="admin" className="py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold">My Courses</h1>
@@ -394,12 +413,12 @@ const CreatorCoursesPage = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </Container>
       </div>
 
       {/* Filters Bar */}
       <div className="bg-white border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
+        <Container variant="admin" className="py-4">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
@@ -483,11 +502,11 @@ const CreatorCoursesPage = () => {
               </div>
             </div>
           )}
-        </div>
+        </Container>
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="admin" className="py-8">
         {filteredCourses.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             {coursesResponse?.data?.courses?.length === 0 ? (
@@ -787,7 +806,7 @@ const CreatorCoursesPage = () => {
             />
           </div>
         )}
-      </div>
+      </Container>
     </div>
 
     {/* Delete Course Modal */}

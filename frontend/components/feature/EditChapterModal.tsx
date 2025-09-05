@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { ButtonSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
 import { useUpdateChapter } from '@/hooks/queries/useCourses';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -272,7 +272,10 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
               className="flex-1"
             >
               {loading ? (
-                <ButtonSkeleton variant="primary" />
+                <>
+                  <LoadingSpinner size="sm" className="mr-2 inline" />
+                  Updating...
+                </>
               ) : (
                 'Update Chapter'
               )}

@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
-import { LoadingSpinner, EmptyState, AdUsersTableSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
 import { 
   useAdminUsersQuery,
   useToggleUserPremium,
@@ -210,7 +211,8 @@ export default function UserManagement() {
   // No client-side filtering needed - server handles it
 
   return (
-    <div className="space-y-6">
+    <Container variant="admin">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -313,7 +315,67 @@ export default function UserManagement() {
         </div>
 
         {showLoadingSpinner ? (
-          <AdUsersTableSkeleton rows={6} />
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-4 py-3"><SkeletonCircle className="h-4 w-4" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-20" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-border">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="hover:bg-muted/30">
+                    <td className="px-4 py-4">
+                      <SkeletonCircle className="h-4 w-4" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <SkeletonCircle className="h-10 w-10 mr-4" />
+                        <div>
+                          <SkeletonBox className="h-4 w-32 mb-1" />
+                          <SkeletonBox className="h-3 w-40" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        <SkeletonBox className="h-6 w-16 rounded-full" />
+                        <SkeletonCircle className="h-4 w-4" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <SkeletonBox className="h-4 w-20 mb-1" />
+                        <SkeletonBox className="h-3 w-16" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <SkeletonBox className="h-4 w-16 mb-1" />
+                        <SkeletonBox className="h-3 w-20" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-4 w-16" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center space-x-2">
+                        <SkeletonBox className="h-8 w-8" />
+                        <SkeletonBox className="h-8 w-8" />
+                        <SkeletonBox className="h-8 w-8" />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : users.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             <EmptyState
@@ -675,5 +737,6 @@ export default function UserManagement() {
         </Modal>
       )}
     </div>
+    </Container>
   );
 }

@@ -19,7 +19,8 @@ import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
-import { LoadingSpinner, EmptyState } from '@/components/ui/LoadingStates';
+import { EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
 import { 
   useAdminFAQCategoriesQuery,
   useCreateFAQCategory,
@@ -285,7 +286,8 @@ export default function FAQCategoriesPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <Container variant="admin">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -312,7 +314,11 @@ export default function FAQCategoriesPage() {
               <FolderOpen className="h-8 w-8 text-primary" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-muted-foreground">Total Categories</p>
-                <p className="text-2xl font-bold text-foreground">{totalCategories}</p>
+                {loading ? (
+                  <SkeletonBox className="h-8 w-16" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground">{totalCategories}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -324,7 +330,11 @@ export default function FAQCategoriesPage() {
               <Eye className="h-8 w-8 text-success" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-muted-foreground">Active Categories</p>
-                <p className="text-2xl font-bold text-foreground">{totalActive}</p>
+                {loading ? (
+                  <SkeletonBox className="h-8 w-16" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground">{totalActive}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -336,7 +346,11 @@ export default function FAQCategoriesPage() {
               <EyeOff className="h-8 w-8 text-muted-foreground" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-muted-foreground">Inactive Categories</p>
-                <p className="text-2xl font-bold text-foreground">{totalInactive}</p>
+                {loading ? (
+                  <SkeletonBox className="h-8 w-16" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground">{totalInactive}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -427,10 +441,72 @@ export default function FAQCategoriesPage() {
         </div>
 
         {loading ? (
-          <div className="p-8">
-            <div className="flex justify-center">
-              <LoadingSpinner />
-            </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-4 py-3"><SkeletonCircle className="h-4 w-4" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-12" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-12" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-12" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-12" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-border">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="hover:bg-muted/30">
+                    <td className="px-4 py-4">
+                      <SkeletonCircle className="h-4 w-4" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <SkeletonBox className="h-6 w-8 rounded-full" />
+                        <div className="flex flex-col gap-1">
+                          <SkeletonBox className="h-6 w-6 rounded" />
+                          <SkeletonBox className="h-6 w-6 rounded" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <SkeletonCircle className="h-4 w-4" />
+                          <SkeletonBox className="h-5 w-32" />
+                        </div>
+                        <SkeletonBox className="h-4 w-48" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-6 w-24 rounded" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="text-center">
+                        <SkeletonBox className="h-6 w-8 mb-1 mx-auto" />
+                        <SkeletonBox className="h-3 w-8 mx-auto" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="text-center">
+                        <SkeletonBox className="h-6 w-8 mb-1 mx-auto" />
+                        <SkeletonBox className="h-3 w-10 mx-auto" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-6 w-16 rounded-full" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center space-x-2">
+                        <SkeletonBox className="h-8 w-8 rounded" />
+                        <SkeletonBox className="h-8 w-8 rounded" />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="p-0">
@@ -847,5 +923,6 @@ export default function FAQCategoriesPage() {
         </Modal>
       )}
     </div>
+    </Container>
   );
 }

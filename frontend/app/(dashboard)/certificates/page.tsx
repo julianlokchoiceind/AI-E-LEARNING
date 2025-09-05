@@ -5,7 +5,8 @@ import { Trophy, Award, Clock, TrendingUp, Download, BookOpen } from 'lucide-rea
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { CertificateCard } from '@/components/feature/CertificateCard';
-import { CertificatesGridSkeleton } from '@/components/ui/LoadingStates';
+import { SkeletonBox, SkeletonText } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
 import { useAuth } from '@/hooks/useAuth';
 import { CertificateWithDetails } from '@/lib/types/certificate';
 import { useCertificatesQuery, useCertificateStatsQuery } from '@/hooks/queries/useCertificates';
@@ -56,7 +57,7 @@ const CertificatesPage = () => {
   // Handle error state
   if (certificatesError) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="public">
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-destructive">Something went wrong</p>
@@ -69,17 +70,51 @@ const CertificatesPage = () => {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </Container>
     );
   }
 
   // Handle loading state
   if (loading) {
-    return <CertificatesGridSkeleton />;
+    return (
+      <Container variant="public">
+        {/* Header */}
+        <div className="mb-8">
+          <SkeletonBox className="h-9 w-64 mb-2" />
+          <SkeletonBox className="h-5 w-96" />
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-background rounded-lg border p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <SkeletonBox className="h-4 w-20" />
+                  <SkeletonBox className="h-8 w-12" />
+                </div>
+                <SkeletonBox className="h-8 w-8 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Certificates Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-background rounded-lg border p-6">
+              <SkeletonBox className="h-32 w-full mb-4" />
+              <SkeletonBox className="h-6 w-full mb-2" />
+              <SkeletonText lines={2} />
+            </div>
+          ))}
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <Container variant="public">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">My Certificates</h1>
@@ -241,7 +276,7 @@ const CertificatesPage = () => {
           </CardContent>
         </Card>
       )}
-    </div>
+    </Container>
   );
 };
 

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { useApiMutation } from '@/hooks/useApiMutation'
 import { resetPassword } from '@/lib/api/auth'
 import { ToastService } from '@/lib/toast/ToastService'
+import { Container } from '@/components/ui/Container'
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams()
@@ -51,8 +52,8 @@ export default function ResetPasswordPage() {
   
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+      <Container variant="auth" className="space-y-8">
           <div className="text-center">
             <h2 className="mt-6 text-3xl font-extrabold text-foreground">
               Password reset successful
@@ -76,14 +77,14 @@ export default function ResetPasswordPage() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    )
-  }
+        </Container>
+    </div>
+  )
+}
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-muted">
+      <Container variant="auth" className="space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
             Reset your password
@@ -151,7 +152,7 @@ export default function ResetPasswordPage() {
             </Link>
           </div>
         </form>
-      </div>
+      </Container>
     </div>
   )
 }

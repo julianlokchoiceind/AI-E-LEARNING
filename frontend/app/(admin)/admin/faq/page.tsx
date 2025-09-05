@@ -17,7 +17,8 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
-import { LoadingSpinner, EmptyState, AdFAQTableSkeleton } from '@/components/ui/LoadingStates';
+import { EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
 import { 
   useAdminFAQsQuery,
   useCreateFAQ,
@@ -233,7 +234,8 @@ export default function AdminFAQPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <Container variant="admin">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -334,7 +336,54 @@ export default function AdminFAQPage() {
         </div>
 
         {showLoadingSpinner ? (
-          <AdFAQTableSkeleton />
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-4 py-3"><SkeletonCircle className="h-4 w-4" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-20" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-12" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-border">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="hover:bg-muted/30">
+                    <td className="px-4 py-4">
+                      <SkeletonCircle className="h-4 w-4" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <SkeletonBox className="h-5 w-48 mb-1" />
+                        <SkeletonBox className="h-4 w-64" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-4 w-24" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-6 w-12 rounded-full" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-4 w-8" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-6 w-20 rounded-full" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center space-x-2">
+                        <SkeletonBox className="h-8 w-8 rounded" />
+                        <SkeletonBox className="h-8 w-8 rounded" />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : faqs.length === 0 ? (
             <div className="flex justify-center items-center h-64">
               <EmptyState
@@ -642,5 +691,6 @@ export default function AdminFAQPage() {
         </Modal>
       )}
     </div>
+    </Container>
   );
 }

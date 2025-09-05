@@ -48,6 +48,7 @@ import { Modal } from '@/components/ui/Modal';
 import { CreateQuizModal } from '@/components/feature/CreateQuizModal';
 import { EditQuizModal } from '@/components/feature/EditQuizModal';
 import { QuizManager } from '@/components/feature/QuizManager';
+import { Container } from '@/components/ui/Container';
 
 // Use LessonResource from types instead of duplicate interface
 
@@ -393,7 +394,7 @@ const LessonEditPage = () => {
 
   if (!lessonData) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="admin">
         <ErrorState
           title="Lesson not found"
           description="The lesson you're looking for doesn't exist or you don't have permission to edit it."
@@ -402,7 +403,7 @@ const LessonEditPage = () => {
             onClick: () => router.push(`/admin/courses/${courseId}/edit`)
           }}
         />
-      </div>
+      </Container>
     );
   }
 
@@ -416,7 +417,7 @@ const LessonEditPage = () => {
       <div className="min-h-screen bg-muted/50">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-10">
-          <div className="container mx-auto px-4 py-4">
+          <Container variant="admin">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Button
@@ -480,12 +481,12 @@ const LessonEditPage = () => {
                 </Button>
               </div>
             </div>
-          </div>
+          </Container>
         </div>
 
         {/* Navigation Tabs */}
         <div className="bg-white border-b">
-          <div className="container mx-auto px-4">
+          <Container variant="admin">
             <nav className="flex space-x-8">
               {[
                 { id: 'content', label: 'Content', icon: FileText },
@@ -510,11 +511,11 @@ const LessonEditPage = () => {
                 </button>
               ))}
             </nav>
-          </div>
+          </Container>
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 py-8">
+        <Container variant="admin">
           {/* Content Tab */}
           {activeTab === 'content' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -871,7 +872,7 @@ const LessonEditPage = () => {
               </div>
             </Card>
           )}
-        </div>
+        </Container>
       </div>
 
       {/* Resource Management Modals */}

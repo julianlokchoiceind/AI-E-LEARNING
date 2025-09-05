@@ -9,6 +9,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { CertificateDisplay } from '@/components/feature/CertificateDisplay';
 import { useVerifyCertificateQuery } from '@/hooks/queries/useCertificates';
 import { CertificateVerification } from '@/lib/types/certificate';
+import { Container } from '@/components/ui/Container';
 
 const CertificateVerificationPage = () => {
   const params = useParams();
@@ -51,7 +52,7 @@ const CertificateVerificationPage = () => {
 
   return (
     <div className="min-h-screen bg-muted/50 py-12">
-      <div className="container mx-auto px-4">
+      <Container variant="public">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Certificate Verification</h1>
@@ -95,7 +96,7 @@ const CertificateVerificationPage = () => {
 
         {/* Verification Result */}
         {verification && (
-          <div className="max-w-4xl mx-auto">
+          <div>
             {/* Status Card */}
             <Card className="mb-8">
               <CardContent className="p-6">
@@ -221,7 +222,7 @@ const CertificateVerificationPage = () => {
         )}
 
         {/* Info Section */}
-        <div className="max-w-2xl mx-auto mt-12">
+        <div className="mt-12">
           <Card>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4">About Certificate Verification</h3>
@@ -267,7 +268,7 @@ const CertificateVerificationPage = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </Container>
     </div>
   );
 };

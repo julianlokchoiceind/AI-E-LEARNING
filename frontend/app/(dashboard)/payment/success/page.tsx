@@ -8,6 +8,7 @@ import { CheckCircle, ArrowRight, Download, Clock } from 'lucide-react';
 import { useCourseQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
+import { Container } from '@/components/ui/Container';
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function PaymentSuccessPage() {
 
   return (
     <div className="min-h-screen bg-background py-8">
-      <div className="max-w-4xl mx-auto px-4">
+      <Container variant="public">
         {/* Success Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-success/20 rounded-full mb-4">
@@ -239,7 +240,7 @@ export default function PaymentSuccessPage() {
             </div>
           </Card>
         )}
-      </div>
+      </Container>
     </div>
   );
 }

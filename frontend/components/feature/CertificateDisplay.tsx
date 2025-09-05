@@ -4,6 +4,7 @@ import React, { useRef } from 'react';
 import { Download, Share2, CheckCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { Container } from '@/components/ui/Container';
 import { ToastService } from '@/lib/toast/ToastService';
 import { CertificateWithDetails } from '@/lib/types/certificate';
 import { useDownloadCertificate, useLinkedInShareData } from '@/hooks/queries/useCertificates';
@@ -95,7 +96,7 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <Container className="max-w-4xl">
       {/* Certificate */}
       <div
         ref={certificateRef}
@@ -220,6 +221,6 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
           )}
         </div>
       )}
-    </div>
+    </Container>
   );
 }

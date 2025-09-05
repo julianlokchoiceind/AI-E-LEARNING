@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Course, Lesson } from '@/lib/types/course';
 import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
+import { Container } from '@/components/ui/Container';
 
 const PreviewLessonPage = () => {
   const params = useParams();
@@ -88,7 +89,7 @@ const PreviewLessonPage = () => {
     <div className="min-h-screen bg-muted/50">
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
+        <Container variant="header" className="py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
@@ -117,10 +118,10 @@ const PreviewLessonPage = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </Container>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="public">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3">
@@ -255,7 +256,7 @@ const PreviewLessonPage = () => {
             </Card>
           </div>
         </div>
-      </div>
+      </Container>
 
       {/* AI Assistant Widget */}
       <SimpleChatWidget

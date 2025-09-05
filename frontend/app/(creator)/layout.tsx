@@ -40,9 +40,9 @@ export default function CreatorLayout({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1">
+      <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
         {children}
-      </div>
+      </main>
     </div>
   );
 }

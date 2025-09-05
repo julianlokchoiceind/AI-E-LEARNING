@@ -18,7 +18,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFAQsQuery, useVoteFAQ } from '@/hooks/queries/useFAQ';
 import { useFAQCategoriesQuery } from '@/hooks/queries/useFAQCategories';
 import { FAQ, FAQListResponse } from '@/lib/api/faq';
-import { LoadingSpinner, EmptyState, FAQListSkeleton } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
+import { SkeletonBox, SkeletonCircle, EmptyState } from '@/components/ui/LoadingStates';
 
 export default function FAQPage() {
   const { user } = useAuth();
@@ -105,21 +106,63 @@ export default function FAQPage() {
   };
 
   if (loading) {
-    return <FAQListSkeleton />;
+    return (
+      <div className="min-h-screen bg-muted py-12">
+        <Container variant="public">
+          <div>
+            {/* Header */}
+            <div className="text-center mb-12">
+              <SkeletonBox className="h-10 w-64 mx-auto mb-4" />
+              <SkeletonBox className="h-6 w-96 mx-auto" />
+            </div>
+
+          {/* Search and Filter */}
+          <div className="mb-8 space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <SkeletonBox className="h-12 w-full rounded-lg" />
+            </div>
+
+            {/* Category Filter */}
+            <div className="flex flex-wrap gap-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <SkeletonBox key={i} className="h-8 w-20 rounded-full" />
+              ))}
+            </div>
+          </div>
+
+          {/* FAQ List */}
+          <div className="space-y-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-background rounded-lg border p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <SkeletonBox className="h-6 w-3/4" />
+                  <SkeletonBox className="h-6 w-6 rounded" />
+                </div>
+                <SkeletonBox className="h-4 w-full mb-2" />
+                <SkeletonBox className="h-4 w-2/3" />
+              </div>
+            ))}
+          </div>
+          </div>
+        </Container>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-muted py-12">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Frequently Asked Questions
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Find answers to common questions about our AI E-Learning platform
-          </p>
-        </div>
+      <Container variant="public">
+        <div>
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
+              Frequently Asked Questions
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              Find answers to common questions about our AI E-Learning platform
+            </p>
+          </div>
 
         {/* Search and Filter */}
         <div className="mb-8 space-y-4">
@@ -296,7 +339,8 @@ export default function FAQPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+        </div>
+      </Container>
     </div>
   );
 }

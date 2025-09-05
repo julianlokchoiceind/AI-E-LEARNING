@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LoadingButton } from '@/components/ui/LoadingStates'
+import { Container } from '@/components/ui/Container'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 
 export default function LoginPage() {
@@ -67,8 +68,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-muted">
+      <Container variant="auth" className="space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
             Sign in to your account
@@ -200,7 +201,7 @@ export default function LoginPage() {
             </div>
           </div>
         </form>
-      </div>
+      </Container>
     </div>
   )
 }

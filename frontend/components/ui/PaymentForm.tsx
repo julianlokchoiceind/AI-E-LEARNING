@@ -9,7 +9,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/Button';
-import { ButtonSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 
 // Initialize Stripe
@@ -122,7 +122,10 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
           className="flex-1"
         >
           {isProcessing ? (
-            <ButtonSkeleton variant="primary" />
+            <>
+              <LoadingSpinner size="sm" className="mr-2 inline" />
+              Processing...
+            </>
           ) : (
             `Pay ${formatAmount(amount, currency)}`
           )}

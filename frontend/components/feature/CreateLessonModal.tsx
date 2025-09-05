@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { ButtonSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
 import { useCreateLesson } from '@/hooks/queries/useLessons';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -348,7 +348,10 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
               className="flex-1"
             >
               {loading ? (
-                <ButtonSkeleton variant="primary" />
+                <>
+                  <LoadingSpinner size="sm" className="mr-2 inline" />
+                  Creating...
+                </>
               ) : (
                 'Create Lesson'
               )}

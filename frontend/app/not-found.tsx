@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
+import { Container } from '@/components/ui/Container'
 
 export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted">
-      <div className="max-w-md w-full space-y-8 text-center">
+      <Container variant="auth" className="space-y-8 text-center">
         <div>
           <h1 className="text-6xl font-bold text-foreground">404</h1>
           <h2 className="mt-6 text-3xl font-extrabold text-foreground">
@@ -29,7 +30,7 @@ export default function NotFound() {
         <p className="mt-2 text-xs text-muted-foreground">
           Error code: 404
         </p>
-      </div>
+      </Container>
     </div>
   )
 }

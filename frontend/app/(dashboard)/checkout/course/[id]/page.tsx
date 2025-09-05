@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Clock, Users, BookOpen, ArrowLeft, Shield, CreditCard } from 'lucide-react';
+import { Container } from '@/components/ui/Container';
 
 export default function CourseCheckoutPage() {
   const params = useParams();
@@ -106,7 +107,7 @@ export default function CourseCheckoutPage() {
 
   return (
     <div className="min-h-screen bg-muted py-8">
-      <div className="max-w-6xl mx-auto px-4">
+      <Container variant="public">
         {/* Header */}
         <div className="mb-8">
           <Button
@@ -266,7 +267,7 @@ export default function CourseCheckoutPage() {
             </Card>
           </div>
         </div>
-      </div>
+      </Container>
     </div>
   );
 }

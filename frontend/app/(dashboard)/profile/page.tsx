@@ -5,7 +5,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
-import { ProfilePageSkeleton } from '@/components/ui/LoadingStates';
+import { SkeletonBox, SkeletonText } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
 import { useUserProfileManagement } from '@/hooks/queries/useUserProfile';
 import { useI18n } from '@/lib/i18n/context';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -90,7 +91,44 @@ export default function ProfilePage() {
   };
 
   if (authLoading || loading) {
-    return <ProfilePageSkeleton />;
+    return (
+      <Container variant="public">
+        <SkeletonBox className="h-9 w-48 mb-8" />
+        
+        <div className="space-y-6">
+          {/* Basic Information Card */}
+          <div className="bg-background rounded-lg border p-6">
+            <SkeletonBox className="h-6 w-40 mb-4" />
+            <div className="space-y-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i}>
+                  <SkeletonBox className="h-4 w-20 mb-2" />
+                  <SkeletonBox className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Additional Information Card */}
+          <div className="bg-background rounded-lg border p-6">
+            <SkeletonBox className="h-6 w-48 mb-4" />
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i}>
+                  <SkeletonBox className="h-4 w-24 mb-2" />
+                  <SkeletonBox className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Save Button */}
+          <div className="flex justify-end">
+            <SkeletonBox className="h-10 w-32" />
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   if (!user) {
@@ -98,7 +136,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <Container variant="public">
       <h1 className="text-3xl font-bold mb-8">{t('profile.title')}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -253,6 +291,6 @@ export default function ProfilePage() {
           </Button>
         </div>
       </form>
-    </div>
+    </Container>
   );
 }

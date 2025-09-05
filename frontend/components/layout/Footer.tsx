@@ -1,9 +1,10 @@
 import Link from 'next/link'
+import { Container } from '@/components/ui/Container'
 
 export function Footer() {
   return (
     <footer className="bg-muted/30 border-t">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <Container variant="header" className="py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
@@ -93,7 +94,7 @@ export function Footer() {
             © 2025 AI E-Learning Platform. All rights reserved.
           </p>
         </div>
-      </div>
+      </Container>
     </footer>
   )
 }

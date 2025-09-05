@@ -18,6 +18,8 @@ interface UseApiQueryOptions<T> {
 interface UseApiQueryResult<T> {
   data: StandardResponse<T> | null;
   loading: boolean;
+  isInitialLoading: boolean;
+  isRefetching: boolean;
   error: AppError | null;
   execute: () => Promise<StandardResponse<T> | undefined>;
   isStale: boolean;
@@ -95,7 +97,9 @@ export function useApiQuery<T>(
   return {
     // Same interface as useApiCall
     data: query.data as StandardResponse<T> | null,
-    loading: query.isLoading || query.isFetching,
+    loading: query.isLoading, // Only initial load - fixes double flash
+    isInitialLoading: query.isLoading && !query.data, // First load with no data
+    isRefetching: query.isFetching && !query.isLoading, // Background refetch
     error: query.error as AppError | null,
     execute,
     

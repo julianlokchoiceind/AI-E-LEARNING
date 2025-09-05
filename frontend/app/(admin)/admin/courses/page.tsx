@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import DeleteCourseModal, { CourseDeleteData } from '@/components/feature/DeleteCourseModal';
-import { LoadingSpinner, EmptyState, AdCoursesTableSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
 import { StandardResponse } from '@/lib/types/api';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { 
@@ -299,7 +300,8 @@ export default function CourseApproval() {
   const filteredCourses = courses;
 
   return (
-    <div className="space-y-6">
+    <Container variant="admin">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -473,7 +475,64 @@ export default function CourseApproval() {
         </div>
 
         {showLoadingSpinner ? (
-          <AdCoursesTableSkeleton rows={6} />
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-4 py-3"><SkeletonCircle className="h-4 w-4" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-border">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="hover:bg-muted/30">
+                    <td className="px-4 py-4">
+                      <SkeletonCircle className="h-4 w-4" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <SkeletonBox className="h-16 w-20 rounded-lg mr-4" />
+                        <div>
+                          <SkeletonBox className="h-4 w-48 mb-1" />
+                          <SkeletonBox className="h-3 w-32" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-4 w-24" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        <SkeletonBox className="h-6 w-20 rounded-full" />
+                        <SkeletonBox className="h-6 w-12 rounded-full" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <SkeletonBox className="h-4 w-16 mb-1" />
+                        <SkeletonBox className="h-3 w-20" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-4 w-12" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center space-x-2">
+                        <SkeletonBox className="h-8 w-8 rounded" />
+                        <SkeletonBox className="h-8 w-8 rounded" />
+                        <SkeletonBox className="h-8 w-8 rounded" />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : filteredCourses.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             <EmptyState
@@ -906,5 +965,6 @@ export default function CourseApproval() {
         </Modal>
       )}
     </div>
+    </Container>
   );
 }

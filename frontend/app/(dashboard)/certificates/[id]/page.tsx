@@ -14,6 +14,7 @@ import { useApiMutation } from '@/hooks/useApiMutation';
 import { certificateAPI } from '@/lib/api/certificates';
 import { CertificateWithDetails, CertificateUpdate } from '@/lib/types/certificate';
 import { ToastService } from '@/lib/toast/ToastService';
+import { Container } from '@/components/ui/Container';
 
 const CertificateViewPage = () => {
   const params = useParams();
@@ -100,7 +101,7 @@ const CertificateViewPage = () => {
   const isOwner = user && user.id === certificate.user_id;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <Container variant="public">
       {/* Header */}
       <div className="mb-8">
         <Button
@@ -288,7 +289,7 @@ const CertificateViewPage = () => {
           </div>
         </div>
       </Modal>
-    </div>
+    </Container>
   );
 };
 

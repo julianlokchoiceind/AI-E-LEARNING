@@ -3,7 +3,7 @@ import { Plus, Trash2, HelpCircle, Sparkles } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
-import { ButtonSkeleton, LoadingSpinner } from '@/components/ui/LoadingStates';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useQuizQuery, useUpdateQuiz } from '@/hooks/queries/useQuizzes';
 import { useGenerateQuizFromTranscript } from '@/hooks/queries/useAI';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -572,7 +572,10 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
             Cancel
           </Button>
           {loading ? (
-            <ButtonSkeleton />
+            <>
+              <LoadingSpinner size="sm" className="mr-2 inline" />
+              Updating...
+            </>
           ) : (
             <Button 
               type="submit"

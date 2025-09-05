@@ -6,10 +6,11 @@ import Link from 'next/link';
 import { Plus, BookOpen, TrendingUp, Users, DollarSign, Star, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Container } from '@/components/ui/Container';
 import { useCreatorCoursesQuery, useCreateCourse } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
-import { LoadingSpinner, EmptyState, CreatorDashboardSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
 import { formatCurrency } from '@/lib/utils/formatters';
 
 const CreatorDashboard = () => {
@@ -120,12 +121,114 @@ const CreatorDashboard = () => {
   };
 
   if (loading) {
-    return <CreatorDashboardSkeleton />;
+    return (
+      <div className="min-h-screen bg-muted">
+        {/* Header - STATIC */}
+        <div className="bg-background border-b">
+          <Container variant="admin">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold">Creator Dashboard</h1>
+                <p className="text-muted-foreground">Welcome back, {user?.name}!</p>
+              </div>
+              <SkeletonBox className="h-10 w-40 rounded" />
+            </div>
+          </Container>
+        </div>
+        
+        {/* Stats Cards */}
+        <Container variant="admin">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-background rounded-lg border p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <SkeletonBox className="h-4 w-24 mb-2" />
+                      <SkeletonBox className="h-8 w-16 mb-1" />
+                      <SkeletonBox className="h-3 w-20" />
+                    </div>
+                    <SkeletonBox className="h-8 w-8 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Dashboard Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-background rounded-lg border p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <SkeletonBox className="h-6 w-32" />
+                  <SkeletonBox className="h-5 w-5" />
+                </div>
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <SkeletonCircle className="h-6 w-6" />
+                        <div>
+                          <SkeletonBox className="h-4 w-32 mb-1" />
+                          <SkeletonBox className="h-3 w-24" />
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <SkeletonBox className="h-4 w-16 mb-1" />
+                        <SkeletonBox className="h-3 w-12" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 pt-4 border-t">
+                  <SkeletonBox className="h-8 w-full rounded" />
+                </div>
+              </div>
+              
+              <div className="bg-background rounded-lg border p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <SkeletonBox className="h-6 w-24" />
+                  <SkeletonBox className="h-5 w-5" />
+                </div>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-muted rounded-lg">
+                      <SkeletonBox className="h-8 w-8 mx-auto mb-1" />
+                      <SkeletonBox className="h-4 w-16 mx-auto" />
+                    </div>
+                    <div className="text-center p-4 bg-muted rounded-lg">
+                      <SkeletonBox className="h-8 w-8 mx-auto mb-1" />
+                      <SkeletonBox className="h-4 w-20 mx-auto" />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-muted rounded-lg">
+                    <SkeletonBox className="h-5 w-32 mb-3" />
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <SkeletonBox className="h-6 w-8 mx-auto mb-1" />
+                        <SkeletonBox className="h-3 w-16 mx-auto" />
+                      </div>
+                      <div>
+                        <SkeletonBox className="h-6 w-12 mx-auto mb-1" />
+                        <SkeletonBox className="h-3 w-20 mx-auto" />
+                      </div>
+                      <div>
+                        <SkeletonBox className="h-6 w-10 mx-auto mb-1" />
+                        <SkeletonBox className="h-3 w-16 mx-auto" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </div>
+    );
   }
 
   if (!coursesResponse && !loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="space-y-6">
         <EmptyState
           title="Unable to load dashboard"
           description="There was a problem loading your creator dashboard. Please try again."
@@ -142,7 +245,7 @@ const CreatorDashboard = () => {
     <div className="min-h-screen bg-muted">
       {/* Header */}
       <div className="bg-background border-b">
-        <div className="container mx-auto px-4 py-6">
+        <Container variant="admin">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Creator Dashboard</h1>
@@ -162,11 +265,11 @@ const CreatorDashboard = () => {
               )}
             </Button>
           </div>
-        </div>
+        </Container>
       </div>
 
       {/* Stats */}
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="admin">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Total Revenue Card */}
           <Card className="p-6">
@@ -340,9 +443,7 @@ const CreatorDashboard = () => {
           </Card>
         </div>
 
-
-
-      </div>
+      </Container>
     </div>
   );
 };

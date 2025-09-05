@@ -18,6 +18,7 @@ import {
 import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { Container } from '@/components/ui/Container';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
@@ -202,7 +203,7 @@ export default function TicketDetailPage() {
   const priorityInfo = TICKET_PRIORITIES.find(p => p.value === ticket.priority);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Container variant="public">
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -432,6 +433,6 @@ export default function TicketDetailPage() {
         </Card>
       )}
 
-    </div>
+    </Container>
   );
 }

@@ -297,6 +297,121 @@ const TableSkeleton = ({ rows = 5, columns = 4 }) => (
 );
 ```
 
+---
+
+## 🔄 **UNIFIED SKELETON LOADING SYSTEM (2025)**
+
+**CRITICAL UPDATE:** All skeleton loading states across the platform have been standardized to use consistent components and colors for better visual cohesion and maintainability.
+
+### **✅ UNIFIED SKELETON COMPONENTS**
+
+**Base Components Located at:** `/components/ui/LoadingStates.tsx`
+
+```jsx
+// 1. SKELETON BOX - For rectangular content
+export const SkeletonBox = ({ className = '', animate = true }) => {
+  return (
+    <div
+      className={`bg-muted border border-border rounded ${animate ? 'animate-pulse' : ''} ${className}`}
+    />
+  );
+};
+
+// 2. SKELETON CIRCLE - For avatars, icons, round elements  
+export const SkeletonCircle = ({ className = '', animate = true }) => {
+  return (
+    <div
+      className={`bg-muted border border-border rounded-full ${animate ? 'animate-pulse' : ''} ${className}`}
+    />
+  );
+};
+
+// 3. SKELETON TEXT - For text content with realistic proportions
+export const SkeletonText = ({ className = '', animate = true }) => {
+  return (
+    <div
+      className={`bg-muted border border-border rounded-sm ${animate ? 'animate-pulse' : ''} ${className}`}
+    />
+  );
+};
+```
+
+### **🎨 UNIFIED COLOR STANDARD**
+
+**✅ CONSISTENT COLORS ACROSS ALL SKELETON STATES:**
+- **Background:** `bg-muted` (consistent gray from design system)
+- **Border:** `border-border` (subtle border for definition) 
+- **Animation:** `animate-pulse` (built-in Tailwind animation)
+- **❌ NO COLORED BACKGROUNDS** in skeleton states (no bg-success/20, bg-warning/20, etc.)
+
+### **📊 DETAILED ADMIN TABLE SKELETON PATTERN**
+
+**All admin pages (Users, FAQ, Courses, Analytics, Payments, Support) follow this pattern:**
+
+```jsx
+// Admin Table Skeleton with Checkbox Column
+const AdminTableSkeleton = ({ columns = 7, rows = 6 }) => (
+  <div className="overflow-x-auto">
+    <table className="min-w-full divide-y divide-border">
+      <thead className="bg-muted/50">
+        <tr>
+          <th className="px-4 py-3"><SkeletonCircle className="h-4 w-4" /></th>
+          {Array.from({ length: columns - 1 }).map((_, i) => (
+            <th key={i} className="px-6 py-3 text-left">
+              <SkeletonBox className="h-4 w-16" />
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-border">
+        {Array.from({ length: rows }).map((_, i) => (
+          <tr key={i} className="hover:bg-muted/30">
+            <td className="px-4 py-4">
+              <SkeletonCircle className="h-4 w-4" />
+            </td>
+            <td className="px-6 py-4">
+              <div className="flex items-center">
+                <SkeletonCircle className="h-10 w-10 mr-4" />
+                <div>
+                  <SkeletonBox className="h-4 w-32 mb-1" />
+                  <SkeletonBox className="h-3 w-24" />
+                </div>
+              </div>
+            </td>
+            <td className="px-6 py-4">
+              <SkeletonBox className="h-6 w-20 rounded-full" />
+            </td>
+            {/* Additional columns... */}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+```
+
+### **🎯 IMPLEMENTATION STATUS (January 2025)**
+
+**✅ COMPLETED PAGES:**
+- **Admin Pages:** Users, FAQ, Courses, Analytics, Payments, Support
+- **Creator Pages:** Dashboard, Courses
+- **All skeleton states** use unified `bg-muted` coloring
+- **All table skeletons** include realistic structure matching actual content
+
+**📋 SKELETON DESIGN PRINCIPLES:**
+1. **Structure Matching:** Skeleton dimensions exactly match real content
+2. **Realistic Placeholders:** Avatar circles, status badges, action buttons
+3. **Consistent Colors:** Only `bg-muted` and `border-border` 
+4. **Performance Optimized:** 3 base components instead of 20+ specialized ones
+5. **Accessibility:** Maintains proper contrast and screen reader compatibility
+
+**🚫 DEPRECATED PATTERNS:**
+- ❌ `AdCoursesTableSkeleton`, `AdPaymentsTableSkeleton`, `CreatorDashboardSkeleton`
+- ❌ Colored skeleton backgrounds (`bg-success/20`, `bg-warning/20`)
+- ❌ Inconsistent gray colors (`bg-gray-300`, `bg-gray-400`)
+
+---
+
 ### **2. EMPTY STATES - USER-FRIENDLY PATTERNS**
 
 **Rule:** Empty states should be encouraging, explain why content is missing, and provide clear next steps.

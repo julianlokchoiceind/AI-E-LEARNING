@@ -10,11 +10,12 @@ import { ToastService } from '@/lib/toast/ToastService';
 import { useCreatorCoursesQuery } from '@/hooks/queries/useCourses';
 import { usePaymentAnalyticsQuery } from '@/hooks/queries/usePayments';
 import { formatCurrency, formatDate } from '@/lib/utils/formatters';
-import { LoadingSpinner, EmptyState, CreatorAnalyticsSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
 
 const CreatorAnalyticsPage = () => {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('30days');
 
@@ -114,15 +115,108 @@ const CreatorAnalyticsPage = () => {
   }, [courses, paymentSummary, paymentTrends]);
 
   useEffect(() => {
-    if (user?.role !== 'creator' && user?.role !== 'admin') {
+    // Don't check access until auth loading is complete
+    if (authLoading) return;
+    
+    if (!user || (user.role !== 'creator' && user.role !== 'admin')) {
       ToastService.error('Access denied. Creator access required.');
       router.push('/dashboard');
       return;
     }
-  }, [user, router]);
+  }, [user, authLoading, router]);
 
-  if (coursesLoading || analyticsLoading) {
-    return <CreatorAnalyticsSkeleton />;
+  if (authLoading || coursesLoading || analyticsLoading) {
+    return (
+      <div className="min-h-screen bg-muted/50">
+        {/* Header - STATIC */}
+        <div className="bg-white border-b">
+          <Container variant="admin" className="py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold">Analytics Overview</h1>
+                <p className="text-muted-foreground">Track your course performance and revenue</p>
+              </div>
+              <SkeletonBox className="h-9 w-32 rounded" />
+            </div>
+          </Container>
+        </div>
+
+        {/* Content */}
+        <Container variant="admin" className="py-8">
+          {/* Overview Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-background border border-border rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <SkeletonBox className="h-4 w-24 mb-2" />
+                    <SkeletonBox className="h-8 w-16 mb-1" />
+                    <SkeletonBox className="h-4 w-28" />
+                  </div>
+                  <SkeletonCircle className="w-8 h-8" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Time Range Filter */}
+          <div className="mb-6">
+            <div className="flex gap-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <SkeletonBox key={i} className="h-9 w-20 rounded" />
+              ))}
+            </div>
+          </div>
+
+          {/* Charts and Tables Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Revenue Chart */}
+            <div className="bg-background border border-border rounded-lg p-6">
+              <SkeletonBox className="h-6 w-32 mb-4" />
+              <SkeletonBox className="h-64 w-full" />
+            </div>
+
+            {/* Course Performance */}
+            <div className="bg-background border border-border rounded-lg p-6">
+              <SkeletonBox className="h-6 w-40 mb-4" />
+              <div className="space-y-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <SkeletonBox className="h-10 w-10 rounded" />
+                      <div>
+                        <SkeletonBox className="h-4 w-32 mb-1" />
+                        <SkeletonBox className="h-3 w-20" />
+                      </div>
+                    </div>
+                    <SkeletonBox className="h-4 w-12" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-background border border-border rounded-lg p-6">
+            <SkeletonBox className="h-6 w-32 mb-4" />
+            <div className="space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-b-0">
+                  <div className="flex items-center gap-3">
+                    <SkeletonCircle className="w-8 h-8" />
+                    <div>
+                      <SkeletonBox className="h-4 w-48 mb-1" />
+                      <SkeletonBox className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <SkeletonBox className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </div>
+    );
   }
 
   // Show error if analytics failed but continue with course data
@@ -132,7 +226,7 @@ const CreatorAnalyticsPage = () => {
 
   if (!analytics || courses.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="admin" className="py-8">
         <EmptyState
           title="No analytics data yet"
           description="Create and publish courses to see your analytics"
@@ -141,7 +235,7 @@ const CreatorAnalyticsPage = () => {
             onClick: () => router.push('/creator/courses')
           }}
         />
-      </div>
+      </Container>
     );
   }
 
@@ -149,7 +243,7 @@ const CreatorAnalyticsPage = () => {
     <div className="min-h-screen bg-muted/50">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6">
+        <Container variant="admin" className="py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Analytics Overview</h1>
@@ -164,11 +258,11 @@ const CreatorAnalyticsPage = () => {
               Manage Courses
             </Button>
           </div>
-        </div>
+        </Container>
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="admin" className="py-8">
         {/* Overview Stats - NOW WITH REAL PAYMENT DATA */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="p-6">
@@ -389,7 +483,7 @@ const CreatorAnalyticsPage = () => {
             For detailed analytics on individual courses, click the analytics icon next to each course.
           </p>
         </div>
-      </div>
+      </Container>
     </div>
   );
 };

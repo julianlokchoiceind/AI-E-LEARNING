@@ -31,6 +31,7 @@ import { useDeleteLesson } from '@/hooks/queries/useLessons';
 import { LoadingSpinner, EmptyState, ErrorState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 import { StandardResponse } from '@/lib/types/api';
+import { Container } from '@/components/ui/Container';
 
 const CourseBuilderPage = () => {
   const params = useParams();
@@ -448,7 +449,7 @@ const CourseBuilderPage = () => {
 
   if (!courseData) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="admin">
         <ErrorState
           title="Course not found"
           description="The course you're looking for doesn't exist or you don't have permission to edit it."
@@ -457,7 +458,7 @@ const CourseBuilderPage = () => {
             onClick: () => router.push('/admin/courses')
           }}
         />
-      </div>
+      </Container>
     );
   }
 
@@ -471,7 +472,7 @@ const CourseBuilderPage = () => {
       <div className="min-h-screen bg-muted/50">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-40">
-          <div className="container mx-auto px-4 py-4">
+          <Container variant="admin" className="py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Button
@@ -538,11 +539,11 @@ const CourseBuilderPage = () => {
                 </Button>
               </div>
             </div>
-          </div>
+          </Container>
         </div>
 
         {/* Main Content */}
-        <div className="container mx-auto px-4 py-8">
+        <Container variant="admin" className="py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Sidebar */}
             <div className="lg:col-span-1">
@@ -851,7 +852,7 @@ const CourseBuilderPage = () => {
               )}
             </div>
           </div>
-        </div>
+        </Container>
       </div>
 
       {/* Chapter Creation Modal */}

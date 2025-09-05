@@ -1,14 +1,14 @@
 "use client";
 
-
+import { Container } from '@/components/ui/Container';
 
 export default function TermsPage() {
   
 
   return (
     <div className="min-h-screen bg-muted">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
+      <Container variant="public" className="py-8">
+        <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-foreground mb-4">
@@ -139,7 +139,7 @@ export default function TermsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </div>
   );
 }

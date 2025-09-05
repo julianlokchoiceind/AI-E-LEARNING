@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
+import { Container } from '@/components/ui/Container'
 
 export default function Error({
   error,
@@ -17,7 +18,7 @@ export default function Error({
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50">
-      <div className="max-w-md w-full space-y-8 text-center">
+      <Container variant="auth" className="space-y-8 text-center">
         <div>
           <h2 className="mt-6 text-3xl font-extrabold text-foreground">
             Oops! Something went wrong
@@ -49,7 +50,7 @@ export default function Error({
         <p className="mt-2 text-xs text-muted-foreground">
           If this problem persists, please contact support.
         </p>
-      </div>
+      </Container>
     </div>
   )
 }

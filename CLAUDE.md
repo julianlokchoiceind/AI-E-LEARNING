@@ -82,6 +82,7 @@ The documentation has been organized into focused modules for better readability
 1. **ONLY CHANGE WHAT'S EXPLICITLY REQUESTED** - No scope creep allowed
 2. **CONSISTENCY OVER CREATIVITY** - Copy existing patterns exactly
 3. **PATTERN INHERITANCE** - If Feature A uses Pattern X, Feature B must use Pattern X
+4. **MANDATORY FILE ANALYSIS** - Before fixing ANY code, thoroughly read and understand the file's structure, context, and assumptions. Analyze what needs to be changed and how to change it accurately based on the existing codebase patterns
 
 ### 🚨 Key Reminders
 - **React Query:** All CRUD operations use REALTIME cache (staleTime: 0)

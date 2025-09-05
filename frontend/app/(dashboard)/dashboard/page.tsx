@@ -13,7 +13,8 @@ import { OnboardingWizard } from '@/components/feature/OnboardingWizard';
 import { useStudentDashboardQuery } from '@/hooks/queries/useStudent';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { formatDistanceToNow } from '@/lib/utils/formatters';
-import { DashboardSkeleton, EmptyState, CourseCardSkeleton } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
+import { SkeletonBox, SkeletonCircle, EmptyState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
@@ -132,12 +133,86 @@ export default function DashboardPage() {
   };
 
   if (authLoading || loading) {
-    return <DashboardSkeleton />;
+    return (
+      <Container variant="public">
+        {/* Welcome Section - STATIC */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">
+            Welcome back, {user?.name || 'Student'}!
+          </h1>
+          <p className="text-muted-foreground">
+            Continue your learning journey and track your progress
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-background rounded-lg border p-6">
+              <SkeletonBox className="h-4 w-20 mb-2" />
+              <SkeletonBox className="h-8 w-12 mb-1" />
+              <SkeletonBox className="h-3 w-16" />
+            </div>
+          ))}
+        </div>
+
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Recent Courses */}
+          <div className="lg:col-span-2">
+            <div className="bg-background rounded-lg border p-6">
+              <SkeletonBox className="h-6 w-32 mb-6" />
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                    <SkeletonBox className="h-16 w-16 rounded" />
+                    <div className="flex-1">
+                      <SkeletonBox className="h-5 w-48 mb-2" />
+                      <SkeletonBox className="h-4 w-24 mb-2" />
+                      <SkeletonBox className="h-2 w-full rounded-full" />
+                    </div>
+                    <SkeletonBox className="h-8 w-20 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Progress Card */}
+            <div className="bg-background rounded-lg border p-6">
+              <SkeletonBox className="h-6 w-24 mb-4" />
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <SkeletonBox className="h-4 w-16" />
+                  <SkeletonBox className="h-4 w-8" />
+                </div>
+                <SkeletonBox className="h-2 w-full rounded-full" />
+              </div>
+            </div>
+
+            {/* Upcoming Lessons */}
+            <div className="bg-background rounded-lg border p-6">
+              <SkeletonBox className="h-6 w-32 mb-4" />
+              <div className="space-y-3">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="p-3 bg-muted rounded-lg">
+                    <SkeletonBox className="h-4 w-full mb-1" />
+                    <SkeletonBox className="h-3 w-3/4" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   if (!dashboardData) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="public">
         <EmptyState
           title="Unable to load dashboard"
           description="There was a problem loading your dashboard data. Please try again."
@@ -146,12 +221,12 @@ export default function DashboardPage() {
             onClick: refreshDashboard
           }}
         />
-      </div>
+      </Container>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <Container variant="public">
       {/* Welcome Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">
@@ -404,6 +479,6 @@ export default function DashboardPage() {
         onClose={handleOnboardingClose}
         onComplete={handleOnboardingComplete}
       />
-    </div>
+    </Container>
   );
 }

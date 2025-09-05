@@ -15,7 +15,8 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { LoadingSpinner, EmptyState, AdSupportTableSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
 import { 
   useAdminSupportTicketsQuery, 
   useSupportStatsQuery, 
@@ -206,7 +207,8 @@ export default function AdminSupportPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <Container variant="admin">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -343,7 +345,54 @@ export default function AdminSupportPage() {
         </div>
 
         {computedValues.showLoadingSpinner ? (
-          <AdSupportTableSkeleton />
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-20" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                  <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-border">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="hover:bg-muted/30">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <SkeletonBox className="h-4 w-40 mb-1" />
+                        <SkeletonBox className="h-3 w-20" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <SkeletonBox className="h-4 w-32 mb-1" />
+                        <SkeletonBox className="h-3 w-40" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-4 w-24" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-8 w-20 rounded" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-8 w-16 rounded" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <SkeletonBox className="h-4 w-20" />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <SkeletonBox className="h-8 w-12 rounded" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : computedValues.tickets.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             <EmptyState
@@ -531,5 +580,6 @@ export default function AdminSupportPage() {
         </div>
       )}
     </div>
+    </Container>
   );
 }

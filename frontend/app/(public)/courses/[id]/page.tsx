@@ -17,7 +17,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
-import { LoadingSpinner, EmptyState, ErrorState, CourseDetailSkeleton } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
+import { SkeletonBox, SkeletonCircle, EmptyState, ErrorState } from '@/components/ui/LoadingStates';
 
 const CourseDetailPage = () => {
   const params = useParams();
@@ -177,12 +178,90 @@ const CourseDetailPage = () => {
   };
 
   if (loading) {
-    return <CourseDetailSkeleton />;
+    return (
+      <Container variant="public">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            {/* Course Header */}
+            <div className="mb-8">
+              <SkeletonBox className="h-8 w-3/4 mb-4" />
+              <SkeletonBox className="h-5 w-full mb-2" />
+              <SkeletonBox className="h-5 w-2/3 mb-4" />
+              
+              {/* Creator & Stats */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <SkeletonCircle className="h-8 w-8" />
+                  <SkeletonBox className="h-4 w-24" />
+                </div>
+                <SkeletonBox className="h-4 w-20" />
+                <SkeletonBox className="h-4 w-16" />
+              </div>
+              
+              {/* Badges */}
+              <div className="flex gap-2">
+                <SkeletonBox className="h-6 w-16 rounded-full" />
+                <SkeletonBox className="h-6 w-20 rounded-full" />
+              </div>
+            </div>
+
+            {/* Video Player */}
+            <div className="mb-8">
+              <SkeletonBox className="h-64 w-full rounded-lg" />
+            </div>
+
+            {/* Tabs */}
+            <div className="mb-6">
+              <div className="flex border-b">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <SkeletonBox key={i} className="h-10 w-20 mr-4" />
+                ))}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-4">
+              <SkeletonBox className="h-4 w-full" />
+              <SkeletonBox className="h-4 w-5/6" />
+              <SkeletonBox className="h-4 w-3/4" />
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Price Card */}
+            <div className="bg-background rounded-lg border p-6">
+              <SkeletonBox className="h-12 w-32 mb-4" />
+              <SkeletonBox className="h-10 w-full rounded mb-4" />
+              <div className="space-y-2">
+                <SkeletonBox className="h-4 w-full" />
+                <SkeletonBox className="h-4 w-3/4" />
+                <SkeletonBox className="h-4 w-2/3" />
+              </div>
+            </div>
+
+            {/* Course Stats */}
+            <div className="bg-background rounded-lg border p-6">
+              <SkeletonBox className="h-6 w-32 mb-4" />
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <SkeletonBox className="h-4 w-20" />
+                    <SkeletonBox className="h-4 w-16" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   if (!course) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="public">
         <ErrorState
           title="Course not found"
           description="The course you're looking for doesn't exist or has been removed."
@@ -191,7 +270,7 @@ const CourseDetailPage = () => {
             onClick: () => router.push('/courses'),
           }}
         />
-      </div>
+      </Container>
     );
   }
 
@@ -199,7 +278,7 @@ const CourseDetailPage = () => {
     <div className="min-h-screen bg-muted">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-primary to-primary/80 text-white">
-        <div className="container mx-auto px-4 py-12">
+        <Container variant="header" className="py-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Course Info - Left Side */}
             <div className="lg:col-span-2">
@@ -396,11 +475,11 @@ const CourseDetailPage = () => {
               </Card>
             </div>
           </div>
-        </div>
+        </Container>
       </div>
 
       {/* Course Content */}
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="public">
         {/* Tabs */}
         <div className="border-b mb-8">
           <nav className="flex gap-8">
@@ -458,7 +537,7 @@ const CourseDetailPage = () => {
         )}
 
         {activeTab === 'curriculum' && (
-          <div className="max-w-4xl">
+          <div>
             <h2 className="text-2xl font-bold mb-6">Course Curriculum</h2>
             {chapters.length === 0 ? (
               <div className="text-muted-foreground text-center py-8">
@@ -524,7 +603,7 @@ const CourseDetailPage = () => {
         )}
 
         {activeTab === 'creator' && (
-          <div className="max-w-4xl">
+          <div>
             <h2 className="text-2xl font-bold mb-6">About the Creator</h2>
             <Card className="p-6">
               <div className="flex items-start gap-4">
@@ -543,7 +622,7 @@ const CourseDetailPage = () => {
         )}
 
         {activeTab === 'reviews' && (
-          <div className="max-w-4xl">
+          <div>
             <CourseReviews
               courseId={courseId}
               isEnrolled={isEnrolled}
@@ -551,7 +630,7 @@ const CourseDetailPage = () => {
             />
           </div>
         )}
-      </div>
+      </Container>
 
       {/* AI Assistant Widget */}
       <SimpleChatWidget

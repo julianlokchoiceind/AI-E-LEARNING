@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Container } from '@/components/ui/Container'
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth()
@@ -13,7 +14,7 @@ export default function HomePage() {
       <Header />
 
       <div className="flex-1 flex flex-col items-center justify-center p-24">
-        <div className="z-10 max-w-5xl w-full items-center justify-between text-sm">
+        <div className="z-10 w-full items-center justify-between text-sm">
           <h1 className="text-4xl font-bold text-center mb-8 gradient-text">
             AI E-Learning Platform
           </h1>
@@ -30,8 +31,9 @@ export default function HomePage() {
           </div>
         </div>
         
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full">
-          <div className="card-hover p-6 border rounded-lg">
+        <Container variant="public" className="mt-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="card-hover p-6 border rounded-lg">
             <h3 className="text-xl font-semibold mb-2">🎓 Quality Courses</h3>
             <p className="text-muted-foreground">
               Learn from expert creators with structured video content
@@ -49,7 +51,8 @@ export default function HomePage() {
               Monitor your learning journey and earn certificates
             </p>
           </div>
-        </div>
+          </div>
+        </Container>
       </div>
       
       <Footer />

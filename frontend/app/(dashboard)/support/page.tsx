@@ -36,6 +36,7 @@ import {
 } from '@/hooks/queries/useSupport';
 import { supportAPI } from '@/lib/api/support';
 import { useQueryClient } from '@tanstack/react-query';
+import { Container } from '@/components/ui/Container';
 
 export default function SupportPage() {
   const router = useRouter();
@@ -184,7 +185,7 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Container variant="public">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -484,6 +485,6 @@ export default function SupportPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </Container>
   );
 }

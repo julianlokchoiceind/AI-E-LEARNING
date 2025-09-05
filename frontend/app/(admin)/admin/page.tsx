@@ -3,7 +3,8 @@
 import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { EmptyState, AdMainPageSkeleton } from '@/components/ui/LoadingStates';
+import { EmptyState, SkeletonBox, SkeletonText } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
 import { useAdminOverviewQuery } from '@/hooks/queries/useAdminStats';
 import { usePaymentAnalyticsQuery } from '@/hooks/queries/usePayments';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -128,15 +129,12 @@ export default function AdminDashboard() {
     }
   };
 
-  if (loading || analyticsLoading) {
-    return <AdMainPageSkeleton />;
-  }
-
   // useApiQuery automatically handles errors via Toast notifications
   // Continue with graceful degradation - show page structure with fallback values
 
   return (
-    <div className="space-y-6">
+    <Container variant="admin">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -152,12 +150,21 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Users</p>
-              <p className="text-2xl font-bold text-foreground">
-                {stats?.users.total.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-success">
-                +{stats?.users.new_today || 0} today
-              </p>
+              {loading || analyticsLoading ? (
+                <>
+                  <SkeletonBox className="h-8 w-20 mb-1" />
+                  <SkeletonBox className="h-4 w-16" />
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-foreground">
+                    {stats?.users.total.toLocaleString() || '0'}
+                  </p>
+                  <p className="text-sm text-success">
+                    +{stats?.users.new_today || 0} today
+                  </p>
+                </>
+              )}
             </div>
             <div className="h-12 w-12 bg-primary/20 rounded-lg flex items-center justify-center">
               <Users className="w-8 h-8 text-primary" />
@@ -170,12 +177,21 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Courses</p>
-              <p className="text-2xl font-bold text-foreground">
-                {stats?.courses.total || '0'}
-              </p>
-              <p className="text-sm text-warning">
-                {stats?.courses.pending_approval || 0} pending approval
-              </p>
+              {loading || analyticsLoading ? (
+                <>
+                  <SkeletonBox className="h-8 w-16 mb-1" />
+                  <SkeletonBox className="h-4 w-24" />
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-foreground">
+                    {stats?.courses.total || '0'}
+                  </p>
+                  <p className="text-sm text-warning">
+                    {stats?.courses.pending_approval || 0} pending approval
+                  </p>
+                </>
+              )}
             </div>
             <div className="h-12 w-12 bg-success/20 rounded-lg flex items-center justify-center">
               <BookOpen className="w-8 h-8 text-success" />
@@ -188,12 +204,21 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Monthly Revenue</p>
-              <p className="text-2xl font-bold text-foreground">
-                ${stats?.revenue.total_monthly.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-success">
-                {stats?.revenue.success_rate.toFixed(1) || 100}% success rate
-              </p>
+              {loading || analyticsLoading ? (
+                <>
+                  <SkeletonBox className="h-8 w-24 mb-1" />
+                  <SkeletonBox className="h-4 w-20" />
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-foreground">
+                    ${stats?.revenue.total_monthly.toLocaleString() || '0'}
+                  </p>
+                  <p className="text-sm text-success">
+                    {stats?.revenue.success_rate.toFixed(1) || 100}% success rate
+                  </p>
+                </>
+              )}
             </div>
             <div className="h-12 w-12 bg-primary/20 rounded-lg flex items-center justify-center">
               <DollarSign className="w-8 h-8 text-primary" />
@@ -206,12 +231,21 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Active Sessions</p>
-              <p className="text-2xl font-bold text-foreground">
-                {stats?.system.active_sessions || '0'}
-              </p>
-              <p className="text-sm text-primary">
-                {stats?.users.active_this_week || 0} weekly active
-              </p>
+              {loading || analyticsLoading ? (
+                <>
+                  <SkeletonBox className="h-8 w-16 mb-1" />
+                  <SkeletonBox className="h-4 w-20" />
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-foreground">
+                    {stats?.system.active_sessions || '0'}
+                  </p>
+                  <p className="text-sm text-primary">
+                    {stats?.users.active_this_week || 0} weekly active
+                  </p>
+                </>
+              )}
             </div>
             <div className="h-12 w-12 bg-warning/20 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-8 h-8 text-warning" />
@@ -380,6 +414,7 @@ export default function AdminDashboard() {
           </div>
         </Card>
       </div>
-    </div>
+      </div>
+    </Container>
   );
 }

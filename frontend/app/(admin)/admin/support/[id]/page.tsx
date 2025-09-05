@@ -20,6 +20,7 @@ import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Container } from '@/components/ui/Container';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   useSupportTicketQuery,
@@ -149,7 +150,7 @@ export default function AdminTicketDetailPage() {
   const priorityInfo = TICKET_PRIORITIES.find(p => p.value === ticket.priority);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Container variant="admin">
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -327,6 +328,6 @@ export default function AdminTicketDetailPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </Container>
   );
 }

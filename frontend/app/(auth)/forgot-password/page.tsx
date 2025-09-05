@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { useApiMutation } from '@/hooks/useApiMutation'
 import { forgotPassword } from '@/lib/api/auth'
 import { ToastService } from '@/lib/toast/ToastService'
+import { Container } from '@/components/ui/Container'
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
@@ -40,8 +41,8 @@ export default function ForgotPasswordPage() {
   
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+      <Container variant="auth" className="space-y-8">
           <div className="text-center">
             <h2 className="mt-6 text-3xl font-extrabold text-foreground">
               Check your email
@@ -71,14 +72,14 @@ export default function ForgotPasswordPage() {
               Back to login
             </Link>
           </div>
-        </div>
-      </div>
-    )
-  }
+        </Container>
+    </div>
+  )
+}
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-muted">
+      <Container variant="auth" className="space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
             Forgot your password?
@@ -128,7 +129,7 @@ export default function ForgotPasswordPage() {
             </Link>
           </div>
         </form>
-      </div>
+      </Container>
     </div>
   )
 }

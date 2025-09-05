@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { AdAnalyticsSkeleton, EmptyState } from '@/components/ui/LoadingStates';
+import { EmptyState, SkeletonBox, SkeletonText } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
 import { AnalyticsChart } from '@/components/feature/AnalyticsChart';
 import { useAdminOverviewQuery } from '@/hooks/queries/useAdminStats';
 import { usePaymentAnalyticsQuery } from '@/hooks/queries/usePayments';
@@ -94,9 +95,6 @@ export default function AdminAnalyticsPage() {
     }
   };
 
-  if (adminLoading || paymentLoading) {
-    return <AdAnalyticsSkeleton />;
-  }
 
   // useApiQuery automatically handles errors via Toast notifications
   // Continue with graceful degradation - show page structure with fallback values
@@ -120,7 +118,8 @@ export default function AdminAnalyticsPage() {
   const paymentStats = paymentSummary?.data;
 
   return (
-    <div className="space-y-6">
+    <Container variant="admin">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -163,12 +162,21 @@ export default function AdminAnalyticsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Revenue</p>
-              <p className="text-2xl font-bold text-foreground">
-                ${paymentStats?.revenue?.total?.toLocaleString() || stats?.total_revenue?.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-success">
-                ${paymentStats?.revenue?.this_month?.toLocaleString() || stats?.revenue_this_month?.toLocaleString() || '0'} this month
-              </p>
+              {adminLoading || paymentLoading ? (
+                <>
+                  <SkeletonBox className="h-8 w-24 mb-1" />
+                  <SkeletonBox className="h-4 w-20" />
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-foreground">
+                    ${paymentStats?.revenue?.total?.toLocaleString() || stats?.total_revenue?.toLocaleString() || '0'}
+                  </p>
+                  <p className="text-sm text-success">
+                    ${paymentStats?.revenue?.this_month?.toLocaleString() || stats?.revenue_this_month?.toLocaleString() || '0'} this month
+                  </p>
+                </>
+              )}
             </div>
             <div className="h-12 w-12 bg-success/20 rounded-lg flex items-center justify-center">
               <DollarSign className="w-8 h-8 text-success" />
@@ -180,12 +188,21 @@ export default function AdminAnalyticsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Platform Users</p>
-              <p className="text-2xl font-bold text-foreground">
-                {stats?.total_users?.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-primary">
-                +{stats?.new_users_today || 0} today
-              </p>
+              {adminLoading || paymentLoading ? (
+                <>
+                  <SkeletonBox className="h-8 w-16 mb-1" />
+                  <SkeletonBox className="h-4 w-16" />
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-foreground">
+                    {stats?.total_users?.toLocaleString() || '0'}
+                  </p>
+                  <p className="text-sm text-primary">
+                    +{stats?.new_users_today || 0} today
+                  </p>
+                </>
+              )}
             </div>
             <div className="h-12 w-12 bg-primary/20 rounded-lg flex items-center justify-center">
               <Users className="w-8 h-8 text-primary" />
@@ -197,12 +214,21 @@ export default function AdminAnalyticsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Published Courses</p>
-              <p className="text-2xl font-bold text-foreground">
-                {stats?.published_courses || '0'}
-              </p>
-              <p className="text-sm text-warning">
-                {stats?.pending_review_courses || 0} pending review
-              </p>
+              {adminLoading || paymentLoading ? (
+                <>
+                  <SkeletonBox className="h-8 w-16 mb-1" />
+                  <SkeletonBox className="h-4 w-24" />
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-foreground">
+                    {stats?.published_courses || '0'}
+                  </p>
+                  <p className="text-sm text-warning">
+                    {stats?.pending_review_courses || 0} pending review
+                  </p>
+                </>
+              )}
             </div>
             <div className="h-12 w-12 bg-secondary/20 rounded-lg flex items-center justify-center">
               <BookOpen className="w-8 h-8 text-secondary" />
@@ -214,12 +240,21 @@ export default function AdminAnalyticsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Enrollments</p>
-              <p className="text-2xl font-bold text-foreground">
-                {stats?.total_enrollments?.toLocaleString() || '0'}
-              </p>
-              <p className="text-sm text-secondary">
-                {stats?.active_enrollments || 0} active
-              </p>
+              {adminLoading || paymentLoading ? (
+                <>
+                  <SkeletonBox className="h-8 w-20 mb-1" />
+                  <SkeletonBox className="h-4 w-16" />
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-foreground">
+                    {stats?.total_enrollments?.toLocaleString() || '0'}
+                  </p>
+                  <p className="text-sm text-secondary">
+                    {stats?.active_enrollments || 0} active
+                  </p>
+                </>
+              )}
             </div>
             <div className="h-12 w-12 bg-secondary/20 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-8 h-8 text-secondary" />
@@ -314,5 +349,6 @@ export default function AdminAnalyticsPage() {
         </div>
       </div>
     </div>
+    </Container>
   );
 }

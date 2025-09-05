@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { Search, Filter, ChevronDown } from 'lucide-react';
 import CourseCard from '@/components/feature/CourseCard';
 import { Button } from '@/components/ui/Button';
-import { CourseCardSkeleton, EmptyState, LoadingSpinner } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
+import { SkeletonBox, SkeletonCircle, EmptyState, LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useCoursesQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -81,12 +82,12 @@ const CourseCatalogPage = () => {
     <div className="min-h-screen bg-muted">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-primary to-primary/80 text-white py-16">
-        <div className="container mx-auto px-4">
+        <Container variant="header">
           <h1 className="text-4xl font-bold mb-4">Explore Our Courses</h1>
           <p className="text-xl mb-8">Learn AI programming from industry experts</p>
           
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+          <form onSubmit={handleSearch}>
             <div className="relative">
               <input
                 type="text"
@@ -103,11 +104,11 @@ const CourseCatalogPage = () => {
               </button>
             </div>
           </form>
-        </div>
+        </Container>
       </div>
 
       {/* Filters and Course Grid */}
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="public">
         {/* Filter Bar */}
         <div className="mb-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -187,7 +188,38 @@ const CourseCatalogPage = () => {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(8)].map((_, index) => (
-              <CourseCardSkeleton key={index} />
+              <div key={index} className="bg-background rounded-lg border overflow-hidden">
+                {/* Course Thumbnail */}
+                <SkeletonBox className="h-48 w-full" />
+                
+                {/* Course Content */}
+                <div className="p-6">
+                  {/* Title */}
+                  <SkeletonBox className="h-6 w-full mb-2" />
+                  
+                  {/* Description */}
+                  <SkeletonBox className="h-4 w-3/4 mb-4" />
+                  
+                  {/* Creator */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <SkeletonCircle className="h-8 w-8" />
+                    <SkeletonBox className="h-4 w-24" />
+                  </div>
+                  
+                  {/* Stats row */}
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                    <SkeletonBox className="h-4 w-16" />
+                    <SkeletonBox className="h-4 w-20" />
+                    <SkeletonBox className="h-4 w-12" />
+                  </div>
+                  
+                  {/* Price */}
+                  <SkeletonBox className="h-8 w-20 mb-4" />
+                  
+                  {/* Button */}
+                  <SkeletonBox className="h-10 w-full rounded" />
+                </div>
+              </div>
             ))}
           </div>
         ) : courses.length === 0 ? (
@@ -215,7 +247,7 @@ const CourseCatalogPage = () => {
             ))}
           </div>
         )}
-      </div>
+      </Container>
     </div>
   );
 };

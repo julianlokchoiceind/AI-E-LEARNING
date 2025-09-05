@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { ButtonSkeleton } from '@/components/ui/LoadingStates';
+import { SkeletonBox } from '@/components/ui/LoadingStates';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
 import { useUpdateLesson } from '@/hooks/queries/useLessons';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -435,7 +435,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
               className="flex-1"
             >
               {loading ? (
-                <ButtonSkeleton variant="primary" />
+                <SkeletonBox className="h-9 w-20" />
               ) : (
                 'Update Lesson'
               )}

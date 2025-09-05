@@ -11,6 +11,7 @@ import { SubscriptionCheckoutForm } from '@/components/feature/SubscriptionCheck
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { ArrowLeft, Shield, Crown, Check } from 'lucide-react';
+import { Container } from '@/components/ui/Container';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
@@ -76,7 +77,7 @@ export default function SubscribePage() {
 
   return (
     <div className="min-h-screen bg-muted py-8">
-      <div className="max-w-4xl mx-auto px-4">
+      <Container variant="public">
         {/* Header */}
         <div className="mb-8">
           <Button
@@ -218,7 +219,7 @@ export default function SubscribePage() {
             Your payment information is encrypted and secure
           </p>
         </div>
-      </div>
+      </Container>
     </div>
   );
 }

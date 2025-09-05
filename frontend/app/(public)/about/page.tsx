@@ -1,12 +1,13 @@
 'use client'
 
 import { Metadata } from 'next'
+import { Container } from '@/components/ui/Container'
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-muted">
-      <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto">
+      <Container variant="public" className="py-8">
+        <div>
           <h1 className="text-4xl font-bold text-center mb-8 gradient-text">
             About AI E-Learning Platform
           </h1>
@@ -67,7 +68,7 @@ export default function AboutPage() {
             </section>
           </div>
         </div>
-      </div>
+      </Container>
     </div>
   )
 }

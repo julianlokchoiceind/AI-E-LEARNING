@@ -6,10 +6,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { MyCoursesGridSkeleton } from '@/components/ui/LoadingStates';
+import { SkeletonBox, SkeletonCircle } from '@/components/ui/LoadingStates';
 import { useMyCoursesQuery } from '@/hooks/queries/useStudent';
 import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
+import { Container } from '@/components/ui/Container';
 
 interface EnrolledCourse {
   id: string;
@@ -79,11 +80,97 @@ export default function MyCoursesPage() {
   });
 
   if (authLoading || loading) {
-    return <MyCoursesGridSkeleton />;
+    return (
+      <Container variant="public">
+        {/* Header - STATIC */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">My Courses</h1>
+          <p className="text-muted-foreground">
+            Track your learning progress across all enrolled courses
+          </p>
+        </div>
+
+        {/* Filters and Sort - STATIC */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div className="flex gap-2">
+            <button className="px-4 py-2 rounded-lg bg-primary text-white">
+              All (0)
+            </button>
+            <button className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80">
+              In Progress (0)
+            </button>
+            <button className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80">
+              Completed (0)
+            </button>
+          </div>
+          <select className="px-4 py-2 border border-border rounded-lg bg-background">
+            <option>Recently Accessed</option>
+          </select>
+        </div>
+
+        {/* Courses Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-background border border-border rounded-lg overflow-hidden">
+              {/* Course Thumbnail */}
+              <SkeletonBox className="h-48 w-full rounded-none" />
+              
+              {/* Course Info */}
+              <div className="p-6">
+                <SkeletonBox className="h-7 w-full mb-2" />
+                <SkeletonBox className="h-4 w-full mb-2" />
+                <SkeletonBox className="h-4 w-3/4 mb-4" />
+
+                {/* Course Meta */}
+                <div className="flex items-center gap-4 mb-4">
+                  <SkeletonBox className="h-4 w-24" />
+                  <SkeletonBox className="h-4 w-20" />
+                </div>
+
+                {/* Progress */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <SkeletonBox className="h-4 w-16" />
+                    <SkeletonBox className="h-4 w-20" />
+                  </div>
+                  <SkeletonBox className="h-2 w-full mb-1" />
+                  <SkeletonBox className="h-3 w-16" />
+                </div>
+
+                {/* Watch Time */}
+                <div className="flex items-center justify-between text-sm mb-4">
+                  <SkeletonBox className="h-4 w-20" />
+                  <SkeletonBox className="h-4 w-16" />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <SkeletonBox className="h-10 flex-1" />
+                  <SkeletonBox className="h-10 w-20" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Summary Stats */}
+        <div className="mt-12 p-6 bg-muted/50 rounded-lg">
+          <SkeletonBox className="h-6 w-32 mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i}>
+                <SkeletonBox className="h-8 w-12 mx-auto mb-2" />
+                <SkeletonBox className="h-4 w-20 mx-auto" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <Container variant="public">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">My Courses</h1>
@@ -278,6 +365,6 @@ export default function MyCoursesPage() {
           </div>
         </div>
       )}
-    </div>
+    </Container>
   );
 }

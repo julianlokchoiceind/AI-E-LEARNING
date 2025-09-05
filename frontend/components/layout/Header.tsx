@@ -8,6 +8,8 @@ import { useNavigationTranslations } from '@/lib/i18n/hooks'
 import { LanguageSwitcherCompact } from '@/components/ui/LanguageSwitcher'
 import { useLocalizedRouter } from '@/lib/i18n/context'
 import { Badge } from '@/components/ui/Badge'
+import { Container } from '@/components/ui/Container'
+import { SkeletonBox, SkeletonCircle } from '@/components/ui/LoadingStates'
 import { useSupportNotifications } from '@/hooks/useSupportNotifications'
 
 export function Header() {
@@ -35,7 +37,7 @@ export function Header() {
 
   return (
     <header className="bg-background shadow-sm border-b">
-      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <Container variant="header">
         <div className="flex h-16 justify-between items-center">
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0">
@@ -71,8 +73,8 @@ export function Header() {
             {loading ? (
               /* Show loading skeleton to prevent hydration mismatch */
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-muted rounded-full animate-pulse"></div>
-                <div className="w-20 h-4 bg-muted rounded animate-pulse"></div>
+                <SkeletonCircle className="w-8 h-8" />
+                <SkeletonBox className="w-20 h-4" />
               </div>
             ) : isAuthenticated ? (
               <div className="relative" ref={userMenuRef}>
@@ -252,8 +254,8 @@ export function Header() {
               {loading ? (
                 /* Mobile loading skeleton */
                 <div className="px-2 space-y-2">
-                  <div className="w-full h-10 bg-muted rounded animate-pulse"></div>
-                  <div className="w-full h-10 bg-muted rounded animate-pulse"></div>
+                  <SkeletonBox className="w-full h-10" />
+                  <SkeletonBox className="w-full h-10" />
                 </div>
               ) : isAuthenticated ? (
                 <div className="px-2 space-y-1">
@@ -333,7 +335,7 @@ export function Header() {
             </div>
           </div>
         )}
-      </nav>
+      </Container>
     </header>
   )
 }

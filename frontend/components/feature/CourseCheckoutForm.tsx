@@ -9,7 +9,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/Button';
-import { ButtonSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useCreateCoursePayment } from '@/hooks/queries/usePayments';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -329,7 +329,10 @@ function CheckoutForm({
         size="lg"
       >
         {isLoading ? (
-          <ButtonSkeleton variant="primary" />
+          <>
+            <LoadingSpinner size="sm" className="mr-2 inline" />
+            Processing...
+          </>
         ) : (
           <>
             <Lock className="w-4 h-4 mr-2" />

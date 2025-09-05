@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { AnalyticsChart } from '@/components/feature/AnalyticsChart';
 import { useCourseAnalyticsQuery } from '@/hooks/queries/useCourses';
+import { Container } from '@/components/ui/Container';
 
 const CourseAnalyticsPage = () => {
   const params = useParams();
@@ -63,7 +64,7 @@ const CourseAnalyticsPage = () => {
     <div className="min-h-screen bg-muted/50">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6">
+        <Container variant="admin" className="py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
@@ -109,11 +110,11 @@ const CourseAnalyticsPage = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </Container>
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-8">
+      <Container variant="admin" className="py-8">
         {/* Overview Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="p-6">
@@ -305,7 +306,7 @@ const CourseAnalyticsPage = () => {
             </Card>
           )}
         </div>
-      </div>
+      </Container>
     </div>
   );
 };

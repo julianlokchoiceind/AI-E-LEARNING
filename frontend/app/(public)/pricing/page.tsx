@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
 import { loadStripe } from '@stripe/stripe-js';
+import { Container } from '@/components/ui/Container';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
@@ -49,17 +50,18 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-muted py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Choose Your Learning Path
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Flexible pricing options to match your learning needs
-          </p>
-        </div>
+      <Container variant="public">
+        <div>
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
+              Choose Your Learning Path
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              Flexible pricing options to match your learning needs
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Free Plan */}
           <div className="bg-white rounded-lg shadow-lg p-8 border border-border">
             <div className="text-center mb-6">
@@ -231,9 +233,10 @@ export default function PricingPage() {
             </Button>
           </div>
         </div>
+        </div>
 
         {/* FAQ Section */}
-        <div className="mt-16 max-w-3xl mx-auto">
+        <div className="mt-16">
           <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
           
           <div className="space-y-6">
@@ -259,7 +262,7 @@ export default function PricingPage() {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </div>
   );
 }

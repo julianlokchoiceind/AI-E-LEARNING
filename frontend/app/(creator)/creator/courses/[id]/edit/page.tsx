@@ -29,6 +29,7 @@ import { useDeleteChapter } from '@/hooks/queries/useChapters';
 import { useDeleteLesson } from '@/hooks/queries/useLessons';
 import { ErrorState } from '@/components/ui/LoadingStates';
 import { ToastService } from '@/lib/toast/ToastService';
+import { Container } from '@/components/ui/Container';
 
 // Type for chapters with lessons
 interface ChapterWithLessons {
@@ -400,7 +401,7 @@ const CourseBuilderPage = () => {
       <div className="min-h-screen bg-muted/50">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-50">
-          <div className="container mx-auto px-4 py-4">
+          <Container variant="admin" className="py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Button
@@ -468,11 +469,11 @@ const CourseBuilderPage = () => {
                 </Button>
               </div>
             </div>
-          </div>
+          </Container>
         </div>
 
         {/* Main Content */}
-        <div className="container mx-auto px-4 py-8">
+        <Container variant="admin" className="py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Sidebar */}
             <div className="lg:col-span-1">
@@ -775,7 +776,7 @@ const CourseBuilderPage = () => {
               )}
             </div>
           </div>
-        </div>
+        </Container>
       </div>
 
       {/* Chapter Creation Modal */}

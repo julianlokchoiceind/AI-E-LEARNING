@@ -15,7 +15,8 @@ import {
 import { useBillingDashboardQuery, useCancelSubscription } from '@/hooks/queries/usePayments';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
-import { BillingPageSkeleton } from '@/components/ui/LoadingStates';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
+import { Container } from '@/components/ui/Container';
 import { 
   CreditCard, 
   Calendar, 
@@ -69,7 +70,13 @@ export default function BillingPage() {
   };
 
   if (authLoading || loading) {
-    return <BillingPageSkeleton />;
+    return (
+      <Container variant="public">
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <LoadingSpinner size="lg" message="Loading billing information..." />
+        </div>
+      </Container>
+    );
   }
 
   if (!user) {
@@ -80,8 +87,8 @@ export default function BillingPage() {
   const isPremiumUser = user.premiumStatus;
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-6xl mx-auto px-4">
+    <div className="min-h-screen bg-background">
+      <Container variant="public">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -299,7 +306,7 @@ export default function BillingPage() {
             </Button>
           </div>
         </Card>
-      </div>
+      </Container>
     </div>
   );
 }
