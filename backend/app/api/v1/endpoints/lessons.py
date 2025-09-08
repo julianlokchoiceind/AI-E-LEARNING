@@ -390,7 +390,7 @@ async def upload_lesson_resource(
     if current_user.role == "creator":
         # Get course to check ownership
         course_service = CourseService()
-        course = await course_service.get_course_by_id(str(lesson.course_id))
+        course = await course_service.get_course(str(lesson.course_id))
         if not course or str(course.creator_id) != str(current_user.id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -513,7 +513,7 @@ async def add_lesson_url_resource(
     if current_user.role == "creator":
         # Get course to check ownership
         course_service = CourseService()
-        course = await course_service.get_course_by_id(str(lesson.course_id))
+        course = await course_service.get_course(str(lesson.course_id))
         if not course or str(course.creator_id) != str(current_user.id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -593,7 +593,7 @@ async def delete_lesson_resource(
     if current_user.role == "creator":
         # Get course to check ownership
         course_service = CourseService()
-        course = await course_service.get_course_by_id(str(lesson.course_id))
+        course = await course_service.get_course(str(lesson.course_id))
         if not course or str(course.creator_id) != str(current_user.id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

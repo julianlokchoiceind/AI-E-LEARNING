@@ -14,7 +14,12 @@ import {
   Clock,
   Youtube,
   ExternalLink,
-  Plus
+  Plus,
+  File,
+  X,
+  Image,
+  FileCode,
+  FileArchive
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -76,10 +81,8 @@ const LessonEditPage = () => {
   const [editingQuizId, setEditingQuizId] = useState<string | null>(null);
 
   // React Query hooks  
-  const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId) as {
-    data: StandardResponse<Lesson> | undefined;
-    loading: boolean;
-  };
+  const { data: lessonResponse, loading: lessonLoading } = useLessonQuery(lessonId);
+  const typedLessonResponse = lessonResponse as StandardResponse<Lesson> | null;
   const { mutateAsync: updateLessonAction } = useUpdateLesson(true); // silent autosave
   const { mutateAsync: manualSaveLessonAction } = useUpdateLesson(false); // manual save with toast
   const { mutate: deleteResource } = useDeleteLessonResource();
@@ -89,48 +92,121 @@ const LessonEditPage = () => {
 
   // Initialize lesson data
   useEffect(() => {
-    if (lessonResponse?.success && lessonResponse.data) {
-      const lesson = lessonResponse.data;
+    if (typedLessonResponse?.success && typedLessonResponse.data) {
+      const lesson = typedLessonResponse.data;
       const resources = lesson.resources || [];
       
       // Ensure video object is properly initialized to prevent input field reset
       const lessonDataWithResources = {
         ...lesson,
-        video: lesson.video || { url: '', youtube_id: '', duration: undefined },
-        resources: resources // 🔧 CRITICAL FIX: Ensure resources are included in lessonData
+        video: lesson.video || { 
+          url: '', 
+          youtube_id: '', 
+          duration: 0,
+          transcript: '',
+          captions: '',
+          thumbnail: ''
+        },
+        unlock_conditions: lesson.unlock_conditions || {
+          previous_lesson_required: true,
+          quiz_pass_required: false,
+          minimum_watch_percentage: 95
+        },
+        resources: resources, // 🔧 CRITICAL FIX: Ensure resources are included in lessonData
+        has_quiz: lesson.has_quiz || false // 🔧 CRITICAL FIX: Include has_quiz field for consistency
       };
       
       setLessonData(lessonDataWithResources);
       setTitleInput(lesson.title);
       setResources(resources); // Keep separate state for UI, but ensure sync with lessonData
     }
-  }, [lessonResponse]);
+  }, [typedLessonResponse]);
+
+  // Sync resources with lessonData
+  useEffect(() => {
+    if (lessonData?.resources) {
+      setResources(lessonData.resources);
+    }
+  }, [lessonData?.resources]);
+
+  // 🔧 Manual save handler with course timestamp update (like Course Edit Page)
+  const handleManualSave = async () => {
+    if (!lessonData) {
+      ToastService.error('No lesson data to save');
+      return;
+    }
+
+    const lessonIdToUse = lessonData.id || lessonId;
+    if (!lessonIdToUse) {
+      ToastService.error('Lesson ID missing');
+      return;
+    }
+
+    // Filter out system fields (same logic as autosave)
+    const updateData: any = {};
+    
+    if (lessonData.title !== undefined) updateData.title = lessonData.title;
+    if (lessonData.description !== undefined) updateData.description = lessonData.description;
+    if (lessonData.content !== undefined) updateData.content = lessonData.content;
+    if (lessonData.status !== undefined) updateData.status = lessonData.status;
+    if (lessonData.resources !== undefined) {
+      // Filter out invalid resources before sending to API
+      updateData.resources = lessonData.resources.filter(resource => 
+        resource.title.trim().length > 0 && 
+        resource.url.trim().length > 0
+      );
+    }
+    
+    // Always include video field - send null/empty for deletion
+    if (lessonData.video !== undefined) {
+      updateData.video = lessonData.video;
+    }
+
+    try {
+      await manualSaveLessonAction({ lessonId: lessonIdToUse, data: updateData });
+      
+      // React Query will automatically refetch course data
+      
+      // Toast will be shown automatically by useApiMutation (showToast=true)
+    } catch (error: any) {
+      // Error toast will be shown automatically by useApiMutation
+      console.error('Manual save failed:', error);
+    }
+  };
 
   // Auto-save hook
   const { saveStatus, lastSavedAt, error, forceSave, hasUnsavedChanges } = useAutosave(
     lessonData,
     {
       delay: 2000,
+      initialLastSavedAt: lessonData?.updated_at || lessonData?.created_at, // Initialize from server data
       onSave: async (data) => {
         if (!data || !data.id) return;
         
         try {
-          // Filter out invalid resources before sending to API
-          const validResources = data.resources?.filter(resource => 
-            resource.title.trim().length > 0 && 
-            resource.url.trim().length > 0
-          ) || [];
-
+          // Clean the data before sending - only include non-null/undefined values
+          const updateData: any = {};
+          
+          if (data.title !== undefined) updateData.title = data.title;
+          if (data.description !== undefined) updateData.description = data.description;
+          if (data.content !== undefined) updateData.content = data.content;
+          if (data.status !== undefined) updateData.status = data.status;
+          if (data.resources !== undefined) {
+            // Filter out invalid resources before sending to API
+            updateData.resources = data.resources.filter(resource => 
+              resource.title.trim().length > 0 && 
+              resource.url.trim().length > 0
+            );
+          }
+          
+          // Always include video field - send null/empty for deletion
+          if (data.video !== undefined) {
+            updateData.video = data.video;
+          }
+          
           await updateLessonAction({ 
             lessonId: data.id, 
-            data: {
-              title: data.title,
-              description: data.description,
-              video: data.video || undefined,
-              content: data.content,
-              resources: validResources as any, // Type assertion to handle extended resource types
-              status: data.status as 'draft' | 'published'
-            }
+            data: updateData
           });
         } catch (error) {
           throw error;
@@ -150,7 +226,10 @@ const LessonEditPage = () => {
 
   const handleTitleSave = () => {
     if (titleInput.trim() !== lessonData?.title) {
-      setLessonData((prev: Lesson | null) => ({ ...prev!, title: titleInput.trim() }));
+      setLessonData((prev: Lesson | null) => {
+        if (!prev) return null;
+        return { ...prev, title: titleInput.trim() };
+      });
     }
     setIsEditingTitle(false);
   };
@@ -163,16 +242,19 @@ const LessonEditPage = () => {
       youtubeId = youtubeMatch[1];
     }
 
-    setLessonData(prev => ({
-      ...prev!,
-      video: {
-        // Spread existing properties first
-        ...prev?.video,
-        // Override with new values
-        url,
-        youtube_id: youtubeId
-      }
-    }));
+    setLessonData(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        video: {
+          // Spread existing properties first
+          ...prev?.video,
+          // Override with new values
+          url,
+          youtube_id: youtubeId
+        }
+      };
+    });
   };
 
   // Resource workflow handlers
@@ -229,6 +311,28 @@ const LessonEditPage = () => {
         }
       }
     );
+  };
+
+  // Get icon for resource type - matching ResourceDisplay component
+  const getResourceIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'pdf':
+        return <FileText className="w-5 h-5 text-destructive" />;
+      case 'doc':
+        return <FileText className="w-5 h-5 text-primary" />;
+      case 'code':
+        return <FileCode className="w-5 h-5 text-success" />;
+      case 'zip':
+        return <FileArchive className="w-5 h-5 text-primary" />;
+      case 'exercise':
+        return <FileText className="w-5 h-5 text-warning" />;
+      case 'link':
+        return <Link className="w-5 h-5 text-primary" />;
+      case 'other':
+      default:
+        // For 'other' type (images, etc)
+        return <Image className="w-5 h-5 text-muted-foreground" />;
+    }
   };
 
   // Quiz workflow handlers
@@ -367,8 +471,8 @@ const LessonEditPage = () => {
 
                 <Button
                   variant="primary"
-                  onClick={forceSave}
-                  disabled={saveStatus === 'saving' || !hasUnsavedChanges}
+                  onClick={handleManualSave}
+                  disabled={saveStatus === 'saving'}
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Save
@@ -386,8 +490,7 @@ const LessonEditPage = () => {
                 { id: 'content', label: 'Content', icon: FileText },
                 { id: 'video', label: 'Video', icon: Video },
                 { id: 'resources', label: 'Resources', icon: Link },
-                { id: 'quiz', label: 'Quiz', icon: HelpCircle },
-                { id: 'settings', label: 'Settings', icon: Settings }
+                { id: 'quiz', label: 'Quiz', icon: HelpCircle }
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -424,7 +527,10 @@ const LessonEditPage = () => {
                       </label>
                       <textarea
                         value={lessonData.description || ''}
-                        onChange={(e) => setLessonData((prev: Lesson | null) => ({ ...prev!, description: e.target.value }))}
+                        onChange={(e) => setLessonData((prev: Lesson | null) => {
+                          if (!prev) return null;
+                          return { ...prev, description: e.target.value };
+                        })}
                         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         rows={3}
                         placeholder="Brief description of what students will learn..."
@@ -437,7 +543,10 @@ const LessonEditPage = () => {
                       </label>
                       <textarea
                         value={lessonData.content || ''}
-                        onChange={(e) => setLessonData((prev: Lesson | null) => ({ ...prev!, content: e.target.value }))}
+                        onChange={(e) => setLessonData((prev: Lesson | null) => {
+                          if (!prev) return null;
+                          return { ...prev, content: e.target.value };
+                        })}
                         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
                         rows={15}
                         placeholder="Detailed lesson content in markdown format..."
@@ -452,7 +561,10 @@ const LessonEditPage = () => {
                   <h3 className="font-semibold mb-4">Lesson Status</h3>
                   <select
                     value={lessonData.status}
-                    onChange={(e) => setLessonData((prev: Lesson | null) => ({ ...prev!, status: e.target.value as 'draft' | 'published' }))}
+                    onChange={(e) => setLessonData((prev: Lesson | null) => {
+                      if (!prev) return null;
+                      return { ...prev, status: e.target.value as 'draft' | 'published' };
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="draft">Draft</option>
@@ -522,13 +634,16 @@ const LessonEditPage = () => {
                         // Normalize comma to dot for decimal separator
                         const normalizedValue = e.target.value.replace(',', '.');
                         const minutes = parseFloat(normalizedValue) || 0;
-                        setLessonData(prev => ({
-                          ...prev!,
-                          video: { 
-                            ...prev?.video, 
-                            duration: Math.round(minutes * 60) // Convert minutes to seconds for storage
-                          }
-                        }));
+                        setLessonData(prev => {
+                          if (!prev) return null;
+                          return {
+                            ...prev,
+                            video: { 
+                              ...prev?.video, 
+                              duration: Math.round(minutes * 60) // Convert minutes to seconds for storage
+                            }
+                          };
+                        });
                       }}
                       placeholder="15.5"
                       className="w-32"
@@ -544,13 +659,16 @@ const LessonEditPage = () => {
                   </label>
                   <textarea
                     value={lessonData.video?.transcript || ''}
-                    onChange={(e) => setLessonData(prev => ({
-                      ...prev!,
-                      video: { 
-                        ...prev?.video, 
-                        transcript: e.target.value 
-                      }
-                    }))}
+                    onChange={(e) => setLessonData(prev => {
+                      if (!prev) return null;
+                      return {
+                        ...prev,
+                        video: { 
+                          ...prev?.video, 
+                          transcript: e.target.value 
+                        }
+                      };
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     rows={10}
                     placeholder="Video transcript for accessibility and AI features..."
@@ -597,16 +715,15 @@ const LessonEditPage = () => {
                   {resources.map((resource, index) => (
                     <div key={index} className="border rounded-lg p-4 hover:border-border transition-colors">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-medium text-foreground">{resource.title}</h3>
-                            <Badge 
-                              variant={resource.type === 'link' ? 'secondary' : 'default'}
-                              className="text-xs"
-                            >
-                              {resource.type.toUpperCase()}
-                            </Badge>
-                          </div>
+                        <div className="flex items-start gap-3 flex-1">
+                          {getResourceIcon(resource.type)}
+                          
+                          <div className="flex-1">
+                            <div className="mb-2">
+                              <h3 className="font-medium text-foreground">
+                                {resource.title}
+                              </h3>
+                            </div>
                           
                           {resource.description && (
                             <p className="text-sm text-muted-foreground mb-2">{resource.description}</p>
@@ -616,20 +733,21 @@ const LessonEditPage = () => {
                             href={getAttachmentUrl(resource.url)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
+                            className="text-sm text-primary hover:text-primary"
                           >
-                            <ExternalLink className="w-3 h-3" />
                             {resource.url}
                           </a>
+                          </div>
                         </div>
                         
                         <Button 
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleDeleteResource(index)}
-                          className="text-destructive hover:text-destructive/80 ml-4"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 ml-4 p-1"
+                          title="Remove resource"
                         >
-                          Remove
+                          <X className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
@@ -646,9 +764,9 @@ const LessonEditPage = () => {
                 <h2 className="text-lg font-semibold">Lesson Quiz</h2>
               </div>
               
-              {/* QuizManager handles its own data fetching and empty state */}
               <QuizManager 
                 lessonId={lessonId}
+                hasQuiz={lessonData?.has_quiz}
                 onCreateQuiz={handleCreateQuiz}
                 onEditQuiz={handleEditQuiz}
                 onQuizDeleted={handleQuizDeleted}
@@ -656,92 +774,6 @@ const LessonEditPage = () => {
             </Card>
           )}
 
-          {/* Settings Tab */}
-          {activeTab === 'settings' && (
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Lesson Settings</h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-medium mb-3">Sequential Learning</h3>
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={lessonData.unlock_conditions?.previous_lesson_required ?? true}
-                        onChange={(e) => setLessonData((prev: Lesson | null) => ({
-                          ...prev!,
-                          unlock_conditions: {
-                            ...prev?.unlock_conditions,
-                            previous_lesson_required: e.target.checked
-                          }
-                        }))}
-                        className="rounded"
-                      />
-                      <span className="text-sm">Previous lesson must be completed</span>
-                    </label>
-                    
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={lessonData.unlock_conditions?.quiz_pass_required ?? false}
-                        onChange={(e) => setLessonData((prev: Lesson | null) => ({
-                          ...prev!,
-                          unlock_conditions: {
-                            ...prev?.unlock_conditions,
-                            quiz_pass_required: e.target.checked
-                          }
-                        }))}
-                        className="rounded"
-                      />
-                      <span className="text-sm">Previous quiz must be passed</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Minimum Watch Percentage for Completion
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      value={lessonData.unlock_conditions?.minimum_watch_percentage ?? 95}
-                      onChange={(e) => setLessonData((prev: Lesson | null) => ({
-                        ...prev!,
-                        unlock_conditions: {
-                          ...prev?.unlock_conditions,
-                          minimum_watch_percentage: parseInt(e.target.value)
-                        }
-                      }))}
-                      className="w-24"
-                      min="0"
-                      max="100"
-                    />
-                    <span className="text-sm text-muted-foreground">%</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={lessonData.is_free_preview ?? false}
-                      onChange={(e) => setLessonData((prev: Lesson | null) => ({
-                        ...prev!,
-                        is_free_preview: e.target.checked
-                      }))}
-                      className="rounded"
-                    />
-                    <span className="text-sm font-medium">Free Preview</span>
-                  </label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Allow non-enrolled users to preview this lesson
-                  </p>
-                </div>
-              </div>
-            </Card>
-          )}
         </Container>
       </div>
 

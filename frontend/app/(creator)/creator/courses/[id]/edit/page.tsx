@@ -66,7 +66,8 @@ const CourseBuilderPage = () => {
   const { data: chaptersResponse, loading: chaptersLoading, refetch: refetchChapters } = useCourseChaptersQuery(courseId);
   
   // React Query mutations
-  const { mutateAsync: updateCourseAction } = useUpdateCourse();
+  const { mutateAsync: updateCourseAction } = useUpdateCourse(true); // silent=true for autosave (no toast spam)
+  const { mutateAsync: manualSaveCourseAction } = useUpdateCourse(false); // Manual save with toast feedback
   const { mutate: deleteChapterAction } = useDeleteChapter();
   const { mutate: deleteLessonAction } = useDeleteLesson();
   const { mutateAsync: reorderChaptersAction } = useReorderChapters();
@@ -128,6 +129,38 @@ const CourseBuilderPage = () => {
       showToastOnError: false // Prevent duplicate toast notifications
     }
   );
+
+  // Custom manual save handler with toast feedback
+  const handleManualSave = async () => {
+    if (!courseData) {
+      ToastService.error('No course data to save');
+      return;
+    }
+
+    const courseIdToUse = courseData.id || courseId;
+    if (!courseIdToUse) {
+      ToastService.error('Course ID missing');
+      return;
+    }
+
+    // Filter out system fields (same logic as autosave)
+    const { 
+      _id, id, created_at, updated_at, stats, creator_id, creator_name, slug,
+      ...userEditableFields  
+    } = courseData;
+
+    const updateData = Object.fromEntries(
+      Object.entries(userEditableFields).filter(([_, v]) => v !== undefined && v !== null)
+    );
+
+    try {
+      await manualSaveCourseAction({ courseId: courseIdToUse, data: updateData });
+      // Toast will be shown automatically by useApiMutation (showToast=true)
+    } catch (error: any) {
+      // Error toast will be shown automatically by useApiMutation
+      console.error('Manual save failed:', error);
+    }
+  };
 
   // Initialize data from React Query responses
   useEffect(() => {
@@ -461,7 +494,7 @@ const CourseBuilderPage = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => forceSave()}
+                  onClick={handleManualSave}
                   loading={saveStatus === 'saving'}
                 >
                   <Save className="w-4 h-4 mr-2" />
@@ -671,6 +704,7 @@ const CourseBuilderPage = () => {
                       onEdit={handleChapterEdit}
                       onDelete={handleChapterDelete}
                       onLessonEdit={handleLessonEdit}
+                      onLessonEditDetailed={handleLessonEditDetailed}
                       onLessonDelete={handleLessonDelete}
                       onCreateLesson={handleCreateLesson}
                       onLessonsReorder={handleLessonsReorder}

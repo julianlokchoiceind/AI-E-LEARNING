@@ -492,8 +492,7 @@ const LessonEditPage = () => {
                 { id: 'content', label: 'Content', icon: FileText },
                 { id: 'video', label: 'Video', icon: Video },
                 { id: 'resources', label: 'Resources', icon: Link },
-                { id: 'quiz', label: 'Quiz', icon: HelpCircle },
-                { id: 'settings', label: 'Settings', icon: Settings }
+                { id: 'quiz', label: 'Quiz', icon: HelpCircle }
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -786,101 +785,6 @@ const LessonEditPage = () => {
             </Card>
           )}
 
-          {/* Settings Tab */}
-          {activeTab === 'settings' && (
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Lesson Settings</h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-medium mb-3">Sequential Learning</h3>
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={lessonData.unlock_conditions?.previous_lesson_required ?? true}
-                        onChange={(e) => setLessonData((prev: Lesson | null) => {
-                          if (!prev) return null;
-                          return {
-                            ...prev,
-                            unlock_conditions: {
-                              ...prev.unlock_conditions || {},
-                              previous_lesson_required: e.target.checked
-                            }
-                          };
-                        })}
-                        className="rounded"
-                      />
-                      <span className="text-sm">Previous lesson must be completed</span>
-                    </label>
-                    
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={lessonData.unlock_conditions?.quiz_pass_required ?? false}
-                        onChange={(e) => setLessonData((prev: Lesson | null) => {
-                          if (!prev) return null;
-                          return {
-                            ...prev,
-                            unlock_conditions: {
-                              ...prev.unlock_conditions || {},
-                              quiz_pass_required: e.target.checked
-                            }
-                          };
-                        })}
-                        className="rounded"
-                      />
-                      <span className="text-sm">Previous quiz must be passed</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Minimum Watch Percentage for Completion
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      value={lessonData.unlock_conditions?.minimum_watch_percentage ?? 95}
-                      onChange={(e) => setLessonData((prev: Lesson | null) => {
-                        if (!prev) return null;
-                        return {
-                          ...prev,
-                          unlock_conditions: {
-                            ...prev.unlock_conditions || {},
-                            minimum_watch_percentage: parseInt(e.target.value) || 95
-                          }
-                        };
-                      })}
-                      className="w-24"
-                      min="0"
-                      max="100"
-                    />
-                    <span className="text-sm text-muted-foreground">%</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={lessonData.is_free_preview ?? false}
-                      onChange={(e) => setLessonData((prev: Lesson | null) => {
-                        if (!prev) return null;
-                        return { ...prev, is_free_preview: e.target.checked };
-                      })}
-                      className="rounded"
-                    />
-                    <span className="text-sm font-medium">Free Preview</span>
-                  </label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Allow non-enrolled users to preview this lesson
-                  </p>
-                </div>
-              </div>
-            </Card>
-          )}
         </Container>
       </div>
 
