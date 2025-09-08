@@ -92,7 +92,7 @@ export const getCreatorCourses = async (params?: CreatorCoursesFilters): Promise
   }
   
   const queryString = queryParams.toString();
-  const url = queryString ? `/courses?${queryString}` : '/courses';
+  const url = queryString ? `/courses/my?${queryString}` : '/courses/my';
   
   return api.get<StandardResponse<CoursesListData>>(url, { requireAuth: true });
 };

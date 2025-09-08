@@ -138,7 +138,7 @@ export default function DashboardPage() {
         {/* Welcome Section - STATIC */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {user?.name || 'Student'}!
+            Welcome back, {user?.name}!
           </h1>
           <p className="text-muted-foreground">
             Continue your learning journey and track your progress

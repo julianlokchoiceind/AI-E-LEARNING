@@ -94,18 +94,9 @@ async def list_courses(
     - Admins: All courses (all statuses)
     """
     try:
-        # Only show unpublished courses to their creators or admins
+        # Public course catalog - ALWAYS show only published courses
         status = CourseStatus.PUBLISHED
         creator_id = None
-        
-        if current_user:
-            if current_user.role == "admin":
-                # Admin can see all courses, pass status as None to see all
-                status = None
-            elif current_user.role == "creator":
-                # PRD: Content Creators should only see their own courses
-                creator_id = str(current_user.id)
-                status = None  # See all statuses of own courses
         
         result = await CourseService.list_courses(
             page=page,
@@ -155,6 +146,67 @@ async def list_courses(
     except Exception as e:
         logger.error(f"Error listing courses: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list courses")
+
+
+@router.get("/my", response_model=StandardResponse[CourseListResponse])
+@measure_performance("api.courses.my")
+async def get_my_courses(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    search: Optional[str] = None,
+    status: Optional[CourseStatus] = None,
+    category: Optional[CourseCategory] = None,
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[CourseListResponse]:
+    """Get current creator's own courses for dashboard."""
+    try:
+        # Only creators can access this endpoint
+        if current_user.role != "creator":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only creators can access this endpoint"
+            )
+        
+        result = await CourseService.list_courses(
+            page=page,
+            per_page=per_page,
+            search=search,
+            status=status,
+            category=category,
+            creator_id=str(current_user.id),
+            level=None,
+            is_free=None
+        )
+        
+        # Convert courses to response format (copy from list_courses logic)
+        courses_with_access = []
+        for course in result["courses"]:
+            course_dict = course.dict()
+            course_dict["id"] = str(course.id)
+            course_dict["creator_id"] = str(course.creator_id)
+            
+            # For creator's own courses, they have full access
+            access_info = {"has_access": True, "is_enrolled": False}
+            course_dict.update(access_info)
+            
+            courses_with_access.append(CourseResponse(**course_dict))
+        
+        return StandardResponse(
+            success=True,
+            data=CourseListResponse(
+                courses=courses_with_access,
+                total=result["total"],
+                page=result["page"],
+                per_page=result["per_page"],
+                total_pages=result["total_pages"]
+            ),
+            message="Creator courses retrieved successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching creator courses: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch creator courses")
 
 
 @router.get("/{course_id}", response_model=StandardResponse[CourseResponse])
