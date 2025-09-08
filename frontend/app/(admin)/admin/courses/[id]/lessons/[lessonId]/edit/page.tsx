@@ -602,7 +602,7 @@ const LessonEditPage = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Duration</span>
-                      <span>{lessonData.video?.duration || 0} min</span>
+                      <span>{lessonData.video?.duration ? Math.round(lessonData.video.duration / 60) : 0} min</span>
                     </div>
                   </div>
                 </Card>
@@ -638,20 +638,29 @@ const LessonEditPage = () => {
                   <div className="flex gap-2">
                     <Clock className="w-5 h-5 text-muted-foreground mt-2" />
                     <Input
-                      type="number"
-                      value={lessonData.video?.duration || ''}
-                      onChange={(e) => setLessonData((prev: Lesson | null) => {
-                        if (!prev) return null;
-                        return {
-                          ...prev,
-                          video: { 
-                            ...prev.video || {}, 
-                            duration: parseInt(e.target.value) || 0
-                          }
-                        };
-                      })}
-                      placeholder="15"
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9]+([.][0-9]+)?"
+                      value={lessonData.video?.duration && lessonData.video.duration > 0 ? (lessonData.video.duration / 60).toFixed(1) : ''}
+                      onChange={(e) => {
+                        // Normalize comma to dot for decimal separator
+                        const normalizedValue = e.target.value.replace(',', '.');
+                        const minutes = parseFloat(normalizedValue) || 0;
+                        setLessonData((prev: Lesson | null) => {
+                          if (!prev) return null;
+                          return {
+                            ...prev,
+                            video: { 
+                              ...prev.video || {}, 
+                              duration: Math.round(minutes * 60) // Convert minutes to seconds for storage
+                            }
+                          };
+                        });
+                      }}
+                      placeholder="15.5"
                       className="w-32"
+                      step="0.1"
+                      min="0"
                     />
                   </div>
                 </div>

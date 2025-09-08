@@ -101,7 +101,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
         video: formData.video_url ? {
           url: formData.video_url.trim(),
           youtube_id: extractYouTubeId(formData.video_url) || undefined,
-          duration: formData.duration ? parseFloat(formData.duration) * 60 : undefined
+          duration: formData.duration ? parseFloat(formData.duration.replace(',', '.')) * 60 : undefined
         } : undefined,
         content: formData.content.trim(),
         status: formData.status as 'draft' | 'published'
@@ -124,7 +124,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
           video: formData.video_url ? {
             url: formData.video_url.trim(),
             youtube_id: extractYouTubeId(formData.video_url) || undefined,
-            duration: formData.duration ? parseFloat(formData.duration) * 60 : undefined
+            duration: formData.duration ? parseFloat(formData.duration.replace(',', '.')) * 60 : undefined
           } : undefined
         };
         
@@ -145,7 +145,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
         title: lesson.title || '',
         description: lesson.description || '',
         video_url: lesson.video?.url || '',
-        duration: lesson.video?.duration ? (lesson.video.duration / 60).toString() : '',
+        duration: lesson.video?.duration && lesson.video.duration > 0 ? (lesson.video.duration / 60).toFixed(1) : '',
         content: lesson.content || '',
         status: lesson.status || 'draft'
       });
@@ -154,9 +154,15 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
   }, [lesson, isOpen]);
 
   const handleInputChange = (field: keyof LessonFormData, value: string) => {
+    // Normalize decimal separator for duration field
+    let normalizedValue = value;
+    if (field === 'duration' && typeof value === 'string') {
+      normalizedValue = value.replace(',', '.');
+    }
+
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: normalizedValue
     }));
 
     // Clear error when user starts typing
@@ -198,9 +204,11 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
 
     // Validate duration (optional but if provided, check format)
     if (formData.duration && formData.duration.trim()) {
-      const duration = parseFloat(formData.duration);
+      // Normalize comma to dot before validation
+      const normalizedDuration = formData.duration.replace(',', '.');
+      const duration = parseFloat(normalizedDuration);
       if (isNaN(duration) || duration <= 0) {
-        newErrors.duration = 'Duration must be a positive number';
+        newErrors.duration = 'Duration must be a positive number (use dot for decimals, e.g. 15.5)';
       } else if (duration > 600) {
         newErrors.duration = 'Duration must be less than 600 minutes';
       }
@@ -228,7 +236,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
           title: lesson.title || '',
           description: lesson.description || '',
           video_url: lesson.video?.url || '',
-          duration: lesson.video?.duration ? (lesson.video.duration / 60).toString() : '',
+          duration: lesson.video?.duration && lesson.video.duration > 0 ? (lesson.video.duration / 60).toFixed(1) : '',
           content: lesson.content || '',
           status: lesson.status || 'draft'
         });
@@ -339,13 +347,12 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
                 onChange={(e) => handleInputChange('duration', e.target.value)}
                 error={errors.duration}
                 disabled={loading}
-                type="number"
-                min="0.1"
-                max="600"
-                step="0.1"
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]+([.][0-9]+)?"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Duration in minutes (e.g., 15.5 for 15 minutes 30 seconds)
+                Duration in minutes (e.g., 15.5 for 15 minutes 30 seconds). Use dot (.) for decimals.
               </p>
             </div>
 
