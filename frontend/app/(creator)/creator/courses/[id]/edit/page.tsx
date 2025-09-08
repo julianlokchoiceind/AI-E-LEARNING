@@ -175,9 +175,14 @@ const CourseBuilderPage = () => {
 
   useEffect(() => {
     // Check permissions
-    if (user && user?.role !== 'creator' && user?.role !== 'admin') {
-      ToastService.error('You do not have permission to edit courses');
-      router.push('/dashboard');
+    if (user && user?.role !== 'creator') {
+      if (user.role === 'admin') {
+        // Admin redirect to admin courses
+        router.push('/admin/courses');
+      } else {
+        // Students/others redirect to 404
+        router.push('/not-found');
+      }
       return;
     }
   }, [user, router]);

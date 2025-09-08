@@ -86,9 +86,14 @@ const CreatorDashboard = () => {
   const loading = authLoading || coursesLoading;
 
   useEffect(() => {
-    if (!authLoading && user && (user.role !== 'creator' && user.role !== 'admin')) {
-      ToastService.error('Access denied. Creator access required.');
-      router.push('/dashboard');
+    if (!authLoading && user && user.role !== 'creator') {
+      if (user.role === 'admin') {
+        // Admin redirect to admin courses
+        router.push('/admin/courses');
+      } else {
+        // Students/others redirect to 404
+        router.push('/not-found');
+      }
       return;
     }
   }, [user, authLoading, router]);
