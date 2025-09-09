@@ -211,7 +211,7 @@ class OnboardingService:
         
         if skill_level == SkillLevel.COMPLETE_BEGINNER and course.level == "beginner":
             reasons.append("Perfect for complete beginners")
-        elif skill_level == SkillLevel.AI_FAMILIAR and course.category == "ai-fundamentals":
+        elif skill_level == SkillLevel.AI_FAMILIAR and course.category == "ml-basics":
             reasons.append("Builds on your AI knowledge")
         
         if course.pricing.is_free:

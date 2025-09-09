@@ -36,11 +36,13 @@ const CourseCatalogPage = () => {
 
   const categories = [
     { value: '', label: 'All Categories' },
-    { value: 'programming', label: 'Programming' },
-    { value: 'ai-fundamentals', label: 'AI Fundamentals' },
-    { value: 'machine-learning', label: 'Machine Learning' },
-    { value: 'ai-tools', label: 'AI Tools' },
-    { value: 'production-ai', label: 'Production AI' }
+    { value: 'ml-basics', label: 'ML Basics' },
+    { value: 'deep-learning', label: 'Deep Learning' },
+    { value: 'nlp', label: 'NLP' },
+    { value: 'computer-vision', label: 'Computer Vision' },
+    { value: 'generative-ai', label: 'Generative AI' },
+    { value: 'ai-ethics', label: 'AI Ethics' },
+    { value: 'ai-in-business', label: 'AI in Business' }
   ];
 
   const levels = [
@@ -186,7 +188,7 @@ const CourseCatalogPage = () => {
 
         {/* Course Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(8)].map((_, index) => (
               <div key={index} className="bg-background rounded-lg border overflow-hidden">
                 {/* Course Thumbnail */}
@@ -238,7 +240,7 @@ const CourseCatalogPage = () => {
             }}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course: any) => (
               <CourseCard
                 key={course.id}

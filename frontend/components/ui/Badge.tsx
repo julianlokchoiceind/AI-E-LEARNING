@@ -10,7 +10,17 @@ export type BadgeVariant =
   | 'warning' 
   | 'info'
   | 'draft'
-  | 'published';
+  | 'published'
+  // Level variants
+  | 'beginner'
+  | 'intermediate'
+  | 'advanced'
+  // Role variants
+  | 'admin'
+  | 'creator'
+  | 'student'
+  // Priority variants
+  | 'primary';
 
 export type BadgeSize = 'sm' | 'md' | 'lg';
 
@@ -55,22 +65,38 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
             'px-2.5 py-0.5 text-xs': size === 'md',
             'px-3 py-1.5 text-sm': size === 'lg',
           },
-          // Variant classes
+          // Variant classes - using CSS variables for centralized color management
           {
-            'bg-primary text-primary-foreground hover:bg-primary/80':
-              effectiveVariant === 'default',
             'bg-secondary text-secondary-foreground hover:bg-secondary/80':
               effectiveVariant === 'secondary',
             'bg-destructive text-destructive-foreground hover:bg-destructive/80':
               effectiveVariant === 'destructive',
             'text-foreground border border-input':
               effectiveVariant === 'outline',
-            'bg-success/20 text-success border border-success/30':
+            // Status variants - using CSS variables
+            'bg-[hsl(var(--badge-success))] text-[hsl(var(--badge-success-foreground))] hover:bg-[hsl(var(--badge-success))]/80':
               effectiveVariant === 'success' || effectiveVariant === 'published',
-            'bg-warning/20 text-warning border border-warning/30':
+            'bg-[hsl(var(--badge-warning))] text-[hsl(var(--badge-warning-foreground))] hover:bg-[hsl(var(--badge-warning))]/80':
               effectiveVariant === 'warning',
-            'bg-info/20 text-info border border-info/30':
+            'bg-[hsl(var(--badge-info))] text-[hsl(var(--badge-info-foreground))] hover:bg-[hsl(var(--badge-info))]/80':
               effectiveVariant === 'info',
+            // Level variants - using CSS variables
+            'bg-[hsl(var(--badge-beginner))] text-[hsl(var(--badge-beginner-foreground))] hover:bg-[hsl(var(--badge-beginner))]/80':
+              effectiveVariant === 'beginner',
+            'bg-[hsl(var(--badge-intermediate))] text-[hsl(var(--badge-intermediate-foreground))] hover:bg-[hsl(var(--badge-intermediate))]/80':
+              effectiveVariant === 'intermediate',
+            'bg-[hsl(var(--badge-advanced))] text-[hsl(var(--badge-advanced-foreground))] hover:bg-[hsl(var(--badge-advanced))]/80':
+              effectiveVariant === 'advanced',
+            // Role variants - using CSS variables
+            'bg-[hsl(var(--badge-admin))] text-[hsl(var(--badge-admin-foreground))] hover:bg-[hsl(var(--badge-admin))]/80':
+              effectiveVariant === 'admin',
+            'bg-[hsl(var(--badge-creator))] text-[hsl(var(--badge-creator-foreground))] hover:bg-[hsl(var(--badge-creator))]/80':
+              effectiveVariant === 'creator',
+            'bg-[hsl(var(--badge-student))] text-[hsl(var(--badge-student-foreground))] hover:bg-[hsl(var(--badge-student))]/80':
+              effectiveVariant === 'student',
+            // Priority variants
+            'bg-primary text-primary-foreground hover:bg-primary/80':
+              effectiveVariant === 'primary' || effectiveVariant === 'default',
             'bg-muted text-muted-foreground border border-border':
               effectiveVariant === 'draft',
           },

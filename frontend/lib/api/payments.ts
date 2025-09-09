@@ -274,44 +274,24 @@ export const formatSubscriptionPeriod = (
 
 /**
  * Get subscription status badge color
+ * @deprecated Use getSubscriptionStatusColorClass from badge-helpers instead
  */
 export const getSubscriptionStatusColor = (status: SubscriptionStatus | string): string => {
+  // Import at runtime to avoid circular dependencies
+  const { getSubscriptionStatusColorClass } = require('@/lib/utils/badge-helpers');
   const statusStr = typeof status === 'string' ? status.toLowerCase() : status;
-  
-  switch (statusStr) {
-    case SubscriptionStatus.ACTIVE:
-    case 'active':
-      return 'bg-success/20 text-success';
-    case SubscriptionStatus.CANCELLED:
-    case 'cancelled':
-      return 'bg-destructive/20 text-destructive';
-    case SubscriptionStatus.PAST_DUE:
-    case 'past_due':
-      return 'bg-warning/20 text-warning';
-    case SubscriptionStatus.INACTIVE:
-    case 'inactive':
-    default:
-      return 'bg-muted/50 text-foreground';
-  }
+  return getSubscriptionStatusColorClass(statusStr);
 };
 
 /**
  * Get payment status badge color
+ * @deprecated Use getPaymentStatusColorClass from badge-helpers instead
  */
 export const getPaymentStatusColor = (status: PaymentStatus): string => {
-  switch (status) {
-    case PaymentStatus.COMPLETED:
-      return 'bg-success/20 text-success';
-    case PaymentStatus.FAILED:
-      return 'bg-destructive/20 text-destructive';
-    case PaymentStatus.PENDING:
-      return 'bg-warning/20 text-warning';
-    case PaymentStatus.REFUNDED:
-      return 'bg-primary/20 text-primary';
-    case PaymentStatus.CANCELLED:
-    default:
-      return 'bg-muted/50 text-foreground';
-  }
+  // Import at runtime to avoid circular dependencies
+  const { getPaymentStatusColorClass } = require('@/lib/utils/badge-helpers');
+  return getPaymentStatusColorClass(status.toLowerCase());
+
 };
 
 // Payment Analytics Interfaces

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Clock, Users, BookOpen, PlayCircle, Check, Lock, Star } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { getLevelVariant } from '@/lib/utils/badge-helpers';
 import { Card } from '@/components/ui/Card';
 import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
 import { PreviewVideoPlayer } from '@/components/feature/PreviewVideoPlayer';
@@ -164,18 +165,6 @@ const CourseDetailPage = () => {
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'bg-success/20 text-success';
-      case 'intermediate':
-        return 'bg-warning/20 text-warning';
-      case 'advanced':
-        return 'bg-destructive/20 text-destructive';
-      default:
-        return 'bg-muted text-foreground';
-    }
-  };
 
   if (loading) {
     return (
@@ -296,7 +285,7 @@ const CourseDetailPage = () => {
 
               {/* Course Meta */}
               <div className="flex flex-wrap items-center gap-4 mb-6">
-                <Badge className={getLevelColor(course.level)}>
+                <Badge variant={getLevelVariant(course.level)}>
                   {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
                 </Badge>
 

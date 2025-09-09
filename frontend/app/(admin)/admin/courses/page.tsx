@@ -39,6 +39,7 @@ import {
   Edit3,
   Trash2
 } from 'lucide-react';
+import { getLevelColorClass } from '@/lib/utils/badge-helpers';
 
 interface Course {
   _id?: string;      // Optional since API might return id instead
@@ -283,18 +284,6 @@ export default function CourseApproval() {
     }
   };
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'text-success';
-      case 'intermediate':
-        return 'text-warning';
-      case 'advanced':
-        return 'text-destructive';
-      default:
-        return 'text-muted-foreground';
-    }
-  };
 
   // No client-side filtering needed - all filtering is done server-side
   const filteredCourses = courses;
@@ -329,7 +318,7 @@ export default function CourseApproval() {
               </p>
               <p className="text-sm text-muted-foreground">Pending Review</p>
             </div>
-            <div className="h-12 w-12 bg-warning/20 rounded-lg flex items-center justify-center">
+            <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center">
               <Clock className="w-8 h-8 text-warning" />
             </div>
           </div>
@@ -343,7 +332,7 @@ export default function CourseApproval() {
               </p>
               <p className="text-sm text-muted-foreground">Published</p>
             </div>
-            <div className="h-12 w-12 bg-success/20 rounded-lg flex items-center justify-center">
+            <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
               <CheckCircle className="w-8 h-8 text-success" />
             </div>
           </div>
@@ -357,7 +346,7 @@ export default function CourseApproval() {
               </p>
               <p className="text-sm text-muted-foreground">Rejected</p>
             </div>
-            <div className="h-12 w-12 bg-destructive/20 rounded-lg flex items-center justify-center">
+            <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
               <AlertTriangle className="w-8 h-8 text-destructive" />
             </div>
           </div>
@@ -371,7 +360,7 @@ export default function CourseApproval() {
               </p>
               <p className="text-sm text-muted-foreground">Free Courses</p>
             </div>
-            <div className="h-12 w-12 bg-primary/20 rounded-lg flex items-center justify-center">
+            <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <Gift className="w-8 h-8 text-primary" />
             </div>
           </div>
@@ -413,11 +402,13 @@ export default function CourseApproval() {
             className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
           >
             <option value="">All Categories</option>
-            <option value="programming">Programming</option>
-            <option value="ai-fundamentals">AI Fundamentals</option>
-            <option value="machine-learning">Machine Learning</option>
-            <option value="ai-tools">AI Tools</option>
-            <option value="production-ai">Production AI</option>
+            <option value="ml-basics">ML Basics</option>
+            <option value="deep-learning">Deep Learning</option>
+            <option value="nlp">NLP</option>
+            <option value="computer-vision">Computer Vision</option>
+            <option value="generative-ai">Generative AI</option>
+            <option value="ai-ethics">AI Ethics</option>
+            <option value="ai-in-business">AI in Business</option>
           </select>
 
           {/* Clear Filters Button */}
@@ -477,7 +468,7 @@ export default function CourseApproval() {
         {showLoadingSpinner ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-border">
-              <thead className="bg-muted/50">
+              <thead className="bg-muted">
                 <tr>
                   <th className="px-4 py-3"><SkeletonCircle className="h-4 w-4" /></th>
                   <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
@@ -551,7 +542,7 @@ export default function CourseApproval() {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-border">
-              <thead className="bg-muted/50">
+              <thead className="bg-muted">
                 <tr>
                   <th className="px-4 py-3">
                     <input
@@ -585,7 +576,7 @@ export default function CourseApproval() {
                 {filteredCourses.map((course: Course) => {
                   const courseId = course.id || course._id || '';
                   return (
-                  <tr key={courseId} className="hover:bg-muted/50">
+                  <tr key={courseId} className="hover:bg-muted">
                     <td className="px-4 py-4">
                       <input
                         type="checkbox"
@@ -612,7 +603,7 @@ export default function CourseApproval() {
                             {course.title}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {course.category} • <span className={getLevelColor(course.level)}>{course.level}</span>
+                            {course.category} • <span className={getLevelColorClass(course.level)}>{course.level}</span>
                           </div>
                         </div>
                       </div>
@@ -623,7 +614,7 @@ export default function CourseApproval() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(course.status)}
                       {course.pricing.is_free && (
-                        <Badge className="bg-primary/20 text-primary ml-2">Free</Badge>
+                        <Badge variant="primary" className="ml-2">Free</Badge>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
@@ -664,7 +655,7 @@ export default function CourseApproval() {
                             const courseId = course.id;
                             router.push(`/admin/courses/${courseId}/edit`);
                           }}
-                          className="text-muted-foreground hover:bg-muted/50"
+                          className="text-muted-foreground hover:bg-muted"
                         >
                           <Edit3 className="h-4 w-4" />
                         </Button>
@@ -727,7 +718,7 @@ export default function CourseApproval() {
 
         {/* Table Footer with Pagination */}
         {totalPages > 1 && (
-          <div className="border-t border-border bg-muted/50 px-6 py-4">
+          <div className="border-t border-border bg-muted px-6 py-4">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -769,7 +760,7 @@ export default function CourseApproval() {
                 <p className="text-muted-foreground mt-1">{selectedCourse.description}</p>
                 <div className="flex items-center space-x-4 mt-3">
                   {getStatusBadge(selectedCourse.status)}
-                  <Badge className={`${selectedCourse.pricing.is_free ? 'bg-primary/20 text-primary' : 'bg-primary/20 text-primary'}`}>
+                  <Badge variant="primary">
                     {selectedCourse.pricing.is_free ? 'Free' : `$${selectedCourse.pricing.price}`}
                   </Badge>
                   <span className="text-sm text-muted-foreground">by {selectedCourse.creator_name}</span>
@@ -915,7 +906,7 @@ export default function CourseApproval() {
             {/* Warning Icon & Message */}
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                   <AlertTriangle className="w-6 h-6 text-destructive" />
                 </div>
               </div>

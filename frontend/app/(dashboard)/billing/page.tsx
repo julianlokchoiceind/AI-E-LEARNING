@@ -9,9 +9,9 @@ import { SubscriptionCard } from '@/components/ui/SubscriptionCard';
 import { PaymentHistory } from '@/components/ui/PaymentHistory';
 import { 
   formatPrice,
-  formatSubscriptionPeriod,
-  getSubscriptionStatusColor
+  formatSubscriptionPeriod
 } from '@/lib/api/payments';
+import { getSubscriptionStatusVariant } from '@/lib/utils/badge-helpers';
 import { useBillingDashboardQuery, useCancelSubscription } from '@/hooks/queries/usePayments';
 import { useAuth } from '@/hooks/useAuth';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -112,7 +112,7 @@ export default function BillingPage() {
             
             {isPremiumUser ? (
               <div>
-                <Badge className="bg-warning/20 text-warning mb-2">
+                <Badge variant="warning" className="mb-2">
                   Premium User
                 </Badge>
                 <p className="text-sm text-muted-foreground">
@@ -121,7 +121,7 @@ export default function BillingPage() {
               </div>
             ) : hasActiveSubscription ? (
               <div>
-                <Badge className={getSubscriptionStatusColor(subscriptionStatus?.data?.status || 'inactive')}>
+                <Badge variant={getSubscriptionStatusVariant(subscriptionStatus?.data?.status || 'inactive')}>
                   {subscriptionStatus?.data?.type?.toUpperCase() || 'FREE'} - {subscriptionStatus?.data?.status?.toUpperCase() || 'INACTIVE'}
                 </Badge>
                 <div className="mt-3">
@@ -136,7 +136,7 @@ export default function BillingPage() {
               </div>
             ) : (
               <div>
-                <Badge className="bg-muted text-muted-foreground mb-2">
+                <Badge variant="secondary" className="mb-2">
                   Free Plan
                 </Badge>
                 <p className="text-sm text-muted-foreground mb-4">
@@ -225,7 +225,7 @@ export default function BillingPage() {
                   </div>
                   <div className="flex justify-between">
                     <span>Status:</span>
-                    <Badge className={getSubscriptionStatusColor(subscriptionStatus?.data?.status || 'inactive')}>
+                    <Badge variant={getSubscriptionStatusVariant(subscriptionStatus?.data?.status || 'inactive')}>
                       {subscriptionStatus?.data?.status?.toUpperCase() || 'INACTIVE'}
                     </Badge>
                   </div>
@@ -234,7 +234,7 @@ export default function BillingPage() {
               
               <div className="space-y-3">
                 {subscriptionStatus?.data?.cancel_at_period_end ? (
-                  <div className="p-4 bg-warning/20 border border-warning rounded-lg">
+                  <div className="p-4 bg-amber-100 border border-warning rounded-lg">
                     <div className="flex items-center">
                       <AlertCircle className="w-5 h-5 text-warning mr-2" />
                       <span className="text-sm font-medium text-warning">
@@ -250,7 +250,7 @@ export default function BillingPage() {
                     variant="outline"
                     onClick={handleCancelSubscription}
                     loading={canceling}
-                    className="w-full text-destructive border-destructive hover:bg-destructive/20"
+                    className="w-full text-destructive border-destructive hover:bg-red-100"
                   >
                     Cancel Subscription
                   </Button>
@@ -287,7 +287,7 @@ export default function BillingPage() {
         </Card>
 
         {/* Billing Support */}
-        <Card className="mt-8 p-6 bg-primary/20 border-primary">
+        <Card className="mt-8 p-6 bg-blue-100 border-primary">
           <h2 className="text-lg font-semibold text-primary mb-2">
             Need Help?
           </h2>

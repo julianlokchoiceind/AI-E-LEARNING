@@ -5,9 +5,9 @@ import { Badge } from '@/components/ui/Badge';
 import {
   PaymentResponse,
   PaymentType,
-  getPaymentStatusColor,
   formatPrice,
 } from '@/lib/api/payments';
+import { getPaymentStatusVariant } from '@/lib/utils/badge-helpers';
 
 interface PaymentHistoryProps {
   payments: PaymentResponse[];
@@ -117,7 +117,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
                 {formatPrice(payment.amount, payment.currency)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <Badge className={getPaymentStatusColor(payment.status)}>
+                <Badge variant={getPaymentStatusVariant(payment.status)}>
                   {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                 </Badge>
               </td>

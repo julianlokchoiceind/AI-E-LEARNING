@@ -516,11 +516,13 @@ export const en = {
 
   // Categories
   categories: {
-    programming: 'Programming',
-    ai_fundamentals: 'AI Fundamentals',
-    machine_learning: 'Machine Learning',
-    ai_tools: 'AI Tools',
-    production_ai: 'Production AI',
+    ml_basics: 'ML Basics',
+    deep_learning: 'Deep Learning',
+    nlp: 'NLP',
+    computer_vision: 'Computer Vision',
+    generative_ai: 'Generative AI',
+    ai_ethics: 'AI Ethics',
+    ai_in_business: 'AI in Business',
     web_development: 'Web Development',
     mobile_development: 'Mobile Development',
     data_science: 'Data Science',

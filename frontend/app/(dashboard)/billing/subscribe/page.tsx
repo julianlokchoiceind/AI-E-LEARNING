@@ -103,7 +103,7 @@ export default function SubscribePage() {
           {/* Plan Details */}
           <Card className="p-6">
             <div className="text-center mb-6">
-              <Badge className="bg-primary/20 text-primary mb-4">
+              <Badge variant="primary" className="mb-4">
                 Most Popular
               </Badge>
               <h2 className="text-2xl font-bold text-foreground mb-2">
@@ -132,7 +132,7 @@ export default function SubscribePage() {
               ))}
             </div>
 
-            <div className="bg-primary/20 border border-primary rounded-lg p-4">
+            <div className="bg-blue-100 border border-primary rounded-lg p-4">
               <h4 className="font-medium text-primary mb-2">
                 Special Offer
               </h4>

@@ -13,6 +13,7 @@ import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Clock, Users, BookOpen, ArrowLeft, Shield, CreditCard } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
+import { getLevelVariant } from '@/lib/utils/badge-helpers';
 
 export default function CourseCheckoutPage() {
   const params = useParams();
@@ -68,18 +69,6 @@ export default function CourseCheckoutPage() {
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'bg-success/20 text-success';
-      case 'intermediate':
-        return 'bg-warning/20 text-warning';
-      case 'advanced':
-        return 'bg-destructive/20 text-destructive';
-      default:
-        return 'bg-muted text-foreground';
-    }
-  };
 
   if (loading) {
     return (
@@ -146,7 +135,7 @@ export default function CourseCheckoutPage() {
                   </p>
                   
                   <div className="flex flex-wrap items-center gap-3 text-sm">
-                    <Badge className={getLevelColor(course.level)}>
+                    <Badge variant={getLevelVariant(course.level)}>
                       {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
                     </Badge>
                     

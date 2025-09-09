@@ -28,6 +28,7 @@ import {
   useMarkTicketViewed,
 } from '@/hooks/queries/useSupport';
 import { supportAPI } from '@/lib/api/support';
+import { getTicketStatusVariant, getTicketPriorityVariant } from '@/lib/utils/badge-helpers';
 import {
   TicketWithMessages,
   MessageCreateData,
@@ -170,11 +171,11 @@ export default function AdminTicketDetailPage() {
             </div>
             
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <Badge variant={statusInfo?.color as any}>
+              <Badge variant={getTicketStatusVariant(ticket.status)}>
                 {statusInfo?.label}
               </Badge>
               
-              <Badge variant={priorityInfo?.color as any}>
+              <Badge variant={getTicketPriorityVariant(ticket.priority)}>
                 {priorityInfo?.label} Priority
               </Badge>
               

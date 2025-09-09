@@ -57,11 +57,11 @@ export const AILearningAnalytics: React.FC<AILearningAnalyticsProps> = ({
         questionsToday: 8,
         averageResponseTime: 2.3,
         topicsDiscussed: [
-          { topic: 'Machine Learning', count: 15 },
-          { topic: 'Python Programming', count: 12 },
-          { topic: 'Data Structures', count: 8 },
-          { topic: 'Neural Networks', count: 7 },
-          { topic: 'API Development', count: 5 }
+          { topic: 'Deep Learning', count: 15 },
+          { topic: 'NLP', count: 12 },
+          { topic: 'Computer Vision', count: 8 },
+          { topic: 'Generative AI', count: 7 },
+          { topic: 'AI Ethics', count: 5 }
         ],
         learningGoals: [
           {

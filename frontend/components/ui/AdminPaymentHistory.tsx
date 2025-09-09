@@ -3,6 +3,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { formatCurrency, formatDate } from '@/lib/utils/formatters';
+import { getPaymentStatusVariant } from '@/lib/utils/badge-helpers';
 
 interface AdminPayment {
   id: string;
@@ -52,22 +53,6 @@ export const AdminPaymentHistory: React.FC<AdminPaymentHistoryProps> = ({
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-success/20 text-success';
-      case 'pending':
-        return 'bg-warning/20 text-warning';
-      case 'failed':
-        return 'bg-destructive/20 text-destructive';
-      case 'cancelled':
-        return 'bg-muted/50 text-muted-foreground';
-      case 'refunded':
-        return 'bg-primary/20 text-primary';
-      default:
-        return 'bg-muted/50 text-muted-foreground';
-    }
-  };
 
   if (payments.length === 0) {
     return (
@@ -154,7 +139,7 @@ export const AdminPaymentHistory: React.FC<AdminPaymentHistoryProps> = ({
                 {formatCurrency(payment.amount)} {payment.currency}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <Badge className={getStatusColor(payment.status)}>
+                <Badge variant={getPaymentStatusVariant(payment.status)}>
                   {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                 </Badge>
               </td>

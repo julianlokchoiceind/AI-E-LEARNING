@@ -516,11 +516,13 @@ export const vi = {
 
   // Categories
   categories: {
-    programming: 'Lập trình',
-    ai_fundamentals: 'Cơ bản về AI',
-    machine_learning: 'Học máy',
-    ai_tools: 'Công cụ AI',
-    production_ai: 'AI sản xuất',
+    ml_basics: 'ML Cơ bản',
+    deep_learning: 'Học sâu',
+    nlp: 'Xử lý ngôn ngữ tự nhiên',
+    computer_vision: 'Thị giác máy tính',
+    generative_ai: 'AI Tạo sinh',
+    ai_ethics: 'Đạo đức AI',
+    ai_in_business: 'AI trong kinh doanh',
     web_development: 'Phát triển Web',
     mobile_development: 'Phát triển di động',
     data_science: 'Khoa học dữ liệu',

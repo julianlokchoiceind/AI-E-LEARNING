@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Clock, Users, BarChart, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { getLevelVariant } from '@/lib/utils/badge-helpers';
 import { Card } from '@/components/ui/Card';
 import { CourseRatingMini } from '@/components/feature/CourseRating';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
@@ -70,26 +71,16 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'bg-success/20 text-success';
-      case 'intermediate':
-        return 'bg-warning/20 text-warning';
-      case 'advanced':
-        return 'bg-destructive/20 text-destructive';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
 
   const getCategoryDisplay = (category: string) => {
     const categoryMap: { [key: string]: string } = {
-      'programming': 'Programming',
-      'ai-fundamentals': 'AI Fundamentals',
-      'machine-learning': 'Machine Learning',
-      'ai-tools': 'AI Tools',
-      'production-ai': 'Production AI'
+      'ml-basics': 'ML Basics',
+      'deep-learning': 'Deep Learning',
+      'nlp': 'NLP',
+      'computer-vision': 'Computer Vision',
+      'generative-ai': 'Generative AI',
+      'ai-ethics': 'AI Ethics',
+      'ai-in-business': 'AI in Business'
     };
     return categoryMap[category] || category;
   };
@@ -115,9 +106,9 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
         {/* Pricing Badge */}
         <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
           {course.pricing.is_free ? (
-            <Badge className="bg-success text-white text-xs sm:text-sm">Free</Badge>
+            <Badge variant="success" className="text-xs sm:text-sm">Free</Badge>
           ) : (
-            <Badge className="bg-primary text-white text-xs sm:text-sm">
+            <Badge variant="primary" className="text-xs sm:text-sm">
               {course.pricing.discount_price ? (
                 <>
                   <span className="line-through mr-1">${course.pricing.price}</span>
@@ -132,7 +123,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
 
         {/* Level Badge */}
         <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
-          <Badge className={`${getLevelColor(course.level)} text-xs sm:text-sm`}>
+          <Badge variant={getLevelVariant(course.level)} className="text-xs sm:text-sm">
             {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
           </Badge>
         </div>

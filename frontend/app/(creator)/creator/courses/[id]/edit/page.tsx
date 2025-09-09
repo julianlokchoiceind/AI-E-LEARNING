@@ -436,7 +436,7 @@ const CourseBuilderPage = () => {
       errorMessage={error}
       onForceSave={forceSave}
     >
-      <div className="min-h-screen bg-muted/50">
+      <div className="min-h-screen bg-muted">
         {/* Header */}
         <div className="bg-white border-b sticky top-0 z-50">
           <Container variant="admin" className="py-4">
@@ -521,8 +521,8 @@ const CourseBuilderPage = () => {
                     onClick={() => setActiveTab('general')}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'general'
-                        ? 'bg-primary/20 text-primary'
-                        : 'hover:bg-muted/50'
+                        ? 'bg-blue-100 text-primary'
+                        : 'hover:bg-muted'
                     }`}
                   >
                     <BookOpen className="w-4 h-4 inline mr-2" />
@@ -533,8 +533,8 @@ const CourseBuilderPage = () => {
                     onClick={() => setActiveTab('chapters')}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'chapters'
-                        ? 'bg-primary/20 text-primary'
-                        : 'hover:bg-muted/50'
+                        ? 'bg-blue-100 text-primary'
+                        : 'hover:bg-muted'
                     }`}
                   >
                     <BookOpen className="w-4 h-4 inline mr-2" />
@@ -545,8 +545,8 @@ const CourseBuilderPage = () => {
                     onClick={() => setActiveTab('settings')}
                     className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
                       activeTab === 'settings'
-                        ? 'bg-primary/20 text-primary'
-                        : 'hover:bg-muted/50'
+                        ? 'bg-blue-100 text-primary'
+                        : 'hover:bg-muted'
                     }`}
                   >
                     <Settings className="w-4 h-4 inline mr-2" />
@@ -612,11 +612,13 @@ const CourseBuilderPage = () => {
                         className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="">Select category</option>
-                        <option value="programming">Programming</option>
-                        <option value="ai-fundamentals">AI Fundamentals</option>
-                        <option value="machine-learning">Machine Learning</option>
-                        <option value="ai-tools">AI Tools</option>
-                        <option value="production-ai">Production AI</option>
+                        <option value="ml-basics">ML Basics</option>
+                        <option value="deep-learning">Deep Learning</option>
+                        <option value="nlp">NLP</option>
+                        <option value="computer-vision">Computer Vision</option>
+                        <option value="generative-ai">Generative AI</option>
+                        <option value="ai-ethics">AI Ethics</option>
+                        <option value="ai-in-business">AI in Business</option>
                       </select>
                     </div>
 

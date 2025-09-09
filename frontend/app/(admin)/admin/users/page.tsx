@@ -29,6 +29,7 @@ import {
   Eye,
   AlertTriangle
 } from 'lucide-react';
+import { getRoleVariant } from '@/lib/utils/badge-helpers';
 
 interface User {
   id: string;
@@ -195,18 +196,6 @@ export default function UserManagement() {
     setShowBulkDeleteModal(false);
   };
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-destructive/20 text-destructive';
-      case 'creator':
-        return 'bg-primary/20 text-primary';
-      case 'student':
-        return 'bg-primary/20 text-primary';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
 
   // No client-side filtering needed - server handles it
 
@@ -317,7 +306,7 @@ export default function UserManagement() {
         {showLoadingSpinner ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-border">
-              <thead className="bg-muted/50">
+              <thead className="bg-muted">
                 <tr>
                   <th className="px-4 py-3"><SkeletonCircle className="h-4 w-4" /></th>
                   <th className="px-6 py-3 text-left"><SkeletonBox className="h-4 w-16" /></th>
@@ -396,7 +385,7 @@ export default function UserManagement() {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-border">
-              <thead className="bg-muted/50">
+              <thead className="bg-muted">
                 <tr>
                   <th className="px-4 py-3">
                     <input
@@ -455,7 +444,7 @@ export default function UserManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
-                        <Badge className={getRoleBadgeColor(user.role)}>
+                        <Badge variant={getRoleVariant(user.role)}>
                           {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                         </Badge>
                         {user.premium_status && (
@@ -536,7 +525,7 @@ export default function UserManagement() {
 
         {/* Table Footer with Pagination */}
         {totalPages > 1 && (
-          <div className="border-t border-border bg-muted/50 px-6 py-4">
+          <div className="border-t border-border bg-muted px-6 py-4">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -568,11 +557,11 @@ export default function UserManagement() {
                 <h3 className="text-lg font-medium text-foreground">{selectedUser.name}</h3>
                 <p className="text-muted-foreground">{selectedUser.email}</p>
                 <div className="flex items-center space-x-2 mt-1">
-                  <Badge className={getRoleBadgeColor(selectedUser.role)}>
+                  <Badge variant={getRoleVariant(selectedUser.role)}>
                     {selectedUser.role.charAt(0).toUpperCase() + selectedUser.role.slice(1)}
                   </Badge>
                   {selectedUser.premium_status && (
-                    <Badge className="bg-warning/20 text-warning">Premium</Badge>
+                    <Badge variant="warning">Premium</Badge>
                   )}
                 </div>
               </div>
@@ -687,7 +676,7 @@ export default function UserManagement() {
             {/* Warning Icon & Message */}
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                   <AlertTriangle className="w-6 h-6 text-destructive" />
                 </div>
               </div>

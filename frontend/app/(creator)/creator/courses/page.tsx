@@ -38,6 +38,7 @@ import DeleteCourseModal, { CourseDeleteData } from '@/components/feature/Delete
 import { StandardResponse } from '@/lib/types/api';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Container } from '@/components/ui/Container';
+import { getLevelColorClass } from '@/lib/utils/badge-helpers';
 
 interface Course {
   _id?: string;      // Optional since API might return id instead
@@ -299,18 +300,6 @@ const CreatorCoursesPage = () => {
     }
   };
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'text-success';
-      case 'intermediate':
-        return 'text-warning';
-      case 'advanced':
-        return 'text-destructive';
-      default:
-        return 'text-muted-foreground';
-    }
-  };
 
   if (showLoadingSpinner) {
     return (
@@ -458,11 +447,13 @@ const CreatorCoursesPage = () => {
                 onChange={(e) => handleFilterChange(e.target.value, 'category')}
               >
                 <option value="">All Categories</option>
-                <option value="programming">Programming</option>
-                <option value="ai-fundamentals">AI Fundamentals</option>
-                <option value="machine-learning">Machine Learning</option>
-                <option value="ai-tools">AI Tools</option>
-                <option value="production-ai">Production AI</option>
+                <option value="ml-basics">ML Basics</option>
+                <option value="deep-learning">Deep Learning</option>
+                <option value="nlp">NLP</option>
+                <option value="computer-vision">Computer Vision</option>
+                <option value="generative-ai">Generative AI</option>
+                <option value="ai-ethics">AI Ethics</option>
+                <option value="ai-in-business">AI in Business</option>
               </select>
 
               {/* Clear Filters Button */}
@@ -734,7 +725,7 @@ const CreatorCoursesPage = () => {
                           {course.title}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {course.category} • <span className={getLevelColor(course.level)}>{course.level}</span>
+                          {course.category} • <span className={getLevelColorClass(course.level)}>{course.level}</span>
                         </div>
                       </div>
                     </td>

@@ -30,12 +30,16 @@ import {
   TicketStats,
   TicketSearchParams,
   TicketUpdateData,
+  TicketStatus,
+  TicketPriority,
+  TicketCategory,
   TICKET_CATEGORIES,
   TICKET_PRIORITIES,
   TICKET_STATUSES,
   TICKET_FILTER_OPTIONS
 } from '@/lib/types/support';
 import { Pagination } from '@/components/ui/Pagination';
+import { getTicketPriorityVariant } from '@/lib/utils/badge-helpers';
 
 export default function AdminSupportPage() {
   const router = useRouter();
@@ -67,9 +71,9 @@ export default function AdminSupportPage() {
     refetch: refetchTickets
   } = useAdminSupportTicketsQuery({
     search: searchQuery,
-    status: filters.status as any || undefined,  // Send "unread" as status, backend will handle it
-    priority: filters.priority as any || undefined,
-    category: filters.category as any || undefined,
+    status: (filters.status && (filters.status === 'open' || filters.status === 'closed')) ? filters.status as TicketStatus : undefined,  // Only pass valid TicketStatus values
+    priority: (filters.priority && ['low', 'medium', 'high', 'urgent'].includes(filters.priority)) ? filters.priority as TicketPriority : undefined,
+    category: (filters.category && ['technical', 'billing', 'course_content', 'account', 'feature_request', 'bug_report', 'other'].includes(filters.category)) ? filters.category as TicketCategory : undefined,
     page: currentPage,
     limit: itemsPerPage
   });
@@ -129,7 +133,7 @@ export default function AdminSupportPage() {
   // Optimized callback handlers with useCallback
   const handleQuickUpdate = useCallback(async (ticketId: string, update: TicketUpdateData) => {
     try {
-      await updateTicketMutation.mutateAsync({ ticketId, data: update as any });
+      await updateTicketMutation.mutateAsync({ ticketId, data: update });
       ToastService.success('Ticket updated successfully');
     } catch (error: any) {
       ToastService.error(error.message || 'Something went wrong');
@@ -466,7 +470,7 @@ export default function AdminSupportPage() {
                         <select
                           value={ticket.priority}
                           onChange={(e) => handleQuickUpdate(ticket.id, { 
-                            priority: e.target.value as any 
+                            priority: e.target.value as TicketPriority
                           })}
                           onClick={(e) => e.stopPropagation()}
                           className="text-sm border rounded px-2 py-1"
@@ -567,7 +571,7 @@ export default function AdminSupportPage() {
                   const priInfo = TICKET_PRIORITIES.find(p => p.value === priority);
                   return (
                     <div key={priority} className="flex items-center justify-between">
-                      <Badge variant={priInfo?.color as any}>
+                      <Badge variant={getTicketPriorityVariant(priority)}>
                         {priInfo?.label || priority}
                       </Badge>
                       <span className="font-medium">{String(count)}</span>

@@ -454,7 +454,7 @@ const LessonEditPage = () => {
                   </h1>
                 )}
 
-                <Badge className={lessonData.status === 'published' ? 'bg-success/20 text-success' : 'bg-muted/50 text-foreground'}>
+                <Badge status={lessonData.status as any}>
                   {lessonData.status}
                 </Badge>
               </div>

@@ -118,7 +118,7 @@ export default function PricingPage() {
 
           {/* Pro Plan */}
           <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-primary relative">
-            <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-white">
+            <Badge variant="primary" className="absolute -top-3 left-1/2 transform -translate-x-1/2">
               Most Popular
             </Badge>
             <div className="text-center mb-6">

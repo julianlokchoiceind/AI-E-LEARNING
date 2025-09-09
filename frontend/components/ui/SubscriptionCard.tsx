@@ -6,9 +6,9 @@ import { Badge } from '@/components/ui/Badge';
 import { 
   SubscriptionStatus, 
   SubscriptionType,
-  getSubscriptionStatusColor,
   formatSubscriptionPeriod 
 } from '@/lib/api/payments';
+import { getSubscriptionStatusVariant } from '@/lib/utils/badge-helpers';
 
 interface SubscriptionCardProps {
   type: SubscriptionType;
@@ -47,7 +47,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               : 'Limited access to free courses'}
           </p>
         </div>
-        <Badge className={getSubscriptionStatusColor(status)}>
+        <Badge variant={getSubscriptionStatusVariant(status)}>
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </Badge>
       </div>

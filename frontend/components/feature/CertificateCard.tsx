@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Award, Calendar, Clock, ExternalLink } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { getLevelVariant, getCategoryVariant } from '@/lib/utils/badge-helpers';
 import { Button } from '@/components/ui/Button';
 import { CertificateWithDetails } from '@/lib/types/certificate';
 
@@ -24,29 +25,6 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
     });
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      'programming': 'bg-primary/20 text-primary',
-      'ai-fundamentals': 'bg-primary/20 text-primary',
-      'machine-learning': 'bg-success/20 text-success',
-      'ai-tools': 'bg-warning/20 text-warning',
-      'production-ai': 'bg-destructive/20 text-destructive',
-    };
-    return colors[category] || 'bg-muted/50 text-muted-foreground';
-  };
-
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'bg-success/20 text-success';
-      case 'intermediate':
-        return 'bg-warning/20 text-warning';
-      case 'advanced':
-        return 'bg-destructive/20 text-destructive';
-      default:
-        return 'bg-muted/50 text-muted-foreground';
-    }
-  };
 
   const handleView = () => {
     if (onView) {
@@ -88,10 +66,10 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
         {/* Course Info */}
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
-            <Badge className={getCategoryColor(certificate.course_category)}>
+            <Badge variant={getCategoryVariant(certificate.course_category)}>
               {certificate.course_category.replace('-', ' ')}
             </Badge>
-            <Badge className={getLevelColor(certificate.course_level)}>
+            <Badge variant={getLevelVariant(certificate.course_level)}>
               {certificate.course_level}
             </Badge>
           </div>

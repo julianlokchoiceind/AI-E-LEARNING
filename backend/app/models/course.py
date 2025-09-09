@@ -10,11 +10,13 @@ from enum import Enum
 
 
 class CourseCategory(str, Enum):
-    PROGRAMMING = "programming"
-    AI_FUNDAMENTALS = "ai-fundamentals"
-    MACHINE_LEARNING = "machine-learning"
-    AI_TOOLS = "ai-tools"
-    PRODUCTION_AI = "production-ai"
+    ML_BASICS = "ml-basics"
+    DEEP_LEARNING = "deep-learning"
+    NLP = "nlp"
+    COMPUTER_VISION = "computer-vision"
+    GENERATIVE_AI = "generative-ai"
+    AI_ETHICS = "ai-ethics"
+    AI_IN_BUSINESS = "ai-in-business"
 
 
 class CourseLevel(str, Enum):

@@ -367,12 +367,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
   const renderLearningPathStep = () => {
     const learningPaths = [
-      { id: 'programming_basics', title: 'Programming Basics', description: 'HTML, CSS, JavaScript, Python', icon: '💻' },
-      { id: 'ai_fundamentals', title: 'AI Fundamentals', description: 'Python for AI, Math, Basic ML', icon: '🤖' },
-      { id: 'machine_learning', title: 'Machine Learning', description: 'Deep Learning, TensorFlow, PyTorch', icon: '🧠' },
-      { id: 'ai_tools', title: 'AI Tools', description: 'Claude, LangChain, Vector DBs', icon: '🛠️' },
-      { id: 'production_ai', title: 'Production AI', description: 'MLOps, Deployment, Scaling', icon: '🚀' },
-      { id: 'full_stack', title: 'Full Stack', description: 'End-to-end development', icon: '📱' }
+      { id: 'ml_basics', title: 'ML Basics', description: 'Python for AI, Math, Basic ML', icon: '🤖' },
+      { id: 'deep_learning', title: 'Deep Learning', description: 'Neural Networks, TensorFlow, PyTorch', icon: '🧠' },
+      { id: 'nlp', title: 'NLP', description: 'Language Models, Text Processing', icon: '🗣️' },
+      { id: 'computer_vision', title: 'Computer Vision', description: 'Image Processing, CNNs, OpenCV', icon: '👁️' },
+      { id: 'generative_ai', title: 'Generative AI', description: 'Claude, LangChain, Vector DBs', icon: '🛠️' },
+      { id: 'ai_ethics', title: 'AI Ethics', description: 'Responsible AI, Bias Detection', icon: '⚖️' },
+      { id: 'ai_in_business', title: 'AI in Business', description: 'MLOps, Deployment, Scaling', icon: '🚀' }
     ];
 
     const skillLevels = [

@@ -45,11 +45,13 @@ const CertificatesPage = () => {
 
   const getCategoryDisplay = (category: string) => {
     const categoryMap: { [key: string]: string } = {
-      'programming': 'Programming',
-      'ai-fundamentals': 'AI Fundamentals',
-      'machine-learning': 'Machine Learning',
-      'ai-tools': 'AI Tools',
-      'production-ai': 'Production AI'
+      'ml-basics': 'ML Basics',
+      'deep-learning': 'Deep Learning',
+      'nlp': 'NLP',
+      'computer-vision': 'Computer Vision',
+      'generative-ai': 'Generative AI',
+      'ai-ethics': 'AI Ethics',
+      'ai-in-business': 'AI in Business'
     };
     return categoryMap[category] || category;
   };

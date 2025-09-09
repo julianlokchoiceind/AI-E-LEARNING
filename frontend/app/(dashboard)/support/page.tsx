@@ -37,6 +37,7 @@ import {
 import { supportAPI } from '@/lib/api/support';
 import { useQueryClient } from '@tanstack/react-query';
 import { Container } from '@/components/ui/Container';
+import { getTicketStatusVariant, getTicketPriorityVariant } from '@/lib/utils/badge-helpers';
 
 export default function SupportPage() {
   const router = useRouter();
@@ -119,15 +120,6 @@ export default function SupportPage() {
     setSelectedFiles([]);
   };
 
-  const getStatusColor = (status: string) => {
-    const statusInfo = TICKET_STATUSES.find(s => s.value === status);
-    return statusInfo?.color || 'muted-foreground';
-  };
-
-  const getPriorityColor = (priority: string) => {
-    const priorityInfo = TICKET_PRIORITIES.find(p => p.value === priority);
-    return priorityInfo?.color || 'muted-foreground';
-  };
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -281,11 +273,11 @@ export default function SupportPage() {
                       </p>
                       
                       <div className="flex items-center gap-4 text-sm">
-                        <Badge variant={getStatusColor(ticket.status) as any}>
+                        <Badge variant={getTicketStatusVariant(ticket.status)}>
                           {TICKET_STATUSES.find(s => s.value === ticket.status)?.label}
                         </Badge>
                         
-                        <Badge variant={getPriorityColor(ticket.priority) as any}>
+                        <Badge variant={getTicketPriorityVariant(ticket.priority)}>
                           {TICKET_PRIORITIES.find(p => p.value === ticket.priority)?.label} Priority
                         </Badge>
                         

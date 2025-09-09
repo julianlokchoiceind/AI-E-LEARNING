@@ -647,11 +647,13 @@ const CourseBuilderPage = () => {
                         className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="">Select category</option>
-                        <option value="programming">Programming</option>
-                        <option value="ai-fundamentals">AI Fundamentals</option>
-                        <option value="machine-learning">Machine Learning</option>
-                        <option value="ai-tools">AI Tools</option>
-                        <option value="production-ai">Production AI</option>
+                        <option value="ml-basics">ML Basics</option>
+                        <option value="deep-learning">Deep Learning</option>
+                        <option value="nlp">NLP</option>
+                        <option value="computer-vision">Computer Vision</option>
+                        <option value="generative-ai">Generative AI</option>
+                        <option value="ai-ethics">AI Ethics</option>
+                        <option value="ai-in-business">AI in Business</option>
                       </select>
                     </div>
 
