@@ -121,6 +121,7 @@ export function useCreateCoursePayment() {
         ['admin-payment-history'], // Refresh admin payment history
       ],
       operationName: 'create-course-payment', // Unique operation ID for toast deduplication
+      showToast: false, // Let parent component handle success/error toast messages
     }
   );
 }

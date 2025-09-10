@@ -153,7 +153,7 @@ export default function SubscribePage() {
               <SubscriptionCheckoutForm 
                 plan={currentPlan}
                 onSuccess={() => {
-                  ToastService.success('Subscription successful! Welcome to Pro!');
+                  // Manual toast removed - SubscriptionCheckoutForm uses useApiMutation which handles API response toast automatically
                   router.push('/dashboard');
                 }}
                 onError={(error: string) => {

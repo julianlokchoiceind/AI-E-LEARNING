@@ -113,7 +113,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
       });
 
       if (response.success) {
-        ToastService.success(response.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API response toast automatically
         
         const updatedLesson = {
           ...lesson,
@@ -132,7 +132,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
         onClose();
       }
     } catch (error: any) {
-      ToastService.error(error.message || 'Something went wrong');
+      // Manual toast removed - useApiMutation handles API error toast automatically
     } finally {
       setLoading(false);
     }

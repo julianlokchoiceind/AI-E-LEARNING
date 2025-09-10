@@ -134,9 +134,9 @@ export default function AdminSupportPage() {
   const handleQuickUpdate = useCallback(async (ticketId: string, update: TicketUpdateData) => {
     try {
       await updateTicketMutation.mutateAsync({ ticketId, data: update });
-      ToastService.success('Ticket updated successfully');
+      // Manual toast removed - useApiMutation handles API response toast automatically
     } catch (error: any) {
-      ToastService.error(error.message || 'Something went wrong');
+      // Manual toast removed - useApiMutation handles API error toast automatically
     }
   }, [updateTicketMutation]);
 

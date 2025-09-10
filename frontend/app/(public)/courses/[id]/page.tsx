@@ -111,7 +111,7 @@ const CourseDetailPage = () => {
         {
           onSuccess: (response) => {
             // React Query will automatically invalidate and refetch enrollment data
-            ToastService.success(response.message || 'Something went wrong');
+            // Manual toast removed - useApiMutation handles API response toast automatically
             
             // Check if the enrollment response has progress information
             if (response.data?.progress?.current_lesson_id) {
@@ -149,7 +149,7 @@ const CourseDetailPage = () => {
               return;
             }
             console.error('Failed to enroll:', error);
-            ToastService.error(error.message || 'Something went wrong');
+            // Manual toast removed - useApiMutation handles API error toast automatically
           },
         }
       );

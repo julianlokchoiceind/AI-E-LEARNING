@@ -153,7 +153,7 @@ export function SubscriptionCheckoutForm({
         {
           onSuccess: (response) => {
             if (response.success) {
-              ToastService.success(response.message || 'Something went wrong');
+              // Manual toast removed - useApiMutation handles API response toast automatically
               setTimeout(() => {
                 onSuccess();
               }, 1500);

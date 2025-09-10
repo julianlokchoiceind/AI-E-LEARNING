@@ -43,15 +43,15 @@ export const ExportProgressModal: React.FC<ExportProgressModalProps> = ({
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
 
-          ToastService.success(response.message || 'Something went wrong');
+          // Manual toast removed - useApiMutation handles API response toast automatically
           onClose();
         } else {
-          ToastService.error(response.message || 'Something went wrong');
+          // Manual toast removed - useApiMutation handles API error toast automatically
         }
       },
       onError: (error: any) => {
         console.error('Export failed:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API error toast automatically
       }
     });
   };

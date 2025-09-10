@@ -139,13 +139,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     // Use React Query mutation instead of direct API call
     skipOnboardingMutation(undefined, {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API response toast automatically
         onClose();
         onComplete?.();
       },
       onError: (error: any) => {
         console.error('Failed to skip onboarding:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API error toast automatically
       },
       onSettled: () => {
         setState(prev => ({ ...prev, isLoading: false }));
@@ -172,7 +172,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
       },
       onError: (error: any) => {
         console.error('Failed to start onboarding:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API error toast automatically
       },
       onSettled: () => {
         setState(prev => ({ ...prev, isLoading: false }));
@@ -209,7 +209,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
       },
       onError: (error: any) => {
         console.error('Failed to update learning path:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API error toast automatically
       },
       onSettled: () => {
         setState(prev => ({ ...prev, isLoading: false }));
@@ -255,12 +255,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           }));
         } catch (error: any) {
           console.error('Failed to get recommendations:', error);
-          ToastService.error(error.message || 'Something went wrong');
+          // Manual toast removed - useApiMutation handles API error toast automatically
         }
       },
       onError: (error: any) => {
         console.error('Failed to update profile setup:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API error toast automatically
       },
       onSettled: () => {
         setState(prev => ({ ...prev, isLoading: false }));
@@ -288,7 +288,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           progress: 100
         }));
         
-        ToastService.success(response.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API response toast automatically
         
         // Close modal after showing completion for a moment
         setTimeout(() => {
@@ -298,7 +298,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
       },
       onError: (error: any) => {
         console.error('Failed to complete onboarding:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API error toast automatically
       },
       onSettled: () => {
         setState(prev => ({ ...prev, isLoading: false }));

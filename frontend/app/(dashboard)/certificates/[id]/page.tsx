@@ -47,12 +47,12 @@ const CertificateViewPage = () => {
     {
       onSuccess: (response) => {
         setShowEditModal(false);
-        ToastService.success(response.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API response toast automatically
         refetch(); // Refresh certificate data
       },
       onError: (error: any) => {
         console.error('Failed to update certificate:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API error toast automatically
       }
     }
   );

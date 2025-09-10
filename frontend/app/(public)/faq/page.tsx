@@ -84,7 +84,7 @@ export default function FAQPage() {
     // React Query mutation handles API call with automatic error handling
     voteFAQ({ faqId, isHelpful }, {
       onSuccess: (response) => {
-        ToastService.success(response.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API response toast automatically
         
         // Mark as voted in local state only
         const newVoted = new Set(votedFaqs);
@@ -96,7 +96,7 @@ export default function FAQPage() {
       },
       onError: (error: any) => {
         console.error('Failed to vote:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API error toast automatically
       }
     });
   };

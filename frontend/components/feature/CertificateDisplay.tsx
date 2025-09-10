@@ -41,11 +41,11 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        ToastService.success('Certificate downloaded successfully');
+        // Manual toast removed - useApiMutation handles API response toast automatically
       },
       onError: (error: any) => {
         console.error('Failed to download certificate:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API error toast automatically
       }
     });
   };
@@ -54,7 +54,7 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
     getLinkedInData(certificate.id, {
       onSuccess: (response) => {
         if (!response.success || !response.data) {
-          ToastService.error(response.message || 'Something went wrong');
+          // Manual toast removed - useApiMutation handles API error toast automatically
           return;
         }
         
@@ -66,11 +66,11 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
         )}`;
         
         window.open(linkedinUrl, '_blank', 'width=600,height=400');
-        ToastService.success(response.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API response toast automatically
       },
       onError: (error: any) => {
         console.error('Failed to get LinkedIn share data:', error);
-        ToastService.error(error.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API error toast automatically
       }
     });
   };

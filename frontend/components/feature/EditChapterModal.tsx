@@ -70,7 +70,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
       });
 
       if (response.success && response.data) {
-        ToastService.success(response.message || 'Something went wrong');
+        // Manual toast removed - useApiMutation handles API response toast automatically
         // Convert response to ChapterEditData format
         const updatedChapter: ChapterEditData = {
           id: response.data.id,
@@ -84,7 +84,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
         onClose();
       }
     } catch (error: any) {
-      ToastService.error(error.message || 'Something went wrong');
+      // Manual toast removed - useApiMutation handles API error toast automatically
     } finally {
       setLoading(false);
     }

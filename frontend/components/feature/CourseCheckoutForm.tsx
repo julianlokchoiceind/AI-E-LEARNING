@@ -203,7 +203,8 @@ function CheckoutForm({
       );
 
       // Payment successful
-      ToastService.success('Payment successful! Enrolling you in the course...');
+      // Manual toast removed - useApiMutation handles API response toast automatically
+      // Parent component handles specific success message and navigation
       
       // Give a moment for webhook processing
       setTimeout(() => {

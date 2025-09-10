@@ -171,6 +171,7 @@ export function useSendAIMessage() {
     },
     {
       operationName: 'send-ai-message',
+      showToast: false, // Let useAIChat.ts handle custom error messages (rate limiting, auth, etc.)
       invalidateQueries: [
         ['conversation-history'], // Refresh conversation history
         // Note: If AI message affects course/lesson progress, manual invalidation needed
@@ -213,6 +214,7 @@ export function useClearConversationHistory() {
     },
     {
       operationName: 'clear-conversation',
+      showToast: false, // Let useAIChat.ts handle success/error messages
       invalidateQueries: [
         ['conversation-history'], // Refresh conversation history
         ['ai-suggestions'], // Clear AI suggestions since they may depend on conversation context
