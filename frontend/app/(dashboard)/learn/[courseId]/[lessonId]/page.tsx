@@ -649,7 +649,7 @@ export default function OptimizedLessonPlayerPage() {
   const handleQuizComplete = useCallback((passed: boolean) => {
     if (passed) {
       setShowQuiz(false);
-      ToastService.success('Lesson completed! Great job!');
+      console.log('Lesson completed! Great job!'); // Success feedback removed
       
       // Navigate to next lesson if available
       if (navigation?.next_lesson_id) {

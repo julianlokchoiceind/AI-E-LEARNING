@@ -130,7 +130,7 @@ export const DroppableLessonList: React.FC<DroppableLessonListProps> = ({
       // Optimistically update UI
       await onLessonsReorder(chapterId, lessonsWithNewOrder);
       
-      ToastService.success('Lesson order updated successfully');
+      console.log('Lesson order updated successfully'); // Success feedback removed
     } catch (error: any) {
       console.error('Failed to reorder lessons:', error);
       ToastService.error(error.message || 'Something went wrong');

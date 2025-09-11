@@ -91,7 +91,7 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
     } else {
       // Copy to clipboard
       navigator.clipboard.writeText(shareUrl);
-      ToastService.success('Certificate link copied to clipboard');
+      console.log('Certificate link copied to clipboard'); // Success feedback removed
     }
   };
 

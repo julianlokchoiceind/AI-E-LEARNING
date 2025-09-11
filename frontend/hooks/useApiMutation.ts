@@ -38,7 +38,7 @@ export function useApiMutation<TData = any, TVariables = any>(
     onSuccess,
     onError,
     invalidateQueries = [],
-    showToast = true,
+    showToast = false, // Changed from true to false - disable auto-toast by default
     operationName = 'mutation',
   } = options;
 
@@ -47,11 +47,11 @@ export function useApiMutation<TData = any, TVariables = any>(
       try {
         const response = await mutationFn(variables);
         
-        // Show success toast if enabled and message exists
+        // Success toast disabled globally - now controlled by DISABLE_SUCCESS flag
         if (showToast && response.message) {
           // Generate operation-based ID for deduplication
           const toastId = generateToastId(operationName, variables);
-          ToastService.success(response.message, toastId);
+          ToastService.success(response.message, toastId); // Will be skipped by global flag
         }
         
         return response;

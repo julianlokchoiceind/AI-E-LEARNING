@@ -110,7 +110,7 @@ export default function DashboardPage() {
     // Refresh dashboard data to show any new courses from onboarding
     await refetchDashboard();
     
-    ToastService.success('Welcome to the platform! Your personalized dashboard is ready.');
+    console.log('Welcome to the platform! Your personalized dashboard is ready.'); // Success feedback removed
   };
 
   // Handle onboarding close (skip or manual close)
@@ -125,7 +125,7 @@ export default function DashboardPage() {
     try {
       // React Query refetch - automatic error handling and caching
       await refetchDashboard();
-      ToastService.success('Dashboard refreshed');
+      console.log('Dashboard refreshed'); // Success feedback removed
     } catch (error) {
       // Error handling is automatic via React Query
       console.error('Dashboard refresh error:', error);

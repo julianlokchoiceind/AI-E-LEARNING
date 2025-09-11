@@ -130,7 +130,7 @@ const CourseDetailPage = () => {
           onError: (error: any) => {
             // If "already enrolled" error → treat as success and redirect
             if (error.message?.includes('already enrolled')) {
-              ToastService.success('Already enrolled, redirecting...');
+              console.log('Already enrolled, redirecting...'); // Success feedback removed
               
               // Use 3-level fallback: continue_lesson_id → current_lesson_id → first lesson
               if (course?.continue_lesson_id) {

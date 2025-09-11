@@ -70,7 +70,7 @@ export default function AdminPaymentsPage() {
         refetchAnalytics(),
         refetchHistory()
       ]);
-      ToastService.success('Payment data refreshed successfully');
+      console.log('Payment data refreshed'); // Success feedback removed
     } catch (error) {
       ToastService.error('Failed to refresh payment data');
     }

@@ -168,7 +168,7 @@ export default function CourseCheckoutPage() {
               <CourseCheckoutForm 
                 course={course}
                 onSuccess={() => {
-                  ToastService.success('Payment successful! Redirecting to course...');
+                  console.log('Payment successful! Redirecting to course...'); // Success feedback removed
                   router.push(`/learn/${courseId}`);
                 }}
                 onError={(error: string) => {

@@ -113,7 +113,7 @@ export const DroppableChapterList: React.FC<DroppableChapterListProps> = ({
       // Optimistically update UI
       await onChaptersReorder(chaptersWithNewOrder);
       
-      ToastService.success('Chapter order updated successfully');
+      console.log('Chapter order updated successfully'); // Success feedback removed
     } catch (error: any) {
       console.error('Failed to reorder chapters:', error);
       ToastService.error(error.message || 'Something went wrong');

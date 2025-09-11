@@ -68,7 +68,7 @@ const NavigationGuard: React.FC<NavigationGuardProps> = ({
     try {
       const success = await onForceSave();
       if (success) {
-        ToastService.success('Changes saved successfully');
+        console.log('Changes saved successfully'); // Success feedback removed
         setShowModal(false);
         if (pendingNavigation) {
           pendingNavigation();

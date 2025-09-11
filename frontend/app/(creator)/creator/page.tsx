@@ -119,7 +119,7 @@ const CreatorDashboard = () => {
     
     try {
       await refetchCourses();
-      ToastService.success('Dashboard refreshed');
+      console.log('Dashboard refreshed'); // Success feedback removed
     } catch (error) {
       console.error('Dashboard refresh error:', error);
     }

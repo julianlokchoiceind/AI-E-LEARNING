@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
  */
 export class ToastService {
   private static activeToasts = new Map<string, string>();
+  private static DISABLE_SUCCESS = true; // Global flag to disable success toasts
   
   /**
    * Success toast with automatic deduplication
@@ -18,6 +19,12 @@ export class ToastService {
    * @param operationId - Unique ID to prevent duplicates
    */
   static success(message: string | null | undefined, operationId?: string): string {
+    // Skip all success toasts when disabled
+    if (this.DISABLE_SUCCESS) {
+      console.log('[Toast Disabled]', message); // Debug log to track what's being skipped
+      return 'disabled-toast';
+    }
+    
     const finalMessage = this.getFinalMessage(message);
     const toastId = operationId || 'default-success';
     
@@ -355,7 +362,7 @@ export class ToastService {
 }
 
 // Export convenience functions for easier migration
-export const showSuccess = ToastService.success;
+// export const showSuccess = ToastService.success; // Disabled - use ToastService.success directly
 export const showError = ToastService.error;
 export const showInfo = ToastService.info;
 export const showLoading = ToastService.loading;

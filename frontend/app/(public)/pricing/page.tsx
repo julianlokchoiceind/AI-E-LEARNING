@@ -27,7 +27,7 @@ export default function PricingPage() {
 
     // Check premium status instead of subscription object
     if (user.premiumStatus) {
-      ToastService.success('You already have premium access');
+      console.log('You already have premium access'); // Success feedback removed
       return;
     }
 

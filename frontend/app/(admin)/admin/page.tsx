@@ -123,7 +123,7 @@ export default function AdminDashboard() {
         refetchAll(),
         refetchAnalytics()
       ]);
-      ToastService.success('Dashboard data refreshed successfully');
+      console.log('Dashboard data refreshed'); // Success feedback removed
     } catch (error) {
       ToastService.error('Failed to refresh dashboard data');
     }

@@ -77,7 +77,7 @@ export class PaymentErrorBoundary extends Component<
 
   handleContactSupport = () => {
     // Navigate to support or open chat
-    ToastService.success('Opening support chat...');
+    console.log('Opening support chat...'); // Success feedback removed
     // Implementation would depend on support system
     window.open('/contact?issue=payment', '_blank');
   };

@@ -338,7 +338,7 @@ export const useAIChat = ({
     try {
       clearHistory({});
       clearMessages();
-      ToastService.success('Conversation history cleared');
+      console.log('Conversation history cleared'); // Success feedback removed
     } catch (error: any) {
       console.error('Failed to clear conversation history:', error);
       ToastService.error(error.message || 'Something went wrong');

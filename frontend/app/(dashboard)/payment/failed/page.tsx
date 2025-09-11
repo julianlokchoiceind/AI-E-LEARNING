@@ -57,7 +57,7 @@ export default function PaymentFailedPage() {
 
   const handleContactSupport = () => {
     // In a real app, this would open a support chat or redirect to contact form
-    ToastService.success('Support contact feature coming soon. Please email support@elearning.com');
+    console.log('Support contact feature coming soon. Please email support@elearning.com'); // Success feedback removed
   };
 
   if (loading) {

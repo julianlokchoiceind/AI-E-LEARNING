@@ -427,7 +427,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
             if (onComplete && isMountedRef.current) {
               onComplete();
             }
-            ToastService.success('Lesson completed! Next lesson unlocked.');
+            console.log('Lesson completed! Next lesson unlocked.'); // Success feedback removed
           }
         }
       } catch (error) {

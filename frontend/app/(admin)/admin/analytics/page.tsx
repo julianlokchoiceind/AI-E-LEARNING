@@ -89,7 +89,7 @@ export default function AdminAnalyticsPage() {
         refetchAdmin(),
         refetchPayments()
       ]);
-      ToastService.success('Analytics data refreshed successfully');
+      console.log('Analytics data refreshed'); // Success feedback removed
     } catch (error) {
       ToastService.error('Failed to refresh analytics data');
     }

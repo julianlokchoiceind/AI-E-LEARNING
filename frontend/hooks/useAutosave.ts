@@ -240,8 +240,8 @@ export const useAutosave = <T = any>(
     const hasChanges = dataChangeChecker(dataRef.current, lastSavedDataRef.current);
     if (!hasChanges) {
       
-      // 🔔 Show toast feedback for manual forceSave with no changes
-      ToastService.success("No changes to save");
+      // Manual save with no changes - log only
+      console.log("No changes to save"); // Success feedback removed
       
       // 🎯 BEST PRACTICE: Keep existing SaveStatusIndicator (don't reset saveStatus)
       // Admin should always see when course was last saved, even if current save has no changes

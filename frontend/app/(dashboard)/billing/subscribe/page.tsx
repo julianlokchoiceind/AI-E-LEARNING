@@ -34,7 +34,7 @@ export default function SubscribePage() {
     if (user) {
       // Premium users have free access
       if (user.premiumStatus) {
-        ToastService.success('You have premium access to all courses');
+        console.log('You have premium access to all courses'); // Success feedback removed
         router.push('/billing');
         return;
       }

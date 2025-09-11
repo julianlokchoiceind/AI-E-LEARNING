@@ -177,7 +177,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
   // Clear conversation
   const clearConversation = () => {
     setMessages([]);
-    ToastService.success('Conversation cleared');
+    console.log('Conversation cleared'); // Success feedback removed
   };
   
   // Format timestamp
