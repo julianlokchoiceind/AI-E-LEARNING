@@ -37,6 +37,7 @@ export function useAISuggestionsQuery(params: AISuggestionsParams, enabled: bool
     },
     {
       enabled: enabled && (!!params.course_id || !!params.lesson_id),
+      showToast: false, // Disable toasts for public AI suggestions - use graceful degradation
       ...getCacheConfig('AI_SUGGESTIONS') // AI suggestions - moderate freshness
     }
   );
@@ -77,6 +78,7 @@ export function useLearningPathRecommendationsQuery(userId?: string) {
     },
     {
       enabled: !!userId,
+      showToast: false, // Disable toasts for public learning path recommendations - use graceful degradation
       ...getCacheConfig('AI_LEARNING_PATH') // AI learning path - stable content
     }
   );
@@ -198,6 +200,7 @@ export function useGetConversationHistory(courseId?: string, lessonId?: string, 
     },
     {
       enabled, // Only run when explicitly enabled
+      showToast: false, // Disable toasts for public AI conversation history - use graceful degradation
       ...getCacheConfig('AI_CONVERSATION') // AI conversation - moderate freshness
     }
   );

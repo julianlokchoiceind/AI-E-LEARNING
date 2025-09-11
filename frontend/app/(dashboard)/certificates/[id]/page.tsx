@@ -13,7 +13,8 @@ import { useCertificateQuery } from '@/hooks/queries/useCertificates';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { certificateAPI } from '@/lib/api/certificates';
 import { CertificateWithDetails, CertificateUpdate } from '@/lib/types/certificate';
-import { ToastService } from '@/lib/toast/ToastService';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 import { Container } from '@/components/ui/Container';
 
 const CertificateViewPage = () => {
@@ -23,6 +24,9 @@ const CertificateViewPage = () => {
   const certificateId = params.id as string;
 
   const [showEditModal, setShowEditModal] = useState(false);
+  
+  // Inline message for certificate errors
+  const certificateErrorMessage = useInlineMessage('certificate-error');
   const [updateData, setUpdateData] = useState<CertificateUpdate>({
     is_public: true,
     template_id: 'default',
@@ -45,6 +49,7 @@ const CertificateViewPage = () => {
     ({ certificateId, updateData }: { certificateId: string; updateData: CertificateUpdate }) => 
       certificateAPI.updateCertificate(certificateId, updateData),
     {
+      showToast: false, // Disable automatic toast notifications
       onSuccess: (response) => {
         setShowEditModal(false);
         // Manual toast removed - useApiMutation handles API response toast automatically
@@ -73,10 +78,9 @@ const CertificateViewPage = () => {
   React.useEffect(() => {
     if (error) {
       console.error('Failed to fetch certificate:', error);
-      ToastService.error(error?.message || 'Something went wrong');
-      router.push('/certificates');
+      certificateErrorMessage.showError(error?.message || 'Something went wrong');
     }
-  }, [error, router]);
+  }, [error, certificateErrorMessage]);
 
   const handleUpdate = () => {
     updateCertificate({ certificateId, updateData });
@@ -102,6 +106,15 @@ const CertificateViewPage = () => {
 
   return (
     <Container variant="public">
+      {/* Certificate Error Message */}
+      {certificateErrorMessage.message && (
+        <InlineMessage 
+          message={certificateErrorMessage.message.message} 
+          type={certificateErrorMessage.message.type}
+          onDismiss={certificateErrorMessage.clear}
+        />
+      )}
+      
       {/* Header */}
       <div className="mb-8">
         <Button

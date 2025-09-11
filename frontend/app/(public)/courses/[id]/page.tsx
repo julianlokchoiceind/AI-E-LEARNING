@@ -15,8 +15,9 @@ import { useCourseQuery, useEnrollInCourse, useCourseChaptersPublicQuery } from 
 import { useEnrollmentQuery } from '@/hooks/queries/useEnrollments';
 import { getCourseEnrollment } from '@/lib/api/enrollments';
 import { useAuth } from '@/hooks/useAuth';
-import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
 import { Container } from '@/components/ui/Container';
 import { SkeletonBox, SkeletonCircle, EmptyState, ErrorState } from '@/components/ui/LoadingStates';
@@ -34,6 +35,11 @@ const CourseDetailPage = () => {
   );
   const [userEnrollmentStatus, setUserEnrollmentStatus] = useState<boolean | null>(null);
   const [checkingEnrollment, setCheckingEnrollment] = useState(false);
+  
+  // Inline message hooks
+  const courseNoChaptersMessage = useInlineMessage('course-no-chapters');
+  const courseNoLessonsMessage = useInlineMessage('course-no-lessons');
+  const courseEnrollmentMessage = useInlineMessage('course-enrollment');
 
   // React Query hooks - automatic caching and state management
   const { data: courseResponse, loading: courseLoading, execute: refetchCourse } = useCourseQuery(courseId);
@@ -98,6 +104,9 @@ const CourseDetailPage = () => {
   }, [course, user, isEnrolled]);
 
   const handleEnroll = async () => {
+    // Clear any existing messages
+    courseEnrollmentMessage.clear();
+    
     if (!user) {
       router.push('/login?redirect=' + encodeURIComponent(`/courses/${courseId}`));
       return;
@@ -110,46 +119,47 @@ const CourseDetailPage = () => {
         { courseId },
         {
           onSuccess: (response) => {
-            // React Query will automatically invalidate and refetch enrollment data
-            // Manual toast removed - useApiMutation handles API response toast automatically
+            // Show success message with inline feedback
+            courseEnrollmentMessage.showSuccess('Successfully enrolled! Redirecting to first lesson...');
             
+            // React Query will automatically invalidate and refetch enrollment data
             // Check if the enrollment response has progress information
             if (response.data?.progress?.current_lesson_id) {
-              router.push(`/learn/${courseId}/${response.data.progress.current_lesson_id}`);
+              setTimeout(() => router.push(`/learn/${courseId}/${response.data!.progress!.current_lesson_id}`), 1500);
             } else {
               // Fallback: Try to get the first lesson from chapters
               const firstLesson = chapters[0]?.lessons?.[0];
               if (firstLesson) {
-                router.push(`/learn/${courseId}/${firstLesson.id}`);
+                setTimeout(() => router.push(`/learn/${courseId}/${firstLesson.id}`), 1500);
               } else {
                 // Last fallback: go to course page to select lesson
-                router.push(`/courses/${courseId}`);
+                setTimeout(() => router.push(`/courses/${courseId}`), 1500);
               }
             }
           },
           onError: (error: any) => {
             // If "already enrolled" error → treat as success and redirect
             if (error.message?.includes('already enrolled')) {
-              console.log('Already enrolled, redirecting...'); // Success feedback removed
+              courseEnrollmentMessage.showSuccess('You\'re already enrolled! Redirecting to continue learning...');
               
               // Use 3-level fallback: continue_lesson_id → current_lesson_id → first lesson
               if (course?.continue_lesson_id) {
-                router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
+                setTimeout(() => router.push(`/learn/${courseId}/${course.continue_lesson_id}`), 1500);
               } else if (course?.current_lesson_id) {
-                router.push(`/learn/${courseId}/${course.current_lesson_id}`);
+                setTimeout(() => router.push(`/learn/${courseId}/${course.current_lesson_id}`), 1500);
               } else {
                 // Fallback to first lesson
                 const firstLesson = chapters[0]?.lessons?.[0];
                 if (firstLesson) {
-                  router.push(`/learn/${courseId}/${firstLesson.id}`);
+                  setTimeout(() => router.push(`/learn/${courseId}/${firstLesson.id}`), 1500);
                 } else {
-                  router.push(`/courses/${courseId}`);
+                  setTimeout(() => router.push(`/courses/${courseId}`), 1500);
                 }
               }
               return;
             }
             console.error('Failed to enroll:', error);
-            // Manual toast removed - useApiMutation handles API error toast automatically
+            courseEnrollmentMessage.showError(error.message || 'Failed to enroll in course. Please try again.');
           },
         }
       );
@@ -265,6 +275,33 @@ const CourseDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-muted">
+      {/* Course Messages */}
+      <Container variant="public" className="pt-6">
+        {courseNoChaptersMessage.message && (
+          <InlineMessage
+            message={courseNoChaptersMessage.message.message}
+            type={courseNoChaptersMessage.message.type}
+            onDismiss={courseNoChaptersMessage.clear}
+          />
+        )}
+        
+        {courseNoLessonsMessage.message && (
+          <InlineMessage
+            message={courseNoLessonsMessage.message.message}
+            type={courseNoLessonsMessage.message.type}
+            onDismiss={courseNoLessonsMessage.clear}
+          />
+        )}
+        
+        {courseEnrollmentMessage.message && (
+          <InlineMessage
+            message={courseEnrollmentMessage.message.message}
+            type={courseEnrollmentMessage.message.type}
+            onDismiss={courseEnrollmentMessage.clear}
+          />
+        )}
+      </Container>
+
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-primary to-primary/80 text-white">
         <Container variant="header" className="py-12">
@@ -413,13 +450,13 @@ const CourseDetailPage = () => {
                       } else {
                         // Fallback to first lesson
                         if (!chapters || chapters.length === 0) {
-                          ToastService.error('Course has no chapters yet');
+                          courseNoChaptersMessage.showError('Course has no chapters yet');
                           return;
                         }
 
                         const firstLesson = chapters[0]?.lessons?.[0];
                         if (!firstLesson) {
-                          ToastService.error('No lessons available');
+                          courseNoLessonsMessage.showError('No lessons available');
                           return;
                         }
 
@@ -626,6 +663,7 @@ const CourseDetailPage = () => {
         courseId={courseId}
         userLevel={course?.level || 'beginner'}
         position="bottom-right"
+        onShowMessage={(message, type) => type === 'error' ? courseEnrollmentMessage.showError(message) : courseEnrollmentMessage.showInfo(message)}
       />
     </div>
   );

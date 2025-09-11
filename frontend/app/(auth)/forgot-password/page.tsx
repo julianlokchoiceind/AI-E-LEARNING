@@ -6,28 +6,30 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { useApiMutation } from '@/hooks/useApiMutation'
 import { forgotPassword } from '@/lib/api/auth'
-import { ToastService } from '@/lib/toast/ToastService'
 import { Container } from '@/components/ui/Container'
+import { useInlineMessage } from '@/hooks/useInlineMessage'
+import { InlineMessage } from '@/components/ui/InlineMessage'
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [success, setSuccess] = useState(false)
-  const [successMessage, setSuccessMessage] = useState('')
+  const [emailError, setEmailError] = useState('')
+  const forgotPasswordMessage = useInlineMessage('forgot-password-form')
   
   // React Query mutation for forgot password - replaces manual API calls
   const { mutate: sendResetEmail, loading } = useApiMutation(
     (email: string) => forgotPassword(email),
     {
       operationName: 'forgot-password', // For toast deduplication
+      showToast: false, // Disable automatic toast - use inline message instead
       onSuccess: (response) => {
         const message = response.message || 'Password reset email sent! Please check your inbox.';
-        setSuccessMessage(message);
+        forgotPasswordMessage.showSuccess(message);
         setSuccess(true);
-        // Toast handled automatically by useApiMutation
       },
       onError: (error: any) => {
-        // Keep error handling logic only, toast is handled automatically
+        forgotPasswordMessage.showError(error.message || 'Failed to send reset email. Please try again.');
         console.error('Forgot password failed:', error);
       }
     }
@@ -35,6 +37,22 @@ export default function ForgotPasswordPage() {
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Clear previous errors
+    setEmailError('')
+    forgotPasswordMessage.clear()
+    
+    // Validate email
+    if (!email) {
+      setEmailError('Email is required')
+      return
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError('Please enter a valid email address')
+      return
+    }
+    
     // React Query mutation handles API call with automatic error handling
     sendResetEmail(email)
   }
@@ -52,20 +70,13 @@ export default function ForgotPasswordPage() {
             </p>
           </div>
           
-          <div className="rounded-md bg-success/20 p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-success" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-success">
-                  {successMessage}
-                </p>
-              </div>
-            </div>
-          </div>
+          {forgotPasswordMessage.message && (
+            <InlineMessage
+              message={forgotPasswordMessage.message.message}
+              type={forgotPasswordMessage.message.type}
+              onDismiss={forgotPasswordMessage.clear}
+            />
+          )}
           
           <div className="text-center">
             <Link href="/login" className="font-medium text-primary hover:text-primary/80">
@@ -89,6 +100,15 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
         
+        {/* Page-level messages */}
+        {forgotPasswordMessage.message && (
+          <InlineMessage
+            message={forgotPasswordMessage.message.message}
+            type={forgotPasswordMessage.message.type}
+            onDismiss={forgotPasswordMessage.clear}
+          />
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           
           <div>
@@ -103,10 +123,21 @@ export default function ForgotPasswordPage() {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  // Clear error when user starts typing
+                  if (emailError) {
+                    setEmailError('')
+                  }
+                }}
+                className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+                  emailError ? 'border-red-500 bg-red-50' : 'border-border'
+                }`}
                 placeholder="Enter your email"
               />
+              {emailError && (
+                <p className="mt-1 text-sm text-red-600">{emailError}</p>
+              )}
             </div>
           </div>
           

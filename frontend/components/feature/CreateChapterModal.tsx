@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/Button';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
 import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useCreateChapter } from '@/hooks/queries/useChapters';
-import { ToastService } from '@/lib/toast/ToastService';
 
 export interface ChapterResponse {
   id: string;

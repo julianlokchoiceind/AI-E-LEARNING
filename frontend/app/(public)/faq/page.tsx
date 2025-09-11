@@ -10,10 +10,11 @@ import {
   Tag,
   HelpCircle
 } from 'lucide-react';
-import { ToastService } from '@/lib/toast/ToastService';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 import { useAuth } from '@/hooks/useAuth';
 import { useFAQsQuery, useVoteFAQ } from '@/hooks/queries/useFAQ';
 import { useFAQCategoriesQuery } from '@/hooks/queries/useFAQCategories';
@@ -28,6 +29,9 @@ export default function FAQPage() {
   const [expandedFaqs, setExpandedFaqs] = useState<Set<string>>(new Set());
   const [votedFaqs, setVotedFaqs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const faqLoginMessage = useInlineMessage('faq-login-required');
+  const faqVotingMessage = useInlineMessage('faq-already-voted');
+  const faqVotingFeedbackMessage = useInlineMessage('faq-voting-feedback');
 
   // React Query hooks - automatic caching and state management
   const { data: faqResponse, loading } = useFAQsQuery({
@@ -71,20 +75,27 @@ export default function FAQPage() {
   };
 
   const handleVote = (faqId: string, isHelpful: boolean) => {
+    faqLoginMessage.clear();
+    faqVotingMessage.clear();
+    faqVotingFeedbackMessage.clear();
+    
     if (!user) {
-      ToastService.error('Please login to vote');
+      faqLoginMessage.showError('Please login to vote on this FAQ');
       return;
     }
 
     if (votedFaqs.has(faqId)) {
-      ToastService.error('You have already voted on this FAQ');
+      faqVotingMessage.showError('You have already voted on this FAQ');
       return;
     }
 
     // React Query mutation handles API call with automatic error handling
     voteFAQ({ faqId, isHelpful }, {
       onSuccess: (response) => {
-        // Manual toast removed - useApiMutation handles API response toast automatically
+        // Show success feedback with inline message
+        faqVotingFeedbackMessage.showSuccess(
+          isHelpful ? 'Thank you! Your feedback helps us improve.' : 'Thanks for letting us know this wasn\'t helpful.'
+        );
         
         // Mark as voted in local state only
         const newVoted = new Set(votedFaqs);
@@ -96,7 +107,7 @@ export default function FAQPage() {
       },
       onError: (error: any) => {
         console.error('Failed to vote:', error);
-        // Manual toast removed - useApiMutation handles API error toast automatically
+        faqVotingFeedbackMessage.showError(error.message || 'Failed to submit feedback. Please try again.');
       }
     });
   };
@@ -163,6 +174,31 @@ export default function FAQPage() {
               Find answers to common questions about our AI E-Learning platform
             </p>
           </div>
+
+          {/* FAQ Messages */}
+          {faqLoginMessage.message && (
+            <InlineMessage
+              message={faqLoginMessage.message.message}
+              type={faqLoginMessage.message.type}
+              onDismiss={faqLoginMessage.clear}
+            />
+          )}
+          
+          {faqVotingMessage.message && (
+            <InlineMessage
+              message={faqVotingMessage.message.message}
+              type={faqVotingMessage.message.type}
+              onDismiss={faqVotingMessage.clear}
+            />
+          )}
+          
+          {faqVotingFeedbackMessage.message && (
+            <InlineMessage
+              message={faqVotingFeedbackMessage.message.message}
+              type={faqVotingFeedbackMessage.message.type}
+              onDismiss={faqVotingFeedbackMessage.clear}
+            />
+          )}
 
         {/* Search and Filter */}
         <div className="mb-8 space-y-4">

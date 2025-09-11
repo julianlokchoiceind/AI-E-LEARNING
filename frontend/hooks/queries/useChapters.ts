@@ -41,6 +41,7 @@ export function useChaptersQuery(courseId: string, enabled: boolean = true) {
     () => getChaptersByCourse(courseId),
     {
       enabled: enabled && !!courseId,
+      showToast: false, // Disable toasts for public course learning interface - use graceful degradation
       ...getCacheConfig('COURSE_CHAPTERS') // Course chapters - fresh data
     }
   );
@@ -154,6 +155,7 @@ export function useChaptersWithLessonsQuery(courseId: string, enabled: boolean =
     () => getChaptersWithLessons(courseId),
     {
       enabled: enabled && !!courseId,
+      showToast: false, // Disable toasts for public course learning interface - use graceful degradation
       ...getCacheConfig('CHAPTERS_WITH_LESSONS') // Chapters with lessons - fresh data
     }
   );

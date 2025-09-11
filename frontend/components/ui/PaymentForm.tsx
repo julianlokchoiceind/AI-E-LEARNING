@@ -10,7 +10,8 @@ import {
 import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingStates';
-import { ToastService } from '@/lib/toast/ToastService';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 
 // Initialize Stripe
 const stripePromise = loadStripe(
@@ -38,7 +39,9 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  
+  // Inline messages for payment form
+  const paymentMessage = useInlineMessage('payment-form');
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -48,7 +51,7 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
     }
 
     setIsProcessing(true);
-    setErrorMessage('');
+    paymentMessage.clear();
 
     try {
       const { error, paymentIntent } = await stripe.confirmPayment({
@@ -60,24 +63,23 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
       });
 
       if (error) {
-        setErrorMessage(error.message || 'Payment failed');
+        const errorMsg = error.message || 'Payment failed';
+        paymentMessage.showError(errorMsg);
         if (onError) {
-          onError(error.message || 'Payment failed');
+          onError(errorMsg);
         }
-        ToastService.error(error.message || 'Something went wrong');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        console.log('Payment successful!'); // Success feedback removed
+        paymentMessage.showSuccess('Payment processed successfully!');
         if (onSuccess) {
           onSuccess();
         }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Payment failed';
-      setErrorMessage(message);
+      paymentMessage.showError(message);
       if (onError) {
         onError(message);
       }
-      ToastService.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -111,8 +113,13 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
         }}
       />
 
-      {errorMessage && (
-        <div className="text-destructive text-sm mt-2">{errorMessage}</div>
+      {/* Inline messages for payment form */}
+      {paymentMessage.message && (
+        <InlineMessage
+          message={paymentMessage.message.message}
+          type={paymentMessage.message.type}
+          onDismiss={paymentMessage.clear}
+        />
       )}
 
       <div className="flex gap-3">

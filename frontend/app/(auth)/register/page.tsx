@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useApiMutation } from '@/hooks/useApiMutation'
 import { registerUser } from '@/lib/api/auth'
-import { ToastService } from '@/lib/toast/ToastService'
 import { Container } from '@/components/ui/Container'
+import { useInlineMessage } from '@/hooks/useInlineMessage'
+import { InlineMessage } from '@/components/ui/InlineMessage'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -17,6 +18,17 @@ export default function RegisterPage() {
     confirmPassword: ''
   })
   
+  // Field validation errors
+  const [errors, setErrors] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  })
+  
+  // Inline messages
+  const registerMessage = useInlineMessage('register-form')
+  
   // React Query mutation for registration - replaces manual API calls and error handling
   const { mutate: register, loading: isLoading } = useApiMutation(
     (data: any) => registerUser({
@@ -26,7 +38,11 @@ export default function RegisterPage() {
     }),
     {
       operationName: 'register-user', // For toast deduplication
+      showToast: false, // Disable automatic toast - use inline message instead
       onSuccess: (response) => {
+        // Show success message
+        registerMessage.showSuccess(response.message || 'Registration successful! Redirecting to login...');
+        
         // Clear form
         setFormData({
           name: '',
@@ -41,7 +57,8 @@ export default function RegisterPage() {
         }, 2000);
       },
       onError: (error: any) => {
-        // Keep error handling logic only, toast is handled automatically
+        // Show error in inline message instead of toast for auth pages
+        registerMessage.showError(error.message || 'Registration failed. Please try again.');
         console.error('Registration failed:', error);
       }
     }
@@ -49,6 +66,67 @@ export default function RegisterPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Clear previous errors and messages
+    setErrors({
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
+    })
+    registerMessage.clear()
+    
+    // Field validation
+    const newErrors = {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
+    }
+    
+    let hasErrors = false
+    
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Full name is required'
+      hasErrors = true
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = 'Full name must be at least 2 characters'
+      hasErrors = true
+    }
+    
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email address is required'
+      hasErrors = true
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address'
+      hasErrors = true
+    }
+    
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required'
+      hasErrors = true
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters'
+      hasErrors = true
+    }
+    
+    // Confirm password validation
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password'
+      hasErrors = true
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match'
+      hasErrors = true
+    }
+    
+    // Set errors if any
+    if (hasErrors) {
+      setErrors(newErrors)
+      return
+    }
     
     // React Query mutation handles API call with automatic error handling
     register(formData)
@@ -70,6 +148,15 @@ export default function RegisterPage() {
           </p>
         </div>
         
+        {/* Page-level messages */}
+        {registerMessage.message && (
+          <InlineMessage
+            message={registerMessage.message.message}
+            type={registerMessage.message.type}
+            onDismiss={registerMessage.clear}
+          />
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -83,10 +170,21 @@ export default function RegisterPage() {
                 autoComplete="name"
                 required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value })
+                  // Clear error when user starts typing
+                  if (errors.name) {
+                    setErrors({ ...errors, name: '' })
+                  }
+                }}
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm ${
+                  errors.name ? 'border-red-500 bg-red-50' : 'border-border'
+                }`}
                 placeholder="John Doe"
               />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+              )}
             </div>
             
             <div>
@@ -100,10 +198,21 @@ export default function RegisterPage() {
                 autoComplete="email"
                 required
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value })
+                  // Clear error when user starts typing
+                  if (errors.email) {
+                    setErrors({ ...errors, email: '' })
+                  }
+                }}
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm ${
+                  errors.email ? 'border-red-500 bg-red-50' : 'border-border'
+                }`}
                 placeholder="john@example.com"
               />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              )}
             </div>
             
             <div>
@@ -117,10 +226,21 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 required
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                onChange={(e) => {
+                  setFormData({ ...formData, password: e.target.value })
+                  // Clear error when user starts typing
+                  if (errors.password) {
+                    setErrors({ ...errors, password: '' })
+                  }
+                }}
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm ${
+                  errors.password ? 'border-red-500 bg-red-50' : 'border-border'
+                }`}
                 placeholder="At least 8 characters"
               />
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              )}
             </div>
             
             <div>
@@ -134,10 +254,21 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 required
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                onChange={(e) => {
+                  setFormData({ ...formData, confirmPassword: e.target.value })
+                  // Clear error when user starts typing
+                  if (errors.confirmPassword) {
+                    setErrors({ ...errors, confirmPassword: '' })
+                  }
+                }}
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm ${
+                  errors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-border'
+                }`}
                 placeholder="Confirm your password"
               />
+              {errors.confirmPassword && (
+                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+              )}
             </div>
           </div>
 

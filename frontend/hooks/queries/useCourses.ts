@@ -90,7 +90,10 @@ export function useCoursesQuery(filters: CoursesFilters = {}) {
       const queryString = buildQueryString();
       return getCourses(queryString);
     },
-    getCacheConfig('COURSE_CATALOG') // 30s fresh - public browsing with admin→public sync
+    {
+      showToast: false, // Disable toasts for public course catalog - use graceful degradation
+      ...getCacheConfig('COURSE_CATALOG') // 30s fresh - public browsing with admin→public sync
+    }
   );
 }
 
@@ -104,6 +107,7 @@ export function useCourseQuery(courseId: string, enabled: boolean = true) {
     () => getCourseById(courseId),
     {
       enabled: enabled && !!courseId,
+      showToast: false, // Disable toasts for public course pages - use ErrorState instead
       ...getCacheConfig('COURSE_DETAILS') // 30s fresh - course detail pages
     }
   );
@@ -217,6 +221,7 @@ export function useEnrollInCourse() {
       enrollInCourse(courseId, enrollmentData),
     {
       operationName: 'enroll-course',
+      showToast: false, // Disable automatic toast - courses page uses inline messages
       invalidateQueries: [
         ['course'],           // Refresh course details to get continue_lesson_id
         ['my-courses'],       // Refresh student's enrolled courses
@@ -459,6 +464,7 @@ export function useCourseChaptersPublicQuery(courseId: string) {
     },
     {
       enabled: !!courseId,
+      showToast: false, // Disable toasts for public course chapter queries - use graceful degradation
       ...getCacheConfig('COURSE_STRUCTURE') // Course structure - moderate freshness
     }
   );

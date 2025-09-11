@@ -54,6 +54,7 @@ export function useQuizProgressQuery(quizId: string, enabled: boolean = true) {
     },
     {
       enabled: enabled && !!quizId,
+      showToast: false, // Disable toasts for public quiz learning interface - use graceful degradation
       ...getCacheConfig('QUIZ_PROGRESS') // Quiz progress - fresh data
     }
   );
@@ -78,6 +79,7 @@ export function useSubmitQuiz() {
         ['student-dashboard'], // Update dashboard stats
         ['course-chapters'], // May unlock next lesson
       ],
+      showToast: false, // Disable toasts for public quiz submission - use inline feedback
     }
   );
 }
@@ -100,6 +102,7 @@ export function useSubmitQuizDirect() {
         ['lesson-progress'], // Refresh lesson progress
         ['course-progress'], // Refresh course progress
       ],
+      showToast: false, // Disable toasts for public quiz submission direct - use inline feedback
     }
   );
 }
@@ -115,6 +118,7 @@ export function useQuizAttemptsQuery(quizId: string, enabled: boolean = true) {
     },
     {
       enabled: enabled && !!quizId,
+      showToast: false, // Disable toasts for public quiz learning interface - use graceful degradation
       ...getCacheConfig('QUIZ_ATTEMPTS') // Quiz attempts - moderate freshness
     }
   );

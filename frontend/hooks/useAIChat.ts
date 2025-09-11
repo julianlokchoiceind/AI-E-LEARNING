@@ -47,6 +47,7 @@ interface UseAIChatParams {
   chapterId?: string;
   userLevel?: string;
   onError?: (error: string) => void;
+  onShowMessage?: (message: string, type: 'info' | 'error') => void;
   enableContextTracking?: boolean;
   enableLearningAnalytics?: boolean;
   maxContextHistory?: number;
@@ -81,6 +82,7 @@ export const useAIChat = ({
   chapterId,
   userLevel,
   onError,
+  onShowMessage,
   enableContextTracking = true,
   enableLearningAnalytics = true,
   maxContextHistory = 10
@@ -194,14 +196,22 @@ export const useAIChat = ({
         const errorMessage = error.message || 'Something went wrong';
         
         // Handle different error types
+        const showError = (msg: string) => {
+          if (onShowMessage) {
+            onShowMessage(msg, 'error');
+          } else {
+            ToastService.error(msg);
+          }
+        };
+        
         if (errorMessage.includes('rate limit')) {
-          ToastService.error('You\'re sending messages too quickly. Please wait a moment.');
+          showError('You\'re sending messages too quickly. Please wait a moment.');
         } else if (errorMessage.includes('Authentication')) {
-          ToastService.error(errorMessage || 'Something went wrong');
+          showError(errorMessage || 'Something went wrong');
         } else if (errorMessage.includes('credit balance')) {
-          ToastService.error(errorMessage || 'Something went wrong');
+          showError(errorMessage || 'Something went wrong');
         } else {
-          ToastService.error(errorMessage);
+          showError(errorMessage);
         }
 
         // Add error message to chat
@@ -329,7 +339,11 @@ export const useAIChat = ({
       }
     } catch (error: any) {
       console.error('Failed to get conversation history:', error);
-      ToastService.error(error.message || 'Something went wrong');
+      if (onShowMessage) {
+        onShowMessage(error.message || 'Something went wrong', 'error');
+      } else {
+        ToastService.error(error.message || 'Something went wrong');
+      }
     }
   }, [getHistory]);
 
@@ -341,7 +355,11 @@ export const useAIChat = ({
       console.log('Conversation history cleared'); // Success feedback removed
     } catch (error: any) {
       console.error('Failed to clear conversation history:', error);
-      ToastService.error(error.message || 'Something went wrong');
+      if (onShowMessage) {
+        onShowMessage(error.message || 'Something went wrong', 'error');
+      } else {
+        ToastService.error(error.message || 'Something went wrong');
+      }
     }
   }, [clearHistory, clearMessages]);
 

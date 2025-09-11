@@ -9,7 +9,8 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { SubscriptionCheckoutForm } from '@/components/feature/SubscriptionCheckoutForm';
 import { useAuth } from '@/hooks/useAuth';
-import { ToastService } from '@/lib/toast/ToastService';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 import { ArrowLeft, Shield, Crown, Check } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 
@@ -23,6 +24,10 @@ export default function SubscribePage() {
   const { user, loading: authLoading } = useAuth();
 
   const [loading, setLoading] = useState(true);
+  
+  // Inline messages for subscription flow
+  const subscriptionErrorMessage = useInlineMessage('subscription-error');
+  const subscriptionAccessMessage = useInlineMessage('subscription-access');
   const plan = searchParams.get('plan') || 'pro';
 
   useEffect(() => {
@@ -34,8 +39,8 @@ export default function SubscribePage() {
     if (user) {
       // Premium users have free access
       if (user.premiumStatus) {
-        console.log('You have premium access to all courses'); // Success feedback removed
-        router.push('/billing');
+        subscriptionAccessMessage.showSuccess('You already have premium access to all courses!');
+        setTimeout(() => router.push('/billing'), 2000);
         return;
       }
       setLoading(false);
@@ -157,7 +162,7 @@ export default function SubscribePage() {
                   router.push('/dashboard');
                 }}
                 onError={(error: string) => {
-                  ToastService.error(error);
+                  subscriptionErrorMessage.showError(error);
                 }}
               />
             </Elements>

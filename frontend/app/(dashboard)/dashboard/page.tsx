@@ -15,7 +15,8 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { formatDistanceToNow } from '@/lib/utils/formatters';
 import { Container } from '@/components/ui/Container';
 import { SkeletonBox, SkeletonCircle, EmptyState } from '@/components/ui/LoadingStates';
-import { ToastService } from '@/lib/toast/ToastService';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
 interface DashboardData {
@@ -63,6 +64,10 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const accessError = searchParams.get('error');
   
+  // Inline messages for dashboard feedback
+  const dashboardAccessMessage = useInlineMessage('dashboard-access');
+  const dashboardSuccessMessage = useInlineMessage('dashboard-success');
+  
   // React Query hook - automatic caching and state management
   // Only fetch when user is authenticated
   const { data: dashboardResponse, loading, execute: refetchDashboard } = useStudentDashboardQuery(!authLoading && !!user);
@@ -85,7 +90,7 @@ export default function DashboardPage() {
   useEffect(() => {
     // Show access denied message if redirected from unauthorized route
     if (accessError === 'access_denied') {
-      ToastService.error('Access denied: You do not have permission to access that page');
+      dashboardAccessMessage.showError('Access denied: You do not have permission to access that page');
       // Clean the URL without causing redirect loop
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
@@ -110,7 +115,7 @@ export default function DashboardPage() {
     // Refresh dashboard data to show any new courses from onboarding
     await refetchDashboard();
     
-    console.log('Welcome to the platform! Your personalized dashboard is ready.'); // Success feedback removed
+    dashboardSuccessMessage.showSuccess('Welcome to the platform! Your personalized dashboard is ready.');
   };
 
   // Handle onboarding close (skip or manual close)
@@ -125,7 +130,7 @@ export default function DashboardPage() {
     try {
       // React Query refetch - automatic error handling and caching
       await refetchDashboard();
-      console.log('Dashboard refreshed'); // Success feedback removed
+      dashboardSuccessMessage.showSuccess('Dashboard refreshed successfully!');
     } catch (error) {
       // Error handling is automatic via React Query
       console.error('Dashboard refresh error:', error);
@@ -227,6 +232,22 @@ export default function DashboardPage() {
 
   return (
     <Container variant="public">
+      {/* Dashboard Messages */}
+      {dashboardAccessMessage.message && (
+        <InlineMessage 
+          message={dashboardAccessMessage.message.message} 
+          type={dashboardAccessMessage.message.type}
+          onDismiss={dashboardAccessMessage.clear}
+        />
+      )}
+      {dashboardSuccessMessage.message && (
+        <InlineMessage 
+          message={dashboardSuccessMessage.message.message} 
+          type={dashboardSuccessMessage.message.type}
+          onDismiss={dashboardSuccessMessage.clear}
+        />
+      )}
+      
       {/* Welcome Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">
@@ -478,6 +499,7 @@ export default function DashboardPage() {
         isOpen={showOnboardingModal}
         onClose={handleOnboardingClose}
         onComplete={handleOnboardingComplete}
+        onShowMessage={(message, type) => type === 'error' ? dashboardAccessMessage.showError(message) : dashboardAccessMessage.showInfo(message)}
       />
     </Container>
   );

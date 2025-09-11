@@ -9,7 +9,8 @@ import { CourseCheckoutForm } from '@/components/feature/CourseCheckoutForm';
 import { LoadingSpinner, ErrorState } from '@/components/ui/LoadingStates';
 import { useCourseQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
-import { ToastService } from '@/lib/toast/ToastService';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Clock, Users, BookOpen, ArrowLeft, Shield, CreditCard } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
@@ -20,6 +21,11 @@ export default function CourseCheckoutPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const courseId = params.id as string;
+  
+  // Inline messages for checkout flow
+  const checkoutAccessMessage = useInlineMessage('checkout-access');
+  const checkoutErrorMessage = useInlineMessage('checkout-error');
+  const paymentSuccessMessage = useInlineMessage('payment-success');
 
   // React Query hook - automatic data fetching and error handling
   const { 
@@ -42,14 +48,14 @@ export default function CourseCheckoutPage() {
     if (course && user) {
       // Check if course should be free for this user
       if (course.pricing.is_free) {
-        ToastService.error('This course is free. Redirecting to course page...');
-        router.push(`/courses/${courseId}`);
+        checkoutAccessMessage.showInfo('This course is free. Redirecting to course page...');
+        setTimeout(() => router.push(`/courses/${courseId}`), 2000);
         return;
       }
 
       if (user?.premiumStatus) {
-        ToastService.error('You already have access to this course. Redirecting...');
-        router.push(`/courses/${courseId}`);
+        checkoutAccessMessage.showSuccess('You already have access to this course. Redirecting...');
+        setTimeout(() => router.push(`/courses/${courseId}`), 2000);
         return;
       }
     }
@@ -58,10 +64,10 @@ export default function CourseCheckoutPage() {
   useEffect(() => {
     if (courseError) {
       console.error('Failed to fetch course:', courseError);
-      ToastService.error(courseError?.message || 'Something went wrong');
-      router.push('/courses');
+      checkoutErrorMessage.showError(courseError?.message || 'Something went wrong');
+      setTimeout(() => router.push('/courses'), 3000);
     }
-  }, [courseError, router]);
+  }, [courseError, router, checkoutErrorMessage]);
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -113,6 +119,29 @@ export default function CourseCheckoutPage() {
           </p>
         </div>
 
+        {/* Inline Messages */}
+        {checkoutAccessMessage.message && (
+          <InlineMessage 
+            message={checkoutAccessMessage.message.message} 
+            type={checkoutAccessMessage.message.type}
+            onDismiss={checkoutAccessMessage.clear}
+          />
+        )}
+        {checkoutErrorMessage.message && (
+          <InlineMessage 
+            message={checkoutErrorMessage.message.message} 
+            type={checkoutErrorMessage.message.type}
+            onDismiss={checkoutErrorMessage.clear}
+          />
+        )}
+        {paymentSuccessMessage.message && (
+          <InlineMessage 
+            message={paymentSuccessMessage.message.message} 
+            type={paymentSuccessMessage.message.type}
+            onDismiss={paymentSuccessMessage.clear}
+          />
+        )}
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Course Summary */}
           <div className="lg:col-span-2">
@@ -168,11 +197,11 @@ export default function CourseCheckoutPage() {
               <CourseCheckoutForm 
                 course={course}
                 onSuccess={() => {
-                  console.log('Payment successful! Redirecting to course...'); // Success feedback removed
-                  router.push(`/learn/${courseId}`);
+                  paymentSuccessMessage.showSuccess('Payment successful! Redirecting to course...');
+                  setTimeout(() => router.push(`/learn/${courseId}`), 2000);
                 }}
                 onError={(error: string) => {
-                  ToastService.error(error);
+                  checkoutErrorMessage.showError(error);
                 }}
               />
             </Card>

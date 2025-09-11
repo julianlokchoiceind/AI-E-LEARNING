@@ -26,6 +26,7 @@ export function useUserProfileQuery(enabled: boolean = true) {
     () => usersApi.getProfile(),
     {
       enabled,
+      showToast: false, // Disable toasts for dashboard profile page - use inline messages instead
       ...getCacheConfig('USER_PROFILE') // User profile data - moderate freshness
     }
   );
@@ -43,6 +44,7 @@ export function useUpdateUserProfile() {
         ['user-profile'], // Refresh profile data
         ['user'], // Refresh auth user data if needed
       ],
+      showToast: false, // Disable toasts for dashboard profile updates - use inline feedback
     }
   );
 }

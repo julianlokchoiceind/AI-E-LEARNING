@@ -15,7 +15,8 @@ import {
   Image as ImageIcon,
   Upload
 } from 'lucide-react';
-import { ToastService } from '@/lib/toast/ToastService';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Container } from '@/components/ui/Container';
@@ -45,6 +46,10 @@ export default function TicketDetailPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const ticketId = params.ticketId as string;
+  
+  // Inline messages for support ticket feedback
+  const ticketErrorMessage = useInlineMessage('ticket-error');
+  const fileUploadMessage = useInlineMessage('file-upload');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasMarkedAsViewed = useRef(false);
   
@@ -66,10 +71,9 @@ export default function TicketDetailPage() {
   // Handle ticket error
   useEffect(() => {
     if (ticketError) {
-      ToastService.error('Failed to load ticket');
-      router.push('/support');
+      ticketErrorMessage.showError('Failed to load ticket');
     }
-  }, [ticketError, router]);
+  }, [ticketError, ticketErrorMessage]);
 
   // Mark ticket as viewed when loaded (for notification system)
   useEffect(() => {
@@ -145,7 +149,7 @@ export default function TicketDetailPage() {
     
     for (const file of files) {
       if (file.size > 10 * 1024 * 1024) {
-        ToastService.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
+        fileUploadMessage.showError(`File "${file.name}" is too large. Maximum size is 10MB.`);
         continue;
       }
       validFiles.push(file);
@@ -205,6 +209,22 @@ export default function TicketDetailPage() {
 
   return (
     <Container variant="public">
+      {/* Support Ticket Messages */}
+      {ticketErrorMessage.message && (
+        <InlineMessage 
+          message={ticketErrorMessage.message.message} 
+          type={ticketErrorMessage.message.type}
+          onDismiss={ticketErrorMessage.clear}
+        />
+      )}
+      {fileUploadMessage.message && (
+        <InlineMessage 
+          message={fileUploadMessage.message.message} 
+          type={fileUploadMessage.message.type}
+          onDismiss={fileUploadMessage.clear}
+        />
+      )}
+      
       {/* Header */}
       <div className="mb-6">
         <Button

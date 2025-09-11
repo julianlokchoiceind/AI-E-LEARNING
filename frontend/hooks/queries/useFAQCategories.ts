@@ -33,7 +33,10 @@ export function useFAQCategoriesQuery(filters: FAQCategoriesFilters = {}) {
   return useApiQuery<FAQCategoriesListResponse>(
     ['faq-categories', { is_active, include_stats }],
     () => faqCategoriesApi.list({ is_active, include_stats }),
-    getCacheConfig('APP_CONFIGURATION') // 10min stable - FAQ categories rarely change
+    {
+      showToast: false, // Disable toasts for public FAQ category browsing - use graceful degradation
+      ...getCacheConfig('APP_CONFIGURATION') // 10min stable - FAQ categories rarely change
+    }
   );
 }
 
@@ -47,6 +50,7 @@ export function useFAQCategoryQuery(categoryId: string, enabled: boolean = true)
     () => faqCategoriesApi.get(categoryId),
     {
       enabled: enabled && !!categoryId,
+      showToast: false, // Disable toasts for public FAQ category pages - use graceful degradation
       ...getCacheConfig('APP_CONFIGURATION') // 10min stable - category details stable
     }
   );
@@ -62,6 +66,7 @@ export function useFAQCategoryWithFAQsQuery(categoryId: string, enabled: boolean
     () => faqCategoriesApi.getWithFAQs(categoryId),
     {
       enabled: enabled && !!categoryId,
+      showToast: false, // Disable toasts for public FAQ category content pages - use graceful degradation
       ...getCacheConfig('FAQ_CONTENT') // 30s fresh - FAQ content for browsing
     }
   );
@@ -198,6 +203,7 @@ export function useActiveFAQCategoriesQuery(enabled: boolean = true) {
     () => faqCategoriesApi.list({ is_active: true, include_stats: false }),
     {
       enabled,
+      showToast: false, // Disable toasts for public FAQ form dropdowns - use graceful degradation
       ...getCacheConfig('APP_CONFIGURATION') // 10min stable - categories for forms rarely change
     }
   );

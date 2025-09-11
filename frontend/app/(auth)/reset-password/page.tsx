@@ -6,8 +6,9 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { useApiMutation } from '@/hooks/useApiMutation'
 import { resetPassword } from '@/lib/api/auth'
-import { ToastService } from '@/lib/toast/ToastService'
 import { Container } from '@/components/ui/Container'
+import { useInlineMessage } from '@/hooks/useInlineMessage'
+import { InlineMessage } from '@/components/ui/InlineMessage'
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams()
@@ -18,13 +19,24 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [success, setSuccess] = useState(false)
   
+  // Field validation errors
+  const [errors, setErrors] = useState({
+    password: '',
+    confirmPassword: ''
+  })
+  
+  // Inline messages
+  const resetPasswordMessage = useInlineMessage('reset-password-form')
+  
   // React Query mutation for password reset - replaces manual API calls and error handling
   const { mutate: resetPasswordMutation, loading } = useApiMutation(
     (data: { token: string; password: string; confirmPassword: string }) => 
       resetPassword(data.token, data.password, data.confirmPassword),
     {
       operationName: 'reset-password', // For toast deduplication
+      showToast: false, // Disable automatic toast - use inline message instead
       onSuccess: (response) => {
+        resetPasswordMessage.showSuccess(response.message || 'Password reset successful! Redirecting to login...');
         setSuccess(true);
         
         // Redirect to login after 3 seconds
@@ -33,7 +45,7 @@ export default function ResetPasswordPage() {
         }, 3000);
       },
       onError: (error: any) => {
-        // Keep error handling logic only, toast is handled automatically
+        resetPasswordMessage.showError(error.message || 'Failed to reset password. Please try again.');
         console.error('Password reset failed:', error);
       }
     }
@@ -41,6 +53,51 @@ export default function ResetPasswordPage() {
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Clear previous errors and messages
+    setErrors({
+      password: '',
+      confirmPassword: ''
+    })
+    resetPasswordMessage.clear()
+    
+    // Check if token exists
+    if (!token) {
+      resetPasswordMessage.showError('Invalid reset token. Please request a new password reset.')
+      return
+    }
+    
+    // Field validation
+    const newErrors = {
+      password: '',
+      confirmPassword: ''
+    }
+    
+    let hasErrors = false
+    
+    // Password validation
+    if (!password) {
+      newErrors.password = 'New password is required'
+      hasErrors = true
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters'
+      hasErrors = true
+    }
+    
+    // Confirm password validation
+    if (!confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your new password'
+      hasErrors = true
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match'
+      hasErrors = true
+    }
+    
+    // Set errors if any
+    if (hasErrors) {
+      setErrors(newErrors)
+      return
+    }
     
     // React Query mutation handles API call with automatic error handling
     resetPasswordMutation({
@@ -94,6 +151,15 @@ export default function ResetPasswordPage() {
           </p>
         </div>
         
+        {/* Page-level messages */}
+        {resetPasswordMessage.message && (
+          <InlineMessage
+            message={resetPasswordMessage.message.message}
+            type={resetPasswordMessage.message.type}
+            onDismiss={resetPasswordMessage.clear}
+          />
+        )}
+        
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           
           <div className="space-y-4">
@@ -109,10 +175,21 @@ export default function ResetPasswordPage() {
                   autoComplete="new-password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    // Clear error when user starts typing
+                    if (errors.password) {
+                      setErrors({ ...errors, password: '' })
+                    }
+                  }}
+                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+                    errors.password ? 'border-red-500 bg-red-50' : 'border-border'
+                  }`}
                   placeholder="Enter new password"
                 />
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                )}
               </div>
             </div>
             
@@ -128,10 +205,21 @@ export default function ResetPasswordPage() {
                   autoComplete="new-password"
                   required
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value)
+                    // Clear error when user starts typing
+                    if (errors.confirmPassword) {
+                      setErrors({ ...errors, confirmPassword: '' })
+                    }
+                  }}
+                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+                    errors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-border'
+                  }`}
                   placeholder="Confirm new password"
                 />
+                {errors.confirmPassword && (
+                  <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                )}
               </div>
             </div>
           </div>

@@ -61,6 +61,7 @@ export function useSupportTicketsQuery(filters: SupportTicketFilters = {}) {
       per_page: limit 
     }),
     {
+      showToast: false, // Disable toasts for dashboard support pages - use inline messages instead
       ...getCacheConfig('SUPPORT_TICKETS'), // Support tickets - fresh data
       keepPreviousData: true, // Smooth filter transitions
     }
@@ -129,6 +130,7 @@ export function useSupportTicketQuery(ticketId: string, enabled: boolean = true)
     () => supportAPI.getTicket(ticketId),
     {
       enabled: enabled && !!ticketId,
+      showToast: false, // Disable toasts for dashboard support ticket detail - use inline messages instead
       ...getCacheConfig('SUPPORT_TICKET_DETAILS') // Ticket details - fresh data
     }
   );

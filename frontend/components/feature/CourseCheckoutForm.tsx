@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useCreateCoursePayment } from '@/hooks/queries/usePayments';
 import { useAuth } from '@/hooks/useAuth';
-import { ToastService } from '@/lib/toast/ToastService';
 import { CreditCard, Lock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { PaymentErrorBoundary } from './PaymentErrorBoundary';
 import { CoursePaymentRetryHandler, getRecoveryStrategy } from '@/lib/utils/paymentRetry';
@@ -193,7 +192,7 @@ function CheckoutForm({
           setRecoveryStrategy(strategy);
           
           if (strategy.canRetry) {
-            ToastService.error(`${error.message} - Retrying... (${attempt}/3)`);
+            setPaymentError(`${error.message} - Retrying... (${attempt}/3)`);
             return true; // Continue retrying
           } else {
             setPaymentError(error.message);

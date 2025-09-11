@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/hooks/useAuth';
-import { ToastService } from '@/lib/toast/ToastService';
 import { loadStripe } from '@stripe/stripe-js';
 import { Container } from '@/components/ui/Container';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
@@ -17,17 +18,22 @@ export default function PricingPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
+  const pricingLoginMessage = useInlineMessage('pricing-login-required');
+  const pricingErrorMessage = useInlineMessage('pricing-error');
 
   const handleProSubscription = async () => {
+    pricingErrorMessage.clear();
+    pricingLoginMessage.clear();
+    
     if (!user) {
-      ToastService.error('Please login to subscribe');
-      router.push('/login');
+      pricingLoginMessage.showError('Please login to subscribe');
+      setTimeout(() => router.push('/login'), 2000);
       return;
     }
 
     // Check premium status instead of subscription object
     if (user.premiumStatus) {
-      console.log('You already have premium access'); // Success feedback removed
+      pricingErrorMessage.showSuccess('You already have premium access to all courses!');
       return;
     }
 
@@ -38,7 +44,7 @@ export default function PricingPage() {
       router.push('/billing/subscribe');
     } catch (error: any) {
       console.error('Subscription error:', error);
-      ToastService.error(error.message || 'Something went wrong');
+      pricingErrorMessage.showError(error.message || 'Something went wrong');
     } finally {
       setIsProcessing(false);
     }
@@ -60,6 +66,23 @@ export default function PricingPage() {
               Flexible pricing options to match your learning needs
             </p>
           </div>
+
+          {/* Global messages for pricing errors */}
+          {pricingLoginMessage.message && (
+            <InlineMessage
+              message={pricingLoginMessage.message.message}
+              type={pricingLoginMessage.message.type}
+              onDismiss={pricingLoginMessage.clear}
+            />
+          )}
+          
+          {pricingErrorMessage.message && (
+            <InlineMessage
+              message={pricingErrorMessage.message.message}
+              type={pricingErrorMessage.message.type}
+              onDismiss={pricingErrorMessage.clear}
+            />
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Free Plan */}

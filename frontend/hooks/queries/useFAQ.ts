@@ -34,7 +34,10 @@ export function useFAQsQuery(filters: FAQFilters = {}) {
   return useApiQuery(
     ['faqs', { search, category, published, page, limit }],
     () => getFAQs({ q: search, category, is_published: published, page, per_page: limit }),
-    getCacheConfig('FAQ_CONTENT') // 30s fresh - FAQ content for public browsing
+    {
+      showToast: false, // Disable toasts for public FAQ browsing - use graceful error handling
+      ...getCacheConfig('FAQ_CONTENT') // 30s fresh - FAQ content for public browsing
+    }
   );
 }
 
@@ -69,6 +72,7 @@ export function useCreateFAQ() {
         ['admin-faqs'], // Refresh admin FAQ list
         ['faq-categories'], // Update categories if new category added
       ],
+      showToast: false, // Disable toasts for admin FAQ creation - use inline feedback
     }
   );
 }
@@ -87,6 +91,7 @@ export function useUpdateFAQ() {
         ['admin-faqs'], // Refresh admin FAQ list
         ['faq', 'faqId'], // Refresh specific FAQ if viewing
       ],
+      showToast: false, // Disable toasts for admin FAQ updates - use inline feedback
     }
   );
 }
@@ -105,6 +110,7 @@ export function useDeleteFAQ() {
         ['admin-faqs'], // Refresh admin FAQ list
         ['faq-categories'], // Update categories count
       ],
+      showToast: false, // Disable toasts for admin FAQ deletion - use inline feedback
     }
   );
 }
@@ -138,7 +144,10 @@ export function useFAQCategoriesQuery() {
       const categories = Array.from(new Set(response.data?.items?.map(faq => faq.category_id).filter(Boolean) || []));
       return { success: true, data: { categories }, message: 'FAQ categories retrieved successfully' };
     }),
-    getCacheConfig('APP_CONFIGURATION') // 10min stable - FAQ categories rarely change
+    {
+      showToast: false, // Disable toasts for public FAQ category queries - use graceful error handling
+      ...getCacheConfig('APP_CONFIGURATION') // 10min stable - FAQ categories rarely change
+    }
   );
 }
 
@@ -156,6 +165,7 @@ export function usePublishFAQ() {
         ['admin-faqs'], // Refresh admin FAQ list
       ],
       operationName: 'publish-faq', // Unique operation ID for toast deduplication
+      showToast: false, // Disable toasts for admin FAQ publishing - use inline feedback
     }
   );
 }
@@ -192,6 +202,7 @@ export function useBulkFAQActions() {
         ['faqs'], // Refresh public FAQ list
         ['admin-faqs'], // Refresh admin FAQ list
       ],
+      showToast: false, // Disable toasts for admin bulk FAQ actions - use inline feedback
     }
   );
 }
@@ -210,6 +221,7 @@ export function useVoteFAQ() {
         ['admin-faqs'], // Refresh admin FAQ list
       ],
       operationName: 'vote-faq', // Unique operation ID for toast deduplication
+      showToast: false, // Disable automatic toast - FAQ page uses inline messages
     }
   );
 }

@@ -6,13 +6,17 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { XCircle, ArrowLeft, RefreshCw, CreditCard, HelpCircle, AlertTriangle } from 'lucide-react';
 import { useCourseQuery } from '@/hooks/queries/useCourses';
-import { ToastService } from '@/lib/toast/ToastService';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Container } from '@/components/ui/Container';
 
 export default function PaymentFailedPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  
+  // Inline message for support contact feedback
+  const supportMessage = useInlineMessage('support-contact');
   
   const courseId = searchParams.get('course_id');
   const errorMessage = searchParams.get('error');
@@ -57,7 +61,7 @@ export default function PaymentFailedPage() {
 
   const handleContactSupport = () => {
     // In a real app, this would open a support chat or redirect to contact form
-    console.log('Support contact feature coming soon. Please email support@elearning.com'); // Success feedback removed
+    supportMessage.showInfo('Support contact feature coming soon. Please email support@elearning.com for assistance.');
   };
 
   if (loading) {
@@ -71,6 +75,15 @@ export default function PaymentFailedPage() {
   return (
     <div className="min-h-screen bg-background py-8">
       <Container variant="public">
+        {/* Support Contact Message */}
+        {supportMessage.message && (
+          <InlineMessage 
+            message={supportMessage.message.message} 
+            type={supportMessage.message.type}
+            onDismiss={supportMessage.clear}
+          />
+        )}
+        
         {/* Error Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-destructive/20 rounded-full mb-4">

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { X, ChevronRight, CheckCircle, Clock, BookOpen } from 'lucide-react';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { formatDuration } from '@/lib/utils/time';
-import { ToastService } from '@/lib/toast/ToastService';
 
 interface Lesson {
   id: string;
@@ -45,6 +44,7 @@ interface MobileNavigationDrawerProps {
   lessonsProgress: Map<string, LessonProgress>;
   onNavigateToLesson: (lessonId: string) => void;
   currentVideoDuration?: number | null;
+  onShowMessage?: (message: string, type: 'info' | 'error') => void;
 }
 
 export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
@@ -55,7 +55,8 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
   courseProgress,
   lessonsProgress,
   onNavigateToLesson,
-  currentVideoDuration
+  currentVideoDuration,
+  onShowMessage
 }) => {
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
 
@@ -89,7 +90,7 @@ export const MobileNavigationDrawer: React.FC<MobileNavigationDrawerProps> = ({
     const isUnlocked = lessonProgress?.is_unlocked || false;
 
     if (!isUnlocked && !isCurrentLesson) {
-      ToastService.error('Please complete previous lessons first');
+      onShowMessage?.('Please complete previous lessons first', 'error');
       return;
     }
 

@@ -17,6 +17,7 @@ interface SimpleChatWidgetProps {
   videoProgress?: number;
   videoCurrentTime?: number;
   enableEnhancedFeatures?: boolean;
+  onShowMessage?: (message: string, type: 'info' | 'error') => void;
 }
 
 export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
@@ -28,7 +29,8 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
   className = "",
   videoProgress,
   videoCurrentTime,
-  enableEnhancedFeatures = true
+  enableEnhancedFeatures = true,
+  onShowMessage
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -81,7 +83,8 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
     chapterId,
     userLevel,
     enableContextTracking: enableEnhancedFeatures,
-    enableLearningAnalytics: enableEnhancedFeatures
+    enableLearningAnalytics: enableEnhancedFeatures,
+    onShowMessage
   });
 
   // Auto-scroll to bottom

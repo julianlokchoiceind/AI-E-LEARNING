@@ -188,6 +188,7 @@ export function useLearnPage(courseId: string, lessonId: string, enabled: boolea
     },
     {
       enabled: enabled && !!courseId && !!lessonId,
+      showToast: false, // Disable toasts for dashboard learn pages - use inline messages instead
       ...getCacheConfig('LESSON_PROGRESS'), // FRESH tier for immediate updates
       
       // Error handling for better UX

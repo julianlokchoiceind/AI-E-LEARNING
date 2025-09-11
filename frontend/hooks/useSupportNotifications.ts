@@ -23,6 +23,7 @@ export function useSupportNotifications() {
     {
       ...getCacheConfig('SUPPORT_NOTIFICATIONS'), // Use existing cache config (REALTIME)
       enabled: isAuthenticated && !!user,
+      showToast: false, // Disable toasts for background notification polling in headers
     }
   );
 

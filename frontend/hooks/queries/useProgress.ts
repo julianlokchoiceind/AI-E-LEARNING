@@ -24,6 +24,7 @@ export function useCourseProgressQuery(courseId: string, enabled: boolean = true
     },
     {
       enabled: enabled && !!courseId,
+      showToast: false, // Disable toasts for public learning progress tracking - use graceful degradation
       ...getCacheConfig('COURSE_PROGRESS_OVERVIEW') // Course progress overview - fresh data
     }
   );

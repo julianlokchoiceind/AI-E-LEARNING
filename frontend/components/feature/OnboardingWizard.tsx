@@ -14,7 +14,6 @@ import {
   useCourseRecommendationsQuery,
   useCompleteOnboarding
 } from '@/hooks/queries/useStudent';
-import { ToastService } from '@/lib/toast/ToastService';
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -33,6 +32,7 @@ interface OnboardingWizardProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete?: () => void;
+  onShowMessage?: (message: string, type: 'info' | 'error') => void;
 }
 
 type OnboardingStep = 'welcome' | 'learning_path' | 'profile_setup' | 'course_recommendations' | 'completed';
@@ -65,7 +65,8 @@ interface WizardState {
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   isOpen,
   onClose,
-  onComplete
+  onComplete,
+  onShowMessage
 }) => {
   const [state, setState] = useState<WizardState>({
     currentStep: 'welcome',
@@ -129,7 +130,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
       }));
     } catch (error: any) {
       console.error('Failed to check onboarding status:', error);
-      ToastService.error(error.message || 'Something went wrong');
+      onShowMessage?.(error.message || 'Something went wrong', 'error');
     }
   };
 
@@ -182,7 +183,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
   const handleLearningPathSubmit = async () => {
     if (state.selectedPaths.length === 0 || !state.skillLevel || !state.timeCommitment) {
-      ToastService.error('Please complete all required fields');
+      onShowMessage?.('Please complete all required fields', 'error');
       return;
     }
 

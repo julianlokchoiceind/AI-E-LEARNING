@@ -6,7 +6,8 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LoadingButton } from '@/components/ui/LoadingStates'
 import { Container } from '@/components/ui/Container'
-import { AlertCircle, CheckCircle } from 'lucide-react'
+import { useInlineMessage } from '@/hooks/useInlineMessage'
+import { InlineMessage } from '@/components/ui/InlineMessage'
 
 export default function LoginPage() {
   const searchParams = useSearchParams()
@@ -14,29 +15,79 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [localError, setLocalError] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
+  const [errors, setErrors] = useState({
+    email: '',
+    password: ''
+  })
+  const { message, showSuccess, showError, clear } = useInlineMessage('login-form')
 
   useEffect(() => {
     // Check for success messages in URL params
     if (searchParams.get('registered') === 'true') {
-      setSuccessMessage('Registration successful! Please check your email to verify your account before logging in.')
+      showSuccess('Registration successful! Please check your email to verify your account before logging in.')
     }
     if (searchParams.get('verified') === 'true') {
-      setSuccessMessage('Email verified successfully! You can now log in to your account.')
+      showSuccess('Email verified successfully! You can now log in to your account.')
     }
     if (searchParams.get('reset') === 'true') {
-      setSuccessMessage('Password reset successfully! You can now log in with your new password.')
+      showSuccess('Password reset successfully! You can now log in with your new password.')
     }
     if (searchParams.get('message') === 'already_verified') {
-      setSuccessMessage('Your email has already been verified. You can log in to your account.')
+      showSuccess('Your email has already been verified. You can log in to your account.')
     }
-  }, [searchParams])
+  }, [searchParams, showSuccess])
+
+  // Field validation function
+  const validateForm = (): boolean => {
+    const newErrors = {
+      email: '',
+      password: ''
+    }
+
+    // Validate email
+    if (!email.trim()) {
+      newErrors.email = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = 'Please enter a valid email address'
+    }
+
+    // Validate password
+    if (!password.trim()) {
+      newErrors.password = 'Password is required'
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters'
+    }
+
+    setErrors(newErrors)
+    return !newErrors.email && !newErrors.password
+  }
+
+  const handleInputChange = (field: 'email' | 'password', value: string) => {
+    if (field === 'email') setEmail(value)
+    if (field === 'password') setPassword(value)
+
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }))
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Clear existing messages
+    clear()
+    setErrors({ email: '', password: '' })
+
+    // Validate form
+    if (!validateForm()) {
+      return
+    }
+
     setIsLoading(true)
-    setLocalError('')
     
     try {
       const result = await signIn('credentials', {
@@ -47,7 +98,7 @@ export default function LoginPage() {
       
       if (result?.error) {
         // Use the actual error message from NextAuth or fallback
-        setLocalError(result.error || 'Something went wrong')
+        showError(result.error || 'Something went wrong')
       } else if (result?.ok) {
         // Wait a moment for session to establish, then redirect
         setTimeout(() => {
@@ -56,7 +107,7 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error('Login error:', error)
-      setLocalError(error.message || 'Something went wrong')
+      showError(error.message || 'Something went wrong')
     } finally {
       setIsLoading(false)
     }
@@ -83,18 +134,12 @@ export default function LoginPage() {
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {localError && (
-            <div className="rounded-md bg-destructive/20 p-4 flex items-start">
-              <AlertCircle className="h-5 w-5 text-destructive mt-0.5 mr-2 flex-shrink-0" />
-              <p className="text-sm text-destructive">{localError}</p>
-            </div>
-          )}
-          
-          {successMessage && (
-            <div className="rounded-md bg-success/20 p-4 flex items-start">
-              <CheckCircle className="h-5 w-5 text-success mt-0.5 mr-2 flex-shrink-0" />
-              <p className="text-sm text-success">{successMessage}</p>
-            </div>
+          {message && (
+            <InlineMessage
+              message={message.message}
+              type={message.type}
+              onDismiss={clear}
+            />
           )}
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
@@ -108,10 +153,15 @@ export default function LoginPage() {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm ${
+                  errors.email ? 'border-red-500 bg-red-50' : 'border-border'
+                }`}
                 placeholder="Email address"
               />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              )}
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
@@ -124,10 +174,15 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-border placeholder-muted-foreground text-foreground rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm ${
+                  errors.password ? 'border-red-500 bg-red-50' : 'border-border'
+                }`}
                 placeholder="Password"
               />
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              )}
             </div>
           </div>
 

@@ -29,7 +29,10 @@ export function useCertificatesQuery(filters: CertificateFilters = {}) {
     async () => {
       return certificateAPI.getMyCertificates();
     },
-    getCacheConfig('USER_CERTIFICATES') // User certificates - stable content
+    {
+      showToast: false, // Disable toasts for dashboard certificates page - use graceful degradation
+      ...getCacheConfig('USER_CERTIFICATES') // User certificates - stable content
+    }
   );
 }
 
@@ -42,7 +45,10 @@ export function useCertificateStatsQuery() {
     async () => {
       return certificateAPI.getMyCertificateStats();
     },
-    getCacheConfig('USER_CERTIFICATES') // Certificate statistics - stable content
+    {
+      showToast: false, // Disable toasts for dashboard certificate statistics - use graceful degradation
+      ...getCacheConfig('USER_CERTIFICATES') // Certificate statistics - stable content
+    }
   );
 }
 
@@ -57,6 +63,7 @@ export function useCertificateQuery(certificateId: string, enabled: boolean = tr
     },
     {
       enabled: enabled && !!certificateId,
+      showToast: false, // Disable toasts for public certificate viewing - use ErrorState instead
       ...getCacheConfig('CERTIFICATE_DETAILS') // Certificate details - very stable
     }
   );
@@ -76,6 +83,7 @@ export function useGenerateCertificate() {
         ['certificate-stats'], // Refresh stats
         ['course-progress'], // Refresh course progress
       ],
+      showToast: false, // Disable toasts for dashboard certificate generation - use inline feedback
     }
   );
 }
@@ -127,6 +135,7 @@ export function useVerifyCertificateQuery(certificateNumber: string, enabled: bo
     },
     {
       enabled: enabled && !!certificateNumber,
+      showToast: false, // Disable toasts for public certificate verification - use ErrorState instead
       ...getCacheConfig('CERTIFICATE_VERIFICATION') // Certificate verification - very stable
     }
   );

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import { SubscriptionCard } from '@/components/ui/SubscriptionCard';
 import { PaymentHistory } from '@/components/ui/PaymentHistory';
 import { 
@@ -14,7 +15,6 @@ import {
 import { getSubscriptionStatusVariant } from '@/lib/utils/badge-helpers';
 import { useBillingDashboardQuery, useCancelSubscription } from '@/hooks/queries/usePayments';
 import { useAuth } from '@/hooks/useAuth';
-import { ToastService } from '@/lib/toast/ToastService';
 import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { Container } from '@/components/ui/Container';
 import { 
@@ -30,6 +30,7 @@ import {
 export default function BillingPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   // React Query hooks for billing data
   const {
@@ -48,11 +49,13 @@ export default function BillingPage() {
     }
   }, [user, authLoading, router]);
 
-  const handleCancelSubscription = async () => {
-    if (!window.confirm('Are you sure you want to cancel your subscription? You\'ll lose access to Pro features at the end of your billing period.')) {
-      return;
-    }
+  const handleCancelClick = () => {
+    setShowCancelModal(true);
+  };
 
+  const handleConfirmCancel = async () => {
+    setShowCancelModal(false);
+    
     cancelSubscriptionMutation(true, {
       onSuccess: (response) => {
         // React Query will automatically invalidate and refetch billing data
@@ -248,7 +251,7 @@ export default function BillingPage() {
                 ) : (
                   <Button
                     variant="outline"
-                    onClick={handleCancelSubscription}
+                    onClick={handleCancelClick}
                     loading={canceling}
                     className="w-full text-destructive border-destructive hover:bg-red-100"
                   >
@@ -307,6 +310,70 @@ export default function BillingPage() {
           </div>
         </Card>
       </Container>
+
+      {/* Cancel Subscription Confirmation Modal */}
+      <Modal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Cancel Subscription"
+        size="md"
+      >
+        <div className="space-y-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <div className="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-destructive" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Confirm Subscription Cancellation
+              </h3>
+              <p className="text-muted-foreground">
+                Are you sure you want to cancel your subscription? You'll lose access to Pro features at the end of your billing period.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-warning/10 border border-warning/30 p-4 rounded-lg">
+            <h4 className="font-medium text-warning mb-2">What happens when you cancel:</h4>
+            <ul className="text-sm text-warning space-y-1 ml-4 list-disc">
+              <li>Your subscription will be cancelled immediately</li>
+              <li>You'll keep Pro access until your current billing period ends</li>
+              <li>No future charges will be made</li>
+              <li>You can resubscribe anytime to regain Pro features</li>
+            </ul>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowCancelModal(false)}
+              disabled={canceling}
+              className="flex-1"
+            >
+              Keep Subscription
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleConfirmCancel}
+              disabled={canceling}
+              className="flex-1"
+            >
+              {canceling ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2 inline" />
+                  Cancelling...
+                </>
+              ) : (
+                'Yes, Cancel Subscription'
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

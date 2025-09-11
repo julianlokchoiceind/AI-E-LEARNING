@@ -9,7 +9,6 @@ import {
 import { Button } from '@/components/ui/Button';
 import { SubscriptionType } from '@/lib/api/payments';
 import { useAuth } from '@/hooks/useAuth';
-import { ToastService } from '@/lib/toast/ToastService';
 import { useCreateSubscription } from '@/hooks/queries/usePayments';
 import { Lock, CheckCircle, Crown, AlertTriangle } from 'lucide-react';
 import { SubscriptionRetryHandler, getRecoveryStrategy } from '@/lib/utils/paymentRetry';
@@ -135,7 +134,7 @@ export function SubscriptionCheckoutForm({
           setRecoveryStrategy(strategy);
           
           if (strategy.canRetry) {
-            ToastService.error(`${error.message} - Retrying... (${attempt}/3)`);
+            setPaymentError(`${error.message} - Retrying... (${attempt}/3)`);
             return true; // Continue retrying
           } else {
             setPaymentError(error.message);

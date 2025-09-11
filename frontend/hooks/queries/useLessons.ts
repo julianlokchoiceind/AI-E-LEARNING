@@ -60,6 +60,7 @@ export function useLessonsQuery(chapterId: string, enabled: boolean = true) {
     () => getLessonsByChapter(chapterId),
     {
       enabled: enabled && !!chapterId,
+      showToast: false, // Disable toasts for public course learning interface - use graceful degradation
       ...getCacheConfig('CHAPTER_LESSONS') // Chapter lessons - fresh data
     }
   );
@@ -75,6 +76,7 @@ export function useLessonQuery(lessonId: string, enabled: boolean = true) {
     () => getLesson(lessonId),
     {
       enabled: enabled && !!lessonId,
+      showToast: false, // Disable toasts for public lesson learning interface - use graceful degradation
       ...getCacheConfig('LESSON_DETAILS') // Lesson details - moderate freshness
     }
   );
@@ -90,6 +92,7 @@ export function usePreviewLessonQuery(courseId: string, lessonId: string, enable
     () => getPreviewLesson(courseId, lessonId),
     {
       enabled: enabled && !!courseId && !!lessonId,
+      showToast: false, // Disable toasts for public lesson previews - use ErrorState instead
       ...getCacheConfig('LESSON_PREVIEW') // Lesson preview - stable content
     }
   );

@@ -36,6 +36,7 @@ export function useCourseReviewsQuery(courseId: string, filters: ReviewFilters =
     },
     {
       enabled: !!courseId,
+      showToast: false, // Disable toasts for public course review pages - use graceful degradation
       ...getCacheConfig('COURSE_REVIEWS') // Course reviews - moderate freshness
     }
   );
@@ -53,6 +54,7 @@ export function useCreateReview() {
       invalidateQueries: [
         ['course-reviews'], // Refresh course reviews
       ],
+      showToast: false, // Disable toasts for public review creation - use inline feedback
     }
   );
 }
@@ -72,6 +74,7 @@ export function useUpdateReview() {
       invalidateQueries: [
         ['course-reviews'], // Refresh course reviews
       ],
+      showToast: false, // Disable toasts for public review updates - use inline feedback
     }
   );
 }
@@ -88,6 +91,7 @@ export function useDeleteReview() {
       invalidateQueries: [
         ['course-reviews'], // Refresh course reviews
       ],
+      showToast: false, // Disable toasts for public review deletion - use inline feedback
     }
   );
 }
@@ -122,6 +126,7 @@ export function useReportReview() {
       invalidateQueries: [
         ['reviews'], // Refresh reviews to show reported status
       ],
+      showToast: false, // Disable toasts for public review reporting - use inline feedback
     }
   );
 }

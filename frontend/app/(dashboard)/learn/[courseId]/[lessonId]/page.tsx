@@ -11,7 +11,8 @@ import { MobileNavigationDrawer } from '@/components/feature/MobileNavigationDra
 import { LessonBreadcrumbs } from '@/components/seo/Breadcrumbs';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { ErrorState } from '@/components/ui/LoadingStates';
-import { ToastService } from '@/lib/toast/ToastService';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 import { formatDuration, formatDurationHuman } from '@/lib/utils/time';
 import { api } from '@/lib/api/api-client';
 
@@ -117,6 +118,7 @@ interface VideoSectionProps {
   videoProgress: number;
   actualVideoProgress: number;
   navigation?: NavigationInfo;
+  onShowMessage: (message: string, type: 'error' | 'info') => void;
 }
 
 const VideoSection = React.memo<VideoSectionProps>(({
@@ -133,7 +135,8 @@ const VideoSection = React.memo<VideoSectionProps>(({
   currentVideoDuration,
   videoProgress,
   actualVideoProgress,
-  navigation
+  navigation,
+  onShowMessage
 }) => {
   const progress = lesson.progress;
   
@@ -155,6 +158,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
             initialCurrentPosition={progress?.video_progress.current_position || 0}
             nextLessonId={navigation?.next_lesson_id}
             actualVideoProgress={actualVideoProgress}
+            onShowMessage={onShowMessage}
           />
           
           {/* Enhanced Video Info Bar */}
@@ -290,6 +294,7 @@ interface QuizSectionProps {
   lessonId: string;
   isPreviewMode: boolean;
   handleQuizComplete: (passed: boolean) => void;
+  onShowMessage: (message: string, type: 'error' | 'info') => void;
 }
 
 const QuizSection = React.memo<QuizSectionProps>(({
@@ -299,7 +304,8 @@ const QuizSection = React.memo<QuizSectionProps>(({
   isCompleted,
   lessonId,
   isPreviewMode,
-  handleQuizComplete
+  handleQuizComplete,
+  onShowMessage
 }) => {
   // Don't show quiz section if lesson doesn't have quiz
   if (!hasQuiz) {
@@ -331,6 +337,7 @@ const QuizSection = React.memo<QuizSectionProps>(({
           lessonId={lessonId}
           onComplete={handleQuizComplete}
           isPreviewMode={isPreviewMode}
+          onShowMessage={onShowMessage}
         />
       </div>
     </section>
@@ -356,6 +363,10 @@ export default function OptimizedLessonPlayerPage() {
 
   // 🚀 SINGLE MUTATION for progress updates
   const { mutate: updateProgress } = useUpdateLessonProgress();
+  
+  // Inline messages for lesson feedback
+  const lessonNavigationMessage = useInlineMessage('lesson-navigation');
+  const lessonCompletionMessage = useInlineMessage('lesson-completion');
 
   // Extract data from consolidated response
   const pageData = learnData?.data || null;
@@ -649,7 +660,7 @@ export default function OptimizedLessonPlayerPage() {
   const handleQuizComplete = useCallback((passed: boolean) => {
     if (passed) {
       setShowQuiz(false);
-      console.log('Lesson completed! Great job!'); // Success feedback removed
+      lessonCompletionMessage.showSuccess('Lesson completed! Great job! 🎉');
       
       // Navigate to next lesson if available
       if (navigation?.next_lesson_id) {
@@ -735,6 +746,22 @@ export default function OptimizedLessonPlayerPage() {
             </span>
           </div>
         </div>
+      )}
+
+      {/* Inline Messages for Lesson Feedback */}
+      {lessonNavigationMessage.message && (
+        <InlineMessage 
+          message={lessonNavigationMessage.message.message} 
+          type={lessonNavigationMessage.message.type}
+          onDismiss={lessonNavigationMessage.clear}
+        />
+      )}
+      {lessonCompletionMessage.message && (
+        <InlineMessage 
+          message={lessonCompletionMessage.message.message} 
+          type={lessonCompletionMessage.message.type}
+          onDismiss={lessonCompletionMessage.clear}
+        />
       )}
 
       {/* Main Layout */}
@@ -842,7 +869,7 @@ export default function OptimizedLessonPlayerPage() {
                             key={chapterLesson.id}
                             onClick={() => {
                               if (!isUnlocked && !isCurrentLesson && !isPreviewMode) {
-                                ToastService.error('Please complete previous lessons first');
+                                lessonNavigationMessage.showError('Please complete previous lessons first');
                                 return;
                               }
                               handleNavigateLesson(chapterLesson.id);
@@ -1029,6 +1056,7 @@ export default function OptimizedLessonPlayerPage() {
               videoProgress={actualVideoProgress}
               actualVideoProgress={actualVideoProgress}
               navigation={navigation || undefined}
+              onShowMessage={(message, type) => type === 'error' ? lessonNavigationMessage.showError(message) : lessonNavigationMessage.showInfo(message)}
             />
 
             {/* Lesson Information */}
@@ -1082,6 +1110,7 @@ export default function OptimizedLessonPlayerPage() {
               lessonId={lessonId}
               isPreviewMode={isPreviewMode}
               handleQuizComplete={handleQuizComplete}
+              onShowMessage={(message, type) => type === 'error' ? lessonCompletionMessage.showError(message) : lessonCompletionMessage.showInfo(message)}
             />
 
             {/* Completion Status */}
@@ -1099,6 +1128,7 @@ export default function OptimizedLessonPlayerPage() {
         lessonsProgress={createLessonProgressMap(userProgress)}
         onNavigateToLesson={handleNavigateLesson}
         currentVideoDuration={currentVideoDuration}
+        onShowMessage={(message, type) => type === 'error' ? lessonNavigationMessage.showError(message) : lessonNavigationMessage.showInfo(message)}
       />
 
       {/* AI Assistant - Keep existing floating widget */}

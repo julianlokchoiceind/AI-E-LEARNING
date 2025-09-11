@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import YouTube, { YouTubeProps, YouTubeEvent } from 'react-youtube';
-import { ToastService } from '@/lib/toast/ToastService';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize, Settings, X } from 'lucide-react';
 
 interface VideoPlayerProps {
@@ -20,6 +19,7 @@ interface VideoPlayerProps {
   initialCurrentPosition?: number; // exact timestamp in seconds
   nextLessonId?: string;
   actualVideoProgress?: number; // Pass actual progress from parent
+  onShowMessage?: (message: string, type: 'info' | 'error') => void; // Inline message handler
 }
 
 const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
@@ -35,7 +35,8 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   initialProgress = 0,
   initialCurrentPosition = 0,
   nextLessonId,
-  actualVideoProgress = 0
+  actualVideoProgress = 0,
+  onShowMessage
 }) => {
   // Use useRef to maintain player instance across re-renders
   const playerRef = useRef<any>(null);
@@ -294,7 +295,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
         
         if (current > effectiveMaxTime + 3) {
           playerRef.current.seekTo(effectiveMaxTime, true);
-          ToastService.info('You can only watch up to where you\'ve already viewed');
+          onShowMessage?.('You can only watch up to where you\'ve already viewed', 'info');
         }
       } catch (error) {
         console.error('[VideoPlayer] Error in seek monitoring:', error);
@@ -370,7 +371,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
     const errorMessage = 'Error loading video. Please try again.';
     setPlayerError(errorMessage);
     setIsLoading(false);
-    ToastService.error(errorMessage);
+    onShowMessage?.(errorMessage, 'error');
   }, []);
 
   const startProgressTracking = useCallback(() => {
@@ -591,7 +592,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
     playerRef.current.seekTo(allowedSeekTime, true);
     
     if (seekTime > effectiveMaxTime) {
-      ToastService.info('You can only seek to previously watched content');
+      onShowMessage?.('You can only seek to previously watched content', 'info');
     }
   }, [playerRef, isReady, duration, maxWatchedTime, initialProgress, actualVideoProgress]);
 

@@ -16,7 +16,8 @@ import {
   Image,
   X
 } from 'lucide-react';
-import { ToastService } from '@/lib/toast/ToastService';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
@@ -44,6 +45,9 @@ export default function SupportPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  // Inline message for file upload feedback
+  const fileUploadMessage = useInlineMessage('file-upload');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -139,7 +143,7 @@ export default function SupportPage() {
     for (const file of files) {
       // 10MB limit
       if (file.size > 10 * 1024 * 1024) {
-        ToastService.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
+        fileUploadMessage.showError(`File "${file.name}" is too large. Maximum size is 10MB.`);
         continue;
       }
       validFiles.push(file);
@@ -178,6 +182,15 @@ export default function SupportPage() {
 
   return (
     <Container variant="public">
+      {/* File Upload Message */}
+      {fileUploadMessage.message && (
+        <InlineMessage 
+          message={fileUploadMessage.message.message} 
+          type={fileUploadMessage.message.type}
+          onDismiss={fileUploadMessage.clear}
+        />
+      )}
+      
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>

@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { SkeletonBox, SkeletonCircle } from '@/components/ui/LoadingStates';
 import { useMyCoursesQuery } from '@/hooks/queries/useStudent';
-import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Container } from '@/components/ui/Container';
 

@@ -3,7 +3,6 @@ import { HelpCircle, Clock, CheckCircle, XCircle, AlertCircle, ChevronDown } fro
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { LoadingSpinner } from '@/components/ui/LoadingStates';
-import { ToastService } from '@/lib/toast/ToastService';
 import { useLessonQuizQuery } from '@/hooks/queries/useQuizzes';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { quizAPI } from '@/lib/api/quizzes';
@@ -13,12 +12,14 @@ interface StudentQuizPlayerProps {
   lessonId: string;
   onComplete?: (passed: boolean) => void;
   isPreviewMode?: boolean;
+  onShowMessage?: (message: string, type: 'info' | 'error') => void;
 }
 
 export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
   lessonId,
   onComplete,
-  isPreviewMode = false
+  isPreviewMode = false,
+  onShowMessage
 }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string | boolean>>({});
@@ -184,7 +185,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
     }
     
     if (unansweredQuestions.length > 0) {
-      ToastService.error(`Please answer all questions. Missing: Question ${unansweredQuestions.join(', ')}`);
+      onShowMessage?.(`Please answer all questions. Missing: Question ${unansweredQuestions.join(', ')}`, 'error');
       return;
     }
     
@@ -202,7 +203,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
       setScore(finalScore);
       setQuizCompleted(true);
       
-      ToastService.info('Preview mode - results not saved');
+      onShowMessage?.('Preview mode - results not saved', 'info');
       onComplete?.(finalScore >= (quiz?.config?.pass_percentage || 70));
       return;
     }

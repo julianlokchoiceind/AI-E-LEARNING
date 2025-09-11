@@ -12,8 +12,8 @@ import { LoadingSpinner, ErrorState } from '@/components/ui/LoadingStates';
 import { useCourseQuery } from '@/hooks/queries/useCourses';
 import { usePreviewLessonQuery } from '@/hooks/queries/useLessons';
 import { useAuth } from '@/hooks/useAuth';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { Course, Lesson } from '@/lib/types/course';
-import { ToastService } from '@/lib/toast/ToastService';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Container } from '@/components/ui/Container';
 
@@ -23,6 +23,9 @@ const PreviewLessonPage = () => {
   const { user } = useAuth();
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
+
+  // Inline message management for AI chat errors
+  const lessonPreviewMessage = useInlineMessage('lesson-preview-chat');
 
   // React Query hooks - automatic data fetching, caching, and error handling
   const { 
@@ -263,6 +266,7 @@ const PreviewLessonPage = () => {
         courseId={courseId}
         userLevel={course.level}
         position="bottom-right"
+        onShowMessage={(message, type) => type === 'error' ? lessonPreviewMessage.showError(message) : lessonPreviewMessage.showInfo(message)}
       />
     </div>
   );

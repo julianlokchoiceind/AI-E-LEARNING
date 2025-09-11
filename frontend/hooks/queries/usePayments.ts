@@ -24,6 +24,7 @@ export function useSubscriptionStatusQuery(enabled: boolean = true) {
     () => getSubscriptionStatus(),
     {
       enabled,
+      showToast: false, // Disable toasts for dashboard billing page - use inline messages instead
       ...getCacheConfig('SUBSCRIPTION_STATUS') // Subscription status - fresh data
     }
   );
@@ -39,6 +40,7 @@ export function usePaymentHistoryQuery(limit: number = 10, offset: number = 0, e
     () => getPaymentHistory(limit, offset),
     {
       enabled,
+      showToast: false, // Disable toasts for dashboard billing page - use inline messages instead
       ...getCacheConfig('PAYMENT_HISTORY') // Payment history - moderate freshness
     }
   );
@@ -96,6 +98,7 @@ export function useCreateSubscription() {
     ({ paymentMethodId, subscriptionType }: { paymentMethodId: string; subscriptionType: SubscriptionType }) => 
       createSubscription(paymentMethodId, subscriptionType),
     {
+      showToast: false, // Disable automatic toast notifications
       invalidateQueries: [
         ['subscription-status'], // Refresh subscription status
         ['payment-history'], // Refresh payment history

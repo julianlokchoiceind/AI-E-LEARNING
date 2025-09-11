@@ -29,6 +29,7 @@ export function useEnrollmentQuery(courseId: string, enabled: boolean = true) {
     },
     {
       enabled: enabled && !!courseId,
+      showToast: false, // Disable toasts for enrollment checks - handle gracefully in UI
       ...getCacheConfig('ENROLLMENT_STATUS') // Enrollment status - moderate freshness
     }
   );

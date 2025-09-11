@@ -9,7 +9,8 @@ import { SkeletonBox, SkeletonText } from '@/components/ui/LoadingStates';
 import { Container } from '@/components/ui/Container';
 import { useUserProfileManagement } from '@/hooks/queries/useUserProfile';
 import { useI18n } from '@/lib/i18n/context';
-import { ToastService } from '@/lib/toast/ToastService';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 
 interface ProfileData {
   name: string;
@@ -43,6 +44,19 @@ export default function ProfilePage() {
     linkedin: ''
   });
 
+  // Field validation errors
+  const [errors, setErrors] = useState({
+    name: '',
+    bio: '',
+    location: '',
+    website: '',
+    github: '',
+    linkedin: ''
+  });
+
+  // Inline messages
+  const profileMessage = useInlineMessage('profile-form');
+
   // Initialize form data when profile data is loaded from React Query
   useEffect(() => {
     if (profile) {
@@ -64,10 +78,72 @@ export default function ProfilePage() {
       ...prev,
       [name]: value
     }));
+    
+    // Clear error when user starts typing
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateField = (name: string, value: string): string => {
+    switch (name) {
+      case 'name':
+        if (!value.trim()) return 'Name is required';
+        if (value.trim().length < 2) return 'Name must be at least 2 characters';
+        break;
+      case 'website':
+        if (value && !/^https?:\/\/.+\..+/.test(value)) {
+          return 'Website must be a valid URL (e.g., https://example.com)';
+        }
+        break;
+      case 'linkedin':
+        if (value && !value.includes('linkedin.com')) {
+          return 'LinkedIn must be a valid LinkedIn URL or username';
+        }
+        break;
+      case 'bio':
+        if (value && value.length > 500) {
+          return 'Bio must be less than 500 characters';
+        }
+        break;
+    }
+    return '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors and messages
+    setErrors({
+      name: '',
+      bio: '',
+      location: '',
+      website: '',
+      github: '',
+      linkedin: ''
+    });
+    profileMessage.clear();
+    
+    // Field validation
+    const newErrors = {
+      name: validateField('name', profileData.name),
+      bio: validateField('bio', profileData.bio),
+      location: '',
+      website: validateField('website', profileData.website),
+      github: '',
+      linkedin: validateField('linkedin', profileData.linkedin)
+    };
+    
+    const hasErrors = Object.values(newErrors).some(error => error !== '');
+    
+    if (hasErrors) {
+      setErrors(newErrors);
+      profileMessage.showError('Please fix the validation errors before saving.');
+      return;
+    }
 
     updateProfile({
       name: profileData.name,
@@ -80,8 +156,8 @@ export default function ProfilePage() {
       }
     }, {
       onSuccess: (response) => {
+        profileMessage.showSuccess('Profile updated successfully!');
         // React Query will automatically invalidate and refetch profile data
-        // Toast handled automatically by useUserProfileManagement
       },
       onError: (error: any) => {
         // Keep error handling logic only, toast is handled automatically
@@ -139,6 +215,15 @@ export default function ProfilePage() {
     <Container variant="public">
       <h1 className="text-3xl font-bold mb-8">{t('profile.title')}</h1>
 
+      {/* Page-level messages */}
+      {profileMessage.message && (
+        <InlineMessage
+          message={profileMessage.message.message}
+          type={profileMessage.message.type}
+          onDismiss={profileMessage.clear}
+        />
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
         <Card className="p-6">
@@ -155,7 +240,11 @@ export default function ProfilePage() {
                 value={profileData.name}
                 onChange={handleInputChange}
                 required
+                className={errors.name ? 'border-red-500 bg-red-50' : ''}
               />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+              )}
             </div>
 
             <div>
@@ -183,9 +272,17 @@ export default function ProfilePage() {
                 rows={4}
                 value={profileData.bio}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${
+                  errors.bio ? 'border-red-500 bg-red-50' : 'border-border'
+                }`}
                 placeholder="Tell us about yourself"
               />
+              {errors.bio && (
+                <p className="mt-1 text-sm text-red-600">{errors.bio}</p>
+              )}
+              <p className="mt-1 text-sm text-muted-foreground">
+                {profileData.bio.length}/500 characters
+              </p>
             </div>
 
             <div>
@@ -219,7 +316,11 @@ export default function ProfilePage() {
                 value={profileData.website}
                 onChange={handleInputChange}
                 placeholder="https://example.com"
+                className={errors.website ? 'border-red-500 bg-red-50' : ''}
               />
+              {errors.website && (
+                <p className="mt-1 text-sm text-red-600">{errors.website}</p>
+              )}
             </div>
 
             <div>
@@ -247,7 +348,11 @@ export default function ProfilePage() {
                 value={profileData.linkedin}
                 onChange={handleInputChange}
                 placeholder="linkedin.com/in/username"
+                className={errors.linkedin ? 'border-red-500 bg-red-50' : ''}
               />
+              {errors.linkedin && (
+                <p className="mt-1 text-sm text-red-600">{errors.linkedin}</p>
+              )}
             </div>
           </div>
         </Card>

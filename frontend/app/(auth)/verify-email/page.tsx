@@ -5,19 +5,21 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { verifyEmail } from '@/lib/api/auth'
 import { Container } from '@/components/ui/Container'
+import { useInlineMessage } from '@/hooks/useInlineMessage'
+import { InlineMessage } from '@/components/ui/InlineMessage'
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-  const [message, setMessage] = useState('')
+  const { message, showSuccess, showError, clear } = useInlineMessage('email-verification')
   
   useEffect(() => {
     const token = searchParams.get('token')
     
     if (!token) {
       setStatus('error')
-      setMessage('Invalid verification link. No token provided.')
+      showError('Invalid verification link. No token provided.')
       return
     }
     
@@ -25,7 +27,7 @@ export default function VerifyEmailPage() {
     verifyEmail(token)
       .then((response) => {
         setStatus('success')
-        setMessage(response.message || 'Email verified successfully!')
+        showSuccess(response.message || 'Email verified successfully!')
         // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push('/login?verified=true')
@@ -33,7 +35,7 @@ export default function VerifyEmailPage() {
       })
       .catch((error) => {
         setStatus('error')
-        setMessage(error.message || 'Email verification failed. Please try again.')
+        showError(error.message || 'Email verification failed. Please try again.')
         // If the link was already used, show login button
         if (error.message?.includes('already been used')) {
           setTimeout(() => {
@@ -65,46 +67,12 @@ export default function VerifyEmailPage() {
             </div>
           )}
           
-          {status === 'success' && (
-            <div className="rounded-md bg-success/20 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-success" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-success">
-                    {message}
-                  </p>
-                  <p className="mt-2 text-sm text-success">
-                    Redirecting to login page...
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {status === 'error' && (
-            <div className="rounded-md bg-destructive/20 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-destructive" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-destructive">
-                    {message}
-                  </p>
-                  {message?.includes('already been used') && (
-                    <p className="mt-2 text-sm text-destructive">
-                      Redirecting to login page in 5 seconds...
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+          {message && status !== 'loading' && (
+            <InlineMessage
+              message={message.message + (status === 'success' ? ' Redirecting to login page...' : '')}
+              type={message.type}
+              onDismiss={clear}
+            />
           )}
         </div>
         

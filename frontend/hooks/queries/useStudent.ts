@@ -40,6 +40,7 @@ export function useStudentDashboardQuery(enabled: boolean = true) {
     () => usersApi.getDashboard(),
     {
       enabled,
+      showToast: false, // Disable toasts for dashboard - use graceful degradation instead
       ...getCacheConfig('STUDENT_DASHBOARD') // Student dashboard - fresh data
     }
   );
@@ -55,7 +56,10 @@ export function useMyCoursesQuery() {
     async () => {
       return api.get<any>('/users/my-courses', { requireAuth: true });
     },
-    getCacheConfig('USER_COURSES') // User courses - moderate freshness
+    {
+      showToast: false, // Disable toasts for dashboard my-courses page - use graceful degradation
+      ...getCacheConfig('USER_COURSES') // User courses - moderate freshness
+    }
   );
 }
 
@@ -71,6 +75,7 @@ export function useCourseProgressQuery(courseId: string, enabled: boolean = true
     },
     {
       enabled: enabled && !!courseId,
+      showToast: false, // Disable toasts for dashboard progress tracking - use graceful degradation
       ...getCacheConfig('COURSE_PROGRESS') // Course progress - fresh data
     }
   );
@@ -116,6 +121,7 @@ export function useMarkLessonComplete() {
         ['student-dashboard'], // Update dashboard stats
       ],
       operationName: 'mark-lesson-complete', // Unique operation ID for toast deduplication
+      showToast: false, // Disable toasts for dashboard lesson completion - use inline feedback
     }
   );
 }
@@ -130,7 +136,10 @@ export function useMyCertificatesQuery() {
     async () => {
       return api.get<any>('/users/certificates', { requireAuth: true });
     },
-    getCacheConfig('USER_CERTIFICATES') // User certificates - stable content
+    {
+      showToast: false, // Disable toasts for dashboard certificates page - use graceful degradation
+      ...getCacheConfig('USER_CERTIFICATES') // User certificates - stable content
+    }
   );
 }
 
@@ -144,7 +153,10 @@ export function useProgressStatisticsQuery() {
     async () => {
       return api.get<any>('/users/progress-statistics', { requireAuth: true });
     },
-    getCacheConfig('PROGRESS_STATISTICS') // Progress statistics - moderate freshness
+    {
+      showToast: false, // Disable toasts for dashboard statistics page - use graceful degradation
+      ...getCacheConfig('PROGRESS_STATISTICS') // Progress statistics - moderate freshness
+    }
   );
 }
 
@@ -158,7 +170,10 @@ export function useRecentCoursesQuery() {
     async () => {
       return api.get<any>('/users/recent-courses?limit=5', { requireAuth: true });
     },
-    getCacheConfig('RECENT_COURSES') // Recent courses - fresh data
+    {
+      showToast: false, // Disable toasts for dashboard recent courses - use graceful degradation
+      ...getCacheConfig('RECENT_COURSES') // Recent courses - fresh data
+    }
   );
 }
 
@@ -189,6 +204,7 @@ export function useCourseCompletionQuery(courseId: string) {
     },
     {
       enabled: !!courseId,
+      showToast: false, // Disable toasts for dashboard course completion status - use graceful degradation
       ...getCacheConfig('COURSE_COMPLETION') // Course completion - moderate freshness
     }
   );
@@ -206,6 +222,7 @@ export function useOnboardingStatusQuery(enabled: boolean = true) {
     },
     {
       enabled,
+      showToast: false, // Disable toasts for dashboard onboarding status - use graceful degradation
       ...getCacheConfig('ONBOARDING_STATUS') // Onboarding status - stable content
     }
   );
@@ -228,6 +245,7 @@ export function useStartOnboarding() {
         ['student-dashboard'], // Update dashboard
       ],
       operationName: 'start-onboarding', // Unique operation ID for toast deduplication
+      showToast: false, // Disable toasts for dashboard onboarding - use inline feedback
     }
   );
 }
@@ -245,6 +263,7 @@ export function useSkipOnboarding() {
         ['student-dashboard'], // Update dashboard
       ],
       operationName: 'skip-onboarding', // Unique operation ID for toast deduplication
+      showToast: false, // Disable toasts for dashboard onboarding - use inline feedback
     }
   );
 }
@@ -266,6 +285,7 @@ export function useUpdateLearningPath() {
         ['onboarding-status'], // Refresh onboarding status
       ],
       operationName: 'update-learning-path', // Unique operation ID for toast deduplication
+      showToast: false, // Disable toasts for dashboard learning path setup - use inline feedback
     }
   );
 }
@@ -291,6 +311,7 @@ export function useUpdateProfileSetup() {
         ['student-dashboard'], // Update dashboard with profile
       ],
       operationName: 'update-profile-setup', // Unique operation ID for toast deduplication
+      showToast: false, // Disable toasts for dashboard profile setup - use inline feedback
     }
   );
 }
@@ -305,6 +326,7 @@ export function useCourseRecommendationsQuery(enabled: boolean = true) {
     () => getCourseRecommendations(),
     {
       enabled,
+      showToast: false, // Disable toasts for dashboard course recommendations - use graceful degradation
       ...getCacheConfig('COURSE_RECOMMENDATIONS') // Course recommendations - stable content
     }
   );
@@ -328,6 +350,7 @@ export function useCompleteOnboarding() {
         ['my-courses'], // Refresh enrolled courses
       ],
       operationName: 'complete-onboarding', // Unique operation ID for toast deduplication
+      showToast: false, // Disable toasts for dashboard onboarding completion - use inline feedback
     }
   );
 }

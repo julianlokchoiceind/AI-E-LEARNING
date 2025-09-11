@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ToastService } from '@/lib/toast/ToastService';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { supportAPI } from '@/lib/api/support';
 import { Container } from '@/components/ui/Container';
+import { useInlineMessage } from '@/hooks/useInlineMessage';
+import { InlineMessage } from '@/components/ui/InlineMessage';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -16,16 +17,29 @@ export default function ContactPage() {
     message: ''
   });
 
+  // Field validation errors
+  const [errors, setErrors] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+
+  // Inline messages
+  const contactMessage = useInlineMessage('contact-form');
+
   // React Query mutation for contact form submission
   const { mutate: submitContactForm, loading: isSubmitting } = useApiMutation(
     (contactData: typeof formData) => supportAPI.submitContact(contactData),
     {
       operationName: 'submit-contact', // For toast deduplication
+      showToast: false, // Disable automatic toast - use inline message instead
       onSuccess: (response) => {
+        contactMessage.showSuccess(response.message || 'Thank you for your message! We\'ll get back to you soon.');
         setFormData({ name: '', email: '', subject: '', message: '' });
       },
       onError: (error: any) => {
-        // Keep error handling logic only, toast is handled automatically
+        contactMessage.showError(error.message || 'Failed to send message. Please try again.');
         console.error('Contact form submission failed:', error);
       }
     }
@@ -37,10 +51,80 @@ export default function ContactPage() {
       ...prev,
       [name]: value
     }));
+    
+    // Clear error when user starts typing
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors and messages
+    setErrors({
+      name: '',
+      email: '',
+      subject: '',
+      message: ''
+    });
+    contactMessage.clear();
+    
+    // Field validation
+    const newErrors = {
+      name: '',
+      email: '',
+      subject: '',
+      message: ''
+    };
+    
+    let hasErrors = false;
+    
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Full name is required';
+      hasErrors = true;
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = 'Full name must be at least 2 characters';
+      hasErrors = true;
+    }
+    
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email address is required';
+      hasErrors = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+      hasErrors = true;
+    }
+    
+    // Subject validation
+    if (!formData.subject.trim()) {
+      newErrors.subject = 'Subject is required';
+      hasErrors = true;
+    } else if (formData.subject.trim().length < 5) {
+      newErrors.subject = 'Subject must be at least 5 characters';
+      hasErrors = true;
+    }
+    
+    // Message validation
+    if (!formData.message.trim()) {
+      newErrors.message = 'Message is required';
+      hasErrors = true;
+    } else if (formData.message.trim().length < 10) {
+      newErrors.message = 'Message must be at least 10 characters';
+      hasErrors = true;
+    }
+    
+    // Set errors if any
+    if (hasErrors) {
+      setErrors(newErrors);
+      return;
+    }
+    
     submitContactForm(formData);
   };
 
@@ -133,6 +217,15 @@ export default function ContactPage() {
                 Send us a Message
               </h2>
 
+              {/* Page-level messages */}
+              {contactMessage.message && (
+                <InlineMessage
+                  message={contactMessage.message.message}
+                  type={contactMessage.message.type}
+                  onDismiss={contactMessage.clear}
+                />
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
@@ -146,7 +239,11 @@ export default function ContactPage() {
                     onChange={handleInputChange}
                     required
                     placeholder="Enter your full name"
+                    className={errors.name ? 'border-red-500 bg-red-50' : ''}
                   />
+                  {errors.name && (
+                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                  )}
                 </div>
 
                 <div>
@@ -161,7 +258,11 @@ export default function ContactPage() {
                     onChange={handleInputChange}
                     required
                     placeholder="Enter your email address"
+                    className={errors.email ? 'border-red-500 bg-red-50' : ''}
                   />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  )}
                 </div>
 
                 <div>
@@ -176,7 +277,11 @@ export default function ContactPage() {
                     onChange={handleInputChange}
                     required
                     placeholder="Enter the subject"
+                    className={errors.subject ? 'border-red-500 bg-red-50' : ''}
                   />
+                  {errors.subject && (
+                    <p className="mt-1 text-sm text-red-600">{errors.subject}</p>
+                  )}
                 </div>
 
                 <div>
@@ -190,9 +295,14 @@ export default function ContactPage() {
                     value={formData.message}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary ${
+                      errors.message ? 'border-red-500 bg-red-50' : 'border-border'
+                    }`}
                     placeholder="Enter your message"
                   />
+                  {errors.message && (
+                    <p className="mt-1 text-sm text-red-600">{errors.message}</p>
+                  )}
                 </div>
 
                 <Button
