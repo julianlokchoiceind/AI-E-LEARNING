@@ -38,7 +38,7 @@ export function useApiMutation<TData = any, TVariables = any>(
     onSuccess,
     onError,
     invalidateQueries = [],
-    showToast = false, // Changed from true to false - disable auto-toast by default
+    showToast = true, // Enable auto-toast by default (errors need to show)
     operationName = 'mutation',
   } = options;
 
