@@ -245,10 +245,8 @@ export function handleError(error: unknown, showToast: boolean = true): AppError
     details: appError.details
   });
 
-  // Send to monitoring service in production
-  if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined' && (window as any).Sentry) {
-    (window as any).Sentry.captureException(appError);
-  }
+  // Error logged to console for debugging
+  // In production, consider implementing alternative error tracking
 
   // Show toast notification
   if (showToast) {

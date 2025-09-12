@@ -103,8 +103,7 @@ SMTP_HOST=smtp-mail.outlook.com
 SMTP_USER=info@choiceind.com
 SMTP_PASS=dycphhkfvnfjgqhj
 
-# Monitoring
-SENTRY_DSN=https://e361b6f5a71325c0649205ce514e1a31@o4509546120675328.ingest.us.sentry.io/4509546126114816
+# Monitoring (Sentry removed - using standard logging)
 
 # Frontend Public
 NEXT_PUBLIC_APP_URL=http://localhost:3000

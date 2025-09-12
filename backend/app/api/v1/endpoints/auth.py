@@ -11,13 +11,11 @@ from pydantic import EmailStr
 from bson import ObjectId
 import secrets
 import logging
-import sentry_sdk
 
 from app.core.config import settings
 from app.core.database import get_database
 from app.core.email import email_service
 from app.core.rate_limit import limiter, AUTH_RATE_LIMITS
-from app.core.sentry_utils import track_user_context, capture_message
 from app.models.user import User
 from app.schemas.auth import (
     UserCreate,

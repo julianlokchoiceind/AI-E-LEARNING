@@ -43,20 +43,12 @@ export class PaymentErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log payment errors to monitoring service
+    // Log payment errors to console for debugging
     console.error('Payment Error:', error);
     console.error('Error Info:', errorInfo);
     
-    // Log to external service (Sentry, etc.)
-    if (typeof window !== 'undefined' && (window as any).Sentry) {
-      (window as any).Sentry.captureException(error, {
-        tags: {
-          component: 'PaymentErrorBoundary',
-          errorCode: (error as any).code || 'PAYMENT_ERROR',
-        },
-        extra: errorInfo,
-      });
-    }
+    // Payment error logged to console for debugging
+    // In production, consider implementing payment error tracking
   }
 
   handleRetry = () => {

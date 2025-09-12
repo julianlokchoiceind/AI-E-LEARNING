@@ -36,8 +36,7 @@ httpx
 ruff
 black
 
-# Monitoring
-sentry-sdk[fastapi]
+# Monitoring (removed Sentry - using standard logging)
 
 # Utilities
 python-dotenv

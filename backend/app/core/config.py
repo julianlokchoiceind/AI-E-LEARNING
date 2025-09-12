@@ -142,8 +142,6 @@ class Settings(BaseSettings):
         """Get max file size in MB for display."""
         return round(self.MAX_FILE_SIZE / (1024 * 1024), 1)
     
-    # Sentry
-    SENTRY_DSN: Optional[str] = "https://e361b6f5a71325c0649205ce514e1a31@o4509546120675328.ingest.us.sentry.io/4509546126114816"
     
     class Config:
         case_sensitive = True
