@@ -1,4 +1,5 @@
 'use client';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
@@ -178,7 +179,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
           disabled={isEnrolling}
         >
           {isEnrolling 
-            ? 'Loading...' 
+            ? <LoadingSpinner size="sm" /> 
             : course.is_enrolled
               ? (course.progress_percentage && course.progress_percentage >= 95 ? 'Review Course' : course.continue_lesson_id || course.current_lesson_id || (course.progress_percentage && course.progress_percentage > 0) ? 'Continue Learning' : 'Start Learning')
               : 'View Details'

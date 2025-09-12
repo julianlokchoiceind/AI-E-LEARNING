@@ -22,7 +22,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
   onShowMessage
 }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string | boolean>>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string | boolean>>({ });
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [quizStarted, setQuizStarted] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
@@ -54,7 +54,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
         
         if (response.success && response.data?.has_saved_progress) {
           // Auto-resume - no UI prompt needed!
-          const savedAnswers: Record<number, string | boolean> = {};
+          const savedAnswers: Record<number, string | boolean> = { };
           response.data.saved_answers?.forEach((answer: any, index: number) => {
             if (answer !== -1) savedAnswers[index] = answer;
           });
@@ -89,7 +89,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
       
       const timer = setTimeout(() => {
         quizAPI.saveProgress(quiz.id, answersArray, currentQuestionIndex)
-          .catch(() => {}); // Silent fail
+          .catch(() => { }); // Silent fail
       }, 500);
       
       return () => clearTimeout(timer);
@@ -257,7 +257,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <LoadingSpinner size="md" message="Loading quiz..." />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
@@ -443,7 +443,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
   if (quizCompleted && score !== null) {
     return (
       <div className="flex justify-center py-8">
-        <LoadingSpinner size="md" message="Loading quiz results..." />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
@@ -533,7 +533,7 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
             onClick={handleSubmitQuiz}
             disabled={submitting}
           >
-            {submitting ? 'Submitting...' : 'Submit Quiz'}
+            {submitting ? <LoadingSpinner size="sm" /> : 'Submit Quiz'}
           </Button>
         ) : (
           <Button

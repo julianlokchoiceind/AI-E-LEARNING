@@ -1,7 +1,9 @@
 'use client';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/hooks/useAuth';
@@ -197,7 +199,7 @@ export default function PricingPage() {
               onClick={handleProSubscription}
               disabled={isProcessing || user?.premiumStatus}
             >
-              {isProcessing ? 'Processing...' : 
+              {isProcessing ? <LoadingSpinner size="sm" /> : 
                user?.premiumStatus ? 
                'Current Plan' : 'Subscribe to Pro'}
             </Button>

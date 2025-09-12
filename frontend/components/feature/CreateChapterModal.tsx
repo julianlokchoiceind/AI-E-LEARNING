@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
-import { LoadingSpinner } from '@/components/ui/LoadingStates';
+import { } from 'lucide-react';
 import { useCreateChapter } from '@/hooks/queries/useChapters';
 
 export interface ChapterResponse {
@@ -39,7 +40,7 @@ export const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
     description: ''
   });
 
-  const [errors, setErrors] = useState<Partial<ChapterFormData>>({});
+  const [errors, setErrors] = useState<Partial<ChapterFormData>>({ });
   
   // React Query mutation hook - automatic loading states and error handling
   const { mutate: createChapterMutation, loading } = useCreateChapter();
@@ -60,7 +61,7 @@ export const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<ChapterFormData> = {};
+    const newErrors: Partial<ChapterFormData> = { };
 
     // Validate title (required)
     if (!formData.title.trim()) {
@@ -100,14 +101,14 @@ export const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
           
           // Reset form and close modal
           setFormData({ title: '', description: '' });
-          setErrors({});
+          setErrors({ });
           onClose();
         }
       },
       onError: (error: any) => {
         console.error('Failed to create chapter:', error);
         // Toast is already shown by useApiMutation with operation ID 'create-chapter-error'
-        setErrors({});
+        setErrors({ });
       }
     });
   };
@@ -116,7 +117,7 @@ export const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
     if (!loading) {
       // Reset form when closing
       setFormData({ title: '', description: '' });
-      setErrors({});
+      setErrors({ });
       onClose();
     }
   };
@@ -200,14 +201,7 @@ export const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
               disabled={loading || !formData.title.trim()}
               className="flex-1"
             >
-              {loading ? (
-                <>
-                  <LoadingSpinner size="sm" className="mr-2 inline" />
-                  Creating...
-                </>
-              ) : (
-                'Create Chapter'
-              )}
+              {loading ? <LoadingSpinner size="sm" /> : 'Create Chapter'}
             </Button>
           </MobileFormActions>
 

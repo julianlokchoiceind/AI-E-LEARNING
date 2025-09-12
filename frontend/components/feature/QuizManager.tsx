@@ -114,7 +114,7 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <LoadingSpinner size="md" message="Loading quiz..." />
+        <LoadingSpinner size="md" />
       </div>
     );
   }
@@ -322,7 +322,7 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
                 className="text-destructive border-destructive hover:bg-destructive/20 flex-1"
                 disabled={deleteLoading}
               >
-                {deleteLoading ? 'Deleting...' : 'Delete Quiz'}
+                {deleteLoading ? <LoadingSpinner size="sm" /> : 'Delete Quiz'}
               </Button>
               
               <Button

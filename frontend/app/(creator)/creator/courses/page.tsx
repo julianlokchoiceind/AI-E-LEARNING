@@ -1,4 +1,5 @@
 'use client';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -17,7 +18,8 @@ import {
   BarChart,
   CheckSquare,
   Square,
-  AlertTriangle
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -162,7 +164,7 @@ const CreatorCoursesPage = () => {
   };
 
   const handleCreateCourse = () => {
-    createCourse({}, {
+    createCourse({ }, {
       onSuccess: (response) => {
         if (response?.success && response?.data?.id) {
           // Redirect based on user role
@@ -394,10 +396,7 @@ const CreatorCoursesPage = () => {
                 disabled={createLoading}
               >
                 {createLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Creating...
-                  </>
+                  <LoadingSpinner size="sm" />
                 ) : (
                   <>
                     <Plus className="w-4 h-4 mr-2" />
@@ -612,7 +611,7 @@ const CreatorCoursesPage = () => {
                             className="w-full px-4 py-2 text-left hover:bg-muted flex items-center text-destructive disabled:opacity-50"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
-                            {deleteLoading ? 'Deleting...' : 'Delete'}
+                            {deleteLoading ? <LoadingSpinner size="sm" /> : 'Delete'}
                           </button>
                         </div>
                       )}

@@ -1,4 +1,5 @@
 'use client';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import React, { useState } from 'react';
 import {
@@ -290,7 +291,7 @@ export function SubscriptionCheckoutForm({
         size="lg"
       >
         <Lock className="w-4 h-4 mr-2" />
-        {isLoading ? 'Processing...' : `Subscribe for $${plan.price}/${plan.interval}`}
+        {isLoading ? <LoadingSpinner size="sm" /> : `Subscribe for $${plan.price}/${plan.interval}`}
       </Button>
 
       {/* Subscription Benefits Reminder */}

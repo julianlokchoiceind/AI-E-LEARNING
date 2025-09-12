@@ -1,6 +1,8 @@
 'use client';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import { useState, useEffect } from 'react';
+import { } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -392,7 +394,7 @@ export default function ProfilePage() {
         {/* Submit Button */}
         <div className="flex justify-end">
           <Button type="submit" disabled={updating}>
-            {updating ? 'Saving...' : 'Save Changes'}
+            {updating ? <LoadingSpinner size="sm" /> : 'Save Changes'}
           </Button>
         </div>
       </form>

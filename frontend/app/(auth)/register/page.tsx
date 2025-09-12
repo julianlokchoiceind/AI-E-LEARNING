@@ -1,8 +1,10 @@
 'use client'
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import { useApiMutation } from '@/hooks/useApiMutation'
 import { registerUser } from '@/lib/api/auth'
 import { Container } from '@/components/ui/Container'
@@ -298,7 +300,7 @@ export default function RegisterPage() {
               disabled={isLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Creating account...' : 'Create account'}
+              {isLoading ? <LoadingSpinner size="sm" /> : 'Create account'}
             </button>
           </div>
         </form>

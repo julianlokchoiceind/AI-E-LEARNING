@@ -41,7 +41,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
     status: 'draft'
   });
 
-  const [errors, setErrors] = useState<Partial<ChapterFormData>>({});
+  const [errors, setErrors] = useState<Partial<ChapterFormData>>({ });
   const [loading, setLoading] = useState(false);
 
   // React Query mutation for updating chapter
@@ -98,7 +98,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
         description: chapter.description || '',
         status: chapter.status || 'draft'
       });
-      setErrors({});
+      setErrors({ });
     }
   }, [chapter, isOpen]);
 
@@ -118,7 +118,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<ChapterFormData> = {};
+    const newErrors: Partial<ChapterFormData> = { };
 
     // Validate title (required)
     if (!formData.title.trim()) {
@@ -153,7 +153,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
           status: chapter.status || 'draft'
         });
       }
-      setErrors({});
+      setErrors({ });
       onClose();
     }
   };
@@ -273,8 +273,8 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
             >
               {loading ? (
                 <>
-                  <LoadingSpinner size="sm" className="mr-2 inline" />
-                  Updating...
+                  <LoadingSpinner size="sm" />
+                  
                 </>
               ) : (
                 'Update Chapter'

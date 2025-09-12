@@ -1,6 +1,7 @@
 import React from 'react';
-import { Check, Loader2, AlertCircle, AlertTriangle, WifiOff } from 'lucide-react';
+import { Check, AlertCircle, AlertTriangle, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'conflict' | 'offline';
 
@@ -53,8 +54,8 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
     >
       {status === 'saving' && (
         <>
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Saving...</span>
+          <LoadingSpinner size="sm" />
+          <span></span>
         </>
       )}
       

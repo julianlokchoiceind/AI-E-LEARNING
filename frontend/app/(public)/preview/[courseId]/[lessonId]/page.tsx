@@ -67,8 +67,8 @@ const PreviewLessonPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <LoadingSpinner size="lg" message="Loading lesson preview..." />
+      <div className="flex justify-center items-center min-h-screen text-primary">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }

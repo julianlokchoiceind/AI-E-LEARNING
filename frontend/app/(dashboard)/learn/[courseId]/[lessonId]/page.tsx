@@ -375,7 +375,7 @@ export default function OptimizedLessonPlayerPage() {
   const initialChapters = pageData?.chapters || [];
   const enrollment = pageData?.enrollment || null;
   const navigation = pageData?.navigation || null;
-  const userProgress = pageData?.user_progress || {};
+  const userProgress = pageData?.user_progress || { };
   // Check both API response and URL parameter for preview mode
   const isPreviewMode = pageData?.is_preview_mode || searchParams.get('preview') === 'true' || false;
 

@@ -1,4 +1,5 @@
 'use client';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import React, { useState } from 'react';
 import {
@@ -9,7 +10,6 @@ import {
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/Button';
-import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useCreateCoursePayment } from '@/hooks/queries/usePayments';
 import { useAuth } from '@/hooks/useAuth';
 import { CreditCard, Lock, CheckCircle, AlertTriangle } from 'lucide-react';
@@ -330,8 +330,8 @@ function CheckoutForm({
       >
         {isLoading ? (
           <>
-            <LoadingSpinner size="sm" className="mr-2 inline" />
-            Processing...
+            <LoadingSpinner size="sm" />
+            
           </>
         ) : (
           <>

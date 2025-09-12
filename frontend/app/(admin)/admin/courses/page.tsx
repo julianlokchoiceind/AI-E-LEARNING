@@ -184,7 +184,7 @@ export default function CourseApproval() {
   };
 
   const handleCreateCourse = () => {
-    createCourseAction({}, {
+    createCourseAction({ }, {
       onSuccess: (response) => {
         if (response.success && response.data?.id) {
           router.push(`/admin/courses/${response.data.id}/edit`);

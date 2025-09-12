@@ -1,4 +1,5 @@
 'use client';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -423,7 +424,7 @@ const CourseDetailPage = () => {
                     size="lg"
                   >
                     {checkingEnrollment
-                      ? 'Checking...'
+                      ? <LoadingSpinner size="sm" />
                       : course.pricing.is_free
                         ? 'Enroll for Free'
                         : 'Enroll Now'}

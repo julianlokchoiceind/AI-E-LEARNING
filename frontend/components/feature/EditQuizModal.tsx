@@ -53,7 +53,7 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
     shuffle_answers: false
   });
   
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({ });
   const [isGenerating, setIsGenerating] = useState(false);
   
   // Fetch existing quiz data
@@ -167,7 +167,7 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
   };
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+    const newErrors: Record<string, string> = { };
 
     // Validate title
     if (!formData.title.trim()) {
@@ -259,16 +259,16 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
 
   const handleClose = () => {
     if (!loading) {
-      setErrors({});
+      setErrors({ });
       onClose();
     }
   };
 
   if (fetchLoading) {
     return (
-      <Modal isOpen={isOpen} onClose={() => {}} title="Loading Quiz...">
+      <Modal isOpen={isOpen} onClose={() => { }} title="Loading Quiz...">
         <div className="flex justify-center py-8">
-          <LoadingSpinner size="md" message="Loading quiz data..." />
+          <LoadingSpinner size="md" />
         </div>
       </Modal>
     );
@@ -335,10 +335,7 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
                     size="sm"
                   >
                     {isGenerating ? (
-                      <>
-                        <LoadingSpinner className="w-4 h-4 mr-2" />
-                        Regenerating...
-                      </>
+                      <LoadingSpinner size="sm" />
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4 mr-2" />
@@ -573,8 +570,8 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
           </Button>
           {loading ? (
             <>
-              <LoadingSpinner size="sm" className="mr-2 inline" />
-              Updating...
+              <LoadingSpinner size="sm" />
+              
             </>
           ) : (
             <Button 

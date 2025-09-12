@@ -78,15 +78,15 @@ export default function CourseCheckoutPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <LoadingSpinner size="lg" message="Loading checkout..." />
+      <div className="flex justify-center items-center min-h-screen text-primary">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   if (!course) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen text-primary">
         <ErrorState
           title="Course not found"
           description="The course you're trying to purchase doesn't exist or is no longer available."

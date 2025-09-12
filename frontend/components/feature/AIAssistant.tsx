@@ -112,7 +112,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     setIsTyping(true);
     
     // Prepare context for AI
-    const context: any = {};
+    const context: any = { };
     if (courseId) context.course_id = courseId;
     if (lessonId) context.lesson_id = lessonId;
     if (userLevel) context.user_level = userLevel;

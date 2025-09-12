@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Image, X, Loader2 } from 'lucide-react';
+import { Upload, Image, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { uploadCourseThumbnail, deleteCourseThumbnail } from '@/lib/api/courses';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -141,7 +142,7 @@ export const CourseImageUpload: React.FC<CourseImageUploadProps> = ({
           
           {uploading && (
             <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-              <Loader2 className="w-6 h-6 text-white animate-spin" />
+              <LoadingSpinner size="sm" className="text-white" />
             </div>
           )}
         </div>
@@ -162,7 +163,7 @@ export const CourseImageUpload: React.FC<CourseImageUploadProps> = ({
         >
           {uploading ? (
             <div className="flex flex-col items-center">
-              <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+              <LoadingSpinner size="md" className="text-primary mb-2" />
               <p className="text-sm text-muted-foreground">Uploading image...</p>
             </div>
           ) : (

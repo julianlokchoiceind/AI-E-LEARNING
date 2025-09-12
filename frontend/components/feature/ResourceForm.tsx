@@ -41,7 +41,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
     title?: string;
     url?: string;
     file?: string;
-  }>({});
+  }>({ });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,7 +58,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
     setDescription('');
     setUrl('');
     setFile(null);
-    setErrors({});
+    setErrors({ });
     setDragActive(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -66,7 +66,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: typeof errors = {};
+    const newErrors: typeof errors = { };
 
     if (mode === 'url') {
       // URL mode validation

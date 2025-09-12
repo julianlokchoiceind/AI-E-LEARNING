@@ -441,8 +441,8 @@ const CourseBuilderPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" message="Loading course data..." />
+      <div className="flex items-center justify-center min-h-screen text-primary">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }

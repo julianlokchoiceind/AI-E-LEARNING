@@ -24,7 +24,7 @@ const CreatorAnalyticsPage = () => {
     data: coursesResponse,
     loading: coursesLoading,
     execute: refetchCourses
-  } = useCreatorCoursesQuery({}, !!user);
+  } = useCreatorCoursesQuery({ }, !!user);
 
   // NEW: Use Payment Analytics for real revenue data
   const {

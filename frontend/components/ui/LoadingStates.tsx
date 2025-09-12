@@ -6,13 +6,11 @@ import { Loader2, AlertCircle } from 'lucide-react';
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
-  message?: string;
 }
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
   size = 'md', 
-  className = '',
-  message
+  className = ''
 }) => {
   const sizeClasses = {
     sm: 'w-4 h-4',
@@ -22,12 +20,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   };
 
   return (
-    <div className={`flex flex-col items-center justify-center ${className}`}>
-      <Loader2 className={`animate-spin text-primary ${sizeClasses[size]}`} />
-      {message && (
-        <p className="mt-4 text-sm text-muted-foreground">{message}</p>
-      )}
-    </div>
+    <Loader2 className={`animate-spin text-current ${sizeClasses[size]} ${className}`} />
   );
 };
 
@@ -38,8 +31,8 @@ interface LoadingOverlayProps {
 export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ message = 'Loading...' }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-background rounded-lg p-6 shadow-xl">
-        <LoadingSpinner size="lg" message={message} />
+      <div className="bg-background rounded-lg p-6 shadow-xl text-primary">
+        <LoadingSpinner size="lg" />
       </div>
     </div>
   );
@@ -153,7 +146,7 @@ export const LoadingButton: React.FC<LoadingButtonProps> = ({
     >
       {loading ? (
         <span className="flex items-center justify-center">
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          <LoadingSpinner size="sm" className="mr-2" />
           {loadingText}
         </span>
       ) : (

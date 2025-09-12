@@ -1,4 +1,5 @@
 'use client';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import React, { useState } from 'react';
 import {
@@ -9,7 +10,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/Button';
-import { LoadingSpinner } from '@/components/ui/LoadingStates';
+import { } from 'lucide-react';
 import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { InlineMessage } from '@/components/ui/InlineMessage';
 
@@ -130,8 +131,8 @@ const CheckoutForm: React.FC<PaymentFormProps> = ({
         >
           {isProcessing ? (
             <>
-              <LoadingSpinner size="sm" className="mr-2 inline" />
-              Processing...
+              <LoadingSpinner size="sm" />
+              
             </>
           ) : (
             `Pay ${formatAmount(amount, currency)}`

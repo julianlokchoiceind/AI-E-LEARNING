@@ -94,7 +94,7 @@ export default function DashboardPage() {
       // Clean the URL without causing redirect loop
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
-      window.history.replaceState({}, '', url);
+      window.history.replaceState({ }, '', url);
     }
   }, [accessError]);
 

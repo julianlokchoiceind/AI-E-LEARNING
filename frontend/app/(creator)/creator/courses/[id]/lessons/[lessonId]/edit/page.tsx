@@ -143,7 +143,7 @@ const LessonEditPage = () => {
     }
 
     // Filter out system fields (same logic as autosave)
-    const updateData: any = {};
+    const updateData: any = { };
     
     if (lessonData.title !== undefined) updateData.title = lessonData.title;
     if (lessonData.description !== undefined) updateData.description = lessonData.description;
@@ -185,7 +185,7 @@ const LessonEditPage = () => {
         
         try {
           // Clean the data before sending - only include non-null/undefined values
-          const updateData: any = {};
+          const updateData: any = { };
           
           if (data.title !== undefined) updateData.title = data.title;
           if (data.description !== undefined) updateData.description = data.description;
@@ -390,8 +390,8 @@ const LessonEditPage = () => {
 
   if (lessonLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" message="Loading lesson data..." />
+      <div className="flex items-center justify-center min-h-screen text-primary">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }

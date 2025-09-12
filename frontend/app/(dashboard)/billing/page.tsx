@@ -75,8 +75,8 @@ export default function BillingPage() {
   if (authLoading || loading) {
     return (
       <Container variant="public">
-        <div className="flex justify-center items-center min-h-[50vh]">
-          <LoadingSpinner size="lg" message="Loading billing information..." />
+        <div className="flex justify-center items-center min-h-[50vh] text-primary">
+          <LoadingSpinner size="lg" />
         </div>
       </Container>
     );
@@ -364,8 +364,8 @@ export default function BillingPage() {
             >
               {canceling ? (
                 <>
-                  <LoadingSpinner size="sm" className="mr-2 inline" />
-                  Cancelling...
+                  <LoadingSpinner size="sm" />
+                  
                 </>
               ) : (
                 'Yes, Cancel Subscription'

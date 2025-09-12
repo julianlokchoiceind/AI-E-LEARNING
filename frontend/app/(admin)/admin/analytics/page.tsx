@@ -101,7 +101,7 @@ export default function AdminAnalyticsPage() {
 
   if (!chartData) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen text-primary">
         <EmptyState
           title="No analytics data available"
           description="Analytics data is not yet available. Please check back later."

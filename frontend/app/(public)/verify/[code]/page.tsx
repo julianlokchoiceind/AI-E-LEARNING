@@ -44,8 +44,8 @@ const CertificateVerificationPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <LoadingSpinner size="lg" message="Verifying certificate..." />
+      <div className="flex justify-center items-center min-h-screen text-primary">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }

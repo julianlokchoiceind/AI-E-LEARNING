@@ -11,7 +11,7 @@ interface InlineMessageProps {
 }
 
 const getMessageStyles = (type: MessageType) => {
-  const baseStyles = 'mb-4 rounded-md border border-l-4 p-4 flex items-start';
+  const baseStyles = 'mb-4 rounded-md border border-l-4 p-3 flex items-start';
   
   switch (type) {
     case 'success':
@@ -91,11 +91,11 @@ export function InlineMessage({ message, type, onDismiss, className = '' }: Inli
         </p>
       </div>
       {onDismiss && (
-        <div className="ml-auto pl-3 flex items-center">
+        <div className="ml-auto pl-2 flex items-center -mr-1">
           <button
             type="button"
             onClick={onDismiss}
-            className={`inline-flex items-center justify-center rounded-md p-1 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+            className={`inline-flex items-center justify-center rounded-md p-0.5 hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
               type === 'success' ? 'text-green-500 hover:bg-green-500 focus:ring-green-600' :
               type === 'error' ? 'text-red-500 hover:bg-red-500 focus:ring-red-600' :
               type === 'warning' ? 'text-yellow-500 hover:bg-yellow-500 focus:ring-yellow-600' :
@@ -103,7 +103,7 @@ export function InlineMessage({ message, type, onDismiss, className = '' }: Inli
             }`}
           >
             <span className="sr-only">Dismiss</span>
-            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
           </button>

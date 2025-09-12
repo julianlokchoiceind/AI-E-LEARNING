@@ -223,8 +223,8 @@ export const DeleteLessonModal: React.FC<DeleteLessonModalProps> = ({
             >
               {loading ? (
                 <>
-                  <LoadingSpinner size="sm" className="mr-2 inline" />
-                  Deleting...
+                  <LoadingSpinner size="sm" />
+                  
                 </>
               ) : (
                 <>

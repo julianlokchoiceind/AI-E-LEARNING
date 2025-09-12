@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { Plus, Trash2, HelpCircle, Sparkles } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
-import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useCreateQuiz } from '@/hooks/queries/useQuizzes';
 import { useGenerateQuizFromTranscript } from '@/hooks/queries/useAI';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -55,7 +55,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
     shuffle_answers: true
   });
 
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [errors, setErrors] = useState<{[key: string]: string}>({ });
   const [isGenerating, setIsGenerating] = useState(false);
   
   // React Query mutation hooks
@@ -192,7 +192,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: {[key: string]: string} = {};
+    const newErrors: {[key: string]: string} = { };
 
     // Validate title
     if (!formData.title.trim()) {
@@ -307,7 +307,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
         shuffle_questions: true,
         shuffle_answers: true
       });
-      setErrors({});
+      setErrors({ });
       onClose();
     }
   };
@@ -388,10 +388,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                       size="sm"
                     >
                       {isGenerating ? (
-                        <>
-                          <LoadingSpinner className="w-4 h-4 mr-2" />
-                          Generating...
-                        </>
+                        <LoadingSpinner size="sm" />
                       ) : (
                         <>
                           <Sparkles className="w-4 h-4 mr-2" />
@@ -408,10 +405,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                       size="sm"
                     >
                       {isGenerating ? (
-                        <>
-                          <LoadingSpinner className="w-4 h-4 mr-2" />
-                          Regenerating...
-                        </>
+                        <LoadingSpinner size="sm" />
                       ) : (
                         <>
                           <Sparkles className="w-4 h-4 mr-2" />
@@ -652,14 +646,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
               disabled={loading || !formData.title.trim()}
               className="flex-1"
             >
-              {loading ? (
-                <>
-                  <LoadingSpinner size="sm" className="mr-2 inline" />
-                  Creating...
-                </>
-              ) : (
-                'Create Quiz'
-              )}
+              {loading ? <LoadingSpinner size="sm" /> : 'Create Quiz'}
             </Button>
           </MobileFormActions>
 

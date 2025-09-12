@@ -170,8 +170,8 @@ export const DeleteChapterModal: React.FC<DeleteChapterModalProps> = ({
             >
               {loading ? (
                 <>
-                  <LoadingSpinner size="sm" className="mr-2 inline" />
-                  Deleting...
+                  <LoadingSpinner size="sm" />
+                  
                 </>
               ) : (
                 <>

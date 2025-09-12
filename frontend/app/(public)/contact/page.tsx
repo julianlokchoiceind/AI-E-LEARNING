@@ -1,6 +1,8 @@
 "use client";
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import { useState } from 'react';
+import { } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useApiMutation } from '@/hooks/useApiMutation';
@@ -311,7 +313,7 @@ export default function ContactPage() {
                   className="w-full"
                 >
                   {isSubmitting 
-                    ? 'Sending...'
+                    ? <LoadingSpinner size="sm" />
                     : 'Send Message'
                   }
                 </Button>

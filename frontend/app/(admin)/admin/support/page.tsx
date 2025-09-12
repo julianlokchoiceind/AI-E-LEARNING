@@ -179,7 +179,7 @@ export default function AdminSupportPage() {
 
   // Memoized category lookup for better performance
   const categoryMap = useMemo(() => {
-    const map: Record<string, any> = {};
+    const map: Record<string, any> = { };
     TICKET_CATEGORIES.forEach(category => {
       map[category.value] = category;
     });
@@ -567,7 +567,7 @@ export default function AdminSupportPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {Object.entries(computedValues.stats?.tickets_by_priority || {}).map(([priority, count]) => {
+                {Object.entries(computedValues.stats?.tickets_by_priority || { }).map(([priority, count]) => {
                   const priInfo = TICKET_PRIORITIES.find(p => p.value === priority);
                   return (
                     <div key={priority} className="flex items-center justify-between">

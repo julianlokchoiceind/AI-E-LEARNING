@@ -70,7 +70,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
     status: 'draft'
   });
 
-  const [errors, setErrors] = useState<Partial<LessonFormData>>({});
+  const [errors, setErrors] = useState<Partial<LessonFormData>>({ });
   const [loading, setLoading] = useState(false);
 
   // React Query mutation for updating lesson
@@ -149,7 +149,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
         content: lesson.content || '',
         status: lesson.status || 'draft'
       });
-      setErrors({});
+      setErrors({ });
     }
   }, [lesson, isOpen]);
 
@@ -175,7 +175,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<LessonFormData> = {};
+    const newErrors: Partial<LessonFormData> = { };
 
     // Validate title (required)
     if (!formData.title.trim()) {
@@ -241,7 +241,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
           status: lesson.status || 'draft'
         });
       }
-      setErrors({});
+      setErrors({ });
       onClose();
     }
   };

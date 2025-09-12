@@ -408,7 +408,7 @@ const CourseBuilderPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen text-primary">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
@@ -416,7 +416,7 @@ const CourseBuilderPage = () => {
 
   if (!loading && !courseData && !courseResponse?.data) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen text-primary">
         <ErrorState
           title="Course not found"
           description="The course you're looking for doesn't exist or you don't have permission to edit it."

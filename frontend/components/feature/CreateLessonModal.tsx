@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { LoadingSpinner } from '@/components/ui/LoadingStates';
+import { } from 'lucide-react';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
 import { useCreateLesson } from '@/hooks/queries/useLessons';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -69,7 +70,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
     duration: ''
   });
 
-  const [errors, setErrors] = useState<Partial<LessonFormData>>({});
+  const [errors, setErrors] = useState<Partial<LessonFormData>>({ });
   
   // React Query mutation hook - automatic loading states and error handling
   const { mutate: createLessonMutation, loading } = useCreateLesson();
@@ -90,7 +91,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<LessonFormData> = {};
+    const newErrors: Partial<LessonFormData> = { };
 
     // Validate title (required)
     if (!formData.title.trim()) {
@@ -200,14 +201,14 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
             video_url: '', 
             duration: '' 
           });
-          setErrors({});
+          setErrors({ });
           onClose();
         }
       },
       onError: (error: any) => {
         // Error already handled by useApiMutation
         // Toast is already shown by useApiMutation with operation ID 'create-lesson-error'
-        setErrors({});
+        setErrors({ });
       }
     });
   };
@@ -221,7 +222,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
         video_url: '', 
         duration: '' 
       });
-      setErrors({});
+      setErrors({ });
       onClose();
     }
   };
@@ -347,14 +348,7 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
               disabled={loading || !formData.title.trim()}
               className="flex-1"
             >
-              {loading ? (
-                <>
-                  <LoadingSpinner size="sm" className="mr-2 inline" />
-                  Creating...
-                </>
-              ) : (
-                'Create Lesson'
-              )}
+              {loading ? <LoadingSpinner size="sm" /> : 'Create Lesson'}
             </Button>
           </MobileFormActions>
 
