@@ -84,6 +84,7 @@ export default function CourseApproval() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [selectedCourses, setSelectedCourses] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [processingCourseId, setProcessingCourseId] = useState<string | null>(null);
   const router = useRouter();
   
   // React Query hooks for data fetching and mutations with server-side pagination
@@ -114,8 +115,8 @@ export default function CourseApproval() {
   const { mutate: deleteCourseAction, loading: deleteLoading } = useDeleteCourse();
   const { mutate: createCourseAction, loading: createLoading } = useCreateCourse();
   
-  // Combined loading state for actions
-  const actionLoading = approveLoading || rejectLoading || toggleLoading || deleteLoading || createLoading;
+  // Individual loading state tracking (following Support page pattern)
+  // Global actionLoading removed to prevent all rows showing spinners
   
   // Extract courses and pagination data from response (flat structure from backend)
   const typedCoursesData = coursesData as StandardResponse<{ courses: any[], total: number, page: number, per_page: number, total_pages: number, summary: any }> | null;
@@ -127,33 +128,55 @@ export default function CourseApproval() {
   const typedStatisticsData = statisticsData as StandardResponse<any> | null;
   const statistics = typedStatisticsData?.data || null;
 
-  const handleApproveCourse = (course: Course) => {
+  const handleApproveCourse = async (course: Course) => {
     const courseId = course.id;
-    if (courseId) {
-      approveCourse(courseId);
+    if (!courseId) return;
+
+    try {
+      setProcessingCourseId(courseId);
+      await approveCourse(courseId);
+    } catch (error: any) {
+      // Error toast is handled automatically by useApiMutation
+    } finally {
+      setProcessingCourseId(null);
     }
   };
 
-  const handleRejectCourse = () => {
+  const handleRejectCourse = async () => {
     if (!selectedCourse || !rejectionReason.trim()) {
       // Let the mutation handle the validation error
       return;
     }
-    
+
     const courseId = selectedCourse.id!;
-    rejectCourse({ courseId, reason: rejectionReason }, {
-      onSuccess: () => {
-        setShowRejectModal(false);
-        setRejectionReason('');
-        setSelectedCourse(null);
-      }
-    });
+    try {
+      setProcessingCourseId(courseId);
+      await rejectCourse({ courseId, reason: rejectionReason }, {
+        onSuccess: () => {
+          setShowRejectModal(false);
+          setRejectionReason('');
+          setSelectedCourse(null);
+        }
+      });
+    } catch (error: any) {
+      // Error toast is handled automatically by useApiMutation
+    } finally {
+      setProcessingCourseId(null);
+    }
   };
 
-  const handleToggleFree = (course: Course, currentStatus: boolean) => {
+  const handleToggleFree = async (course: Course, currentStatus: boolean) => {
     const courseId = course.id || course._id;
     if (!courseId) return;
-    toggleFree({ courseId, isFree: !currentStatus });
+
+    try {
+      setProcessingCourseId(courseId);
+      await toggleFree({ courseId, isFree: !currentStatus });
+    } catch (error: any) {
+      // Error toast is handled automatically by useApiMutation
+    } finally {
+      setProcessingCourseId(null);
+    }
   };
 
   const handleDeleteCourse = (course: Course) => {
@@ -175,12 +198,19 @@ export default function CourseApproval() {
   };
 
   const handleConfirmDeleteCourse = async (courseId: string) => {
-    deleteCourseAction(courseId, {
-      onSuccess: () => {
-        setShowDeleteModal(false);
-        setSelectedCourseForDelete(null);
-      }
-    });
+    try {
+      setProcessingCourseId(courseId);
+      await deleteCourseAction(courseId, {
+        onSuccess: () => {
+          setShowDeleteModal(false);
+          setSelectedCourseForDelete(null);
+        }
+      });
+    } catch (error: any) {
+      // Error toast is handled automatically by useApiMutation
+    } finally {
+      setProcessingCourseId(null);
+    }
   };
 
   const handleCreateCourse = () => {
@@ -302,7 +332,6 @@ export default function CourseApproval() {
             onClick={handleCreateCourse}
             className="bg-primary hover:bg-primary/90"
           >
-            <BookOpen className="w-4 h-4 mr-2" />
             Create New Course
           </Button>
         </div>
@@ -422,7 +451,6 @@ export default function CourseApproval() {
             variant="outline"
             className="w-full"
           >
-            <Filter className="w-4 h-4 mr-2" />
             Clear Filters
           </Button>
         </div>
@@ -447,7 +475,6 @@ export default function CourseApproval() {
                 onClick={handleBulkDelete}
                 className="text-destructive hover:bg-destructive/10"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
                 Delete Selected
               </Button>
             </div>
@@ -612,10 +639,12 @@ export default function CourseApproval() {
                       {course.creator_name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(course.status)}
-                      {course.pricing.is_free && (
-                        <Badge variant="primary" className="ml-2">Free</Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(course.status)}
+                        {course.pricing.is_free && (
+                          <Badge variant="primary">Free</Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       <div>
@@ -676,7 +705,7 @@ export default function CourseApproval() {
                               size="sm"
                               variant="ghost"
                               onClick={() => handleApproveCourse(course)}
-                              loading={actionLoading}
+                              loading={processingCourseId === course.id}
                               className="text-success hover:bg-success/10"
                             >
                               <Check className="h-4 w-4" />
@@ -701,7 +730,7 @@ export default function CourseApproval() {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleToggleFree(course, course.pricing.is_free)}
-                            loading={actionLoading}
+                            loading={processingCourseId === course.id}
                             className={`${course.pricing.is_free ? 'text-warning' : 'text-primary'} hover:bg-primary/10`}
                           >
                             <Gift className="h-4 w-4" />
@@ -802,7 +831,7 @@ export default function CourseApproval() {
                 <>
                   <Button
                     onClick={() => handleApproveCourse(selectedCourse)}
-                    loading={actionLoading}
+                    loading={processingCourseId === selectedCourse.id}
                     className="bg-success hover:bg-success/80"
                   >
                     <Check className="h-4 w-4 mr-2" />
@@ -823,7 +852,7 @@ export default function CourseApproval() {
               {selectedCourse.status === 'published' && (
                 <Button
                   onClick={() => handleToggleFree(selectedCourse, selectedCourse.pricing.is_free)}
-                  loading={actionLoading}
+                  loading={processingCourseId === selectedCourse.id}
                   variant="outline"
                 >
                   <Gift className="h-4 w-4 mr-2" />
@@ -866,7 +895,7 @@ export default function CourseApproval() {
             <div className="flex space-x-3">
               <Button
                 onClick={handleRejectCourse}
-                loading={actionLoading}
+                loading={processingCourseId === selectedCourse?.id}
                 variant="outline"
                 className="text-destructive border-destructive/30 hover:bg-destructive/10"
                 disabled={!rejectionReason.trim()}
@@ -948,7 +977,6 @@ export default function CourseApproval() {
                 loading={deleteLoading}
                 className="flex-1"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
                 Delete {selectedCourses.size} Course{selectedCourses.size > 1 ? 's' : ''}
               </Button>
             </div>

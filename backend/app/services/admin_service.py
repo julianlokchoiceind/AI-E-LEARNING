@@ -26,7 +26,7 @@ class AdminService:
     """Service for admin operations."""
     
     @staticmethod
-    async def get_dashboard_stats() -> AdminDashboardStats:
+    async def get_dashboard_stats() -> Dict[str, Any]:
         """Get comprehensive admin dashboard statistics."""
         try:
             # Get database instance
@@ -173,32 +173,32 @@ class AdminService:
                 enr["id"] = str(enr["_id"])
                 enr.pop("_id", None)  # Remove _id after conversion
             
-            return AdminDashboardStats(
-                total_users=total_users,
-                total_students=total_students,
-                total_creators=total_creators,
-                total_admins=total_admins,
-                new_users_today=new_users_today,
-                new_users_this_week=new_users_this_week,
-                total_courses=total_courses,
-                published_courses=published_courses,
-                draft_courses=draft_courses,
-                pending_review_courses=pending_review_courses,
-                archived_courses=archived_courses,
-                total_enrollments=total_enrollments,
-                active_enrollments=active_enrollments,
-                completed_courses=completed_courses,
-                total_revenue=total_revenue,
-                revenue_this_month=revenue_this_month,
-                revenue_today=revenue_today,
-                average_course_price=average_course_price,
-                active_users_today=active_users_today,
-                active_users_this_week=active_users_this_week,
-                lessons_completed_today=lessons_completed_today,
-                recent_registrations=recent_registrations,
-                recent_course_submissions=recent_course_submissions,
-                recent_enrollments=recent_enrollments
-            )
+            return {
+                "total_users": total_users,
+                "total_students": total_students,
+                "total_creators": total_creators,
+                "total_admins": total_admins,
+                "new_users_today": new_users_today,
+                "new_users_this_week": new_users_this_week,
+                "total_courses": total_courses,
+                "published_courses": published_courses,
+                "draft_courses": draft_courses,
+                "pending_review_courses": pending_review_courses,
+                "archived_courses": archived_courses,
+                "total_enrollments": total_enrollments,
+                "active_enrollments": active_enrollments,
+                "completed_courses": completed_courses,
+                "total_revenue": total_revenue,
+                "revenue_this_month": revenue_this_month,
+                "revenue_today": revenue_today,
+                "average_course_price": average_course_price,
+                "active_users_today": active_users_today,
+                "active_users_this_week": active_users_this_week,
+                "lessons_completed_today": lessons_completed_today,
+                "recent_registrations": recent_registrations,
+                "recent_course_submissions": recent_course_submissions,
+                "recent_enrollments": recent_enrollments
+            }
         except Exception as e:
             logger.error(f"Error getting dashboard stats: {str(e)}")
             raise
@@ -239,7 +239,7 @@ class AdminService:
             raise
     
     @staticmethod
-    async def approve_course(course_id: str, admin: User) -> CourseApprovalResponse:
+    async def approve_course(course_id: str, admin: User) -> Dict[str, Any]:
         """Approve a course for publication."""
         try:
             db = get_database()
@@ -247,15 +247,15 @@ class AdminService:
             course = await db.courses.find_one({"_id": ObjectId(course_id)})
             if not course:
                 raise NotFoundException(f"Course not found: {course_id}")
-            
+
             # Check if course is in review status
             if course["status"] != CourseStatus.REVIEW:
-                return CourseApprovalResponse(
-                    success=False,
-                    message=f"Course is not in review status. Current status: {course['status']}",
-                    course_id=course_id,
-                    status=course["status"]
-                )
+                return {
+                    "success": False,
+                    "message": f"Course is not in review status. Current status: {course['status']}",
+                    "course_id": course_id,
+                    "status": course["status"]
+                }
             
             # Update course status to published
             now = datetime.now(timezone.utc)
@@ -289,20 +289,20 @@ class AdminService:
                 except Exception as e:
                     logger.error(f"Failed to send approval email: {str(e)}")
             
-            return CourseApprovalResponse(
-                success=True,
-                message="Course approved successfully",
-                course_id=course_id,
-                status=CourseStatus.PUBLISHED,
-                approved_by=str(admin.id),
-                approved_at=now
-            )
+            return {
+                "success": True,
+                "message": "Course approved successfully",
+                "course_id": course_id,
+                "status": CourseStatus.PUBLISHED,
+                "approved_by": str(admin.id),
+                "approved_at": now
+            }
         except Exception as e:
             logger.error(f"Error approving course: {str(e)}")
             raise
     
     @staticmethod
-    async def reject_course(course_id: str, feedback: str, admin: User) -> CourseApprovalResponse:
+    async def reject_course(course_id: str, feedback: str, admin: User) -> Dict[str, Any]:
         """Reject a course with feedback."""
         try:
             db = get_database()
@@ -310,15 +310,15 @@ class AdminService:
             course = await db.courses.find_one({"_id": ObjectId(course_id)})
             if not course:
                 raise NotFoundException(f"Course not found: {course_id}")
-            
+
             # Check if course is in review status
             if course["status"] != CourseStatus.REVIEW:
-                return CourseApprovalResponse(
-                    success=False,
-                    message=f"Course is not in review status. Current status: {course['status']}",
-                    course_id=course_id,
-                    status=course["status"]
-                )
+                return {
+                    "success": False,
+                    "message": f"Course is not in review status. Current status: {course['status']}",
+                    "course_id": course_id,
+                    "status": course["status"]
+                }
             
             # Update course status back to draft
             now = datetime.now(timezone.utc)
@@ -353,13 +353,13 @@ class AdminService:
                 except Exception as e:
                     logger.error(f"Failed to send rejection email: {str(e)}")
             
-            return CourseApprovalResponse(
-                success=True,
-                message="Course rejected with feedback",
-                course_id=course_id,
-                status=CourseStatus.DRAFT,
-                feedback=feedback
-            )
+            return {
+                "success": True,
+                "message": "Course rejected with feedback",
+                "course_id": course_id,
+                "status": CourseStatus.DRAFT,
+                "feedback": feedback
+            }
         except Exception as e:
             logger.error(f"Error rejecting course: {str(e)}")
             raise
@@ -511,34 +511,57 @@ class AdminService:
             raise
     
     @staticmethod
-    async def bulk_approve_courses(course_ids: List[str], admin: User) -> BulkApprovalResult:
+    async def bulk_approve_courses(course_ids: List[str], admin: User) -> Dict[str, Any]:
         """Bulk approve multiple courses."""
         try:
             approved = []
             failed = []
-            
+
             for course_id in course_ids:
                 try:
                     result = await AdminService.approve_course(course_id, admin)
-                    if result.success:
+                    if result["success"]:
                         approved.append(course_id)
                     else:
-                        failed.append({course_id: result.message})
+                        failed.append({course_id: result["message"]})
                 except Exception as e:
                     failed.append({course_id: str(e)})
-            
-            return BulkApprovalResult(
-                total_processed=len(course_ids),
-                approved=approved,
-                failed=failed,
-                message=f"Approved {len(approved)} courses, {len(failed)} failed"
-            )
+
+            return {
+                "total_processed": len(course_ids),
+                "approved": approved,
+                "failed": failed,
+                "message": f"Approved {len(approved)} courses, {len(failed)} failed"
+            }
         except Exception as e:
             logger.error(f"Error in bulk approval: {str(e)}")
             raise
     
     # User Management Methods
     
+    @staticmethod
+    def get_user_status_display(user: Dict[str, Any]) -> str:
+        """
+        Smart Backend: Calculate exact display text for user status.
+        Follows hierarchy: Role > Premium > Subscription > Free
+        """
+        role = user.get("role")
+
+        # Role-based status (highest priority)
+        if role == "admin":
+            return "Administrator"
+        elif role == "creator":
+            return "Content Creator"
+
+        # Subscription-based status for students
+        if user.get("premium_status"):
+            return "Premium Access"  # Admin-granted
+        elif user.get("subscription", {}).get("stripe_subscription_id"):
+            return "Pro Subscriber"  # Paid subscription
+        else:
+            return "Free User"
+
+
     @staticmethod
     async def list_users(
         page: int = 1,
@@ -570,22 +593,26 @@ class AdminService:
             # Get users
             users = await db.users.find(query).sort("created_at", -1).skip(skip).limit(per_page).to_list(per_page)
             
-            # Format response
+            # Format response with Smart Backend logic
+            formatted_users = []
+            for user in users:
+                user_data = {
+                    "id": str(user["_id"]),
+                    "name": user["name"],
+                    "email": user["email"],
+                    "role": user["role"],
+                    "premium_status": user.get("premium_status", False),
+                    "subscription": user.get("subscription"),
+                    "created_at": user["created_at"],
+                    "last_login": user.get("last_login"),
+                    "stats": user.get("stats"),
+                    # Smart Backend: Pre-calculated status for Dumb Frontend
+                    "status_display": AdminService.get_user_status_display(user)
+                }
+                formatted_users.append(user_data)
+
             return {
-                "users": [
-                    {
-                        "id": str(user["_id"]),
-                        "name": user["name"],
-                        "email": user["email"],
-                        "role": user["role"],
-                        "premium_status": user.get("premium_status", False),
-                        "subscription": user.get("subscription"),
-                        "created_at": user["created_at"],
-                        "last_login": user.get("last_login"),
-                        "stats": user.get("stats")
-                    }
-                    for user in users
-                ],
+                "users": formatted_users,
                 "total_count": total_count,
                 "page": page,
                 "per_page": per_page,
@@ -608,15 +635,16 @@ class AdminService:
             if not user:
                 raise NotFoundException(f"User not found: {user_id}")
             
-            # Update premium status
+            # Update ONLY premium status - DO NOT modify subscription object
+            # Premium status is independent of subscription data
+            update_data = {
+                "premium_status": is_premium,
+                "updated_at": datetime.now(timezone.utc)
+            }
+
             result = await db.users.update_one(
                 {"_id": ObjectId(user_id)},
-                {
-                    "$set": {
-                        "premium_status": is_premium,
-                        "updated_at": datetime.now(timezone.utc)
-                    }
-                }
+                {"$set": update_data}
             )
             
             if result.modified_count == 0:

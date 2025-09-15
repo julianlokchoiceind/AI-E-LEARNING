@@ -197,11 +197,10 @@ export default function PricingPage() {
             <Button
               className="w-full bg-primary hover:bg-primary/80"
               onClick={handleProSubscription}
-              disabled={isProcessing || user?.premiumStatus}
+              loading={isProcessing}
+              disabled={user?.premiumStatus}
             >
-              {isProcessing ? <LoadingSpinner size="sm" /> : 
-               user?.premiumStatus ? 
-               'Current Plan' : 'Subscribe to Pro'}
+              {user?.premiumStatus ? 'Current Plan' : 'Subscribe to Pro'}
             </Button>
           </div>
 

@@ -579,7 +579,7 @@ export const EditQuizModal: React.FC<EditQuizModalProps> = ({
               variant="primary"
               disabled={loading}
             >
-              Update Quiz
+              Update
             </Button>
           )}
         </MobileFormActions>

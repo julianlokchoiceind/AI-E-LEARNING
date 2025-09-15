@@ -291,7 +291,7 @@ export function SubscriptionCheckoutForm({
         size="lg"
       >
         <Lock className="w-4 h-4 mr-2" />
-        {isLoading ? <LoadingSpinner size="sm" /> : `Subscribe for $${plan.price}/${plan.interval}`}
+        Subscribe for ${plan.price}/{plan.interval}
       </Button>
 
       {/* Subscription Benefits Reminder */}

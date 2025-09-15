@@ -198,10 +198,11 @@ export const CreateChapterModal: React.FC<CreateChapterModalProps> = ({
             </Button>
             <Button
               type="submit"
-              disabled={loading || !formData.title.trim()}
+              loading={loading}
+              disabled={!formData.title.trim()}
               className="flex-1"
             >
-              {loading ? <LoadingSpinner size="sm" /> : 'Create Chapter'}
+              Create
             </Button>
           </MobileFormActions>
 

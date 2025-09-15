@@ -126,7 +126,7 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
             size="sm"
             onClick={() => window.open(certificate.verification_url, '_blank')}
           >
-            <ExternalLink className="h-4 w-4" />
+            Verify
           </Button>
         </div>
       </div>

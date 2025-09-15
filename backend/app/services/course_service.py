@@ -12,7 +12,7 @@ from app.models.enrollment import Enrollment
 from app.models.progress import Progress
 from app.models.lesson import Lesson
 from app.models.chapter import Chapter
-from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse, CourseCreateResponse
+from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse
 from app.core.exceptions import (
     NotFoundException,
     ForbiddenException,
@@ -85,8 +85,8 @@ class CourseService:
             title=title,
             description="",  # Empty description initially
             slug=slug,
-            category=CourseCategory.PROGRAMMING,  # Default category
-            level=CourseLevel.BEGINNER,  # Default level
+            category=CourseCategory.ML_BASICS,  # Default category - proper enum usage
+            level=CourseLevel.BEGINNER,  # Default level - proper enum usage
             creator_id=user.id,
             creator_name=user.name,
             pricing=Pricing()  # Default pricing (not free, price 0)
@@ -95,13 +95,13 @@ class CourseService:
         # Save to database
         await course.create()
         
-        # Return a Pydantic model instance to ensure proper field serialization
-        # Use the Python field name 'id', not the alias '_id'
-        return CourseCreateResponse(
-            id=str(course.id),
-            redirect_url=f"/admin/courses/{course.id}/edit",
-            message="Course created successfully"
-        )
+        # Return dictionary to avoid Pydantic v2 serialization issues
+        # Following CLAUDE.md pattern: Dictionary approach for API responses
+        return {
+            "id": str(course.id),
+            "redirect_url": f"/admin/courses/{course.id}/edit",
+            "message": "Course created successfully"
+        }
     
     @staticmethod
     async def get_course(course_id: str, user: Optional[User] = None) -> Course:

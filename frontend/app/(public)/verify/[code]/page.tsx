@@ -86,7 +86,6 @@ const CertificateVerificationPage = () => {
                   loading={manualLoading}
                   className="w-full"
                 >
-                  <Search className="h-4 w-4 mr-2" />
                   Verify Certificate
                 </Button>
               </div>

@@ -43,6 +43,7 @@ export default function AdminFAQPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [faqToDelete, setFaqToDelete] = useState<FAQDeleteData | null>(null);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  const [processingFaqId, setProcessingFaqId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<FAQCreateData>({
     question: '',
@@ -76,8 +77,8 @@ export default function AdminFAQPage() {
   const { mutate: deleteFAQMutation, loading: deleteLoading } = useDeleteFAQ();
   const { mutate: bulkActionMutation, loading: bulkLoading } = useBulkFAQActions();
   
-  // Combined loading state for actions
-  const actionLoading = createLoading || updateLoading || deleteLoading || bulkLoading;
+  // Individual loading state tracking (following Support page pattern)
+  // Global actionLoading removed to prevent all rows showing spinners
   
   // Smart loading states: Only show spinner on initial load, not background refetch
   const showLoadingSpinner = isInitialLoading && !faqsData;
@@ -133,13 +134,20 @@ export default function AdminFAQPage() {
   };
 
   const handleConfirmDeleteFAQ = async (faqId: string) => {
-    deleteFAQMutation(faqId, {
-      onSuccess: (response) => {
-        // React Query will automatically invalidate and refetch FAQs
-        setIsDeleteModalOpen(false);
-        setFaqToDelete(null);
-      }
-    });
+    try {
+      setProcessingFaqId(faqId);
+      await deleteFAQMutation(faqId, {
+        onSuccess: (response) => {
+          // React Query will automatically invalidate and refetch FAQs
+          setIsDeleteModalOpen(false);
+          setFaqToDelete(null);
+        }
+      });
+    } catch (error: any) {
+      // Error toast is handled automatically by useApiMutation
+    } finally {
+      setProcessingFaqId(null);
+    }
   };
 
   const handleBulkAction = async (action: 'publish' | 'unpublish' | 'delete') => {
@@ -248,7 +256,6 @@ export default function AdminFAQPage() {
             setShowCreateModal(true);
           }}
         >
-          <Plus className="h-4 w-4 mr-2" />
           Add FAQ
         </Button>
       </div>
@@ -296,7 +303,6 @@ export default function AdminFAQPage() {
                     onClick={() => handleBulkAction('publish')}
                     loading={bulkLoading}
                   >
-                    <Eye className="h-4 w-4 mr-1" />
                     Publish
                   </Button>
                   <Button
@@ -305,7 +311,6 @@ export default function AdminFAQPage() {
                     onClick={() => handleBulkAction('unpublish')}
                     loading={bulkLoading}
                   >
-                    <EyeOff className="h-4 w-4 mr-1" />
                     Unpublish
                   </Button>
                   <Button
@@ -315,7 +320,6 @@ export default function AdminFAQPage() {
                     onClick={() => handleBulkAction('delete')}
                     loading={bulkLoading}
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
                     Delete
                   </Button>
                 </div>
@@ -473,7 +477,6 @@ export default function AdminFAQPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => startEdit(faq)}
-                              disabled={actionLoading}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -482,7 +485,7 @@ export default function AdminFAQPage() {
                               variant="ghost"
                               className="text-destructive hover:bg-destructive/10"
                               onClick={() => handleDelete(faq)}
-                              loading={deleteLoading}
+                              loading={processingFaqId === faq.id}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -610,7 +613,7 @@ export default function AdminFAQPage() {
             <Button 
               onClick={handleCreateOrUpdate}
               disabled={!formData.question || !formData.answer}
-              loading={actionLoading}
+              loading={createLoading || updateLoading}
             >
               {editingFaq ? 'Update' : 'Create'}
             </Button>
@@ -683,7 +686,6 @@ export default function AdminFAQPage() {
                 loading={bulkLoading}
                 className="flex-1"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
                 Delete {selectedFaqs.size} FAQ{selectedFaqs.size > 1 ? 's' : ''}
               </Button>
             </div>

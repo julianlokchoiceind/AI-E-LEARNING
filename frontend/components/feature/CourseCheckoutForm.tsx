@@ -328,17 +328,7 @@ function CheckoutForm({
         className="w-full"
         size="lg"
       >
-        {isLoading ? (
-          <>
-            <LoadingSpinner size="sm" />
-            
-          </>
-        ) : (
-          <>
-            <Lock className="w-4 h-4 mr-2" />
-            Pay ${course.pricing.discount_price || course.pricing.price}
-          </>
-        )}
+        Pay ${course.pricing.discount_price || course.pricing.price}
       </Button>
 
       {/* Features Included */}

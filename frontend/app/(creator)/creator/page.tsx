@@ -256,15 +256,8 @@ const CreatorDashboard = () => {
               <h1 className="text-2xl font-bold">Creator Dashboard</h1>
               <p className="text-muted-foreground">Welcome back, {user?.name}!</p>
             </div>
-            <Button variant="primary" onClick={handleCreateCourse} disabled={createLoading}>
-              {createLoading ? (
-                <LoadingSpinner size="sm" />
-              ) : (
-                <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create New Course
-                </>
-              )}
+            <Button variant="primary" onClick={handleCreateCourse} loading={createLoading}>
+              Create New Course
             </Button>
           </div>
         </Container>
@@ -395,8 +388,8 @@ const CreatorDashboard = () => {
               <div className="text-center py-8">
                 <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
                 <p className="text-muted-foreground text-sm">No courses created yet</p>
-                <Button variant="primary" onClick={handleCreateCourse} disabled={createLoading} className="mt-2">
-                  {createLoading ? <LoadingSpinner size="sm" /> : 'Create Your First Course'}
+                <Button variant="primary" onClick={handleCreateCourse} loading={createLoading} className="mt-2">
+                  Create Your First Course
                 </Button>
               </div>
             ) : (

@@ -198,7 +198,6 @@ export default function SupportPage() {
           <p className="text-muted-foreground mt-2">Get help with any issues or questions</p>
         </div>
         <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />
           New Ticket
         </Button>
       </div>
@@ -485,7 +484,7 @@ export default function SupportPage() {
               onClick={handleCreateTicket}
               disabled={!formData.title || !formData.description}
             >
-              Create Ticket
+              Create
             </Button>
           </div>
         </div>

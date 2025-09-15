@@ -531,9 +531,9 @@ export const StudentQuizPlayer: React.FC<StudentQuizPlayerProps> = ({
           <Button
             variant="primary"
             onClick={handleSubmitQuiz}
-            disabled={submitting}
+            loading={submitting}
           >
-            {submitting ? <LoadingSpinner size="sm" /> : 'Submit Quiz'}
+            Submit Quiz
           </Button>
         ) : (
           <Button

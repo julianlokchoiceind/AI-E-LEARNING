@@ -444,7 +444,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
               {loading ? (
                 <SkeletonBox className="h-9 w-20" />
               ) : (
-                'Update Lesson'
+                'Update'
               )}
             </Button>
           </MobileFormActions>

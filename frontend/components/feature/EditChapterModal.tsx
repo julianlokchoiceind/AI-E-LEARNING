@@ -277,7 +277,7 @@ export const EditChapterModal: React.FC<EditChapterModalProps> = ({
                   
                 </>
               ) : (
-                'Update Chapter'
+                'Update'
               )}
             </Button>
           </MobileFormActions>

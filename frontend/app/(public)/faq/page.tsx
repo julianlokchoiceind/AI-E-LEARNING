@@ -29,6 +29,7 @@ export default function FAQPage() {
   const [expandedFaqs, setExpandedFaqs] = useState<Set<string>>(new Set());
   const [votedFaqs, setVotedFaqs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const [votingFaqId, setVotingFaqId] = useState<string | null>(null);
   const faqLoginMessage = useInlineMessage('faq-login-required');
   const faqVotingMessage = useInlineMessage('faq-already-voted');
   const faqVotingFeedbackMessage = useInlineMessage('faq-voting-feedback');
@@ -45,7 +46,7 @@ export default function FAQPage() {
   const { data: categoriesResponse, loading: categoriesLoading } = useFAQCategoriesQuery();
   
   // React Query mutation for FAQ voting
-  const { mutate: voteFAQ, loading: isVoting } = useVoteFAQ();
+  const { mutate: voteFAQ, loading: votingFaqId === faq.id } = useVoteFAQ();
   
   // Extract data from React Query responses
   const faqs = faqResponse?.data?.items || [];
@@ -74,11 +75,11 @@ export default function FAQPage() {
     setExpandedFaqs(newExpanded);
   };
 
-  const handleVote = (faqId: string, isHelpful: boolean) => {
+  const handleVote = async (faqId: string, isHelpful: boolean) => {
     faqLoginMessage.clear();
     faqVotingMessage.clear();
     faqVotingFeedbackMessage.clear();
-    
+
     if (!user) {
       faqLoginMessage.showError('Please login to vote on this FAQ');
       return;
@@ -89,27 +90,34 @@ export default function FAQPage() {
       return;
     }
 
-    // React Query mutation handles API call with automatic error handling
-    voteFAQ({ faqId, isHelpful }, {
-      onSuccess: (response) => {
-        // Show success feedback with inline message
-        faqVotingFeedbackMessage.showSuccess(
-          isHelpful ? 'Thank you! Your feedback helps us improve.' : 'Thanks for letting us know this wasn\'t helpful.'
-        );
-        
-        // Mark as voted in local state only
-        const newVoted = new Set(votedFaqs);
-        newVoted.add(faqId);
-        setVotedFaqs(newVoted);
-        localStorage.setItem('votedFaqs', JSON.stringify(Array.from(newVoted)));
-        
-        // React Query will automatically refetch FAQ data to show updated vote counts
-      },
-      onError: (error: any) => {
-        console.error('Failed to vote:', error);
-        faqVotingFeedbackMessage.showError(error.message || 'Failed to submit feedback. Please try again.');
-      }
-    });
+    try {
+      setVotingFaqId(faqId);
+      // React Query mutation handles API call with automatic error handling
+      await voteFAQ({ faqId, isHelpful }, {
+        onSuccess: (response) => {
+          // Show success feedback with inline message
+          faqVotingFeedbackMessage.showSuccess(
+            isHelpful ? 'Thank you! Your feedback helps us improve.' : 'Thanks for letting us know this wasn\'t helpful.'
+          );
+
+          // Mark as voted in local state only
+          const newVoted = new Set(votedFaqs);
+          newVoted.add(faqId);
+          setVotedFaqs(newVoted);
+          localStorage.setItem('votedFaqs', JSON.stringify(Array.from(newVoted)));
+
+          // React Query will automatically refetch FAQ data to show updated vote counts
+        },
+        onError: (error: any) => {
+          console.error('Failed to vote:', error);
+          faqVotingFeedbackMessage.showError(error.message || 'Failed to submit feedback. Please try again.');
+        }
+      });
+    } catch (error: any) {
+      // Additional error handling
+    } finally {
+      setVotingFaqId(null);
+    }
   };
 
   const getCategoryInfo = (categoryId: string) => {
@@ -302,9 +310,9 @@ export default function FAQPage() {
                             <div className="flex items-center gap-4">
                               <button
                                 onClick={() => handleVote(faq.id, true)}
-                                disabled={hasVoted || isVoting}
+                                disabled={hasVoted || votingFaqId === faq.id}
                                 className={`flex items-center gap-1 px-3 py-1 rounded-md transition-colors ${
-                                  hasVoted || isVoting
+                                  hasVoted || votingFaqId === faq.id
                                     ? 'text-muted-foreground cursor-not-allowed'
                                     : 'text-muted-foreground hover:bg-success/20 hover:text-success'
                                 }`}
@@ -314,9 +322,9 @@ export default function FAQPage() {
                               </button>
                               <button
                                 onClick={() => handleVote(faq.id, false)}
-                                disabled={hasVoted || isVoting}
+                                disabled={hasVoted || votingFaqId === faq.id}
                                 className={`flex items-center gap-1 px-3 py-1 rounded-md transition-colors ${
-                                  hasVoted || isVoting
+                                  hasVoted || votingFaqId === faq.id
                                     ? 'text-muted-foreground cursor-not-allowed'
                                     : 'text-muted-foreground hover:bg-destructive/20 hover:text-destructive'
                                 }`}

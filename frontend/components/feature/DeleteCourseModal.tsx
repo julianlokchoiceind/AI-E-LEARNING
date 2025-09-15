@@ -179,19 +179,10 @@ export const DeleteCourseModal: React.FC<DeleteCourseModalProps> = ({
               variant="danger"
               onClick={handleConfirmDelete}
               disabled={loading || confirmText !== 'DELETE'}
+            loading={loading}
               className="flex-1"
             >
-              {loading ? (
-                <>
-                  <LoadingSpinner size="sm" />
-                  
-                </>
-              ) : (
-                <>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Course
-                </>
-              )}
+              Delete
             </Button>
           </div>
 

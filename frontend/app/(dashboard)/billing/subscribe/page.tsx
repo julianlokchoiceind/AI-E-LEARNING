@@ -90,7 +90,6 @@ export default function SubscribePage() {
             onClick={() => router.push('/pricing')}
             className="mb-4"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Pricing
           </Button>
           <div className="text-center">

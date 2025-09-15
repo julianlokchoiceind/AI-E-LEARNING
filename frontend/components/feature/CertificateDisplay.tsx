@@ -186,7 +186,6 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
             disabled={downloading}
             variant="primary"
           >
-            <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
           
@@ -196,12 +195,10 @@ export function CertificateDisplay({ certificate, showActions = true }: Certific
             disabled={sharing}
             variant="secondary"
           >
-            <ExternalLink className="h-4 w-4 mr-2" />
             Share on LinkedIn
           </Button>
           
           <Button onClick={handleShare} variant="outline">
-            <Share2 className="h-4 w-4 mr-2" />
             Share Certificate
           </Button>
         </div>

@@ -133,74 +133,76 @@ class CertificateService:
     @staticmethod
     async def get_certificate_with_details(
         certificate_id: str
-    ) -> Optional[CertificateWithDetails]:
+    ) -> Optional[Dict[str, Any]]:
         """Get certificate with course and user details"""
         certificate = await Certificate.get(certificate_id)
         if not certificate:
             return None
-        
+
         # Get course and user details
         course = await Course.get(certificate.course_id)
         user = await User.get(certificate.user_id)
-        
+
         if not course or not user:
             return None
-        
-        return CertificateWithDetails(
-            **certificate.model_dump(),
-            course_title=course.title,
-            course_description=course.description,
-            course_level=course.level,
-            course_category=course.category,
-            course_creator=course.creator_name,
-            user_name=user.name,
-            user_email=user.email
-        )
+
+        # Convert certificate to dictionary and add details
+        cert_dict = certificate.model_dump()
+        cert_dict.update({
+            "course_title": course.title,
+            "course_description": course.description,
+            "course_level": course.level,
+            "course_category": course.category,
+            "course_creator": course.creator_name,
+            "user_name": user.name,
+            "user_email": user.email
+        })
+        return cert_dict
     
     @staticmethod
     async def verify_certificate(
         verification_code: str
-    ) -> CertificateVerification:
+    ) -> Dict[str, Any]:
         """Verify certificate by code"""
         certificate = await Certificate.find_one({
             "verification_code": verification_code
         })
-        
+
         if not certificate:
-            return CertificateVerification(
-                is_valid=False,
-                message="Certificate not found"
-            )
-        
+            return {
+                "is_valid": False,
+                "message": "Certificate not found"
+            }
+
         if not certificate.is_active:
-            return CertificateVerification(
-                is_valid=False,
-                message="Certificate has been revoked"
-            )
-        
+            return {
+                "is_valid": False,
+                "message": "Certificate has been revoked"
+            }
+
         if certificate.expiry_date and certificate.expiry_date < datetime.utcnow():
-            return CertificateVerification(
-                is_valid=False,
-                message="Certificate has expired"
-            )
-        
+            return {
+                "is_valid": False,
+                "message": "Certificate has expired"
+            }
+
         # Get full details
         details = await CertificateService.get_certificate_with_details(
             str(certificate.id)
         )
-        
-        return CertificateVerification(
-            is_valid=True,
-            certificate=details,
-            message="Certificate is valid"
-        )
+
+        return {
+            "is_valid": True,
+            "certificate": details,
+            "message": "Certificate is valid"
+        }
     
     @staticmethod
     async def get_user_certificates(
         user_id: str,
         skip: int = 0,
         limit: int = 10
-    ) -> List[CertificateWithDetails]:
+    ) -> List[Dict[str, Any]]:
         """Get all certificates for a user"""
         certificates = await Certificate.find(
             {"user_id": user_id, "is_active": True}
@@ -218,22 +220,22 @@ class CertificateService:
         return detailed_certs
     
     @staticmethod
-    async def get_user_certificate_stats(user_id: str) -> CertificateStats:
+    async def get_user_certificate_stats(user_id: str) -> Dict[str, Any]:
         """Get certificate statistics for a user"""
         certificates = await Certificate.find({
             "user_id": user_id,
             "is_active": True
         }).to_list()
-        
+
         if not certificates:
-            return CertificateStats(
-                total_certificates=0,
-                courses_completed=0,
-                total_hours_learned=0,
-                average_score=0,
-                certificates_by_category={},
-                certificates_by_year={}
-            )
+            return {
+                "total_certificates": 0,
+                "courses_completed": 0,
+                "total_hours_learned": 0,
+                "average_score": 0,
+                "certificates_by_category": {},
+                "certificates_by_year": {}
+            }
         
         # Calculate stats
         total_hours = sum(cert.total_hours for cert in certificates)
@@ -254,14 +256,14 @@ class CertificateService:
             year = cert.issue_date.year
             certificates_by_year[year] = certificates_by_year.get(year, 0) + 1
         
-        return CertificateStats(
-            total_certificates=len(certificates),
-            courses_completed=len(set(cert.course_id for cert in certificates)),
-            total_hours_learned=total_hours,
-            average_score=average_score,
-            certificates_by_category=certificates_by_category,
-            certificates_by_year=certificates_by_year
-        )
+        return {
+            "total_certificates": len(certificates),
+            "courses_completed": len(set(cert.course_id for cert in certificates)),
+            "total_hours_learned": total_hours,
+            "average_score": average_score,
+            "certificates_by_category": certificates_by_category,
+            "certificates_by_year": certificates_by_year
+        }
     
     @staticmethod
     async def update_certificate(
@@ -317,24 +319,24 @@ class CertificateService:
     @staticmethod
     async def generate_linkedin_share_data(
         certificate_id: str
-    ) -> LinkedInShareData:
+    ) -> Dict[str, Any]:
         """Generate data for LinkedIn certificate sharing"""
         certificate = await CertificateService.get_certificate_with_details(certificate_id)
         if not certificate:
             raise NotFoundError("Certificate not found")
-        
+
         share_text = (
-            f"I'm excited to share that I've completed '{certificate.course_title}' "
-            f"on AI E-Learning Platform with a score of {certificate.final_score}%! "
+            f"I'm excited to share that I've completed '{certificate['course_title']}' "
+            f"on AI E-Learning Platform with a score of {certificate['final_score']}%! "
             f"#OnlineLearning #CertificateOfCompletion #AI #MachineLearning"
         )
-        
-        return LinkedInShareData(
-            certificate_url=certificate.verification_url,
-            share_text=share_text,
-            issue_date=certificate.issue_date.strftime("%B %Y"),
-            certificate_id=certificate.certificate_number
-        )
+
+        return {
+            "certificate_url": certificate["verification_url"],
+            "share_text": share_text,
+            "issue_date": certificate["issue_date"].strftime("%B %Y"),
+            "certificate_id": certificate["certificate_number"]
+        }
     
     @staticmethod
     async def generate_certificate_pdf(certificate_id: str) -> bytes:

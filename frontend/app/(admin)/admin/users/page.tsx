@@ -31,6 +31,23 @@ import {
 } from 'lucide-react';
 import { getRoleVariant } from '@/lib/utils/badge-helpers';
 
+// Dumb Frontend: Simple color mapping using predefined global CSS classes
+const getStatusColor = (status_display: string): string => {
+  switch (status_display) {
+    case 'Administrator':
+      return 'text-[hsl(var(--badge-admin))]'; // Admin = red (from globals.css)
+    case 'Content Creator':
+      return 'text-[hsl(var(--badge-creator))]'; // Creator = purple (from globals.css)
+    case 'Premium Access':
+      return 'text-[hsl(var(--warning))]'; // Premium = amber (from globals.css)
+    case 'Pro Subscriber':
+      return 'text-[hsl(var(--success))]'; // Pro = green (from globals.css)
+    case 'Free User':
+    default:
+      return 'text-muted-foreground'; // Free = muted (Tailwind class)
+  }
+};
+
 interface User {
   id: string;
   name: string;
@@ -48,19 +65,22 @@ interface User {
     courses_completed: number;
     certificates_earned: number;
   };
+  // Smart Backend provided fields
+  status_display: string;
 }
 
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [premiumFilter, setPremiumFilter] = useState<string>('');
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [processingUserId, setProcessingUserId] = useState<string | null>(null);
   
   // React Query hooks for data fetching and mutations  
   const { 
@@ -80,8 +100,8 @@ export default function UserManagement() {
   const { mutate: updateRoleMutation, loading: roleLoading } = useUpdateUserRole();
   const { mutate: deleteUserMutation, loading: deleteLoading } = useDeleteUser();
   
-  // Combined loading state for actions
-  const actionLoading = premiumLoading || roleLoading || deleteLoading;
+  // Individual loading state tracking (following Support page pattern)
+  // Global actionLoading removed to prevent all rows showing spinners
   
   // Smart loading states: Only show spinner on initial load, not background refetch
   const showLoadingSpinner = isInitialLoading && !usersData;
@@ -90,6 +110,9 @@ export default function UserManagement() {
   const users = usersData?.data?.users || [];
   const totalItems = usersData?.data?.total_count || 0;
   const totalPages = usersData?.data?.total_pages || 1;
+
+  // Compute current selected user from fresh data (always up-to-date)
+  const selectedUser = selectedUserId ? users.find((u: any) => u.id === selectedUserId) : null;
 
   // Handle filter changes - reset to page 1
   const handleFilterChange = (newValue: string, filterType: 'search' | 'role' | 'premium') => {
@@ -117,31 +140,52 @@ export default function UserManagement() {
   };
 
   const handleTogglePremium = async (userId: string, currentStatus: boolean) => {
-    togglePremiumMutation({ userId, premiumStatus: !currentStatus }, {
-      onSuccess: (response) => {
-        // React Query will automatically invalidate and refetch users
-      }
-    });
+    try {
+      setProcessingUserId(userId);
+      await togglePremiumMutation({ userId, premiumStatus: !currentStatus }, {
+        onSuccess: (response) => {
+          // React Query will automatically invalidate and refetch users
+        }
+      });
+    } catch (error: any) {
+      // Error toast is handled automatically by useApiMutation
+    } finally {
+      setProcessingUserId(null);
+    }
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
-    updateRoleMutation({ userId, role: newRole as 'student' | 'creator' | 'admin' }, {
-      onSuccess: (response) => {
-        // React Query will automatically invalidate and refetch users
-      }
-    });
+    try {
+      setProcessingUserId(userId);
+      await updateRoleMutation({ userId, role: newRole as 'student' | 'creator' | 'admin' }, {
+        onSuccess: (response) => {
+          // React Query will automatically invalidate and refetch users
+        }
+      });
+    } catch (error: any) {
+      // Error toast is handled automatically by useApiMutation
+    } finally {
+      setProcessingUserId(null);
+    }
   };
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
-    
-    deleteUserMutation(selectedUser.id, {
-      onSuccess: (response) => {
-        setShowDeleteModal(false);
-        setSelectedUser(null);
-        // React Query will automatically invalidate and refetch users
-      }
-    });
+
+    try {
+      setProcessingUserId(selectedUser.id);
+      await deleteUserMutation(selectedUser.id, {
+        onSuccess: (response) => {
+          setShowDeleteModal(false);
+          setSelectedUserId(null);
+          // React Query will automatically invalidate and refetch users
+        }
+      });
+    } catch (error: any) {
+      // Error toast is handled automatically by useApiMutation
+    } finally {
+      setProcessingUserId(null);
+    }
   };
 
   const handleSelectAll = () => {
@@ -260,7 +304,6 @@ export default function UserManagement() {
             }} 
             variant="outline"
             className="w-full">
-            <Filter className="w-4 h-4 mr-2" />
             Clear Filters
           </Button>
         </div>
@@ -285,7 +328,6 @@ export default function UserManagement() {
                 onClick={handleBulkDelete}
                 className="text-destructive hover:bg-destructive/10"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
                 Delete Selected
               </Button>
             </div>
@@ -454,14 +496,9 @@ export default function UserManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm">
-                        <div className={`font-medium ${user.subscription ? 'text-success' : 'text-muted-foreground'}`}>
-                          {user.subscription ? 'Subscribed' : 'Free User'}
+                        <div className={`font-medium ${getStatusColor(user.status_display)}`}>
+                          {user.status_display}
                         </div>
-                        {user.subscription && (
-                          <div className="text-xs text-muted-foreground">
-                            {user.subscription.type} - {user.subscription.status}
-                          </div>
-                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
@@ -484,7 +521,7 @@ export default function UserManagement() {
                           size="sm"
                           variant="ghost"
                           onClick={() => {
-                            setSelectedUser(user);
+                            setSelectedUserId(user.id);
                             setShowUserModal(true);
                           }}
                         >
@@ -495,7 +532,7 @@ export default function UserManagement() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleTogglePremium(user.id, user.premium_status)}
-                          loading={actionLoading}
+                          loading={processingUserId === user.id}
                           disabled={user.role === 'admin'}
                         >
                           <Crown className={`h-4 w-4 ${user.premium_status ? 'text-warning' : 'text-muted-foreground'}`} />
@@ -506,7 +543,7 @@ export default function UserManagement() {
                             size="sm"
                             variant="ghost"
                             onClick={() => {
-                              setSelectedUser(user);
+                              setSelectedUserId(user.id);
                               setShowDeleteModal(true);
                             }}
                             className="text-destructive hover:bg-destructive/10"
@@ -544,7 +581,10 @@ export default function UserManagement() {
       {showUserModal && selectedUser && (
         <Modal
           isOpen={showUserModal}
-          onClose={() => setShowUserModal(false)}
+          onClose={() => {
+            setShowUserModal(false);
+            setSelectedUserId(null);
+          }}
           title="User Details"
         >
           <div className="space-y-6">
@@ -610,17 +650,20 @@ export default function UserManagement() {
             <div className="flex space-x-3">
               <Button
                 onClick={() => handleTogglePremium(selectedUser.id, selectedUser.premium_status)}
-                loading={actionLoading}
+                loading={processingUserId === selectedUser.id}
                 variant={selectedUser.premium_status ? "outline" : "primary"}
                 disabled={selectedUser.role === 'admin'}
               >
-                <Crown className="h-4 w-4 mr-2" />
+                {/* Text button - remove Crown icon as it has both icon + text */}
                 {selectedUser.premium_status ? 'Remove Premium' : 'Grant Premium'}
               </Button>
               
               <Button
                 variant="outline"
-                onClick={() => setShowUserModal(false)}
+                onClick={() => {
+                  setShowUserModal(false);
+                  setSelectedUserId(null);
+                }}
               >
                 Close
               </Button>
@@ -645,11 +688,10 @@ export default function UserManagement() {
             <div className="flex space-x-3">
               <Button
                 onClick={handleDeleteUser}
-                loading={actionLoading}
+                loading={processingUserId === selectedUser?.id}
                 variant="outline"
                 className="text-destructive border-destructive/30 hover:bg-destructive/10"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
                 Delete User
               </Button>
               
@@ -718,7 +760,6 @@ export default function UserManagement() {
                 loading={deleteLoading}
                 className="flex-1"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
                 Delete {selectedUsers.size} User{selectedUsers.size > 1 ? 's' : ''}
               </Button>
             </div>

@@ -393,8 +393,8 @@ export default function ProfilePage() {
 
         {/* Submit Button */}
         <div className="flex justify-end">
-          <Button type="submit" disabled={updating}>
-            {updating ? <LoadingSpinner size="sm" /> : 'Save Changes'}
+          <Button type="submit" loading={updating}>
+            Save Changes
           </Button>
         </div>
       </form>

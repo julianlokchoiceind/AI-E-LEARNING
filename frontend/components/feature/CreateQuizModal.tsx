@@ -643,10 +643,11 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
             </Button>
             <Button
               type="submit"
-              disabled={loading || !formData.title.trim()}
+              loading={loading}
+              disabled={!formData.title.trim()}
               className="flex-1"
             >
-              {loading ? <LoadingSpinner size="sm" /> : 'Create Quiz'}
+              Create
             </Button>
           </MobileFormActions>
 

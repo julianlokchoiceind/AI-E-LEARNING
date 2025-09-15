@@ -312,7 +312,6 @@ const CreatorCoursesPage = () => {
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold">My Courses</h1>
               <Button variant="primary" disabled>
-                <Plus className="w-4 h-4 mr-2" />
                 Create New Course
               </Button>
             </div>
@@ -382,27 +381,19 @@ const CreatorCoursesPage = () => {
               </div>
               
               
-              <Button 
+              <Button
                 onClick={() => window.location.reload()}
                 variant="outline"
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>
               
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 onClick={handleCreateCourse}
-                disabled={createLoading}
+                loading={createLoading}
               >
-                {createLoading ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create New Course
-                  </>
-                )}
+                Create New Course
               </Button>
             </div>
           </div>
@@ -465,7 +456,6 @@ const CreatorCoursesPage = () => {
                 }} 
                 variant="outline"
               >
-                <Filter className="w-4 h-4 mr-2" />
                 Clear Filters
               </Button>
             </div>
@@ -491,7 +481,6 @@ const CreatorCoursesPage = () => {
                   onClick={handleBulkDelete}
                   className="text-destructive hover:bg-destructive/10"
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
                   Delete Selected
                 </Button>
               </div>
@@ -574,7 +563,6 @@ const CreatorCoursesPage = () => {
                             }}
                             className="w-full px-4 py-2 text-left hover:bg-muted flex items-center"
                           >
-                            <Edit className="w-4 h-4 mr-2" />
                             Edit Course
                           </button>
                           
@@ -585,7 +573,6 @@ const CreatorCoursesPage = () => {
                             }}
                             className="w-full px-4 py-2 text-left hover:bg-muted flex items-center"
                           >
-                            <Eye className="w-4 h-4 mr-2" />
                             Preview
                           </button>
 
@@ -596,23 +583,22 @@ const CreatorCoursesPage = () => {
                             }}
                             className="w-full px-4 py-2 text-left hover:bg-muted flex items-center"
                           >
-                            <BarChart className="w-4 h-4 mr-2" />
                             Analytics
                           </button>
                           
                           <hr className="my-2" />
                           
-                          <button
+                          <Button
                             onClick={() => {
                               handleDeleteCourse(course);
                               setActiveDropdown(null);
                             }}
-                            disabled={deleteLoading}
-                            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center text-destructive disabled:opacity-50"
+                            loading={deleteLoading}
+                            variant="ghost"
+                            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center text-destructive justify-start"
                           >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            {deleteLoading ? <LoadingSpinner size="sm" /> : 'Delete'}
-                          </button>
+                            Delete
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -650,7 +636,6 @@ const CreatorCoursesPage = () => {
                     className="w-full mt-4"
                     onClick={() => handleEditCourse(course.id)}
                   >
-                    <Edit className="w-4 h-4 mr-2" />
                     Edit Course
                   </Button>
                 </div>
@@ -869,7 +854,6 @@ const CreatorCoursesPage = () => {
               loading={deleteLoading}
               className="flex-1"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
               Delete {selectedCourses.size} Course{selectedCourses.size > 1 ? 's' : ''}
             </Button>
           </div>

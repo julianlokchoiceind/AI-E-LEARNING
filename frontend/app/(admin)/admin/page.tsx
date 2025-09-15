@@ -311,7 +311,6 @@ export default function AdminDashboard() {
               size="sm"
               onClick={() => window.open('/admin/users', '_blank')}
             >
-              <Users className="w-4 h-4 mr-2" />
               Manage Users
             </Button>
             
@@ -320,7 +319,6 @@ export default function AdminDashboard() {
               size="sm"
               onClick={() => window.open('/admin/courses', '_blank')}
             >
-              <BookOpen className="w-4 h-4 mr-2" />
               Review Courses
             </Button>
             
@@ -329,7 +327,6 @@ export default function AdminDashboard() {
               size="sm"
               onClick={() => window.open('/admin/payments', '_blank')}
             >
-              <DollarSign className="w-4 h-4 mr-2" />
               View Payments
             </Button>
             
@@ -338,7 +335,6 @@ export default function AdminDashboard() {
               size="sm"
               onClick={() => window.open('/admin/support', '_blank')}
             >
-              <AlertTriangle className="w-4 h-4 mr-2" />
               Support Queue
             </Button>
           </div>

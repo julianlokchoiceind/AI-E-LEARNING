@@ -66,6 +66,7 @@ export default function FAQCategoriesPage() {
   const [categoryToDelete, setCategoryToDelete] = useState<FAQCategoryData | null>(null);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [processingCategoryId, setProcessingCategoryId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<FAQCategoryCreateData>({
     name: '',
@@ -87,8 +88,8 @@ export default function FAQCategoriesPage() {
   const { mutate: reorderCategories, loading: reorderLoading } = useReorderFAQCategories();
   const { mutate: bulkAction, loading: bulkLoading } = useBulkFAQCategoryActions();
   
-  // Combined loading state for actions
-  const actionLoading = createLoading || updateLoading || deleteLoading || reorderLoading || bulkLoading;
+  // Individual loading state tracking (following Support page pattern)
+  // Global actionLoading removed to prevent all rows showing spinners
   
   // Extract categories from React Query response
   const categories = categoriesData?.data?.categories || [];
@@ -299,9 +300,9 @@ export default function FAQCategoriesPage() {
             resetForm();
             setShowCreateModal(true);
           }}
-          disabled={actionLoading}
+          disabled={createLoading}
+          loading={createLoading}
         >
-          <Plus className="h-4 w-4 mr-2" />
           Add Category
         </Button>
       </div>
@@ -401,28 +402,25 @@ export default function FAQCategoriesPage() {
                     size="sm"
                     variant="outline"
                     onClick={handleBulkActivate}
-                    disabled={actionLoading}
+                    disabled={bulkLoading}
                   >
-                    <Eye className="h-4 w-4 mr-1" />
                     Activate
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={handleBulkDeactivate}
-                    disabled={actionLoading}
+                    disabled={bulkLoading}
                   >
-                    <EyeOff className="h-4 w-4 mr-1" />
                     Deactivate
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={handleBulkDelete}
-                    disabled={actionLoading}
+                    disabled={bulkLoading}
                     className="text-destructive hover:bg-destructive/10"
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
                     Delete
                   </Button>
                 </div>
@@ -634,7 +632,6 @@ export default function FAQCategoriesPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => startEdit(category)}
-                              disabled={actionLoading}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -643,7 +640,7 @@ export default function FAQCategoriesPage() {
                               variant="ghost"
                               className="text-destructive hover:bg-destructive/10"
                               onClick={() => handleDelete(category)}
-                              disabled={actionLoading || (Number(category.faq_count) > 0)}
+                              disabled={processingCategoryId === category.id || (Number(category.faq_count) > 0)}
                               title={Number(category.faq_count) > 0 ? 'Cannot delete category with FAQs' : 'Delete category'}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -777,10 +774,10 @@ export default function FAQCategoriesPage() {
             </Button>
             <Button 
               onClick={handleCreateOrUpdate}
-              disabled={!formData.name || !formData.slug || actionLoading}
-              loading={actionLoading}
+              disabled={!formData.name || !formData.slug || createLoading || updateLoading}
+              loading={createLoading || updateLoading}
             >
-              {editingCategory ? 'Update Category' : 'Create Category'}
+              {editingCategory ? 'Update' : 'Create'}
             </Button>
           </div>
         </div>
@@ -847,8 +844,7 @@ export default function FAQCategoriesPage() {
                 disabled={Number(categoryToDelete.faq_count) > 0}
                 className="flex-1"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete Category
+                Delete
               </Button>
             </div>
           </div>

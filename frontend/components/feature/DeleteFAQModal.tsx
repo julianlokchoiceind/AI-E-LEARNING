@@ -107,18 +107,9 @@ export const DeleteFAQModal: React.FC<DeleteFAQModalProps> = ({
             onClick={handleConfirmDelete}
             disabled={loading}
             className="flex-1"
+            loading={loading}
           >
-            {loading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                
-              </>
-            ) : (
-              <>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete FAQ
-              </>
-            )}
+            Delete
           </Button>
         </div>
       </div>

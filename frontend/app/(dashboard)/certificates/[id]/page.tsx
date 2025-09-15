@@ -122,7 +122,6 @@ const CertificateViewPage = () => {
           onClick={() => router.push('/certificates')}
           className="mb-4"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Certificates
         </Button>
 
@@ -136,7 +135,6 @@ const CertificateViewPage = () => {
 
           {isOwner && (
             <Button onClick={() => setShowEditModal(true)} variant="outline">
-              <Edit2 className="h-4 w-4 mr-2" />
               Edit Settings
             </Button>
           )}

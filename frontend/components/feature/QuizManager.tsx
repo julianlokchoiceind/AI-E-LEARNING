@@ -187,9 +187,7 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={handleEditQuiz}
-                className="flex items-center gap-2"
               >
-                <Edit3 className="w-4 h-4" />
                 Edit
               </Button>
               
@@ -197,9 +195,8 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={handleDeleteQuiz}
-                className="flex items-center gap-2 text-destructive hover:text-destructive hover:bg-destructive/20"
+                className="text-destructive hover:text-destructive hover:bg-destructive/20"
               >
-                <Trash2 className="w-4 h-4" />
                 Delete
               </Button>
             </div>
@@ -320,9 +317,9 @@ export const QuizManager: React.FC<QuizManagerProps> = ({
                 onClick={confirmDeleteQuiz}
                 variant="outline"
                 className="text-destructive border-destructive hover:bg-destructive/20 flex-1"
-                disabled={deleteLoading}
+                loading={deleteLoading}
               >
-                {deleteLoading ? <LoadingSpinner size="sm" /> : 'Delete Quiz'}
+                Delete Quiz
               </Button>
               
               <Button

@@ -212,7 +212,6 @@ export function CourseCompletionCelebration({
                   
                   <div className="flex gap-2 justify-center">
                     <Button onClick={handleViewCertificate} variant="primary">
-                      <Award className="h-4 w-4 mr-2" />
                       View Certificate
                     </Button>
                     <Button 
@@ -221,7 +220,6 @@ export function CourseCompletionCelebration({
                       disabled={downloading}
                       variant="outline"
                     >
-                      <Download className="h-4 w-4 mr-2" />
                       Download PDF
                     </Button>
                     <Button 
@@ -230,7 +228,6 @@ export function CourseCompletionCelebration({
                       disabled={sharing}
                       variant="outline"
                     >
-                      <ExternalLink className="h-4 w-4 mr-2" />
                       Share on LinkedIn
                     </Button>
                   </div>
@@ -246,7 +243,6 @@ export function CourseCompletionCelebration({
                     disabled={loading}
                     variant="primary"
                   >
-                    <Award className="h-4 w-4 mr-2" />
                     Generate Certificate
                   </Button>
                 </div>

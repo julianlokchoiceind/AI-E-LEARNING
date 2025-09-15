@@ -104,7 +104,6 @@ export class ErrorBoundary extends Component<Props, State> {
                 variant="primary"
                 className="flex items-center justify-center gap-2"
               >
-                <RefreshCw className="w-4 h-4" />
                 Refresh Page
               </Button>
               
@@ -113,7 +112,6 @@ export class ErrorBoundary extends Component<Props, State> {
                 variant="outline"
                 className="flex items-center justify-center gap-2"
               >
-                <Home className="w-4 h-4" />
                 Go to Homepage
               </Button>
             </div>

@@ -345,10 +345,11 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
             </Button>
             <Button
               type="submit"
-              disabled={loading || !formData.title.trim()}
+              loading={loading}
+              disabled={!formData.title.trim()}
               className="flex-1"
             >
-              {loading ? <LoadingSpinner size="sm" /> : 'Create Lesson'}
+              Create
             </Button>
           </MobileFormActions>
 
