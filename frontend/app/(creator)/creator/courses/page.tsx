@@ -292,9 +292,11 @@ const CreatorCoursesPage = () => {
       case 'published':
         return <Badge status="published" />;
       case 'review':
-        return <Badge variant="warning">Awaiting Admin Approval</Badge>;
+        return <Badge variant="info">Awaiting Admin Approval</Badge>;
       case 'archived':
         return <Badge variant="destructive">Archived</Badge>;
+      case 'coming_soon':
+        return <Badge variant="warning">Coming Soon</Badge>;
       case 'draft':
         return <Badge status="draft" />;
       default:
@@ -428,6 +430,7 @@ const CreatorCoursesPage = () => {
                 <option value="review">Pending Admin Review</option>
                 <option value="published">Published</option>
                 <option value="archived">Archived</option>
+                <option value="coming_soon">Coming Soon</option>
               </select>
 
               {/* Category Filter */}

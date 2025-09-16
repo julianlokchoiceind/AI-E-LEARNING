@@ -94,8 +94,8 @@ async def list_courses(
     - Admins: All courses (all statuses)
     """
     try:
-        # Public course catalog - ALWAYS show only published courses
-        status = CourseStatus.PUBLISHED
+        # Public course catalog - Show published and coming soon courses
+        status = [CourseStatus.PUBLISHED, CourseStatus.COMING_SOON]
         creator_id = None
         
         result = await CourseService.list_courses(

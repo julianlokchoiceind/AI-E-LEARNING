@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Settings, BookOpen } from 'lucide-react';
+import { ArrowLeft, Plus, Settings, BookOpen, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SaveStatusIndicator } from '@/components/ui/SaveStatusIndicator';
@@ -85,6 +85,24 @@ const CourseBuilderPage = () => {
     }
     return [] as ChapterWithLessons[];
   }, [chaptersResponse]);
+
+  // Calculate published chapters and lessons for validation requirements
+  const publishedChapters = React.useMemo(() => {
+    return chapters.filter(chapter => chapter.status === 'published').length;
+  }, [chapters]);
+
+  const publishedLessons = React.useMemo(() => {
+    return chapters.reduce((total, chapter) => {
+      if (chapter.lessons) {
+        return total + chapter.lessons.filter(lesson =>
+          lesson.status === 'published' &&
+          (lesson.video?.url || lesson.video?.youtube_id)
+        ).length;
+      }
+      return total;
+    }, 0);
+  }, [chapters]);
+
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -824,10 +842,50 @@ const CourseBuilderPage = () => {
                       >
                         <option value="draft">Draft</option>
                         <option value="review">Submit for Admin Review</option>
+                        <option value="coming_soon">Coming Soon</option>
+                        {courseData.status === 'archived' && (
+                          <option value="archived" disabled>Archived (Rejected)</option>
+                        )}
                       </select>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Submit for review when ready. Admin approval required for publishing.
+                        Submit for review when ready. Use Coming Soon for public preview without validation.
                       </p>
+
+                      {/* Validation Requirements - Fixed Display */}
+                      <div className="mt-5 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <div className="flex gap-3">
+                          {/* Column 1: Icon */}
+                          <div className="flex-shrink-0 flex items-center justify-center">
+                            <AlertTriangle className="w-5 h-5 text-amber-500" />
+                          </div>
+
+                          {/* Column 2: All content */}
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900 mb-2">Publishing Requirements</p>
+                            <ul className="text-xs text-gray-700 space-y-2">
+                              <li className="flex items-center gap-2">
+                                <div className={`w-1 h-1 rounded-full ${courseData.thumbnail ? 'bg-green-600' : 'bg-red-500'}`} />
+                                Course thumbnail uploaded
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <div className={`w-1 h-1 rounded-full ${courseData.total_duration && courseData.total_duration > 0 ? 'bg-green-600' : 'bg-red-500'}`} />
+                                Course duration set
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <div className={`w-1 h-1 rounded-full ${publishedChapters > 0 ? 'bg-green-600' : 'bg-red-500'}`} />
+                                At least one published chapter
+                              </li>
+                              <li className="flex items-center gap-2">
+                                <div className={`w-1 h-1 rounded-full ${publishedLessons > 0 ? 'bg-green-600' : 'bg-red-500'}`} />
+                                At least one published lesson with video
+                              </li>
+                            </ul>
+                            <p className="text-xs text-red-600 mt-2 italic text-[11px]">
+                              Note: Required for Review and Published status only
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Target Audience */}

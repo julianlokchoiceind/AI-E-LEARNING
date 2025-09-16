@@ -35,6 +35,7 @@ interface CourseCardProps {
       average_rating: number;
       total_reviews: number;
     };
+    status: 'draft' | 'review' | 'published' | 'archived' | 'coming_soon';
     is_enrolled?: boolean;
     continue_lesson_id?: string;
     current_lesson_id?: string;
@@ -46,6 +47,17 @@ interface CourseCardProps {
 
 const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling = false }) => {
   const router = useRouter();
+
+  // Status badge helper function - only for public-visible statuses
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'coming_soon':
+        return <Badge variant="warning" className="text-xs sm:text-sm">Coming Soon</Badge>;
+      case 'published':
+      default:
+        return null; // No badge for published status (shows pricing instead)
+    }
+  };
 
   const handleEnroll = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -104,9 +116,11 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
           </div>
         )}
         
-        {/* Pricing Badge */}
+        {/* Pricing Badge or Status Badge */}
         <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
-          {course.pricing.is_free ? (
+          {getStatusBadge(course.status) ? (
+            getStatusBadge(course.status)
+          ) : course.pricing.is_free ? (
             <Badge variant="success" className="text-xs sm:text-sm">Free</Badge>
           ) : (
             <Badge variant="primary" className="text-xs sm:text-sm">
@@ -171,20 +185,30 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
         </div>
 
         {/* Action Button - Larger touch target on mobile */}
-        <Button
-          onClick={handleEnroll}
-          className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium touch-manipulation"
-          variant={course.is_enrolled ? 'outline' : 'secondary'}
-          loading={isEnrolling}
-          disabled={isEnrolling}
-        >
-          {isEnrolling 
-            ? <LoadingSpinner size="sm" /> 
-            : course.is_enrolled
-              ? (course.progress_percentage && course.progress_percentage >= 95 ? 'Review Course' : course.continue_lesson_id || course.current_lesson_id || (course.progress_percentage && course.progress_percentage > 0) ? 'Continue Learning' : 'Start Learning')
-              : 'View Details'
-          }
-        </Button>
+        {course.status === 'coming_soon' ? (
+          <Button
+            className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium touch-manipulation"
+            variant="secondary"
+            disabled
+          >
+            Coming Soon
+          </Button>
+        ) : course.status === 'archived' ? null : (
+          <Button
+            onClick={handleEnroll}
+            className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium touch-manipulation"
+            variant={course.is_enrolled ? 'outline' : 'secondary'}
+            loading={isEnrolling}
+            disabled={isEnrolling}
+          >
+            {isEnrolling
+              ? <LoadingSpinner size="sm" />
+              : course.is_enrolled
+                ? (course.progress_percentage && course.progress_percentage >= 95 ? 'Review Course' : course.continue_lesson_id || course.current_lesson_id || (course.progress_percentage && course.progress_percentage > 0) ? 'Continue Learning' : 'Start Learning')
+                : 'View Details'
+            }
+          </Button>
+        )}
       </div>
     </Card>
   );

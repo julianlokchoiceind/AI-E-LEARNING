@@ -29,7 +29,7 @@ interface CourseResponse {
     total_reviews: number;
     total_revenue: number;
   };
-  status: 'draft' | 'review' | 'published' | 'archived';
+  status: 'draft' | 'review' | 'published' | 'archived' | 'coming_soon';
   published_at?: string;
   created_at: string;
   updated_at: string;

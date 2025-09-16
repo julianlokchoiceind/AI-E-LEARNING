@@ -56,6 +56,7 @@ class AdminService:
             draft_courses = await db.courses.count_documents({"status": CourseStatus.DRAFT})
             pending_review_courses = await db.courses.count_documents({"status": CourseStatus.REVIEW})
             archived_courses = await db.courses.count_documents({"status": CourseStatus.ARCHIVED})
+            coming_soon_courses = await db.courses.count_documents({"status": CourseStatus.COMING_SOON})
             
             # Enrollment statistics
             total_enrollments = await db.enrollments.count_documents({})
@@ -185,6 +186,7 @@ class AdminService:
                 "draft_courses": draft_courses,
                 "pending_review_courses": pending_review_courses,
                 "archived_courses": archived_courses,
+                "coming_soon_courses": coming_soon_courses,
                 "total_enrollments": total_enrollments,
                 "active_enrollments": active_enrollments,
                 "completed_courses": completed_courses,
@@ -1428,7 +1430,8 @@ class AdminService:
                         "draft": status_counts.get(CourseStatus.DRAFT, 0),
                         "review": status_counts.get(CourseStatus.REVIEW, 0),
                         "published": status_counts.get(CourseStatus.PUBLISHED, 0),
-                        "archived": status_counts.get(CourseStatus.ARCHIVED, 0)
+                        "archived": status_counts.get(CourseStatus.ARCHIVED, 0),
+                        "coming_soon": status_counts.get(CourseStatus.COMING_SOON, 0)
                     },
                     "total_revenue": total_revenue,
                     "filters_applied": {

@@ -30,6 +30,7 @@ class CourseStatus(str, Enum):
     REVIEW = "review"
     PUBLISHED = "published"
     ARCHIVED = "archived"
+    COMING_SOON = "coming_soon"
 
 
 class Pricing(BaseModel):

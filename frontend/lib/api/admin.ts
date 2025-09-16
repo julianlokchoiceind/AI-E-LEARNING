@@ -19,6 +19,7 @@ export interface AdminDashboardStats {
   draft_courses: number;
   pending_review_courses: number;
   archived_courses: number;
+  coming_soon_courses: number;
   total_enrollments: number;
   active_enrollments: number;
   completed_courses: number;

@@ -303,10 +303,12 @@ export default function CourseApproval() {
       case 'published':
         return <Badge status="published" />;
       case 'review':
-        return <Badge variant="warning">Pending Review</Badge>;
+        return <Badge variant="info">Pending Review</Badge>;
       case 'rejected':
       case 'archived':
         return <Badge variant="destructive">Rejected</Badge>;
+      case 'coming_soon':
+        return <Badge variant="warning">Coming Soon</Badge>;
       case 'draft':
         return <Badge status="draft" />;
       default:
@@ -421,6 +423,7 @@ export default function CourseApproval() {
             <option value="review">Pending Review</option>
             <option value="published">Published</option>
             <option value="archived">Rejected</option>
+            <option value="coming_soon">Coming Soon</option>
             <option value="draft">Draft</option>
           </select>
 

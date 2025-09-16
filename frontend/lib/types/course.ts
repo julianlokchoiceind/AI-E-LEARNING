@@ -22,7 +22,7 @@ export interface Course {
   total_chapters: number
   total_lessons: number
   total_duration: number
-  status: 'draft' | 'review' | 'published' | 'archived'
+  status: 'draft' | 'review' | 'published' | 'archived' | 'coming_soon'
   published_at?: string
   stats: CourseStats
   seo?: CourseSEO

@@ -40,7 +40,8 @@ class AdminDashboardStats(BaseModel):
     draft_courses: int
     pending_review_courses: int
     archived_courses: int
-    
+    coming_soon_courses: int
+
     # Enrollment stats
     total_enrollments: int
     active_enrollments: int

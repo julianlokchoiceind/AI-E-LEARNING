@@ -46,7 +46,7 @@ export default function FAQPage() {
   const { data: categoriesResponse, loading: categoriesLoading } = useFAQCategoriesQuery();
   
   // React Query mutation for FAQ voting
-  const { mutate: voteFAQ, loading: votingFaqId === faq.id } = useVoteFAQ();
+  const { mutate: voteFAQ, loading: votingLoading } = useVoteFAQ();
   
   // Extract data from React Query responses
   const faqs = faqResponse?.data?.items || [];

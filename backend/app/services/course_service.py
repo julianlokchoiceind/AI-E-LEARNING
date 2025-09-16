@@ -144,6 +144,7 @@ class CourseService:
                 new_status = update_dict["status"]
 
                 # Only validate when changing to review or published
+                # coming_soon and archived statuses skip validation
                 if new_status in ["review", "published"]:
                     validation_errors = await CourseService.validate_course_for_publishing(course_id)
                     if validation_errors:
@@ -228,7 +229,12 @@ class CourseService:
         else:
             # Regular status filtering for non-creators (students, non-authenticated users)
             if status is not None:
-                query_conditions.append(Course.status == status)
+                if isinstance(status, list):
+                    # Multiple statuses - use $in operator
+                    query_conditions.append({"status": {"$in": status}})
+                else:
+                    # Single status
+                    query_conditions.append(Course.status == status)
         
         if category:
             query_conditions.append(Course.category == category)
