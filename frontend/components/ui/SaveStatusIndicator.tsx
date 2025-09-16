@@ -53,10 +53,7 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
       )}
     >
       {status === 'saving' && (
-        <>
-          <LoadingSpinner size="sm" />
-          <span></span>
-        </>
+        <span>Saving...</span>
       )}
       
       {status === 'saved' && (
@@ -83,12 +80,9 @@ const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({
       )}
       
       {status === 'idle' && lastSavedAt && (
-        <>
-          <Check className="w-4 h-4 text-muted-foreground" />
-          <span className="text-muted-foreground">
-            Last saved at {formatTime(lastSavedAt)}
-          </span>
-        </>
+        <span className="text-muted-foreground">
+          Last saved at {formatTime(lastSavedAt)}
+        </span>
       )}
       
       {status === 'idle' && !lastSavedAt && (

@@ -127,12 +127,7 @@ export const updateCourse = async (courseId: string, data: Partial<CourseRespons
     );
     return result;
   } catch (error) {
-    console.error('🔧 [API DEBUG] updateCourse failed:', {
-      error,
-      errorMessage: error instanceof Error ? error.message : 'Unknown error',
-      errorName: error instanceof Error ? error.name : 'Unknown',
-      errorStack: error instanceof Error ? error.stack : 'No stack'
-    });
+    // Error will be handled by error-handler utility
     throw error;
   }
 };

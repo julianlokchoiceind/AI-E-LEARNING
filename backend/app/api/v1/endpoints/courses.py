@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile
 # Local application imports
 from app.core.database import db
 from app.core.deps import get_current_user, get_current_optional_user
-from app.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
+from app.core.exceptions import BadRequestException, ForbiddenException, NotFoundException, ValidationException
 from app.core.performance import measure_performance
 from app.models.course import CourseCategory, CourseLevel, CourseStatus
 from app.models.user import User
@@ -308,6 +308,8 @@ async def update_course(
         raise HTTPException(status_code=404, detail=str(e))
     except ForbiddenException as e:
         raise HTTPException(status_code=403, detail=str(e))
+    except ValidationException as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error updating course: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to update course")

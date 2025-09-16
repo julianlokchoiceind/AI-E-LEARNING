@@ -210,11 +210,9 @@ export const useAutosave = <T = any>(
           setSaveStatus(prev => prev === 'saved' ? 'idle' : prev);
         }, 2000);
       } catch (err: any) {
-        console.error('🔧 [DEBOUNCED SAVE DEBUG] Save failed:', err);
-        
         // 🎯 SIMPLE: Just set error and reset after timeout
         setSaveStatus('error');
-        setError('Save failed - try again manually');
+        setError('Save failed');
         
         // Reset to idle after 15 seconds (simple timeout handling)
         setTimeout(() => {
@@ -301,7 +299,7 @@ export const useAutosave = <T = any>(
       
       // 🎯 SIMPLE: Just show error and reset after 15 seconds
       setSaveStatus('error');
-      setError('Save failed - try again');
+      setError('Save failed');
       
       // Reset to idle after 15 seconds  
       setTimeout(() => {

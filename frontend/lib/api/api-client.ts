@@ -23,7 +23,7 @@ class ApiClient {
         'API_ENDPOINTS.BASE_URL is not defined. Please ensure NEXT_PUBLIC_API_URL environment variable is set.'
       );
     }
-    log('API-CLIENT', 'Constructor - baseUrl:', this.baseUrl);
+    debug('API-CLIENT', 'Constructor - baseUrl:', this.baseUrl);
   }
 
   // Get auth token from NextAuth session ONLY

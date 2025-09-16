@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Settings, BookOpen, Save } from 'lucide-react';
+import { ArrowLeft, Plus, Settings, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SaveStatusIndicator } from '@/components/ui/SaveStatusIndicator';
@@ -87,6 +87,7 @@ const CourseBuilderPage = () => {
   }, [chaptersResponse]);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [isChapterModalOpen, setIsChapterModalOpen] = useState(false);
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
   const [isEditChapterModalOpen, setIsEditChapterModalOpen] = useState(false);
@@ -121,8 +122,16 @@ const CourseBuilderPage = () => {
         
         try {
           const result = await updateCourseAction({ courseId: courseIdToUse, data: data });
-        } catch (error) {
-          console.error('🔧 [AUTOSAVE DEBUG] Autosave failed:', error);
+        } catch (error: any) {
+          // Show validation error toast
+          const status = error?.statusCode;
+          const message = error?.message;
+
+          // Show validation error for 400 status
+          if (status === 400 && message) {
+            ToastService.error(message);
+          }
+
           throw error;
         }
       },
@@ -144,21 +153,32 @@ const CourseBuilderPage = () => {
     }
 
     // Filter out system fields (same logic as autosave)
-    const { 
+    const {
       _id, id, created_at, updated_at, stats, creator_id, creator_name, slug,
-      ...userEditableFields  
+      ...userEditableFields
     } = courseData;
 
     const updateData = Object.fromEntries(
       Object.entries(userEditableFields).filter(([_, v]) => v !== undefined && v !== null)
     );
 
+    setIsSaving(true);
     try {
       await manualSaveCourseAction({ courseId: courseIdToUse, data: updateData });
       // Toast will be shown automatically by useApiMutation (showToast=true)
     } catch (error: any) {
+      // Check if it's a validation error and revert status to draft
+      const status = error?.statusCode;
+      if (status === 400 && courseData.status === 'review') {
+        updateCourseData({ status: 'draft' });
+      }
       // Error toast will be shown automatically by useApiMutation
-      console.error('Manual save failed:', error);
+      // Only log non-validation errors
+      if (status !== 400) {
+        console.error('Manual save failed:', error);
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -500,9 +520,8 @@ const CourseBuilderPage = () => {
                   variant="primary"
                   size="sm"
                   onClick={handleManualSave}
-                  loading={saveStatus === 'saving'}
+                  loading={isSaving}
                 >
-                  <Save className="w-4 h-4 mr-2" />
                   Save
                 </Button>
               </div>
@@ -785,7 +804,22 @@ const CourseBuilderPage = () => {
                       </label>
                       <select
                         value={courseData.status || 'draft'}
-                        onChange={(e) => updateCourseData({ status: e.target.value })}
+                        onChange={async (e) => {
+                          const newStatus = e.target.value;
+                          const oldStatus = courseData.status || 'draft';
+                          updateCourseData({ status: newStatus });
+
+                          // Force save for review status
+                          if (newStatus === 'review') {
+                            setTimeout(async () => {
+                              const success = await forceSave();
+                              // If validation failed, revert to previous status
+                              if (!success) {
+                                updateCourseData({ status: oldStatus });
+                              }
+                            }, 100);
+                          }
+                        }}
                         className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="draft">Draft</option>

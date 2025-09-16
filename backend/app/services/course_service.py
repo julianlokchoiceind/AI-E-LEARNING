@@ -16,7 +16,8 @@ from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse
 from app.core.exceptions import (
     NotFoundException,
     ForbiddenException,
-    BadRequestException
+    BadRequestException,
+    ValidationException
 )
 from app.core.performance import measure_performance
 from app.services.learn_service import LearnService
@@ -137,7 +138,19 @@ class CourseService:
             # Update fields if provided
             update_dict = update_data.dict(exclude_unset=True)
             logger.info(f"Update dict: {update_dict}")
-            
+
+            # Validate course when changing to review or published status
+            if "status" in update_dict:
+                new_status = update_dict["status"]
+
+                # Only validate when changing to review or published
+                if new_status in ["review", "published"]:
+                    validation_errors = await CourseService.validate_course_for_publishing(course_id)
+                    if validation_errors:
+                        # Use first error for clear user message
+                        logger.warning(f"Course validation failed: {validation_errors[0]}")
+                        raise ValidationException(validation_errors[0])
+
             # TEMPORARY FIX: Skip slug update completely to fix autosave
             # TODO: Fix slug generation logic later
             if "slug" in update_dict:
@@ -522,3 +535,52 @@ class CourseService:
             logger.error(f"❌ AUTO-CASCADE: Failed to update course {course_id} timestamp: {e}")
             # Don't raise exception - timestamp update is non-critical
             pass
+
+    @staticmethod
+    async def validate_course_for_publishing(course_id: str) -> List[str]:
+        """
+        Validate course is ready for review/publishing.
+        Returns list of validation errors, empty if valid.
+        """
+        errors = []
+
+        # Get course
+        course = await Course.get(PydanticObjectId(course_id))
+        if not course:
+            return ["Course not found"]
+
+        # Check thumbnail
+        if not course.thumbnail:
+            errors.append("Please upload a course thumbnail before publishing")
+
+        # Check duration
+        if course.total_duration == 0:
+            errors.append("Course duration must be set (appears to be 0 minutes)")
+
+        # Check for published chapters
+        published_chapters = await Chapter.find({
+            "course_id": PydanticObjectId(course_id),
+            "status": "published"
+        }).count()
+
+        if published_chapters == 0:
+            errors.append("At least one chapter must be published")
+            return errors  # No need to check lessons
+
+        # Check for published lessons
+        published_lessons = await Lesson.find({
+            "course_id": PydanticObjectId(course_id),
+            "status": "published"
+        }).to_list()
+
+        if not published_lessons:
+            errors.append("At least one lesson must be published")
+            return errors
+
+        # Check YouTube URLs in published lessons
+        for lesson in published_lessons:
+            if not lesson.video or not lesson.video.youtube_url:
+                errors.append(f"Lesson '{lesson.title}' needs a YouTube video URL")
+                break  # Report first missing video only
+
+        return errors
