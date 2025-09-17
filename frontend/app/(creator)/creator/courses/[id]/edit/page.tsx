@@ -847,7 +847,7 @@ const CourseBuilderPage = () => {
                           <option value="archived" disabled>Archived (Rejected)</option>
                         )}
                       </select>
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="mt-3 text-xs text-red-600 italic text-[11px]">
                         Submit for review when ready. Use Coming Soon for public preview without validation.
                       </p>
 
