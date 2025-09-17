@@ -21,7 +21,7 @@ export class ToastService {
   static success(message: string | null | undefined, operationId?: string): string {
     // Skip all success toasts when disabled
     if (this.DISABLE_SUCCESS) {
-      console.log('[Toast Disabled]', message); // Debug log to track what's being skipped
+      // Remove debug logs - just silently skip
       return 'disabled-toast';
     }
     

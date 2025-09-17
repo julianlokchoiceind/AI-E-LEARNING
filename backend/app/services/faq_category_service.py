@@ -223,6 +223,7 @@ class FAQCategoryService:
             "name": category.name,
             "slug": category.slug,
             "description": category.description,
+            "platform_context": category.platform_context,
             "order": category.order,
             "is_active": category.is_active,
             "faq_count": category.faq_count,

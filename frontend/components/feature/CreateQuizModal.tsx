@@ -391,8 +391,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                         <LoadingSpinner size="sm" />
                       ) : (
                         <>
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Generate
+                          AI Generative
                         </>
                       )}
                     </Button>

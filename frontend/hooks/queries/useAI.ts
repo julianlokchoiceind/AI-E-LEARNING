@@ -225,3 +225,26 @@ export function useClearConversationHistory() {
     }
   );
 }
+
+/**
+ * Generate FAQ for category (with extended timeout for AI processing)
+ * Following quiz generation pattern
+ */
+export function useGenerateFAQForCategory() {
+  return useApiMutation(
+    async (params: {
+      category_name: string;
+      platform_context: string;
+      num_faqs?: number | null
+    }): Promise<StandardResponse<any>> => {
+      const response = await api.post('/ai/generate-faq', params, {
+        requireAuth: true,
+        timeout: 60000  // 1 minute timeout for AI generation
+      });
+      return response as StandardResponse<any>;
+    },
+    {
+      operationName: 'generate-faq',
+    }
+  );
+}

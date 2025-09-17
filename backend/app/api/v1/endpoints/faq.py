@@ -2,10 +2,11 @@
 FAQ API endpoints
 """
 # Standard library imports
+import logging
 from typing import List
 
 # Third-party imports
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 
 # Local imports
 from app.core.deps import get_admin_user, get_current_user
@@ -21,6 +22,7 @@ from app.schemas.base import StandardResponse
 from app.services.faq_service import faq_service
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("", response_model=StandardResponse[dict])
@@ -273,11 +275,27 @@ async def bulk_action_faqs(
 ):
     """
     Perform bulk actions on FAQs (Admin only)
+    Actions: create, publish, unpublish, delete
     """
-    result = await faq_service.bulk_action(bulk_data.faq_ids, bulk_data.action)
-    
-    return StandardResponse(
-        success=True,
-        data=result,
-        message=result.get("message", "Bulk action completed successfully")
-    )
+    try:
+        if bulk_data.action == "create":
+            # Handle bulk create with faqs_data
+            result = await faq_service.bulk_action(
+                action=bulk_data.action,
+                faqs_data=[faq.dict() for faq in bulk_data.faqs_data]
+            )
+        else:
+            # Handle other actions with faq_ids
+            result = await faq_service.bulk_action(
+                faq_ids=bulk_data.faq_ids,
+                action=bulk_data.action
+            )
+
+        return StandardResponse(
+            success=True,
+            data=result,
+            message=result.get("message", "Bulk action completed successfully")
+        )
+    except Exception as e:
+        logger.error(f"Bulk action failed: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))

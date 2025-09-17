@@ -211,11 +211,54 @@ class FAQService:
         }).sort([("view_count", -1)]).limit(limit).to_list()
         return [self._format_faq(faq) for faq in faqs]
     
-    async def bulk_action(self, faq_ids: List[str], action: str) -> dict:
+    async def bulk_action(self, faq_ids: List[str] = None, action: str = None, faqs_data: List[dict] = None) -> dict:
         """Perform bulk action on FAQs"""
+
+        if action == "create":
+            # Handle bulk create
+            if not faqs_data:
+                raise HTTPException(status_code=400, detail="faqs_data required for create action")
+
+            created_faqs = []
+            errors = []
+
+            for i, faq_data in enumerate(faqs_data):
+                try:
+                    # Create FAQ instance
+                    faq = FAQ(**faq_data)
+
+                    # Call pre_save to generate slug if needed
+                    await faq.pre_save()
+
+                    # Save to database
+                    await faq.save()
+
+                    # Format and add to created list
+                    created_faqs.append(self._format_faq(faq))
+
+                except Exception as e:
+                    errors.append({
+                        "index": i,
+                        "question": faq_data.get('question', 'Unknown'),
+                        "error": str(e)
+                    })
+
+            return {
+                "success": True,
+                "message": f"Created {len(created_faqs)} FAQs successfully",
+                "created_count": len(created_faqs),
+                "failed_count": len(errors),
+                "created_faqs": created_faqs,
+                "errors": errors if errors else None
+            }
+
+        # Handle other actions (publish/unpublish/delete)
+        if not faq_ids:
+            raise HTTPException(status_code=400, detail="faq_ids required for this action")
+
         # Convert string IDs to ObjectIds
         object_ids = [PydanticObjectId(id_str) for id_str in faq_ids]
-        
+
         if action == "publish":
             result = await FAQ.find({"_id": {"$in": object_ids}}).update_many({
                 "$set": {"is_published": True, "updated_at": datetime.utcnow()}
@@ -231,12 +274,25 @@ class FAQService:
                 status_code=400,
                 detail="Invalid action"
             )
-        
+
         return {
             "success": True,
             "message": f"{action.capitalize()} action performed on {len(faq_ids)} FAQs",
             "affected_count": result.modified_count if hasattr(result, 'modified_count') else result.deleted_count
         }
+
+    def _generate_slug(self, question: str) -> str:
+        """Generate slug from question text"""
+        if not question:
+            return ''
+
+        # Simple slug generation from question
+        slug = question.lower()
+        # Keep only alphanumeric and spaces
+        slug = ''.join(c if c.isalnum() or c == ' ' else '' for c in slug)
+        # Replace spaces with hyphens and limit length
+        slug = '-'.join(slug.split())[:100]
+        return slug if slug else ''
 
 
 # Create service instance

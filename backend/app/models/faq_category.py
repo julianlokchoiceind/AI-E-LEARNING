@@ -15,6 +15,9 @@ class FAQCategory(Document):
     name: Indexed(str)  # Display name (e.g., "General", "Pricing")
     slug: Indexed(str, unique=True)  # URL-friendly identifier (e.g., "general", "pricing")
     description: Optional[str] = None
+
+    # AI Generation context
+    platform_context: Optional[str] = None  # Context for AI FAQ generation
     
     # Display control
     order: int = Field(default=0, ge=0)  # Order for display (0 = first)

@@ -9,6 +9,7 @@ export interface FAQCategoryData {
   name: string;
   slug: string;
   description?: string;
+  platform_context?: string;  // Context for AI FAQ generation
   order: number;
   is_active: boolean;
   faq_count?: number;
@@ -108,7 +109,8 @@ export const faqCategoriesApi = {
   create: (data: FAQCategoryCreateData) => {
     return apiClient.post<StandardResponse<FAQCategoryData>>(
       '/faq-categories',
-      data
+      data,
+      { requireAuth: true }
     );
   },
 
@@ -118,7 +120,8 @@ export const faqCategoriesApi = {
   update: (id: string, data: FAQCategoryUpdateData) => {
     return apiClient.put<StandardResponse<FAQCategoryData>>(
       `/faq-categories/${id}`,
-      data
+      data,
+      { requireAuth: true }
     );
   },
 
@@ -128,7 +131,8 @@ export const faqCategoriesApi = {
    */
   delete: (id: string) => {
     return apiClient.delete<StandardResponse<{ success: boolean; message: string }>>(
-      `/faq-categories/${id}`
+      `/faq-categories/${id}`,
+      { requireAuth: true }
     );
   },
 
@@ -138,7 +142,8 @@ export const faqCategoriesApi = {
   reorder: (orders: Array<{ id: string; order: number }>) => {
     return apiClient.post<StandardResponse<{ success: boolean; message: string }>>(
       '/faq-categories/reorder',
-      { category_orders: orders }
+      { category_orders: orders },
+      { requireAuth: true }
     );
   },
 
@@ -147,14 +152,15 @@ export const faqCategoriesApi = {
    * Actions: activate, deactivate, delete
    */
   bulkAction: (categoryIds: string[], action: 'activate' | 'deactivate' | 'delete') => {
-    return apiClient.post<StandardResponse<{ 
-      success: boolean; 
-      message: string; 
+    return apiClient.post<StandardResponse<{
+      success: boolean;
+      message: string;
       affected: number;
       errors?: string[];
     }>>(
       '/faq-categories/bulk-action',
-      { category_ids: categoryIds, action }
+      { category_ids: categoryIds, action },
+      { requireAuth: true }
     );
   }
 };

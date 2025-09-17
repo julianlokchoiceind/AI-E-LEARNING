@@ -27,8 +27,9 @@ export type {
 } from '@/lib/types/faq';
 
 export interface FAQBulkAction {
-  faq_ids: string[];
-  action: 'publish' | 'unpublish' | 'delete';
+  action: 'create' | 'publish' | 'unpublish' | 'delete';
+  faq_ids?: string[];  // Required for publish/unpublish/delete
+  faqs_data?: FAQCreateData[];  // Required for create
 }
 
 // FAQ API functions
@@ -96,7 +97,7 @@ export const faqAPI = {
    * Create a new FAQ (Admin only)
    */
   async createFAQ(data: FAQCreateData): Promise<StandardResponse<FAQ>> {
-    const response = await apiClient.post<StandardResponse<FAQ>>('/faq', data);
+    const response = await apiClient.post<StandardResponse<FAQ>>('/faq', data, { requireAuth: true });
     return response;
   },
 
@@ -104,7 +105,7 @@ export const faqAPI = {
    * Update a FAQ (Admin only)
    */
   async updateFAQ(id: string, data: FAQUpdateData): Promise<StandardResponse<FAQ>> {
-    const response = await apiClient.put<StandardResponse<FAQ>>(`/faq/${id}`, data);
+    const response = await apiClient.put<StandardResponse<FAQ>>(`/faq/${id}`, data, { requireAuth: true });
     return response;
   },
 
@@ -112,7 +113,7 @@ export const faqAPI = {
    * Delete a FAQ (Admin only)
    */
   async deleteFAQ(id: string): Promise<StandardResponse<{ message: string }>> {
-    const response = await apiClient.delete<StandardResponse<{ message: string }>>(`/faq/${id}`);
+    const response = await apiClient.delete<StandardResponse<{ message: string }>>(`/faq/${id}`, { requireAuth: true });
     return response;
   },
 
@@ -128,12 +129,35 @@ export const faqAPI = {
    * Perform bulk action on FAQs (Admin only)
    */
   async bulkAction(data: FAQBulkAction): Promise<StandardResponse<{
-    affected_count: number;
+    affected_count?: number;
+    created_count?: number;
+    failed_count?: number;
+    created_faqs?: FAQ[];
+    errors?: any[];
   }>> {
     const response = await apiClient.post<StandardResponse<{
-      affected_count: number;
-    }>>('/faq/bulk-action', data);
+      affected_count?: number;
+      created_count?: number;
+      failed_count?: number;
+      created_faqs?: FAQ[];
+      errors?: any[];
+    }>>('/faq/bulk-action', data, { requireAuth: true });
     return response;
+  },
+
+  /**
+   * Bulk create FAQs (Admin only)
+   */
+  async bulkCreate(faqs: FAQCreateData[]): Promise<StandardResponse<{
+    created_count: number;
+    failed_count: number;
+    created_faqs: FAQ[];
+    errors?: any[];
+  }>> {
+    return this.bulkAction({
+      action: 'create',
+      faqs_data: faqs
+    });
   },
 };
 
@@ -145,4 +169,5 @@ export const updateFAQ = faqAPI.updateFAQ;
 export const deleteFAQ = faqAPI.deleteFAQ;
 export const voteFAQ = faqAPI.voteFAQ;
 export const bulkAction = faqAPI.bulkAction;
+export const bulkCreate = faqAPI.bulkCreate;
 export const searchFAQs = faqAPI.getFAQs; // Alias for consistency

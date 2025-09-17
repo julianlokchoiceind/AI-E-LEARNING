@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, BookOpen, Settings } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
+import { CategoryDropdown } from '@/components/ui/CategoryDropdown'
 import { useNavigationTranslations } from '@/lib/i18n/hooks'
 import { LanguageSwitcherCompact } from '@/components/ui/LanguageSwitcher'
 import { useLocalizedRouter } from '@/lib/i18n/context'
@@ -16,9 +17,11 @@ export function Header() {
   const { user, isAuthenticated, logout, loading } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [explorerOpen, setExplorerOpen] = useState(false)
   const { navItems, t } = useNavigationTranslations()
   const router = useLocalizedRouter()
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const explorerRef = useRef<HTMLDivElement>(null)
   
   // Support notifications polling every 30 seconds
   const { unreadCount } = useSupportNotifications()
@@ -28,6 +31,9 @@ export function Header() {
     const handleClickOutside = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setUserMenuOpen(false)
+      }
+      if (explorerRef.current && !explorerRef.current.contains(event.target as Node)) {
+        setExplorerOpen(false)
       }
     }
 
@@ -46,12 +52,17 @@ export function Header() {
             
             {/* Desktop Navigation */}
             <div className="hidden md:ml-10 md:flex md:space-x-8">
-              <button
-                onClick={() => router.push('/courses')}
-                className="text-muted-foreground hover:text-foreground px-3 py-2 text-sm font-medium"
-              >
-                {navItems.courses}
-              </button>
+              {/* Explorer Dropdown */}
+              <div className="relative" ref={explorerRef}>
+                <button
+                  onMouseEnter={() => setExplorerOpen(true)}
+                  className="text-muted-foreground hover:text-primary hover:bg-primary/10 hover:border-primary/20 border border-transparent px-3 py-2 text-sm font-medium transition-all duration-200 rounded-md"
+                >
+                  Explore
+                </button>
+                {explorerOpen && <CategoryDropdown onClose={() => setExplorerOpen(false)} />}
+              </div>
+
               <button
                 onClick={() => router.push('/about')}
                 className="text-muted-foreground hover:text-foreground px-3 py-2 text-sm font-medium"
@@ -228,12 +239,6 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <button
-                onClick={() => router.push('/courses')}
-                className="block w-full text-left px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
-              >
-                {navItems.courses}
-              </button>
               <button
                 onClick={() => router.push('/about')}
                 className="block w-full text-left px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"

@@ -281,7 +281,7 @@ async def generate_quiz_questions(
         )
 
 
-@router.post("/generate-quiz-from-transcript", 
+@router.post("/generate-quiz-from-transcript",
              response_model=StandardResponse[dict],
              dependencies=[Depends(get_current_user)])
 async def generate_quiz_from_transcript(
@@ -289,31 +289,31 @@ async def generate_quiz_from_transcript(
     current_user: User = Depends(get_current_user)
 ) -> StandardResponse[dict]:
     """Generate quiz with AI smart content analysis"""
-    
+
     # Permission check FIRST (fail fast)
     if current_user.role not in ["creator", "admin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only content creators and admins can generate quiz"
         )
-    
+
     # Get transcript
     transcript = request.get("transcript", "").strip()
     difficulty = request.get("difficulty", "intermediate")
-    
+
     # BACKEND validates and returns appropriate message
     if not transcript:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Please enter transcript in Video tab first"
         )
-    
+
     if len(transcript) < 100:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Transcript too short. Please provide more content"
         )
-    
+
     try:
         # ONE AI call - smart adaptive generation
         questions = await ai_service.generate_quiz_questions(
@@ -322,13 +322,13 @@ async def generate_quiz_from_transcript(
             num_questions=None,  # None = AI decides based on content
             include_true_false=True
         )
-        
+
         if not questions:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Content insufficient for meaningful quiz generation"
             )
-        
+
         # Format for frontend (fast list comprehension)
         formatted_questions = [
             {
@@ -341,13 +341,13 @@ async def generate_quiz_from_transcript(
             }
             for q in questions
         ]
-        
+
         return StandardResponse(
             success=True,
             data={"questions": formatted_questions},
             message="Quiz generated successfully"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -355,6 +355,70 @@ async def generate_quiz_from_transcript(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate quiz. Please try again"
+        )
+
+
+@router.post("/generate-faq",
+             response_model=StandardResponse[dict],
+             dependencies=[Depends(get_current_user)])
+async def generate_faq_for_category(
+    request: dict,
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """Generate FAQs with AI smart category analysis - following quiz generation pattern"""
+
+    # Permission check FIRST (fail fast)
+    if current_user.role not in ["creator", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only content creators and admins can generate FAQs"
+        )
+
+    # Get category information
+    category_name = request.get("category_name", "").strip()
+    platform_context = request.get("platform_context", "").strip()
+    num_faqs = request.get("num_faqs")  # None = adaptive mode
+
+    # BACKEND validates and returns appropriate message
+    if not category_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Category name is required"
+        )
+
+    if not platform_context:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Platform context is required for meaningful FAQ generation"
+        )
+
+    try:
+        # ONE AI call - smart adaptive generation (following quiz pattern)
+        faqs = await ai_service.generate_faqs_for_category(
+            category_name=category_name,
+            platform_context=platform_context,
+            num_faqs=num_faqs  # None = AI decides based on category complexity
+        )
+
+        if not faqs:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Category context insufficient for meaningful FAQ generation"
+            )
+
+        return StandardResponse(
+            success=True,
+            data={"faqs": faqs},
+            message="FAQs generated successfully"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"FAQ generation error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate FAQs. Please try again"
         )
 
 

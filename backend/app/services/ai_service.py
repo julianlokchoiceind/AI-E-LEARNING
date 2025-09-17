@@ -639,7 +639,183 @@ class AIService:
             )]
         
         return questions
-    
+
+    async def generate_faqs_for_category(
+        self,
+        category_name: str,
+        platform_context: str,
+        num_faqs: int = None  # None = adaptive mode
+    ) -> List[Dict[str, str]]:
+        """
+        Smart FAQ generation for platform categories - FAST single AI call
+
+        Args:
+            category_name: The FAQ category name (e.g., "Getting Started")
+            platform_context: Platform-specific context for this category
+            num_faqs: Number of FAQs (None = AI decides based on category complexity)
+
+        Returns:
+            List of generated FAQ objects with question and answer
+        """
+        try:
+            # Adaptive vs Fixed mode (following quiz pattern)
+            if num_faqs is None:
+                # ADAPTIVE MODE - AI decides based on category complexity
+                prompt = f"""
+                Generate FAQ questions and answers for this AI E-Learning platform category.
+
+                CATEGORY: {category_name}
+                PLATFORM CONTEXT: {platform_context}
+
+                RULES:
+                - Analyze category context and generate 3-8 FAQs based on complexity
+                - Simple categories: 3-4 FAQs
+                - Medium categories: 5-6 FAQs
+                - Complex categories: 7-8 FAQs
+                - Each FAQ tests different aspect of the category
+                - Answers should be helpful and actionable
+                - Use platform-specific information from context
+
+                PLATFORM DETAILS:
+                - AI E-Learning Platform in Vietnam
+                - Offers AI programming courses
+                - Uses Claude 3.5 Sonnet as AI Study Buddy
+                - Has Pro subscription ($29/month) and individual courses ($19-99)
+                - Provides certificates for 80% completion + 70% quiz scores
+                - Supports social login (Google/GitHub/Microsoft)
+                - Video-based learning with YouTube integration
+
+                Return JSON array only:
+                [
+                    {{
+                        "question": "How do I create an account?",
+                        "answer": "You can create an account using Google, GitHub, or Microsoft social login..."
+                    }}
+                ]
+                """
+            else:
+                # FIXED MODE - specific number requested
+                prompt = f"""
+                Generate exactly {num_faqs} FAQ questions and answers for this category:
+
+                CATEGORY: {category_name}
+                PLATFORM CONTEXT: {platform_context}
+
+                Requirements:
+                - Generate {num_faqs} complete FAQ pairs
+                - Cover the most important aspects of this category
+                - Provide clear, actionable answers
+                - Use platform-specific information from context
+
+                PLATFORM DETAILS:
+                - AI E-Learning Platform specializing in AI programming
+                - Features Claude 3.5 Sonnet AI Study Buddy for 24/7 help
+                - Pro subscription: $29/month unlimited access
+                - Individual courses: $19-99 each
+                - Certificate requirements: 80% completion + 70% quiz pass rate
+                - Social login support: Google, GitHub, Microsoft
+                - Video lessons with YouTube integration
+                - Browser requirements: modern browsers for video playback
+
+                Return ONLY a JSON array with this exact format:
+                [
+                    {{
+                        "question": "The question text",
+                        "answer": "The detailed answer with specific platform information"
+                    }}
+                ]
+                """
+
+            # Use appropriate AI service with fallback (same as quiz generation)
+            result_data = None
+
+            if self.use_gemini:
+                # Gemini generation
+                response = self.gemini_model.generate_content(prompt)
+                result_data = response.text
+            else:
+                # Try Anthropic first, fallback to Gemini on failure
+                try:
+                    result = await self.agent.run(prompt)
+                    result_data = result.data
+                except Exception as anthropic_error:
+                    logger.warning(f"Anthropic failed, trying Gemini fallback: {str(anthropic_error)}")
+
+                    # Fallback to Gemini
+                    try:
+                        if self.settings.gemini_api_key:
+                            import google.generativeai as genai
+                            genai.configure(api_key=self.settings.gemini_api_key)
+                            gemini_model = genai.GenerativeModel(self.settings.gemini_model)
+                            response = gemini_model.generate_content(prompt)
+                            result_data = response.text
+                            logger.info("Successfully used Gemini fallback for FAQ generation")
+                        else:
+                            raise Exception("Both Anthropic and Gemini are unavailable")
+                    except Exception as gemini_error:
+                        logger.error(f"Gemini fallback also failed: {str(gemini_error)}")
+                        raise Exception("Category context insufficient for meaningful FAQ generation")
+
+            # Parse the AI response and format as FAQ objects
+            faqs = self._parse_faq_response(result_data, category_name)
+
+            return faqs
+
+        except Exception as e:
+            logger.error(f"FAQ generation error: {str(e)}")
+            return []
+
+    def _parse_faq_response(self, ai_response: str, category_name: str) -> List[Dict[str, str]]:
+        """Parse AI response into FAQ format (following quiz pattern)"""
+        faqs = []
+        try:
+            # Try to parse JSON response from AI
+            if ai_response.strip().startswith('['):
+                # Direct JSON array
+                parsed_faqs = json.loads(ai_response)
+            else:
+                # Look for JSON content in the response
+                import re
+                json_match = re.search(r'\[.*\]', ai_response, re.DOTALL)
+                if json_match:
+                    parsed_faqs = json.loads(json_match.group())
+                else:
+                    # Fallback to sample FAQs
+                    parsed_faqs = [
+                        {
+                            "question": f"What is {category_name} about?",
+                            "answer": f"This section covers important information about {category_name} on our AI E-Learning platform."
+                        },
+                        {
+                            "question": f"How do I get help with {category_name}?",
+                            "answer": "You can use our AI Study Buddy powered by Claude 3.5 Sonnet for 24/7 assistance with any questions."
+                        }
+                    ]
+
+            # Convert to standard FAQ format
+            for faq in parsed_faqs:
+                formatted_faq = {
+                    "question": faq.get('question', 'Question not provided'),
+                    "answer": faq.get('answer', 'Answer not provided')
+                }
+                faqs.append(formatted_faq)
+
+        except Exception as e:
+            logger.error(f"FAQ parsing error: {str(e)}")
+            # Return default FAQs on error
+            faqs = [
+                {
+                    "question": f"What should I know about {category_name}?",
+                    "answer": f"This section contains helpful information about {category_name}. Contact our support team for specific assistance."
+                },
+                {
+                    "question": "How can I get more help?",
+                    "answer": "Use our AI Study Buddy for instant help, or contact our support team through the support portal."
+                }
+            ]
+
+        return faqs
+
     async def generate_contextual_suggestions(
         self,
         course_id: Optional[str] = None,

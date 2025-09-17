@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import List, Optional
 
 # Third-party imports
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, root_validator
 
 # Local imports
 from app.schemas.base import PyObjectId, StandardResponse
@@ -108,8 +108,20 @@ class FAQVoteResponse(BaseModel):
 
 class FAQBulkAction(BaseModel):
     """Bulk action on FAQs"""
-    faq_ids: List[str]
-    action: str = Field(..., pattern="^(publish|unpublish|delete)$")
+    action: str = Field(..., pattern="^(create|publish|unpublish|delete)$")
+    faq_ids: Optional[List[str]] = None  # Required for publish/unpublish/delete
+    faqs_data: Optional[List[FAQCreate]] = None  # Required for create
+
+    @root_validator(skip_on_failure=True)
+    def validate_required_fields(cls, values):
+        action = values.get('action')
+        if action in ['publish', 'unpublish', 'delete']:
+            if not values.get('faq_ids'):
+                raise ValueError('faq_ids required for publish/unpublish/delete actions')
+        elif action == 'create':
+            if not values.get('faqs_data'):
+                raise ValueError('faqs_data required for create action')
+        return values
 
 
 # Response types using StandardResponse

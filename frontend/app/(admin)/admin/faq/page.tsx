@@ -1,15 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  Plus,
+  Edit,
+  Trash2,
   Search,
   Eye,
   EyeOff,
   ChevronDown,
-  AlertTriangle
+  AlertTriangle,
+  Wand2,
+  CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -19,25 +22,38 @@ import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
 import { EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
 import { Container } from '@/components/ui/Container';
-import { 
+import {
   useAdminFAQsQuery,
   useCreateFAQ,
   useUpdateFAQ,
   useDeleteFAQ,
   useBulkFAQActions
 } from '@/hooks/queries/useFAQ';
-import { FAQ, FAQCreateData, FAQUpdateData } from '@/lib/api/faq';
-import { useActiveFAQCategoriesQuery } from '@/hooks/queries/useFAQCategories';
+import { useApiMutation } from '@/hooks/useApiMutation';
+import { FAQ, FAQCreateData, FAQUpdateData, faqAPI } from '@/lib/api/faq';
+import { useGenerateFAQForCategory } from '@/hooks/queries/useAI';
+import { ToastService } from '@/lib/toast/ToastService';
+import { useAdminFAQCategoriesQuery } from '@/hooks/queries/useFAQCategories';
 import DeleteFAQModal, { FAQDeleteData } from '@/components/feature/DeleteFAQModal';
 
 export default function AdminFAQPage() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedFaqs, setSelectedFaqs] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+
+  // FAQ Generation state
+  const [selectedCategoryForGeneration, setSelectedCategoryForGeneration] = useState('');
+  const [generationMode, setGenerationMode] = useState<'adaptive' | 'fixed'>('adaptive');
+  const [numFaqs, setNumFaqs] = useState(5);
+  const [generatedFaqs, setGeneratedFaqs] = useState<Array<{question: string, answer: string}>>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   
   // Delete modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -68,14 +84,37 @@ export default function AdminFAQPage() {
     limit: itemsPerPage
   });
   
-  // Get active FAQ categories for dropdowns
-  const { data: categoriesData } = useActiveFAQCategoriesQuery();
+  // Get admin FAQ categories for dropdowns (includes platform_context for AI generation)
+  const { data: categoriesData } = useAdminFAQCategoriesQuery({ include_stats: false });
   const categories = categoriesData?.data?.categories || [];
   
   const { mutate: createFAQMutation, loading: createLoading } = useCreateFAQ();
   const { mutate: updateFAQMutation, loading: updateLoading } = useUpdateFAQ();
   const { mutate: deleteFAQMutation, loading: deleteLoading } = useDeleteFAQ();
   const { mutate: bulkActionMutation, loading: bulkLoading } = useBulkFAQActions();
+  const { mutate: generateFAQMutation } = useGenerateFAQForCategory();
+
+  // Bulk create FAQ mutation - useApiMutation handles toast intelligently
+  const { mutate: bulkCreateFAQMutation } = useApiMutation(
+    (faqs: FAQCreateData[]) => faqAPI.bulkCreate(faqs),
+    {
+      operationName: 'bulk-create-faqs',
+      invalidateQueries: [
+        ['admin-faqs'],
+        ['faqs'],
+        ['admin-faq-categories']
+      ],
+      onSuccess: (response) => {
+        // Reset and close modals only if some FAQs were created successfully
+        if (response.data.created_count > 0) {
+          setShowPreview(false);
+          setShowGenerateModal(false);
+          setGeneratedFaqs([]);
+          setSelectedCategoryForGeneration('');
+        }
+      }
+    }
+  );
   
   // Individual loading state tracking (following Support page pattern)
   // Global actionLoading removed to prevent all rows showing spinners
@@ -223,6 +262,79 @@ export default function AdminFAQPage() {
     setShowCreateModal(false);
   };
 
+  // FAQ Generation functions (following quiz generation pattern)
+  const handleGenerateFAQs = () => {
+    if (!selectedCategoryForGeneration) {
+      ToastService.error('Please select a category first');
+      return;
+    }
+
+    // Find selected category details
+    const selectedCategory = categories.find(cat => cat.id === selectedCategoryForGeneration);
+    if (!selectedCategory) {
+      ToastService.error('Selected category not found');
+      return;
+    }
+
+    // Validate platform_context
+    if (!selectedCategory.platform_context || selectedCategory.platform_context.trim() === '') {
+      ToastService.error('Selected category missing platform context');
+      return;
+    }
+
+    setIsGenerating(true);
+
+    // Use hook pattern like quiz generation
+    generateFAQMutation(
+      {
+        category_name: selectedCategory.name,
+        platform_context: selectedCategory.platform_context.trim(),
+        num_faqs: generationMode === 'adaptive' ? null : numFaqs
+      },
+      {
+        onSuccess: (response) => {
+          setIsGenerating(false);
+          if (response.success && response.data.faqs) {
+            setGeneratedFaqs(response.data.faqs);
+            setShowPreview(true);
+            ToastService.success('FAQs generated successfully');
+          } else {
+            ToastService.error('No FAQs generated');
+          }
+        },
+        onError: (error: any) => {
+          setIsGenerating(false);
+          ToastService.error(error.message || 'Something went wrong');
+        }
+      }
+    );
+  };
+
+  const handleSaveGeneratedFAQs = () => {
+    // Prepare bulk FAQ data
+    const bulkFAQData: FAQCreateData[] = generatedFaqs.map(faq => ({
+      question: faq.question,
+      answer: faq.answer,
+      category_id: selectedCategoryForGeneration,
+      priority: 0,
+      related_faqs: [],
+      is_published: true,
+      slug: undefined, // Auto-generate in backend
+    }));
+
+    // Use useApiMutation - it handles toast automatically
+    bulkCreateFAQMutation(bulkFAQData);
+  };
+
+  const resetGenerationForm = () => {
+    setSelectedCategoryForGeneration('');
+    setGenerationMode('adaptive');
+    setNumFaqs(5);
+    setGeneratedFaqs([]);
+    setShowPreview(false);
+    setShowGenerateModal(false);
+  };
+
   const toggleSelectFaq = (faqId: string) => {
     const newSelected = new Set(selectedFaqs);
     if (newSelected.has(faqId)) {
@@ -250,14 +362,22 @@ export default function AdminFAQPage() {
           <h1 className="text-2xl font-bold text-foreground">FAQ Management</h1>
           <p className="text-muted-foreground">Manage frequently asked questions and their organization</p>
         </div>
-        <Button
-          onClick={() => {
-            resetForm();
-            setShowCreateModal(true);
-          }}
-        >
-          Add FAQ
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowGenerateModal(true)}
+          >
+            AI Generative
+          </Button>
+          <Button
+            onClick={() => {
+              resetForm();
+              setShowCreateModal(true);
+            }}
+          >
+            Add FAQ
+          </Button>
+        </div>
       </div>
 
       {/* Filters and Actions */}
@@ -690,6 +810,158 @@ export default function AdminFAQPage() {
               </Button>
             </div>
           </div>
+        </Modal>
+      )}
+
+      {/* FAQ Generation Modal */}
+      {showGenerateModal && (
+        <Modal
+          isOpen={showGenerateModal}
+          onClose={resetGenerationForm}
+          title="AI Generative"
+          size="lg"
+        >
+          {!showPreview ? (
+            <div className="space-y-4">
+              {/* Category Selection */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Select Category
+                </label>
+                <select
+                  value={selectedCategoryForGeneration}
+                  onChange={(e) => setSelectedCategoryForGeneration(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                  required
+                >
+                  <option value="">Choose a category...</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                {selectedCategoryForGeneration && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {categories.find(c => c.id === selectedCategoryForGeneration)?.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Generation Mode */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Generation Mode
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="generation-mode"
+                      value="adaptive"
+                      checked={generationMode === 'adaptive'}
+                      onChange={(e) => setGenerationMode(e.target.value as 'adaptive')}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">
+                      <strong>Adaptive</strong> - AI decides number of FAQs (3-8) based on category complexity
+                    </span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="generation-mode"
+                      value="fixed"
+                      checked={generationMode === 'fixed'}
+                      onChange={(e) => setGenerationMode(e.target.value as 'fixed')}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">
+                      <strong>Fixed</strong> - Generate specific number of FAQs
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Number of FAQs (Fixed mode) */}
+              {generationMode === 'fixed' && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Number of FAQs
+                  </label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={8}
+                    value={numFaqs}
+                    onChange={(e) => setNumFaqs(parseInt(e.target.value) || 5)}
+                    className="w-32"
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={resetGenerationForm}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleGenerateFAQs}
+                  disabled={!selectedCategoryForGeneration || isGenerating}
+                  loading={isGenerating}
+                >
+                  AI Generative
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* FAQ Preview */
+            <div className="space-y-4">
+              <div className="bg-green-50 dark:bg-green-950/30 p-4 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <div>
+                    <h3 className="font-medium text-green-900 dark:text-green-100">
+                      Generated {generatedFaqs.length} FAQ{generatedFaqs.length > 1 ? 's' : ''}
+                    </h3>
+                    <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                      Review the generated FAQs below and save them to your collection.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="max-h-96 overflow-y-auto space-y-3">
+                {generatedFaqs.map((faq, index) => (
+                  <div key={index} className="border border-border rounded-lg p-4">
+                    <h4 className="font-medium text-foreground mb-2">
+                      Q{index + 1}: {faq.question}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {faq.answer}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPreview(false)}
+                >
+                  Back to Generate
+                </Button>
+                <Button
+                  onClick={handleSaveGeneratedFAQs}
+                  loading={createLoading}
+                >
+                  Save All FAQs
+                </Button>
+              </div>
+            </div>
+          )}
         </Modal>
       )}
     </div>
