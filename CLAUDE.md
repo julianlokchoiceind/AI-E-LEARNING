@@ -159,6 +159,32 @@ def safe_response(data):
 
 For complete development guidelines and patterns, see [Technical Architecture](./docs/03_TECHNICAL_ARCHITECTURE.md).
 
+## 🧠 AI Memory & Critical Implementation Patterns
+
+### 📋 Bulk Delete Workflow Pattern (Reference Implementation)
+**Problem Solved:** Bulk delete operations with mixed success/failure results
+
+**Final Workflow:**
+
+| Case | Backend Response | Frontend Flow | Result |
+|------|------------------|---------------|---------|
+| **Complete Success** | `success=true`, no failed | onSuccess → no toast | Modal đóng + refresh |
+| **Partial Success** | `success=true`, has failed | onSuccess → manual toast | Modal đóng + refresh + error toast |
+| **Complete Failure** | `success=false` | onError → auto toast | Modal mở + error toast |
+
+**Key Implementation:**
+- **Backend Service**: Partial success returns `success=true` (not false)
+- **Frontend onSuccess**: Check `response.data?.failed?.length > 0` → manual error toast
+- **UX Priority**: Modal close + data refresh more important than automatic toast consistency
+
+**Files Modified:**
+- `/backend/app/services/admin_service.py` - Lines 975-992 (partial success logic)
+- `/frontend/app/(admin)/admin/courses/page.tsx` - Lines 282-285 (manual toast)
+
+**Lesson Learned:** Simple solution beats complex - partial success as success with manual toast better than error handling complexity.
+
+---
+
 ## 📊 Project Status
 - **Version:** 1.0
 - **Status:** ✅ Production Ready - Implementation Approved

@@ -640,7 +640,7 @@ const LessonEditPage = () => {
                       type="text"
                       inputMode="decimal"
                       pattern="[0-9]+([.][0-9]+)?"
-                      value={lessonData.video?.duration && lessonData.video.duration > 0 ? (lessonData.video.duration / 60).toFixed(1) : ''}
+                      value={lessonData.video?.duration && lessonData.video.duration > 0 ? String(lessonData.video.duration / 60) : ''}
                       onChange={(e) => {
                         // Normalize comma to dot for decimal separator
                         const normalizedValue = e.target.value.replace(',', '.');

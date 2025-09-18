@@ -16,11 +16,12 @@ import {
 import { StandardResponse } from '@/lib/types/api';
 import { enrollInCourse, type Enrollment, type EnrollmentCreate } from '@/lib/api/enrollments';
 import { api } from '@/lib/api/api-client';
-import { 
-  getAdminCourses, 
-  approveCourse, 
-  rejectCourse, 
+import {
+  getAdminCourses,
+  approveCourse,
+  rejectCourse,
   toggleCourseFree,
+  bulkCourseAction,
   getAdminStatistics
 } from '@/lib/api/admin';
 import { getCourseAnalytics } from '@/lib/api/analytics';
@@ -680,6 +681,35 @@ export function useAdminStatistics() {
     {
       ...getCacheConfig('ADMIN_OPERATIONS'), // Realtime - admin data needs immediate updates
       staleTime: 30 * 1000, // 30 seconds - Statistics can be slightly stale for performance
+    }
+  );
+}
+
+/**
+ * COURSE BULK ACTIONS - Bulk operations on courses (Following FAQ pattern)
+ * Medium-impact: Admin efficiency
+ */
+export function useBulkCourseActions() {
+  return useApiMutation(
+    async ({ action, courseIds }: { action: 'delete'; courseIds: string[] }) => {
+      // Filter out any undefined/null IDs to prevent errors
+      const validCourseIds = courseIds.filter(id => id && typeof id === 'string' && id.trim() !== '');
+
+      if (validCourseIds.length === 0) {
+        throw new Error('No valid course IDs provided for bulk action');
+      }
+
+      return await bulkCourseAction({
+        course_ids: validCourseIds,
+        action
+      });
+    },
+    {
+      operationName: 'bulk-course-action',
+      invalidateQueries: [
+        ['admin-courses'], // Refresh admin course list
+        ['admin-course-statistics'], // Refresh statistics
+      ],
     }
   );
 }

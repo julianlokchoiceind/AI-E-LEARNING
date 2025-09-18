@@ -145,7 +145,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
         title: lesson.title || '',
         description: lesson.description || '',
         video_url: lesson.video?.url || '',
-        duration: lesson.video?.duration && lesson.video.duration > 0 ? (lesson.video.duration / 60).toFixed(1) : '',
+        duration: lesson.video?.duration && lesson.video.duration > 0 ? String(lesson.video.duration / 60) : '',
         content: lesson.content || '',
         status: lesson.status || 'draft'
       });
@@ -236,7 +236,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
           title: lesson.title || '',
           description: lesson.description || '',
           video_url: lesson.video?.url || '',
-          duration: lesson.video?.duration && lesson.video.duration > 0 ? (lesson.video.duration / 60).toFixed(1) : '',
+          duration: lesson.video?.duration && lesson.video.duration > 0 ? String(lesson.video.duration / 60) : '',
           content: lesson.content || '',
           status: lesson.status || 'draft'
         });

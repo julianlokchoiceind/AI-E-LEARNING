@@ -14,7 +14,9 @@ from app.schemas.admin import (
     AdminDashboardStats,
     PendingReviewResponse,
     AdminCoursesQuery,
-    CourseStatistics
+    CourseStatistics,
+    CourseBulkAction,
+    UserBulkAction
 )
 from app.schemas.base import StandardResponse
 from app.services.course_service import CourseService
@@ -331,6 +333,33 @@ async def bulk_approve_courses(
         raise HTTPException(status_code=500, detail="Failed to bulk approve courses")
 
 
+@router.post("/courses/bulk-action", response_model=StandardResponse[dict])
+async def bulk_course_action(
+    bulk_data: CourseBulkAction,
+    current_admin: User = Depends(get_current_admin)
+):
+    """
+    Perform bulk actions on courses - Following FAQ pattern
+    Actions: delete (more can be added later)
+    """
+    try:
+        results = await AdminService.bulk_course_action(
+            course_ids=bulk_data.course_ids,
+            action=bulk_data.action,
+            admin=current_admin
+        )
+
+        # Use service result directly - service handles all logic
+        return StandardResponse(
+            success=results.get("success", False),
+            data=results,
+            message=results.get("message", "Bulk action completed")
+        )
+    except Exception as e:
+        logger.error(f"Error in bulk course action: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to perform bulk action")
+
+
 # User Management Endpoints
 
 @router.get("/users", response_model=StandardResponse[dict])
@@ -472,9 +501,7 @@ async def delete_user(
 
 @router.post("/users/bulk-action", response_model=StandardResponse[dict])
 async def bulk_user_action(
-    user_ids: List[str],
-    action: str = Query(..., pattern="^(delete|update_role|toggle_premium)$"),
-    data: Optional[dict] = None,
+    bulk_data: UserBulkAction,
     current_admin: User = Depends(get_current_admin)
 ):
     """
@@ -489,9 +516,9 @@ async def bulk_user_action(
     """
     try:
         results = await AdminService.bulk_user_action(
-            user_ids=user_ids,
-            action=action,
-            data=data,
+            user_ids=bulk_data.user_ids,
+            action=bulk_data.action,
+            data=bulk_data.data,
             admin=current_admin
         )
         return StandardResponse(

@@ -338,8 +338,10 @@ async def delete_course(
         raise HTTPException(status_code=404, detail=str(e))
     except ForbiddenException as e:
         raise HTTPException(status_code=403, detail=str(e))
+    except BadRequestException as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to delete course")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/{course_id}/thumbnail", response_model=StandardResponse[dict])

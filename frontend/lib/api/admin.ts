@@ -273,10 +273,40 @@ export const deleteUser = async (userId: string): Promise<StandardResponse<any>>
       `/admin/users/${userId}`,
       { requireAuth: true }
     );
-    
+
     return response;
   } catch (error) {
     console.error('Delete user failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * Bulk user actions - Following FAQ pattern
+ */
+export interface UserBulkAction {
+  action: 'delete' | 'update_role' | 'toggle_premium';
+  user_ids: string[];
+  data?: any;
+}
+
+export const bulkUserAction = async (data: UserBulkAction): Promise<StandardResponse<{
+  successful: string[];
+  failed: any[];
+  total_processed: number;
+  message: string;
+}>> => {
+  try {
+    const response = await api.post<StandardResponse<{
+      successful: string[];
+      failed: any[];
+      total_processed: number;
+      message: string;
+    }>>('/admin/users/bulk-action', data, { requireAuth: true });
+
+    return response;
+  } catch (error) {
+    console.error('Bulk user action failed:', error);
     throw error;
   }
 };
@@ -382,6 +412,30 @@ export const getUserAnalytics = async (): Promise<StandardResponse<UserAnalytics
     console.error('Get user analytics failed:', error);
     throw error;
   }
+};
+
+/**
+ * Bulk course actions - Following FAQ pattern
+ */
+export interface CourseBulkAction {
+  action: 'delete';  // Only delete for now, can expand later
+  course_ids: string[];
+}
+
+export const bulkCourseAction = async (data: CourseBulkAction): Promise<StandardResponse<{
+  successful: string[];
+  failed: any[];
+  total_processed: number;
+  message: string;
+}>> => {
+  const response = await api.post<StandardResponse<{
+    successful: string[];
+    failed: any[];
+    total_processed: number;
+    message: string;
+  }>>('/admin/courses/bulk-action', data, { requireAuth: true });
+
+  return response;
 };
 
 /**

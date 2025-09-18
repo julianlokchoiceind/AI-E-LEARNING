@@ -3,11 +3,12 @@
 import { useApiQuery } from '@/hooks/useApiQuery';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { getCacheConfig } from '@/lib/constants/cache-config';
-import { 
+import {
   getAdminUsers,
   updateUserRole,
   toggleUserPremium,
   deleteUser,
+  bulkUserAction,
   getAdminDashboardStats,
   getUserAnalytics
 } from '@/lib/api/admin';
@@ -142,6 +143,35 @@ export function useUserSearchQuery(query: string, filters: Omit<AdminUsersFilter
     {
       enabled: query.length > 2, // Only search after 3 characters
       ...getCacheConfig('ADMIN_OPERATIONS') // Realtime - admin search results
+    }
+  );
+}
+
+/**
+ * USER BULK ACTIONS - Bulk operations on users (Following FAQ pattern)
+ * Medium-impact: Admin efficiency
+ */
+export function useBulkUserActions() {
+  return useApiMutation(
+    async ({ action, userIds, data }: { action: 'delete' | 'update_role' | 'toggle_premium'; userIds: string[]; data?: any }) => {
+      // Filter out any undefined/null IDs to prevent errors
+      const validUserIds = userIds.filter(id => id && typeof id === 'string' && id.trim() !== '');
+
+      if (validUserIds.length === 0) {
+        throw new Error('No valid user IDs provided for bulk action');
+      }
+
+      return await bulkUserAction({
+        user_ids: validUserIds,
+        action,
+        data
+      });
+    },
+    {
+      operationName: 'bulk-user-action',
+      invalidateQueries: [
+        ['admin-users'], // Refresh admin user list
+      ],
     }
   );
 }

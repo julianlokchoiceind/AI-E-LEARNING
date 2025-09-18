@@ -11,14 +11,16 @@ import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText }
 import { Container } from '@/components/ui/Container';
 import { StandardResponse } from '@/lib/types/api';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
-import { 
-  useAdminCoursesQuery, 
-  useApproveCourse, 
-  useRejectCourse, 
-  useToggleCourseFree, 
+import { ToastService } from '@/lib/toast/ToastService';
+import {
+  useAdminCoursesQuery,
+  useApproveCourse,
+  useRejectCourse,
+  useToggleCourseFree,
   useDeleteCourseAdmin as useDeleteCourse,
   useCreateCourse,
-  useAdminStatistics
+  useAdminStatistics,
+  useBulkCourseActions
 } from '@/hooks/queries/useCourses';
 import { Pagination } from '@/components/ui/Pagination';
 import { 
@@ -114,6 +116,7 @@ export default function CourseApproval() {
   const { mutate: toggleFree, loading: toggleLoading } = useToggleCourseFree();
   const { mutate: deleteCourseAction, loading: deleteLoading } = useDeleteCourse();
   const { mutate: createCourseAction, loading: createLoading } = useCreateCourse();
+  const { mutate: bulkCourseMutation, loading: bulkLoading } = useBulkCourseActions();
   
   // Individual loading state tracking (following Support page pattern)
   // Global actionLoading removed to prevent all rows showing spinners
@@ -198,19 +201,21 @@ export default function CourseApproval() {
   };
 
   const handleConfirmDeleteCourse = async (courseId: string) => {
-    try {
-      setProcessingCourseId(courseId);
-      await deleteCourseAction(courseId, {
-        onSuccess: () => {
-          setShowDeleteModal(false);
-          setSelectedCourseForDelete(null);
-        }
-      });
-    } catch (error: any) {
-      // Error toast is handled automatically by useApiMutation
-    } finally {
-      setProcessingCourseId(null);
-    }
+    setProcessingCourseId(courseId);
+
+    // Use proper callback pattern without await
+    deleteCourseAction(courseId, {
+      onSuccess: () => {
+        setShowDeleteModal(false);
+        setSelectedCourseForDelete(null);
+        setProcessingCourseId(null);
+      },
+      onError: () => {
+        // Error toast is handled automatically by useApiMutation
+        // Backend message "Cannot delete - X students enrolled" will show
+        setProcessingCourseId(null);
+      }
+    });
   };
 
   const handleCreateCourse = () => {
@@ -268,34 +273,21 @@ export default function CourseApproval() {
     setShowBulkDeleteModal(true);
   };
 
-  const handleConfirmBulkDelete = async () => {
-    // Store the courses to delete
-    const coursesToDelete = Array.from(selectedCourses);
-    
-    // Delete all selected courses sequentially to avoid overwhelming the server
-    for (const courseId of coursesToDelete) {
-      await new Promise<void>((resolve) => {
-        deleteCourseAction(courseId, {
-          onSuccess: () => {
-            // Remove from selected set immediately after successful deletion
-            setSelectedCourses(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(courseId);
-              return newSet;
-            });
-            resolve();
-          },
-          onError: () => {
-            console.error(`Failed to delete course ${courseId}`);
-            resolve(); // Continue even if one fails
-          }
-        });
-      });
-    }
-    
-    // Close modal after all operations complete
-    setShowBulkDeleteModal(false);
-    // React Query will auto-refetch due to cache invalidation
+  const handleConfirmBulkDelete = () => {
+    bulkCourseMutation({ action: 'delete', courseIds: Array.from(selectedCourses) }, {
+      onSuccess: (response) => {
+        setSelectedCourses(new Set());
+        setShowBulkDeleteModal(false);
+
+        // Show error toast if some courses failed to delete
+        if (response.data?.failed?.length > 0) {
+          ToastService.error(response.message);
+        }
+      },
+      onError: (error: any) => {
+        // Keep modal open on complete failure
+      }
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -977,7 +969,7 @@ export default function CourseApproval() {
               <Button
                 variant="danger"
                 onClick={handleConfirmBulkDelete}
-                loading={deleteLoading}
+                loading={bulkLoading}
                 className="flex-1"
               >
                 Delete {selectedCourses.size} Course{selectedCourses.size > 1 ? 's' : ''}

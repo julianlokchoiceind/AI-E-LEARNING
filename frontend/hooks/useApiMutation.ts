@@ -46,14 +46,15 @@ export function useApiMutation<TData = any, TVariables = any>(
     mutationFn: async (variables: TVariables) => {
       try {
         const response = await mutationFn(variables);
-        
+
+
         // Success toast disabled globally - now controlled by DISABLE_SUCCESS flag
         if (showToast && response.message) {
           // Generate operation-based ID for deduplication
           const toastId = generateToastId(operationName, variables);
           ToastService.success(response.message, toastId); // Will be skipped by global flag
         }
-        
+
         return response;
       } catch (error: any) {
         const appError = handleError(error, false); // Prevent auto-toast, handle manually

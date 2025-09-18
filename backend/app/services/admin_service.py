@@ -4,6 +4,7 @@ Admin service for course approval and platform management.
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta, timezone
 from bson import ObjectId
+from beanie import PydanticObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.database import get_database
 from app.models.course import Course, CourseStatus
@@ -804,37 +805,207 @@ class AdminService:
         data: Optional[dict],
         admin: User
     ) -> Dict[str, Any]:
-        """Perform bulk actions on users."""
+        """Perform bulk actions on users - Following FAQ pattern for delete, individual for others."""
         try:
-            successful = []
-            failed = []
-            
-            for user_id in user_ids:
-                try:
-                    if action == "delete":
-                        await AdminService.delete_user(user_id, admin)
-                    elif action == "update_role" and data and "role" in data:
-                        await AdminService.update_user_role(user_id, data["role"], admin)
-                    elif action == "toggle_premium" and data and "premium" in data:
-                        await AdminService.update_user_premium_status(user_id, data["premium"], admin)
-                    else:
-                        raise ValueError(f"Invalid action or missing data: {action}")
-                    
-                    successful.append(user_id)
-                except Exception as e:
-                    failed.append({"user_id": user_id, "error": str(e)})
-            
-            return {
-                "success": True,
-                "message": f"Processed {len(successful)} users successfully",
-                "successful": successful,
-                "failed": failed,
-                "total_processed": len(user_ids)
-            }
+            if action == "delete":
+                # BULK HARD DELETE - Following FAQ pattern exactly
+                from bson import ObjectId
+
+                # Filter valid ObjectIds
+                object_ids = []
+                invalid_ids = []
+
+                for user_id in user_ids:
+                    try:
+                        object_ids.append(ObjectId(user_id))
+                    except Exception:
+                        invalid_ids.append(user_id)
+
+                if not object_ids:
+                    return {
+                        "success": False,
+                        "message": "No valid user IDs provided",
+                        "successful": [],
+                        "failed": invalid_ids,
+                        "total_processed": 0
+                    }
+
+                # Get database connection
+                db = get_database()
+
+                # HARD DELETE all users at once - Following FAQ pattern
+                result = await db.users.delete_many({"_id": {"$in": object_ids}})
+
+                return {
+                    "success": True,
+                    "message": f"Deleted {result.deleted_count} users successfully",
+                    "successful": user_ids if result.deleted_count > 0 else [],
+                    "failed": invalid_ids,
+                    "total_processed": result.deleted_count,
+                    "deleted_count": result.deleted_count
+                }
+            else:
+                # For other actions, keep individual processing
+                successful = []
+                failed = []
+
+                for user_id in user_ids:
+                    try:
+                        if action == "update_role" and data and "role" in data:
+                            await AdminService.update_user_role(user_id, data["role"], admin)
+                        elif action == "toggle_premium" and data and "premium" in data:
+                            await AdminService.update_user_premium_status(user_id, data["premium"], admin)
+                        else:
+                            raise ValueError(f"Invalid action or missing data: {action}")
+
+                        successful.append(user_id)
+                    except Exception as e:
+                        failed.append({"user_id": user_id, "error": str(e)})
+
+                return {
+                    "success": True,
+                    "message": f"Processed {len(successful)} users successfully",
+                    "successful": successful,
+                    "failed": failed,
+                    "total_processed": len(user_ids)
+                }
         except Exception as e:
             logger.error(f"Error in bulk user action: {str(e)}")
             raise
-    
+
+    @staticmethod
+    async def bulk_course_action(
+        course_ids: List[str],
+        action: str,
+        admin: User
+    ) -> Dict[str, Any]:
+        """Perform bulk actions on courses - Following FAQ pattern with HARD DELETE"""
+        try:
+            if action == "delete":
+                # Convert string IDs to ObjectIds for query
+                from app.models.course import Course
+                from bson import ObjectId
+
+                # Filter valid ObjectIds
+                object_ids = []
+                invalid_ids = []
+
+                for course_id in course_ids:
+                    try:
+                        object_ids.append(PydanticObjectId(course_id))
+                    except Exception:
+                        invalid_ids.append(course_id)
+
+                if not object_ids:
+                    return {
+                        "success": False,
+                        "message": "No valid course IDs provided",
+                        "successful": [],
+                        "failed": invalid_ids,
+                        "total_processed": 0
+                    }
+
+                # Check each course for enrollments before deletion
+                from app.models.enrollment import Enrollment
+                successful = []
+                failed = []
+
+                for i, object_id in enumerate(object_ids):
+                    course_id = course_ids[i] if i < len(course_ids) else str(object_id)
+
+                    try:
+                        # Check for active enrollments
+                        enrollment_count = await Enrollment.find({
+                            "course_id": str(object_id),
+                            "is_active": True
+                        }).count()
+
+                        if enrollment_count > 0:
+                            failed.append({
+                                "id": course_id,
+                                "reason": f"Cannot delete - {enrollment_count} students enrolled"
+                            })
+                            continue
+
+                        # Delete course if no enrollments
+                        delete_result = await Course.find_one({"_id": object_id}).delete()
+                        if delete_result:
+                            successful.append(course_id)
+                        else:
+                            failed.append({
+                                "id": course_id,
+                                "reason": "Course not found"
+                            })
+
+                    except Exception as e:
+                        failed.append({
+                            "id": course_id,
+                            "reason": f"Error: {str(e)}"
+                        })
+
+                # Add invalid IDs to failed list
+                for invalid_id in invalid_ids:
+                    failed.append({
+                        "id": invalid_id,
+                        "reason": "Invalid course ID"
+                    })
+
+                total_processed = len(successful)
+                has_failures = len(failed) > 0
+
+                if total_processed == 0 and has_failures:
+                    # All deletions failed - provide detailed reasons
+                    failed_details = []
+                    for f in failed[:3]:  # Show first 3 failures
+                        failed_details.append(f["reason"])
+
+                    detail_msg = ", ".join(failed_details)
+                    if len(failed) > 3:
+                        detail_msg += f" and {len(failed) - 3} more"
+
+
+                    return {
+                        "success": False,
+                        "message": f"Cannot delete courses: {detail_msg}",
+                        "successful": successful,
+                        "failed": failed,
+                        "total_processed": total_processed
+                    }
+                elif total_processed > 0 and has_failures:
+                    # Partial success - return as success for modal close and data refresh
+                    failed_with_enrollments = [f for f in failed if "students enrolled" in f.get("reason", "")]
+                    if failed_with_enrollments:
+                        return {
+                            "success": True,
+                            "message": f"Deleted {total_processed} courses. {len(failed_with_enrollments)} courses have active enrollments",
+                            "successful": successful,
+                            "failed": failed,
+                            "total_processed": total_processed
+                        }
+                    else:
+                        return {
+                            "success": True,
+                            "message": f"Deleted {total_processed} courses, {len(failed)} failed",
+                            "successful": successful,
+                            "failed": failed,
+                            "total_processed": total_processed
+                        }
+                else:
+                    # Complete success
+                    return {
+                        "success": True,
+                        "message": f"Deleted {total_processed} courses successfully",
+                        "successful": successful,
+                        "failed": failed,
+                        "total_processed": total_processed
+                    }
+            else:
+                raise ValueError(f"Invalid action: {action}")
+
+        except Exception as e:
+            logger.error(f"Error in bulk course action: {str(e)}")
+            raise
+
     # Payment Management Methods
     
     @staticmethod

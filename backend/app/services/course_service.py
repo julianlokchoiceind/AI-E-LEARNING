@@ -471,10 +471,7 @@ class CourseService:
         
         if enrollment_count > 0:
             logger.error(f"🚨 DELETE COURSE: Cannot delete - {enrollment_count} active enrollments exist")
-            raise BadRequestException(
-                f"Cannot delete course with {enrollment_count} active enrollments. "
-                "Please handle refunds and remove enrollments first."
-            )
+            raise BadRequestException(f"Cannot delete - {enrollment_count} students enrolled")
         
         # Cascade delete: Remove all related data first
         logger.info(f"🗑️ DELETE COURSE: Starting cascade deletion for course {course_id}")

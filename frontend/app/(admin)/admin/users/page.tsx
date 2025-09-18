@@ -8,11 +8,12 @@ import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
 import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
 import { Container } from '@/components/ui/Container';
-import { 
+import {
   useAdminUsersQuery,
   useToggleUserPremium,
   useUpdateUserRole,
-  useDeleteUser
+  useDeleteUser,
+  useBulkUserActions
 } from '@/hooks/queries/useAdminUsers';
 import { 
   Search, 
@@ -99,6 +100,7 @@ export default function UserManagement() {
   const { mutate: togglePremiumMutation, loading: premiumLoading } = useToggleUserPremium();
   const { mutate: updateRoleMutation, loading: roleLoading } = useUpdateUserRole();
   const { mutate: deleteUserMutation, loading: deleteLoading } = useDeleteUser();
+  const { mutate: bulkUserMutation, loading: bulkLoading } = useBulkUserActions();
   
   // Individual loading state tracking (following Support page pattern)
   // Global actionLoading removed to prevent all rows showing spinners
@@ -212,32 +214,14 @@ export default function UserManagement() {
   };
 
   const handleConfirmBulkDelete = async () => {
-    // Store the users to delete
-    const usersToDelete = Array.from(selectedUsers);
-    
-    // Delete all selected users sequentially to avoid overwhelming the server
-    for (const userId of usersToDelete) {
-      await new Promise<void>((resolve) => {
-        deleteUserMutation(userId, {
-          onSuccess: () => {
-            // Remove from selected set immediately after successful deletion
-            setSelectedUsers(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(userId);
-              return newSet;
-            });
-            resolve();
-          },
-          onError: () => {
-            console.error(`Failed to delete user ${userId}`);
-            resolve(); // Continue even if one fails
-          }
-        });
-      });
-    }
-    
-    // Close modal after all operations complete
-    setShowBulkDeleteModal(false);
+    // Use bulk endpoint instead of looping - Following FAQ pattern
+    bulkUserMutation({ action: 'delete', userIds: Array.from(selectedUsers) }, {
+      onSuccess: (response) => {
+        setSelectedUsers(new Set());
+        setShowBulkDeleteModal(false);
+        // React Query will automatically invalidate and refetch users
+      }
+    });
   };
 
 
@@ -757,7 +741,7 @@ export default function UserManagement() {
               <Button
                 variant="danger"
                 onClick={handleConfirmBulkDelete}
-                loading={deleteLoading}
+                loading={bulkLoading}
                 className="flex-1"
               >
                 Delete {selectedUsers.size} User{selectedUsers.size > 1 ? 's' : ''}

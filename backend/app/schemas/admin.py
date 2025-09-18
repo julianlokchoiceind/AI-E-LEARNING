@@ -120,3 +120,16 @@ class CourseStatistics(BaseModel):
     published: int
     rejected: int
     free_courses: int
+
+
+class CourseBulkAction(BaseModel):
+    """Schema for course bulk actions - Following FAQ pattern"""
+    action: str  # delete (expandable later)
+    course_ids: List[str]
+
+
+class UserBulkAction(BaseModel):
+    """Schema for user bulk actions - Following FAQ pattern"""
+    action: str  # delete, update_role, toggle_premium
+    user_ids: List[str]
+    data: Optional[Dict[str, Any]] = None
