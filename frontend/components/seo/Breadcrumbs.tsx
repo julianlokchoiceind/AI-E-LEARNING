@@ -59,7 +59,7 @@ export function Breadcrumbs({
               <li>
                 <Link 
                   href="/"
-                  className="text-muted-foreground hover:text-foreground transition-colors flex items-center"
+                  className="link-hover transition-colors flex items-center"
                   aria-label={t('nav.home')}
                 >
                   <Home className="h-4 w-4" />
@@ -87,7 +87,7 @@ export function Breadcrumbs({
                 ) : (
                   <Link 
                     href={item.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    className="link-hover transition-colors"
                   >
                     {item.name}
                   </Link>
@@ -292,7 +292,7 @@ export function MobileBreadcrumbs({
               ) : (
                 <Link 
                   href={item.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[120px]"
+                  className="link-hover transition-colors truncate max-w-[120px]"
                   title={item.name}
                 >
                   {item.name}

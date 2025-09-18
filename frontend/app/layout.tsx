@@ -44,6 +44,9 @@ export default function RootLayout({
   return (
     <html lang={locale} dir={direction} suppressHydrationWarning>
       <head>
+        {/* Google Search Console Verification */}
+        <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE" />
+        
         {/* Core Organization Schema */}
         <OrganizationStructuredData
           name="AI E-Learning Platform"

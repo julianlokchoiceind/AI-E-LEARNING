@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Globe, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n/context';
@@ -13,7 +13,7 @@ interface LanguageSwitcherProps {
   className?: string;
 }
 
-export function LanguageSwitcher({ 
+export function LanguageSwitcher({
   variant = 'dropdown',
   showFlag = true,
   showText = true,
@@ -21,11 +21,40 @@ export function LanguageSwitcher({
 }: LanguageSwitcherProps) {
   const { locale, setLocale, isLoading } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ right: 0, top: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLocaleChange = (newLocale: Locale) => {
     setLocale(newLocale);
     setIsOpen(false);
   };
+
+  // Calculate dropdown position - consistent with CategoryDropdown pattern
+  useEffect(() => {
+    if (buttonRef.current && isOpen) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        right: window.innerWidth - rect.right,
+        top: 64 // Header height - consistent with CategoryDropdown
+      });
+    }
+  }, [isOpen]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
+          buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
 
   if (variant === 'inline') {
     return (
@@ -38,7 +67,7 @@ export function LanguageSwitcher({
             className={`px-3 py-1 rounded-md text-sm transition-colors ${
               locale === loc
                 ? 'bg-primary/20 text-primary font-medium'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                : 'nav-hover'
             } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {showFlag && (
@@ -54,6 +83,7 @@ export function LanguageSwitcher({
   return (
     <div className={`relative ${className}`}>
       <Button
+        ref={buttonRef}
         variant="ghost"
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
@@ -72,35 +102,33 @@ export function LanguageSwitcher({
       </Button>
 
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setIsOpen(false)}
-          />
-          
-          {/* Dropdown */}
-          <div className="absolute right-0 top-full mt-2 z-20 min-w-[160px] bg-background border border-border rounded-lg shadow-lg py-1">
-            {SUPPORTED_LOCALES.map((loc) => (
-              <button
-                key={loc}
-                onClick={() => handleLocaleChange(loc)}
-                disabled={isLoading}
-                className={`w-full flex items-center gap-3 px-4 py-2 text-left text-sm transition-colors ${
-                  locale === loc
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-muted-foreground hover:bg-muted/30'
-                } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted/30'}`}
-              >
-                <span className="text-lg">{LOCALE_FLAGS[loc]}</span>
-                <span>{LOCALE_NAMES[loc]}</span>
-                {locale === loc && (
-                  <div className="ml-auto h-2 w-2 bg-primary rounded-full" />
-                )}
-              </button>
-            ))}
-          </div>
-        </>
+        <div
+          ref={dropdownRef}
+          className="fixed z-20 min-w-[160px] bg-background border border-border rounded-lg shadow-lg py-1"
+          style={{
+            right: dropdownPosition.right,
+            top: dropdownPosition.top
+          }}
+        >
+          {SUPPORTED_LOCALES.map((loc) => (
+            <button
+              key={loc}
+              onClick={() => handleLocaleChange(loc)}
+              disabled={isLoading}
+              className={`w-full flex items-center gap-3 px-4 py-2 text-left text-sm transition-colors ${
+                locale === loc
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'nav-hover'
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <span className="text-lg">{LOCALE_FLAGS[loc]}</span>
+              <span>{LOCALE_NAMES[loc]}</span>
+              {locale === loc && (
+                <div className="ml-auto h-2 w-2 bg-primary rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );

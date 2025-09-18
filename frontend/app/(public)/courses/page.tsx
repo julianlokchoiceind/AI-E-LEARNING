@@ -8,16 +8,17 @@ import { Container } from '@/components/ui/Container';
 import { SkeletonBox, SkeletonCircle, EmptyState, LoadingSpinner } from '@/components/ui/LoadingStates';
 import { useCoursesQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const CourseCatalogPage = () => {
+  const searchParams = useSearchParams();
+
   // UI state only - data fetching handled by React Query
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [selectedLevel, setSelectedLevel] = useState('');
   const [priceFilter, setPriceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
-  const [showFilters, setShowFilters] = useState(false);
   
   const { user } = useAuth();
   const router = useRouter();
@@ -113,8 +114,8 @@ const CourseCatalogPage = () => {
       <Container variant="public">
         {/* Filter Bar */}
         <div className="mb-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-4">
+          <div className="grid grid-cols-2 gap-4 lg:flex lg:items-center lg:gap-4">
+            <div className="contents lg:contents">
               {/* Category Filter */}
               <select
                 value={selectedCategory}
@@ -154,28 +155,20 @@ const CourseCatalogPage = () => {
                 ))}
               </select>
 
-              {/* Mobile Filter Toggle */}
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden flex items-center gap-2 px-4 py-2 border border-border rounded-lg"
+              {/* Sort Dropdown */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <Filter className="w-4 h-4" />
-                Filters
-              </button>
-            </div>
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
 
-            {/* Sort Dropdown */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            </div>
           </div>
         </div>
 

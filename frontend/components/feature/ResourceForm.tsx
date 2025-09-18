@@ -201,7 +201,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="link-hover transition-colors"
             aria-label="Close modal"
           >
             <X className="w-6 h-6" />

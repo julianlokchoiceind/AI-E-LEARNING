@@ -423,4 +423,16 @@
     @apply hidden;
     /* Implementation for future enhancement */
   }
+
+  /* Unified hover styles for consistent UX */
+
+  /* Simple text link - hover changes text color only */
+  .link-hover {
+    @apply text-muted-foreground transition-colors hover:text-primary;
+  }
+
+  /* Navigation item with background hover - consistent with AdminSidebar active state */
+  .nav-hover {
+    @apply text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary;
+  }
 }

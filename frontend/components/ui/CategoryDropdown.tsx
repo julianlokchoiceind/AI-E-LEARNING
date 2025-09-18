@@ -1,17 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import { useCoursesQuery } from '@/hooks/queries/useCourses';
 
 interface CategoryDropdownProps {
   onClose: () => void;
+  buttonRef: React.RefObject<HTMLButtonElement>;
 }
 
-export function CategoryDropdown({ onClose }: CategoryDropdownProps) {
+export function CategoryDropdown({ onClose, buttonRef }: CategoryDropdownProps) {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [position, setPosition] = useState({ left: 0, top: 64 });
   const router = useRouter();
 
   const categories = [
@@ -33,6 +34,17 @@ export function CategoryDropdown({ onClose }: CategoryDropdownProps) {
 
   const courses = coursesData?.data?.courses || [];
 
+  // Calculate position based on button position
+  useEffect(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPosition({
+        left: rect.left,
+        top: 64 // Header height
+      });
+    }
+  }, [buttonRef]);
+
   const handleCategoryClick = (slug: string) => {
     router.push(`/courses?category=${slug}`);
     onClose();
@@ -43,15 +55,15 @@ export function CategoryDropdown({ onClose }: CategoryDropdownProps) {
     onClose();
   };
 
-  const handleViewAllClick = () => {
-    router.push('/courses');
-    onClose();
-  };
 
   return (
     <div
-      className="category-dropdown absolute left-0 mt-2 bg-card rounded-lg shadow-lg border border-border z-50 flex"
+      className="category-dropdown fixed bg-card shadow-lg border border-border rounded-lg z-50 flex"
       onMouseLeave={onClose}
+      style={{
+        left: position.left,
+        top: position.top
+      }}
     >
       {/* Categories Column */}
       <div className="w-[220px] border-r border-border">
@@ -60,74 +72,35 @@ export function CategoryDropdown({ onClose }: CategoryDropdownProps) {
             key={cat.slug}
             onMouseEnter={() => setHoveredCategory(cat.slug)}
             onClick={() => handleCategoryClick(cat.slug)}
-            className={`w-full text-left px-4 py-3 hover:bg-accent transition-colors flex items-center justify-between ${
-              hoveredCategory === cat.slug ? 'bg-accent' : ''
+            className={`w-full text-left px-4 py-3 nav-hover transition-colors flex items-center justify-between ${
+              hoveredCategory === cat.slug ? 'bg-primary/10 text-primary' : ''
             }`}
           >
-            <span className="font-medium text-foreground">{cat.name}</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">{cat.name}</span>
+            <ChevronRight className="h-4 w-4" />
           </button>
         ))}
-
-        {/* View All Courses */}
-        <div className="border-t border-border">
-          <button
-            onClick={handleViewAllClick}
-            className="block w-full px-4 py-3 text-center text-primary hover:bg-accent transition-colors font-medium"
-          >
-            View All Courses →
-          </button>
-        </div>
       </div>
 
-      {/* Courses Column - Show on hover */}
-      {hoveredCategory && (
-        <div className="w-[320px] p-4">
-          {courses.length > 0 ? (
-            <>
-              <div className="text-sm text-muted-foreground mb-3">
-                Courses in {categories.find(c => c.slug === hoveredCategory)?.name}
-              </div>
+      {/* Courses Column - Show on hover only when courses exist */}
+      {hoveredCategory && courses.length > 0 && (
+        <div className="w-[320px] border-r border-border">
+          {courses.map((course: any) => (
+            <button
+              key={course.id}
+              onMouseDown={() => handleCourseClick(course.id)}
+              className="w-full text-left px-4 py-3 nav-hover transition-colors"
+            >
+              <span className="font-medium">{course.title}</span>
+            </button>
+          ))}
 
-              <div className="space-y-1">
-                {courses.map((course: any) => (
-                  <button
-                    key={course.id}
-                    onClick={() => handleCourseClick(course.id)}
-                    className="block w-full text-left p-2 rounded hover:bg-accent transition-colors"
-                  >
-                    <div className="font-medium text-sm text-foreground line-clamp-1">
-                      {course.title}
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span>{course.lessons_count || 0} lessons</span>
-                      <span className="text-primary font-medium">
-                        {course.is_free ? 'Free' : `$${course.price}`}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* View all in category */}
-              <button
-                onClick={() => handleCategoryClick(hoveredCategory)}
-                className="block w-full mt-3 pt-3 border-t border-border text-center text-sm text-primary hover:text-primary/80"
-              >
-                View all →
-              </button>
-            </>
-          ) : (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              <p>No courses yet</p>
-              <button
-                onClick={handleViewAllClick}
-                className="text-primary hover:text-primary/80 mt-2 inline-block"
-              >
-                Browse all courses →
-              </button>
-            </div>
-          )}
+          <button
+            onMouseDown={() => handleCategoryClick(hoveredCategory)}
+            className="w-full text-left px-4 py-3 nav-hover transition-colors"
+          >
+            <span className="font-medium">View all →</span>
+          </button>
         </div>
       )}
     </div>

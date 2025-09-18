@@ -86,7 +86,7 @@ export function MobileInput({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground touch-target"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 link-hover touch-target"
             aria-label="Clear input"
           >
             <X className="w-4 h-4" />
@@ -98,7 +98,7 @@ export function MobileInput({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground touch-target"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 link-hover touch-target"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
