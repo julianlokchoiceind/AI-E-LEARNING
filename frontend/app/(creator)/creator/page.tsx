@@ -119,7 +119,6 @@ const CreatorDashboard = () => {
     
     try {
       await refetchCourses();
-      console.log('Dashboard refreshed'); // Success feedback removed
     } catch (error) {
       console.error('Dashboard refresh error:', error);
     }

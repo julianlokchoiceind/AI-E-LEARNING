@@ -22,6 +22,14 @@ export default function LoginPage() {
   const { message, showSuccess, showError, clear } = useInlineMessage('login-form')
 
   useEffect(() => {
+    // Check for error messages in URL params
+    const error = searchParams.get('error')
+    if (error === 'AccessDenied') {
+      showError('Your account has been deactivated')
+    } else if (error) {
+      showError('Login failed. Please try again.')
+    }
+
     // Check for success messages in URL params
     if (searchParams.get('registered') === 'true') {
       showSuccess('Registration successful! Please check your email to verify your account before logging in.')
@@ -35,7 +43,7 @@ export default function LoginPage() {
     if (searchParams.get('message') === 'already_verified') {
       showSuccess('Your email has already been verified. You can log in to your account.')
     }
-  }, [searchParams, showSuccess])
+  }, [searchParams, showSuccess, showError])
 
   // Field validation function
   const validateForm = (): boolean => {

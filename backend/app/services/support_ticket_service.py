@@ -561,7 +561,7 @@ class SupportTicketService:
             )
         except Exception as e:
             # Log error but don't fail the ticket creation
-            print(f"Failed to send support team notification: {str(e)}")
+            logger.error(f"Failed to send support team notification: {str(e)}")
             pass
 
     async def _notify_ticket_update(self, ticket: SupportTicket, updated_by: User):
@@ -596,7 +596,7 @@ class SupportTicketService:
                 
         except Exception as e:
             # Log error but don't fail the message creation
-            print(f"Failed to send message notification: {str(e)}")
+            logger.error(f"Failed to send message notification: {str(e)}")
             pass
 
     async def add_attachment(

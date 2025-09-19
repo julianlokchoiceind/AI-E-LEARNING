@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 import logging
 from motor.motor_asyncio import AsyncIOMotorClient
+from jose import jwt, JWTError
 
 from app.core.config import settings
 from app.core.database import get_database
@@ -59,25 +60,47 @@ class TokenBlacklistService:
     
     async def is_token_blacklisted(self, token: str) -> bool:
         """
-        Check if a token is blacklisted
-        
+        Check if a token is blacklisted (specific token OR user blanket)
+
         Args:
             token: JWT token to check
-            
+
         Returns:
             bool: True if token is blacklisted
         """
         try:
             db = get_database()
-            
-            # Check if token exists in blacklist
-            blacklist_entry = await db[self.collection_name].find_one({
+
+            # Check specific token blacklist
+            if await db[self.collection_name].find_one({
                 "token": token,
-                "expires_at": {"$gt": datetime.utcnow()}  # Only check non-expired tokens
-            })
-            
-            return blacklist_entry is not None
-            
+                "expires_at": {"$gt": datetime.utcnow()}
+            }):
+                return True
+
+            # Decode token to check user blanket blacklist
+            try:
+                payload = jwt.decode(
+                    token,
+                    settings.JWT_SECRET,
+                    algorithms=[settings.JWT_ALGORITHM],
+                    options={"verify_exp": False}  # Don't verify expiry, just get user_id
+                )
+                user_id = payload.get("sub")
+
+                if user_id and await db[self.collection_name].find_one({
+                    "user_id": user_id,
+                    "all_tokens": True,
+                    "expires_at": {"$gt": datetime.utcnow()}
+                }):
+                    logger.info(f"Token blocked by blanket blacklist for user {user_id}")
+                    return True
+
+            except JWTError:
+                pass  # Can't decode = can't check user blacklist
+
+            return False
+
         except Exception as e:
             logger.error(f"Error checking token blacklist: {str(e)}")
             # On error, assume token is valid to avoid blocking users

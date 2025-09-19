@@ -49,7 +49,14 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
+    # Check if user is deactivated (auto-logout for security)
+    if user.status == "deactivated":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been deactivated"
+        )
+
     return user
 
 

@@ -29,13 +29,17 @@ import {
   Edit,
   Trash2,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  UserX,
+  UserCheck
 } from 'lucide-react';
 import { getRoleVariant } from '@/lib/utils/badge-helpers';
 
 // Dumb Frontend: Simple color mapping using predefined global CSS classes
 const getStatusColor = (status_display: string): string => {
   switch (status_display) {
+    case 'Deactivated':
+      return 'text-[hsl(var(--destructive))]'; // Deactivated = red (from globals.css)
     case 'Administrator':
       return 'text-[hsl(var(--badge-admin))]'; // Admin = red (from globals.css)
     case 'Content Creator':
@@ -55,6 +59,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  status: string; // User status: active or deactivated
   premium_status: boolean;
   subscription?: {
     type: string;
@@ -69,6 +74,7 @@ interface User {
   };
   // Smart Backend provided fields
   status_display: string;
+  activity_status: string; // Active or Deactivated display
 }
 
 export default function UserManagement() {
@@ -83,6 +89,9 @@ export default function UserManagement() {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [processingUserId, setProcessingUserId] = useState<string | null>(null);
+  const [processingDeactivateUserId, setProcessingDeactivateUserId] = useState<string | null>(null);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [userToDeactivate, setUserToDeactivate] = useState<{id: string, name: string} | null>(null);
 
   // Auth hook for current user info
   const { user: currentUser } = useAuth();
@@ -96,6 +105,16 @@ export default function UserManagement() {
 
     // Only super admin can delete other admins
     if (targetUser.role === "admin" && currentUser?.email !== SUPER_ADMIN) return false;
+
+    return true;
+  };
+
+  // Super admin protection for deactivate (same logic as delete)
+  const canDeactivateUser = (targetUser: any) => {
+    const SUPER_ADMIN = "julian.lok88@icloud.com";
+
+    // Nobody can deactivate super admin
+    if (targetUser.email === SUPER_ADMIN) return false;
 
     return true;
   };
@@ -205,6 +224,45 @@ export default function UserManagement() {
     } finally {
       setProcessingUserId(null);
     }
+  };
+
+  const handleDeactivateUser = (user: {id: string, name: string}) => {
+    setUserToDeactivate(user);
+    setShowDeactivateModal(true);
+  };
+
+  const confirmDeactivation = () => {
+    if (userToDeactivate) {
+      setProcessingDeactivateUserId(userToDeactivate.id);
+      bulkUserMutation({ action: 'deactivate', userIds: [userToDeactivate.id] }, {
+        onSuccess: () => {
+          setProcessingDeactivateUserId(null);
+          setShowDeactivateModal(false);
+          setUserToDeactivate(null);
+          // React Query will automatically invalidate and refetch users
+        },
+        onError: () => {
+          setProcessingDeactivateUserId(null);
+          setShowDeactivateModal(false);
+          setUserToDeactivate(null);
+          // Error toast is handled automatically by useApiMutation
+        }
+      });
+    }
+  };
+
+  const handleReactivateUser = (userId: string) => {
+    setProcessingDeactivateUserId(userId);
+    bulkUserMutation({ action: 'reactivate', userIds: [userId] }, {
+      onSuccess: () => {
+        setProcessingDeactivateUserId(null);
+        // React Query will automatically invalidate and refetch users
+      },
+      onError: () => {
+        setProcessingDeactivateUserId(null);
+        // Error toast is handled automatically by useApiMutation
+      }
+    });
   };
 
   const handleSelectAll = () => {
@@ -497,8 +555,15 @@ export default function UserManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm">
-                        <div className={`font-medium ${getStatusColor(user.status_display)}`}>
+                        <div className={`font-medium ${
+                          user.role === 'admin' ? 'text-destructive' :
+                          user.premium_status ? 'text-warning' :
+                          'text-muted-foreground'
+                        }`}>
                           {user.status_display}
+                        </div>
+                        <div className={`text-xs ${user.activity_status === 'Deactivated' ? 'text-destructive' : 'text-success'}`}>
+                          {user.activity_status}
                         </div>
                       </div>
                     </td>
@@ -538,7 +603,32 @@ export default function UserManagement() {
                         >
                           <Crown className={`h-4 w-4 ${user.premium_status ? 'text-warning' : 'text-muted-foreground'}`} />
                         </Button>
-                        
+
+                        {/* Deactivate/Reactivate Button */}
+                        {canDeactivateUser(user) && (
+                          user.status === 'deactivated' ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleReactivateUser(user.id)}
+                              loading={processingDeactivateUserId === user.id}
+                              className="text-success hover:bg-success/10"
+                            >
+                              <UserCheck className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeactivateUser({id: user.id, name: user.name})}
+                              loading={processingDeactivateUserId === user.id}
+                              className="text-warning hover:bg-warning/10"
+                            >
+                              <UserX className="h-4 w-4" />
+                            </Button>
+                          )
+                        )}
+
                         {canDeleteUser(user) && (
                           <Button
                             size="sm"
@@ -768,6 +858,46 @@ export default function UserManagement() {
         </Modal>
       )}
     </div>
+
+    {/* Deactivation Confirmation Modal */}
+    {showDeactivateModal && userToDeactivate && (
+      <Modal
+        isOpen={showDeactivateModal}
+        onClose={() => {
+          setShowDeactivateModal(false);
+          setUserToDeactivate(null);
+        }}
+        title="Confirm Deactivation"
+      >
+        <div className="space-y-4">
+          <p>
+            Are you sure you want to deactivate <strong>{userToDeactivate.name}</strong>?
+          </p>
+          <p className="text-sm text-muted-foreground">
+            The user will be logged out and unable to access the platform until reactivated.
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeactivateModal(false);
+                setUserToDeactivate(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmDeactivation}
+              loading={processingDeactivateUserId === userToDeactivate.id}
+            >
+              Deactivate
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    )}
+
     </Container>
   );
 }

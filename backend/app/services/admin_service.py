@@ -8,7 +8,7 @@ from beanie import PydanticObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.database import get_database
 from app.models.course import Course, CourseStatus
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, UserStatus
 from app.core.exceptions import NotFoundException, ForbiddenException
 from app.schemas.admin import (
     CourseApprovalResponse,
@@ -18,6 +18,7 @@ from app.schemas.admin import (
     BulkApprovalResult
 )
 from app.core.email import EmailService as email_service
+from app.services.token_blacklist_service import token_blacklist_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -546,11 +547,15 @@ class AdminService:
     def get_user_status_display(user: Dict[str, Any]) -> str:
         """
         Smart Backend: Calculate exact display text for user status.
-        Follows hierarchy: Role > Premium > Subscription > Free
+        Follows hierarchy: Deactivated > Role > Premium > Subscription > Free
         """
+        # Deactivated status (highest priority)
+        if user.get("status") == "deactivated":
+            return "Deactivated"
+
         role = user.get("role")
 
-        # Role-based status (highest priority)
+        # Role-based status (highest priority after deactivated)
         if role == "admin":
             return "Administrator"
         elif role == "creator":
@@ -604,13 +609,16 @@ class AdminService:
                     "name": user["name"],
                     "email": user["email"],
                     "role": user["role"],
+                    "status": user.get("status", "active"),
                     "premium_status": user.get("premium_status", False),
                     "subscription": user.get("subscription"),
                     "created_at": user["created_at"],
                     "last_login": user.get("last_login"),
                     "stats": user.get("stats"),
                     # Smart Backend: Pre-calculated status for Dumb Frontend
-                    "status_display": AdminService.get_user_status_display(user)
+                    "status_display": AdminService.get_user_status_display(user),
+                    # Additional field for active/deactivated display
+                    "activity_status": "Deactivated" if user.get("status") == "deactivated" else "Active"
                 }
                 formatted_users.append(user_data)
 
@@ -748,66 +756,78 @@ class AdminService:
                     "message": "Only super administrator can delete admin accounts"
                 }
 
+            # Check if user has active enrollments (mirroring course deletion pattern)
+            enrollment_count = 0
+
+            # Try string format first
+            enrollment_count += await db.enrollments.count_documents({
+                "user_id": user_id,
+                "is_active": True
+            })
+
+            # Try ObjectId format
+            try:
+                enrollment_count += await db.enrollments.count_documents({
+                    "user_id": ObjectId(user_id),
+                    "is_active": True
+                })
+            except:
+                pass
+
+            if enrollment_count > 0:
+                # Deactivate instead of delete when has enrollments (mirroring course archive)
+                logger.info(f"📦 DEACTIVATE USER: User has {enrollment_count} enrollments - deactivating instead of deleting")
+                result = await db.users.update_one(
+                    {"_id": ObjectId(user_id)},
+                    {"$set": {"status": UserStatus.DEACTIVATED.value, "updated_at": datetime.now(timezone.utc)}}
+                )
+
+                if result.modified_count == 0:
+                    return {
+                        "success": False,
+                        "message": "Failed to deactivate user"
+                    }
+
+                # Blacklist all tokens for deactivated user
+                await token_blacklist_service.blacklist_all_user_tokens(str(user_id))
+                logger.info(f"🔒 Blacklisted all tokens for deactivated user: {user_id}")
+
+                logger.info(f"✅ DEACTIVATE USER: Successfully deactivated user {user_id}")
+                return {
+                    "success": True,
+                    "action": "deactivated",
+                    "message": f"User account deactivated ({enrollment_count} active enrollments)",
+                    "user_id": user_id
+                }
+
+            # Hard delete when no enrollments (existing behavior)
             # Transfer course ownership if creator (before deleting user)
             if user["role"] == "creator":
                 await db.courses.update_many(
                     {"creator_id": ObjectId(user_id)},
                     {"$set": {"creator_id": admin.id, "creator_name": "Platform Admin"}}
                 )
-            
-            # Hard delete all user-related data
+
             # Delete user progress records - try both formats
             await db.progress.delete_many({"user_id": user_id})
             await db.progress.delete_many({"user_id": ObjectId(user_id)})
-            
-            # Find enrollments - try both formats for compatibility
-            user_enrollments = []
-            
-            # Try string format
-            enrollments_str = await db.enrollments.find({
-                "user_id": user_id,
-                "is_active": True
-            }).to_list(None)
-            user_enrollments.extend(enrollments_str)
-            
-            # Try ObjectId format
-            try:
-                enrollments_obj = await db.enrollments.find({
-                    "user_id": ObjectId(user_id),
-                    "is_active": True
-                }).to_list(None)
-                user_enrollments.extend(enrollments_obj)
-            except:
-                pass
-            
-            # Update course stats for each enrollment
-            for enrollment in user_enrollments:
-                await db.courses.update_one(
-                    {"_id": ObjectId(enrollment["course_id"])},
-                    {"$inc": {
-                        "stats.active_students": -1,
-                        "stats.total_enrollments": -1
-                    }}
-                )
-            
-            # Delete all enrollments - try both formats
+
+            # Delete all enrollments - try both formats (should be empty at this point)
             await db.enrollments.delete_many({"user_id": user_id})
             await db.enrollments.delete_many({"user_id": ObjectId(user_id)})
-            
-            # Delete user payment records (keep for audit - optional)
-            # await db.payments.delete_many({"user_id": user_id})
-            
+
             # Delete the user account itself
             result = await db.users.delete_one({"_id": ObjectId(user_id)})
-            
+
             if result.deleted_count == 0:
                 return {
                     "success": False,
                     "message": "Failed to delete user from database"
                 }
-            
+
             return {
                 "success": True,
+                "action": "deleted",
                 "message": "User account permanently deleted",
                 "user_id": user_id
             }
@@ -827,9 +847,9 @@ class AdminService:
             if action == "delete":
                 # BULK DELETE with individual validation for super admin protection
                 SUPER_ADMIN = "julian.lok88@icloud.com"
-                from bson import ObjectId
 
-                successful = []
+                deleted = []
+                deactivated = []
                 failed = []
 
                 for user_id in user_ids:
@@ -868,7 +888,10 @@ class AdminService:
                         # Use individual delete function for consistent logic
                         result = await AdminService.delete_user(user_id, admin)
                         if result["success"]:
-                            successful.append(user_id)
+                            if result.get("action") == "deactivated":
+                                deactivated.append(user_id)
+                            else:
+                                deleted.append(user_id)
                         else:
                             failed.append({
                                 "user_id": user_id,
@@ -881,22 +904,35 @@ class AdminService:
                             "error": f"Invalid user ID or error: {str(e)}"
                         })
 
-                total_processed = len(successful)
+                total_processed = len(deleted) + len(deactivated)
                 has_failures = len(failed) > 0
 
                 if total_processed == 0 and has_failures:
                     return {
                         "success": False,
-                        "message": "All deletions failed",
-                        "successful": successful,
+                        "message": "All operations failed",
+                        "deleted": deleted,
+                        "deactivated": deactivated,
                         "failed": failed,
                         "total_processed": total_processed
                     }
                 else:
+                    # Build message parts (mirroring course bulk delete pattern)
+                    message_parts = []
+                    if len(deleted) > 0:
+                        message_parts.append(f"{len(deleted)} deleted")
+                    if len(deactivated) > 0:
+                        message_parts.append(f"{len(deactivated)} deactivated")
+                    if len(failed) > 0:
+                        message_parts.append(f"{len(failed)} failed")
+
+                    message = ", ".join(message_parts) if message_parts else "No operations performed"
+
                     return {
                         "success": True,
-                        "message": f"Deleted {len(successful)} users successfully",
-                        "successful": successful,
+                        "message": message,
+                        "deleted": deleted,
+                        "deactivated": deactivated,
                         "failed": failed,
                         "total_processed": total_processed
                     }
@@ -909,12 +945,53 @@ class AdminService:
                     try:
                         if action == "update_role" and data and "role" in data:
                             await AdminService.update_user_role(user_id, data["role"], admin)
+                            successful.append(user_id)
                         elif action == "toggle_premium" and data and "premium" in data:
                             await AdminService.update_user_premium_status(user_id, data["premium"], admin)
+                            successful.append(user_id)
+                        elif action == "deactivate":
+                            # Check super admin protection
+                            db = get_database()
+                            user = await db.users.find_one({"_id": ObjectId(user_id)})
+                            if user and user["email"] == "julian.lok88@icloud.com":
+                                raise ValueError("Cannot deactivate super administrator account")
+
+                            # Deactivate user regardless of enrollments
+                            await db.users.update_one(
+                                {"_id": ObjectId(user_id)},
+                                {"$set": {"status": UserStatus.DEACTIVATED.value, "updated_at": datetime.now(timezone.utc)}}
+                            )
+
+                            # Blacklist all tokens for deactivated user
+                            await token_blacklist_service.blacklist_all_user_tokens(str(user_id))
+                            logger.info(f"🔒 Blacklisted all tokens for deactivated user: {user_id}")
+
+                            successful.append(user_id)
+                        elif action == "reactivate":
+                            # Check super admin protection
+                            db = get_database()
+                            user = await db.users.find_one({"_id": ObjectId(user_id)})
+                            if user and user["email"] == "julian.lok88@icloud.com":
+                                raise ValueError("Cannot reactivate super administrator account")
+
+                            # Reactivate user
+                            await db.users.update_one(
+                                {"_id": ObjectId(user_id)},
+                                {"$set": {"status": UserStatus.ACTIVE.value, "updated_at": datetime.now(timezone.utc)}}
+                            )
+
+                            # Clear blacklist entries for reactivated user
+                            result = await db.blacklisted_tokens.delete_many({
+                                "user_id": str(user_id),
+                                "all_tokens": True
+                            })
+                            logger.info(f"🔓 Removed {result.deleted_count} blacklist entries for reactivated user: {user_id}")
+
+                            successful.append(user_id)
                         else:
                             raise ValueError(f"Invalid action or missing data: {action}")
 
-                        successful.append(user_id)
+                        # Note: successful.append(user_id) is now handled within each action branch
                     except Exception as e:
                         failed.append({"user_id": user_id, "error": str(e)})
 

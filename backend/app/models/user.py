@@ -11,8 +11,13 @@ from enum import Enum
 
 class UserRole(str, Enum):
     STUDENT = "student"
-    CREATOR = "creator" 
+    CREATOR = "creator"
     ADMIN = "admin"
+
+
+class UserStatus(str, Enum):
+    ACTIVE = "active"
+    DEACTIVATED = "deactivated"
 
 
 class SubscriptionType(str, Enum):
@@ -126,6 +131,7 @@ class User(Document):
     
     # Role and access
     role: UserRole = UserRole.STUDENT
+    status: UserStatus = UserStatus.ACTIVE
     premium_status: bool = False
     is_verified: bool = False
     
@@ -160,6 +166,7 @@ class User(Document):
         indexes = [
             "email",
             "role",
+            "status",
             "premium_status",
             "subscription.status",
             "created_at"

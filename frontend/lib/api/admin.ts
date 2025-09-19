@@ -303,7 +303,7 @@ export const deleteUser = async (userId: string): Promise<StandardResponse<any>>
  * Bulk user actions - Following FAQ pattern
  */
 export interface UserBulkAction {
-  action: 'delete' | 'update_role' | 'toggle_premium';
+  action: 'delete' | 'update_role' | 'toggle_premium' | 'deactivate' | 'reactivate';
   user_ids: string[];
   data?: any;
 }
@@ -705,10 +705,50 @@ export const getSystemHealth = async (): Promise<StandardResponse<any>> => {
       '/admin/system/health',
       { requireAuth: true }
     );
-    
+
     return response;
   } catch (error) {
     console.error('Get system health failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * Deactivate a user
+ */
+export const deactivateUser = async (userId: string): Promise<StandardResponse<any>> => {
+  try {
+    const response = await api.post<StandardResponse<any>>(
+      '/admin/users/bulk-action',
+      {
+        user_ids: [userId],
+        action: 'deactivate'
+      },
+      { requireAuth: true }
+    );
+    return response;
+  } catch (error) {
+    console.error('Deactivate user failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * Reactivate a user
+ */
+export const reactivateUser = async (userId: string): Promise<StandardResponse<any>> => {
+  try {
+    const response = await api.post<StandardResponse<any>>(
+      '/admin/users/bulk-action',
+      {
+        user_ids: [userId],
+        action: 'reactivate'
+      },
+      { requireAuth: true }
+    );
+    return response;
+  } catch (error) {
+    console.error('Reactivate user failed:', error);
     throw error;
   }
 };

@@ -69,7 +69,7 @@ class LearnService:
                         lesson_obj_id = PydanticObjectId(next_lesson_id)
                         lesson = await Lesson.get(lesson_obj_id)
                         lesson_id = next_lesson_id  # Update lesson_id for rest of the flow
-                        print(f"Info: Redirected from deleted lesson to {next_lesson_id}")
+                        logger.info(f"Redirected from deleted lesson to {next_lesson_id}")
                     else:
                         # No incomplete lessons found, get first lesson of course
                         first_chapter = await Chapter.find_one(
@@ -84,7 +84,7 @@ class LearnService:
                             if first_lesson:
                                 lesson = first_lesson
                                 lesson_id = str(first_lesson.id)
-                                print(f"Info: Redirected to first lesson {lesson_id}")
+                                logger.info(f"Redirected to first lesson {lesson_id}")
             
             # If still no lesson found, raise error
             if not lesson:
@@ -116,10 +116,10 @@ class LearnService:
             
             # Handle fetch errors gracefully
             if isinstance(chapters_data, Exception):
-                print(f"Warning: Failed to fetch chapters: {chapters_data}")
+                logger.warning(f"Failed to fetch chapters: {chapters_data}")
                 chapters_data = []
             if isinstance(user_data, Exception):
-                print(f"Warning: Failed to fetch user data: {user_data}")
+                logger.warning(f"Failed to fetch user data: {user_data}")
                 user_data = LearnService._create_guest_data()
             
             # Phase 3: Data serialization and enrichment
@@ -254,7 +254,7 @@ class LearnService:
                 
             except Exception as e:
                 # Skip problematic progress entries
-                print(f"Warning: Skipped progress entry due to error: {e}")
+                logger.warning(f"Skipped progress entry due to error: {e}")
                 continue
         
         return {
@@ -635,7 +635,7 @@ class LearnService:
                         return enrollment.progress.current_lesson_id
             except Exception as e:
                 # Invalid lesson ID or other error, fallback to finding next lesson
-                print(f"Warning: Current lesson {enrollment.progress.current_lesson_id} not found: {e}")
+                logger.warning(f"Current lesson {enrollment.progress.current_lesson_id} not found: {e}")
         
         # Current lesson is completed, deleted, or no current lesson - find next incomplete
         return await LearnService._find_first_incomplete_lesson(course_id, user_id)

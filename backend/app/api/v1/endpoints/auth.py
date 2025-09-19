@@ -202,6 +202,14 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Please verify your email before logging in"
             )
+
+        # Check if user is deactivated
+        if user.get("status") == "deactivated":
+            logger.warning(f"🚫 Deactivated user login attempt: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your account has been deactivated"
+            )
         
         # Update last login time
         logger.info(f"📅 Updating last login time for: {form_data.username}")
@@ -413,6 +421,14 @@ async def oauth_login(request: Request, oauth_data: OAuthUserCreate) -> Standard
             logger.error(f"Failed to send welcome email to OAuth user: {str(e)}")
             # Don't fail OAuth registration if email sending fails
     else:
+        # Check if existing user is deactivated
+        if user.get("status") == "deactivated":
+            logger.warning(f"🚫 Deactivated user OAuth login attempt: {oauth_data.email}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your account has been deactivated"
+            )
+
         # Update existing user OAuth info
         await db.users.update_one(
             {"_id": user["_id"]},

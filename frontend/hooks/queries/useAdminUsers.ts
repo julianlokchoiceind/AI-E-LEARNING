@@ -153,7 +153,7 @@ export function useUserSearchQuery(query: string, filters: Omit<AdminUsersFilter
  */
 export function useBulkUserActions() {
   return useApiMutation(
-    async ({ action, userIds, data }: { action: 'delete' | 'update_role' | 'toggle_premium'; userIds: string[]; data?: any }) => {
+    async ({ action, userIds, data }: { action: 'delete' | 'update_role' | 'toggle_premium' | 'deactivate' | 'reactivate'; userIds: string[]; data?: any }) => {
       // Filter out any undefined/null IDs to prevent errors
       const validUserIds = userIds.filter(id => id && typeof id === 'string' && id.trim() !== '');
 
@@ -170,7 +170,7 @@ export function useBulkUserActions() {
     {
       operationName: 'bulk-user-action',
       invalidateQueries: [
-        ['admin-users'], // Refresh admin user list
+        ['admin-users'], // Refresh ALL admin-users queries regardless of filters
       ],
     }
   );
