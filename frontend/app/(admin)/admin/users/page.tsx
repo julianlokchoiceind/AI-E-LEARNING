@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
 import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
 import { Container } from '@/components/ui/Container';
+import { useAuth } from '@/hooks/useAuth';
 import {
   useAdminUsersQuery,
   useToggleUserPremium,
@@ -82,7 +83,23 @@ export default function UserManagement() {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [processingUserId, setProcessingUserId] = useState<string | null>(null);
-  
+
+  // Auth hook for current user info
+  const { user: currentUser } = useAuth();
+
+  // Super admin permission logic
+  const canDeleteUser = (targetUser: any) => {
+    const SUPER_ADMIN = "julian.lok88@icloud.com";
+
+    // Nobody can delete super admin
+    if (targetUser.email === SUPER_ADMIN) return false;
+
+    // Only super admin can delete other admins
+    if (targetUser.role === "admin" && currentUser?.email !== SUPER_ADMIN) return false;
+
+    return true;
+  };
+
   // React Query hooks for data fetching and mutations  
   const { 
     data: usersData, 
@@ -522,7 +539,7 @@ export default function UserManagement() {
                           <Crown className={`h-4 w-4 ${user.premium_status ? 'text-warning' : 'text-muted-foreground'}`} />
                         </Button>
                         
-                        {user.role !== 'admin' && (
+                        {canDeleteUser(user) && (
                           <Button
                             size="sm"
                             variant="ghost"

@@ -22,7 +22,8 @@ import {
   rejectCourse,
   toggleCourseFree,
   bulkCourseAction,
-  getAdminStatistics
+  getAdminStatistics,
+  updateCourseStatus
 } from '@/lib/api/admin';
 import { getCourseAnalytics } from '@/lib/api/analytics';
 import { 
@@ -319,6 +320,28 @@ export function useApproveCourse() {
     (courseId: string) => approveCourse(courseId),
     {
       operationName: 'approve-course',
+      invalidateQueries: [
+        ['admin-courses'],        // Refresh all admin course queries (with pagination)
+        ['admin-course-statistics'], // Refresh statistics for Quick Stats
+        ['courses'],              // Update public catalog
+        ['course'],               // Update course details
+        ['featured-courses'],     // Update featured content
+        ['course-search'],        // Update search results
+        ['creator-courses'],      // Update creator dashboard
+      ],
+    }
+  );
+}
+
+/**
+ * Mutation for updating course status
+ * Used for publish/unpublish archived courses
+ */
+export function useUpdateCourseStatus() {
+  return useApiMutation(
+    ({ courseId, status }: { courseId: string; status: string }) => updateCourseStatus(courseId, status),
+    {
+      operationName: 'update-course-status',
       invalidateQueries: [
         ['admin-courses'],        // Refresh all admin course queries (with pagination)
         ['admin-course-statistics'], // Refresh statistics for Quick Stats

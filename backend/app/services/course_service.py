@@ -470,8 +470,12 @@ class CourseService:
         logger.info(f"🗑️ DELETE COURSE: Found {enrollment_count} active enrollments")
         
         if enrollment_count > 0:
-            logger.error(f"🚨 DELETE COURSE: Cannot delete - {enrollment_count} active enrollments exist")
-            raise BadRequestException(f"Cannot delete - {enrollment_count} students enrolled")
+            # Archive instead of delete when has enrollments
+            logger.info(f"📦 ARCHIVE COURSE: Course has {enrollment_count} enrollments - archiving instead of deleting")
+            course.status = CourseStatus.ARCHIVED
+            await course.save()
+            logger.info(f"✅ ARCHIVE COURSE: Successfully archived course {course_id}")
+            return {"action": "archived", "message": f"Course archived ({enrollment_count} students enrolled)"}
         
         # Cascade delete: Remove all related data first
         logger.info(f"🗑️ DELETE COURSE: Starting cascade deletion for course {course_id}")

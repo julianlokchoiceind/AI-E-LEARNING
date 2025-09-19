@@ -159,10 +159,28 @@ export const approveCourse = async (courseId: string): Promise<StandardResponse<
       {},
       { requireAuth: true }
     );
-    
+
     return response;
   } catch (error) {
     console.error('Approve course failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update course status
+ */
+export const updateCourseStatus = async (courseId: string, status: string): Promise<StandardResponse<any>> => {
+  try {
+    const response = await api.put<StandardResponse<any>>(
+      `/admin/courses/${courseId}/status?status=${encodeURIComponent(status)}`,
+      {},
+      { requireAuth: true }
+    );
+
+    return response;
+  } catch (error) {
+    console.error('Update course status failed:', error);
     throw error;
   }
 };

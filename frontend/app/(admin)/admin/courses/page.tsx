@@ -11,7 +11,6 @@ import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText }
 import { Container } from '@/components/ui/Container';
 import { StandardResponse } from '@/lib/types/api';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
-import { ToastService } from '@/lib/toast/ToastService';
 import {
   useAdminCoursesQuery,
   useApproveCourse,
@@ -20,7 +19,8 @@ import {
   useDeleteCourseAdmin as useDeleteCourse,
   useCreateCourse,
   useAdminStatistics,
-  useBulkCourseActions
+  useBulkCourseActions,
+  useUpdateCourseStatus
 } from '@/hooks/queries/useCourses';
 import { Pagination } from '@/components/ui/Pagination';
 import { 
@@ -39,7 +39,8 @@ import {
   CheckCircle,
   Gift,
   Edit3,
-  Trash2
+  Trash2,
+  Upload
 } from 'lucide-react';
 import { getLevelColorClass } from '@/lib/utils/badge-helpers';
 
@@ -117,6 +118,7 @@ export default function CourseApproval() {
   const { mutate: deleteCourseAction, loading: deleteLoading } = useDeleteCourse();
   const { mutate: createCourseAction, loading: createLoading } = useCreateCourse();
   const { mutate: bulkCourseMutation, loading: bulkLoading } = useBulkCourseActions();
+  const { mutate: updateCourseStatusAction } = useUpdateCourseStatus();
   
   // Individual loading state tracking (following Support page pattern)
   // Global actionLoading removed to prevent all rows showing spinners
@@ -138,6 +140,20 @@ export default function CourseApproval() {
     try {
       setProcessingCourseId(courseId);
       await approveCourse(courseId);
+    } catch (error: any) {
+      // Error toast is handled automatically by useApiMutation
+    } finally {
+      setProcessingCourseId(null);
+    }
+  };
+
+  const handlePublishCourse = async (course: Course) => {
+    const courseId = course.id;
+    if (!courseId) return;
+
+    try {
+      setProcessingCourseId(courseId);
+      await updateCourseStatusAction({ courseId, status: 'published' });
     } catch (error: any) {
       // Error toast is handled automatically by useApiMutation
     } finally {
@@ -250,10 +266,13 @@ export default function CourseApproval() {
   };
 
   const handleSelectAll = () => {
-    if (selectedCourses.size === courses.length) {
+    // Only select non-archived courses
+    const selectableCourses = courses.filter((c: Course) => c.status !== 'archived');
+
+    if (selectedCourses.size === selectableCourses.length) {
       setSelectedCourses(new Set());
     } else {
-      const courseIds = courses.map((c: Course) => c.id || c._id).filter(Boolean) as string[];
+      const courseIds = selectableCourses.map((c: Course) => c.id || c._id).filter(Boolean) as string[];
       setSelectedCourses(new Set(courseIds));
     }
   };
@@ -278,11 +297,7 @@ export default function CourseApproval() {
       onSuccess: (response) => {
         setSelectedCourses(new Set());
         setShowBulkDeleteModal(false);
-
-        // Show error toast if some courses failed to delete
-        if (response.data?.failed?.length > 0) {
-          ToastService.error(response.message);
-        }
+        // Success toast automatically handled by useApiMutation
       },
       onError: (error: any) => {
         // Keep modal open on complete failure
@@ -569,7 +584,7 @@ export default function CourseApproval() {
                   <th className="px-4 py-3">
                     <input
                       type="checkbox"
-                      checked={selectedCourses.size === courses.length && courses.length > 0}
+                      checked={selectedCourses.size === courses.filter(c => c.status !== 'archived').length && courses.filter(c => c.status !== 'archived').length > 0}
                       onChange={handleSelectAll}
                       className="rounded"
                     />
@@ -602,9 +617,11 @@ export default function CourseApproval() {
                     <td className="px-4 py-4">
                       <input
                         type="checkbox"
+                        disabled={course.status === 'archived'}
                         checked={selectedCourses.has(courseId)}
                         onChange={() => handleSelectCourse(courseId)}
                         className="rounded"
+                        title={course.status === 'archived' ? 'Archived course' : 'Select for action'}
                       />
                     </td>
                     <td className="px-6 py-4">
@@ -684,15 +701,27 @@ export default function CourseApproval() {
                           <Edit3 className="h-4 w-4" />
                         </Button>
 
-                        {/* Delete Action */}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDeleteCourse(course)}
-                          className="text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {/* Publish/Delete Action */}
+                        {course.status === 'archived' ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handlePublishCourse(course)}
+                            loading={processingCourseId === course.id}
+                            className="text-success hover:bg-success/10"
+                          >
+                            <Upload className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteCourse(course)}
+                            className="text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                         
                         {course.status === 'review' && (
                           <>

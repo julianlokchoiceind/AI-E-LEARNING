@@ -328,12 +328,20 @@ async def delete_course(
     """
     try:
         result = await CourseService.delete_course(course_id, current_user)
-        
-        return StandardResponse(
-            success=True,
-            data=result,
-            message="Course deleted successfully"
-        )
+
+        # Handle both delete and archive results
+        if isinstance(result, dict) and result.get("action") == "archived":
+            return StandardResponse(
+                success=True,
+                data=result,
+                message=result.get("message", "Course archived successfully")
+            )
+        else:
+            return StandardResponse(
+                success=True,
+                data=result if isinstance(result, dict) else {},
+                message="Course deleted successfully"
+            )
     except NotFoundException as e:
         raise HTTPException(status_code=404, detail=str(e))
     except ForbiddenException as e:

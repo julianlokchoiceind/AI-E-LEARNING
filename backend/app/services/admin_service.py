@@ -726,11 +726,28 @@ class AdminService:
     async def delete_user(user_id: str, admin: User) -> Dict[str, Any]:
         """Hard delete user account and all related data."""
         try:
+            SUPER_ADMIN = "julian.lok88@icloud.com"
+
             db = get_database()
             user = await db.users.find_one({"_id": ObjectId(user_id)})
             if not user:
                 raise NotFoundException(f"User not found: {user_id}")
-            
+
+            # SUPER ADMIN PROTECTION
+            # Protection 1: Nobody can delete super admin
+            if user["email"] == SUPER_ADMIN:
+                return {
+                    "success": False,
+                    "message": "Cannot delete super administrator account"
+                }
+
+            # Protection 2: Only super admin can delete other admins
+            if user["role"] == "admin" and admin.email != SUPER_ADMIN:
+                return {
+                    "success": False,
+                    "message": "Only super administrator can delete admin accounts"
+                }
+
             # Transfer course ownership if creator (before deleting user)
             if user["role"] == "creator":
                 await db.courses.update_many(
@@ -808,42 +825,81 @@ class AdminService:
         """Perform bulk actions on users - Following FAQ pattern for delete, individual for others."""
         try:
             if action == "delete":
-                # BULK HARD DELETE - Following FAQ pattern exactly
+                # BULK DELETE with individual validation for super admin protection
+                SUPER_ADMIN = "julian.lok88@icloud.com"
                 from bson import ObjectId
 
-                # Filter valid ObjectIds
-                object_ids = []
-                invalid_ids = []
+                successful = []
+                failed = []
 
                 for user_id in user_ids:
                     try:
-                        object_ids.append(ObjectId(user_id))
-                    except Exception:
-                        invalid_ids.append(user_id)
+                        # Validate ObjectId
+                        ObjectId(user_id)
 
-                if not object_ids:
+                        # Get user details for validation
+                        db = get_database()
+                        user = await db.users.find_one({"_id": ObjectId(user_id)})
+
+                        if not user:
+                            failed.append({
+                                "user_id": user_id,
+                                "error": "User not found"
+                            })
+                            continue
+
+                        # Apply same protection as individual delete
+                        # Protection 1: Nobody can delete super admin
+                        if user["email"] == SUPER_ADMIN:
+                            failed.append({
+                                "user_id": user_id,
+                                "error": "Cannot delete super administrator account"
+                            })
+                            continue
+
+                        # Protection 2: Only super admin can delete other admins
+                        if user["role"] == "admin" and admin.email != SUPER_ADMIN:
+                            failed.append({
+                                "user_id": user_id,
+                                "error": "Only super administrator can delete admin accounts"
+                            })
+                            continue
+
+                        # Use individual delete function for consistent logic
+                        result = await AdminService.delete_user(user_id, admin)
+                        if result["success"]:
+                            successful.append(user_id)
+                        else:
+                            failed.append({
+                                "user_id": user_id,
+                                "error": result["message"]
+                            })
+
+                    except Exception as e:
+                        failed.append({
+                            "user_id": user_id,
+                            "error": f"Invalid user ID or error: {str(e)}"
+                        })
+
+                total_processed = len(successful)
+                has_failures = len(failed) > 0
+
+                if total_processed == 0 and has_failures:
                     return {
                         "success": False,
-                        "message": "No valid user IDs provided",
-                        "successful": [],
-                        "failed": invalid_ids,
-                        "total_processed": 0
+                        "message": "All deletions failed",
+                        "successful": successful,
+                        "failed": failed,
+                        "total_processed": total_processed
                     }
-
-                # Get database connection
-                db = get_database()
-
-                # HARD DELETE all users at once - Following FAQ pattern
-                result = await db.users.delete_many({"_id": {"$in": object_ids}})
-
-                return {
-                    "success": True,
-                    "message": f"Deleted {result.deleted_count} users successfully",
-                    "successful": user_ids if result.deleted_count > 0 else [],
-                    "failed": invalid_ids,
-                    "total_processed": result.deleted_count,
-                    "deleted_count": result.deleted_count
-                }
+                else:
+                    return {
+                        "success": True,
+                        "message": f"Deleted {len(successful)} users successfully",
+                        "successful": successful,
+                        "failed": failed,
+                        "total_processed": total_processed
+                    }
             else:
                 # For other actions, keep individual processing
                 successful = []
@@ -905,15 +961,25 @@ class AdminService:
                         "total_processed": 0
                     }
 
-                # Check each course for enrollments before deletion
+                # Process each course - archive if has enrollments, delete if not
                 from app.models.enrollment import Enrollment
-                successful = []
+                deleted = []
+                archived = []
                 failed = []
 
                 for i, object_id in enumerate(object_ids):
                     course_id = course_ids[i] if i < len(course_ids) else str(object_id)
 
                     try:
+                        # Get course
+                        course = await Course.find_one({"_id": object_id})
+                        if not course:
+                            failed.append({
+                                "id": course_id,
+                                "reason": "Course not found"
+                            })
+                            continue
+
                         # Check for active enrollments
                         enrollment_count = await Enrollment.find({
                             "course_id": str(object_id),
@@ -921,21 +987,14 @@ class AdminService:
                         }).count()
 
                         if enrollment_count > 0:
-                            failed.append({
-                                "id": course_id,
-                                "reason": f"Cannot delete - {enrollment_count} students enrolled"
-                            })
-                            continue
-
-                        # Delete course if no enrollments
-                        delete_result = await Course.find_one({"_id": object_id}).delete()
-                        if delete_result:
-                            successful.append(course_id)
+                            # Archive instead of fail
+                            course.status = CourseStatus.ARCHIVED
+                            await course.save()
+                            archived.append(course_id)
                         else:
-                            failed.append({
-                                "id": course_id,
-                                "reason": "Course not found"
-                            })
+                            # Delete if no enrollments
+                            await course.delete()
+                            deleted.append(course_id)
 
                     except Exception as e:
                         failed.append({
@@ -950,52 +1009,36 @@ class AdminService:
                         "reason": "Invalid course ID"
                     })
 
-                total_processed = len(successful)
+                total_processed = len(deleted) + len(archived)
                 has_failures = len(failed) > 0
 
                 if total_processed == 0 and has_failures:
-                    # All deletions failed - provide detailed reasons
-                    failed_details = []
-                    for f in failed[:3]:  # Show first 3 failures
-                        failed_details.append(f["reason"])
-
-                    detail_msg = ", ".join(failed_details)
-                    if len(failed) > 3:
-                        detail_msg += f" and {len(failed) - 3} more"
-
-
+                    # All operations failed
                     return {
                         "success": False,
-                        "message": f"Cannot delete courses: {detail_msg}",
-                        "successful": successful,
+                        "message": "All operations failed",
+                        "deleted": deleted,
+                        "archived": archived,
                         "failed": failed,
                         "total_processed": total_processed
                     }
-                elif total_processed > 0 and has_failures:
-                    # Partial success - return as success for modal close and data refresh
-                    failed_with_enrollments = [f for f in failed if "students enrolled" in f.get("reason", "")]
-                    if failed_with_enrollments:
-                        return {
-                            "success": True,
-                            "message": f"Deleted {total_processed} courses. {len(failed_with_enrollments)} courses have active enrollments",
-                            "successful": successful,
-                            "failed": failed,
-                            "total_processed": total_processed
-                        }
-                    else:
-                        return {
-                            "success": True,
-                            "message": f"Deleted {total_processed} courses, {len(failed)} failed",
-                            "successful": successful,
-                            "failed": failed,
-                            "total_processed": total_processed
-                        }
                 else:
-                    # Complete success
+                    # Success (either complete or partial)
+                    message_parts = []
+                    if len(deleted) > 0:
+                        message_parts.append(f"{len(deleted)} deleted")
+                    if len(archived) > 0:
+                        message_parts.append(f"{len(archived)} archived")
+                    if len(failed) > 0:
+                        message_parts.append(f"{len(failed)} failed")
+
+                    message = "Processed: " + ", ".join(message_parts)
+
                     return {
                         "success": True,
-                        "message": f"Deleted {total_processed} courses successfully",
-                        "successful": successful,
+                        "message": message,
+                        "deleted": deleted,
+                        "archived": archived,
                         "failed": failed,
                         "total_processed": total_processed
                     }

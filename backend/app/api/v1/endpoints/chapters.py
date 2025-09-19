@@ -3,6 +3,7 @@ Chapter management endpoints.
 """
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from beanie import PydanticObjectId
 
 from app.models.user import User
 from app.models.chapter import Chapter
@@ -266,7 +267,7 @@ async def get_course_chapters_with_lessons(
     Requires authentication. Used for course builder.
     """
     # Verify user has access to edit this course
-    course = await Course.get(course_id)
+    course = await Course.get(PydanticObjectId(course_id))
     if not course:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
