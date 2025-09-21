@@ -10,6 +10,7 @@ import DeleteCourseModal, { CourseDeleteData } from '@/components/feature/Delete
 import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
 import { Container } from '@/components/ui/Container';
 import { StandardResponse } from '@/lib/types/api';
+import { Course } from '@/lib/types/course';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import {
   useAdminCoursesQuery,
@@ -43,35 +44,6 @@ import {
   Upload
 } from 'lucide-react';
 import { getLevelColorClass } from '@/lib/utils/badge-helpers';
-
-interface Course {
-  _id?: string;      // Optional since API might return id instead
-  id?: string;       // API actually returns this field
-  title: string;
-  description: string;
-  thumbnail: string;
-  category: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  creator_id: string;
-  creator_name: string;
-  total_chapters: number;
-  total_lessons: number;
-  total_duration: number;
-  pricing: {
-    is_free: boolean;
-    price: number;
-    currency: string;
-  };
-  status: 'draft' | 'review' | 'published' | 'rejected';
-  stats: {
-    total_enrollments: number;
-    average_rating: number;
-    total_reviews: number;
-  };
-  created_at: string;
-  published_at?: string;
-  rejection_reason?: string;
-}
 
 export default function CourseApproval() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -124,7 +96,7 @@ export default function CourseApproval() {
   // Global actionLoading removed to prevent all rows showing spinners
   
   // Extract courses and pagination data from response (flat structure from backend)
-  const typedCoursesData = coursesData as StandardResponse<{ courses: any[], total: number, page: number, per_page: number, total_pages: number, summary: any }> | null;
+  const typedCoursesData = coursesData as StandardResponse<{ courses: Course[], total: number, page: number, per_page: number, total_pages: number, summary: any }> | null;
   const courses = typedCoursesData?.data?.courses || [];
   const totalItems = typedCoursesData?.data?.total || 0;
   const totalPages = typedCoursesData?.data?.total_pages || 1;
@@ -185,7 +157,7 @@ export default function CourseApproval() {
   };
 
   const handleToggleFree = async (course: Course, currentStatus: boolean) => {
-    const courseId = course.id || course._id;
+    const courseId = course.id || (course as any)._id;
     if (!courseId) return;
 
     try {
@@ -272,7 +244,7 @@ export default function CourseApproval() {
     if (selectedCourses.size === selectableCourses.length) {
       setSelectedCourses(new Set());
     } else {
-      const courseIds = selectableCourses.map((c: Course) => c.id || c._id).filter(Boolean) as string[];
+      const courseIds = selectableCourses.map((c: Course) => c.id || (c as any)._id).filter(Boolean) as string[];
       setSelectedCourses(new Set(courseIds));
     }
   };
@@ -611,7 +583,7 @@ export default function CourseApproval() {
               </thead>
               <tbody className="bg-background divide-y divide-border">
                 {filteredCourses.map((course: Course) => {
-                  const courseId = course.id || course._id || '';
+                  const courseId = course.id || (course as any)._id || '';
                   return (
                   <tr key={courseId} className="hover:bg-muted">
                     <td className="px-4 py-4">
@@ -842,10 +814,10 @@ export default function CourseApproval() {
             </div>
 
             {/* Rejection Reason */}
-            {selectedCourse.status === 'rejected' && selectedCourse.rejection_reason && (
+            {(selectedCourse as any).status === 'rejected' && (selectedCourse as any).rejection_reason && (
               <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
                 <h4 className="font-medium text-destructive mb-2">Rejection Reason:</h4>
-                <p className="text-destructive">{selectedCourse.rejection_reason}</p>
+                <p className="text-destructive">{(selectedCourse as any).rejection_reason}</p>
               </div>
             )}
 

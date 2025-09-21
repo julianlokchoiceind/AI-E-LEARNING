@@ -149,9 +149,9 @@ export const faqAPI = {
    * Bulk create FAQs (Admin only)
    */
   async bulkCreate(faqs: FAQCreateData[]): Promise<StandardResponse<{
-    created_count: number;
-    failed_count: number;
-    created_faqs: FAQ[];
+    created_count?: number;
+    failed_count?: number;
+    created_faqs?: FAQ[];
     errors?: any[];
   }>> {
     return this.bulkAction({

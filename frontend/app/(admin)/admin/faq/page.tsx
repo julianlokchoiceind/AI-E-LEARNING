@@ -106,7 +106,7 @@ export default function AdminFAQPage() {
       ],
       onSuccess: (response) => {
         // Reset and close modals only if some FAQs were created successfully
-        if (response.data.created_count > 0) {
+        if (response.data?.created_count && response.data.created_count > 0) {
           setShowPreview(false);
           setShowGenerateModal(false);
           setGeneratedFaqs([]);

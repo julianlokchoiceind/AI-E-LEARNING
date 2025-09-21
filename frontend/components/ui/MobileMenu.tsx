@@ -31,8 +31,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   // Fetch courses when category selected - tái sử dụng từ CategoryDropdown
   const { data: coursesData } = useCoursesQuery({
     category: selectedCategory?.slug,
-    limit: 5,
-    enabled: !!selectedCategory
+    limit: 5
   });
 
   const courses = coursesData?.data?.courses || [];

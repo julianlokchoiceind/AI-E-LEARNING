@@ -207,7 +207,7 @@ export function AdminHeader() {
                         </p>
                       </div>
                       <p className="text-sm font-medium text-foreground mt-1 truncate">
-                        {ticket.subject}
+                        {ticket.title}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
                         by {ticket.user_name} • {new Date(ticket.created_at).toLocaleDateString()}

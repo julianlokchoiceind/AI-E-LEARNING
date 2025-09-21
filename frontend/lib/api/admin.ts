@@ -5,6 +5,7 @@
 
 import { StandardResponse } from '@/lib/types/api';
 import { api } from '@/lib/api/api-client';
+import { Course } from '@/lib/types/course';
 
 // Types
 export interface AdminDashboardStats {
@@ -467,7 +468,7 @@ export const getAdminAnalytics = async (): Promise<StandardResponse<AdminDashboa
  * Get admin courses with filters
  */
 interface AdminCoursesResponse {
-  courses: any[];
+  courses: Course[];
   total: number;
   page: number;
   per_page: number;

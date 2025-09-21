@@ -27,9 +27,8 @@ export function CategoryDropdown({ onClose, buttonRef }: CategoryDropdownProps) 
 
   // Fetch courses when hovering a category
   const { data: coursesData } = useCoursesQuery({
-    category: hoveredCategory,
-    limit: 5,
-    enabled: !!hoveredCategory
+    category: hoveredCategory || undefined,
+    limit: 5
   });
 
   const courses = coursesData?.data?.courses || [];
