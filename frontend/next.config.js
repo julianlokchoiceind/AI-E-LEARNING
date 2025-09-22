@@ -79,7 +79,7 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
-    optimizeCss: true,
+    // optimizeCss: true, // Disabled for Cloud Run compatibility
     scrollRestoration: true,
   },
   
