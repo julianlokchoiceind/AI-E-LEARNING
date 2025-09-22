@@ -74,6 +74,9 @@ const nextConfig = {
   // NOTE: HTTP cache headers removed - CDN will handle HTTP caching
   // React Query handles all client-side caching for optimal performance
   
+  // Output configuration for Docker deployment
+  output: 'standalone',
+
   // Experimental features
   experimental: {
     serverActions: {

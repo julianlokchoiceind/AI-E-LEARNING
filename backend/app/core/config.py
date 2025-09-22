@@ -8,8 +8,10 @@ from pydantic_settings import BaseSettings
 from pydantic import AnyHttpUrl, validator
 from dotenv import load_dotenv
 
-# Load environment variables from root .env.local
-load_dotenv(os.path.join(os.path.dirname(__file__), '../../../.env.local'))
+# Load environment variables from root .env.local only in development
+# In production (Cloud Run), environment variables are set directly
+if os.getenv("ENVIRONMENT") != "production":
+    load_dotenv(os.path.join(os.path.dirname(__file__), '../../../.env.local'))
 
 
 class Settings(BaseSettings):
