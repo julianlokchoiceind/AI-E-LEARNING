@@ -3,7 +3,7 @@
  * Centralized API endpoint definitions
  */
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://aitc.choiceind.com/api/v1';
 
 export const API_ENDPOINTS = {
   BASE_URL: API_BASE_URL,
