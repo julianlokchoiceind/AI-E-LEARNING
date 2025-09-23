@@ -20,6 +20,11 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
+# Install runtime dependencies for python-magic
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libmagic1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 
