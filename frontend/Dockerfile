@@ -19,7 +19,7 @@ RUN npm ci
 COPY . .
 
 # Build argument for API URL (defaults to production)
-ARG NEXT_PUBLIC_API_URL=https://aitc.choiceind.com/api/v1
+ARG NEXT_PUBLIC_API_URL=https://aitc-api.choiceind.com/api/v1
 
 # Set environment variables for build
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL

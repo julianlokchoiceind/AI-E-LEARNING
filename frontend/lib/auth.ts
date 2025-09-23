@@ -115,7 +115,7 @@ export const authOptions: NextAuthOptions = {
       // Token has expired - attempt to refresh
       if (token.refreshToken) {
         try {
-          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://aitc.choiceind.com/api/v1'
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://aitc-api.choiceind.com/api/v1'
           const refreshResponse = await fetch(`${baseUrl}/auth/refresh`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -194,7 +194,7 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider !== 'credentials') {
         try {
           // Send OAuth user data to backend directly
-          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://aitc.choiceind.com/api/v1'
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://aitc-api.choiceind.com/api/v1'
           const oauthResponse = await fetch(`${baseUrl}/auth/oauth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

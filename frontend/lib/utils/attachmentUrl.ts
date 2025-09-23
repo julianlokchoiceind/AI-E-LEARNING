@@ -14,7 +14,7 @@ export function getAttachmentUrl(path: string): string {
   }
   
   // Get backend base URL from environment
-  const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://aitc.choiceind.com/api/v1').replace('/api/v1', '');
+  const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://aitc-api.choiceind.com/api/v1').replace('/api/v1', '');
   
   if (!backendUrl) {
     console.warn('NEXT_PUBLIC_API_URL not configured, attachment may not load properly');
