@@ -41,6 +41,7 @@ black
 # Utilities
 python-dotenv
 python-slugify
+python-magic==0.4.27
 
 # Report Generation
 reportlab
