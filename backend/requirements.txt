@@ -47,3 +47,6 @@ stripe
 
 # Report Generation
 reportlab
+
+# Cloud Storage
+google-cloud-storage==2.10.0
