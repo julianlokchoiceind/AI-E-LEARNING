@@ -83,7 +83,7 @@ async def list_courses(
     Query parameters:
     - page: Page number (default: 1)
     - per_page: Items per page (default: 20, max: 100)
-    - category: Filter by category (programming, ai-fundamentals, etc.)
+    - category: Filter by category (ml-basics, deep-learning, nlp, computer-vision, generative-ai, ai-ethics, ai-in-business)
     - level: Filter by level (beginner, intermediate, advanced)
     - search: Search in title and description
     - is_free: Filter free/paid courses
@@ -163,7 +163,7 @@ async def get_my_courses(
         # Only creators can access this endpoint
         if current_user.role != "creator":
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=403,  # HTTP_403_FORBIDDEN
                 detail="Only creators can access this endpoint"
             )
         
@@ -517,7 +517,7 @@ async def submit_course_for_review(
             )
         
         # Check if course has content
-        chapters_count = await db.chapters.count_documents({"course_id": ObjectId(course_id)})
+        chapters_count = await db.database["chapters"].count_documents({"course_id": ObjectId(course_id)})  # type: ignore
         if chapters_count == 0:
             return StandardResponse(
                 success=False,
@@ -526,7 +526,7 @@ async def submit_course_for_review(
             )
         
         # Check if chapters have lessons
-        lessons_count = await db.lessons.count_documents({"course_id": ObjectId(course_id)})
+        lessons_count = await db.database["lessons"].count_documents({"course_id": ObjectId(course_id)})  # type: ignore
         if lessons_count == 0:
             return StandardResponse(
                 success=False,
@@ -690,7 +690,7 @@ async def get_preview_lesson(
     """
     try:
         # Check if course exists and is published
-        course = await db.courses.find_one({
+        course = await db.database["courses"].find_one({  # type: ignore
             "_id": ObjectId(course_id),
             "status": CourseStatus.PUBLISHED
         })
@@ -699,7 +699,7 @@ async def get_preview_lesson(
             raise HTTPException(status_code=404, detail="Course not found or not published")
         
         # Get lesson
-        lesson = await db.lessons.find_one({
+        lesson = await db.database["lessons"].find_one({  # type: ignore
             "_id": ObjectId(lesson_id),
             "course_id": ObjectId(course_id),
             "status": "published"

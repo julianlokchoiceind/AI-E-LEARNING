@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { SearchBar } from '@/components/ui/SearchBar';
 import DeleteCourseModal, { CourseDeleteData } from '@/components/feature/DeleteCourseModal';
 import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
 import { Container } from '@/components/ui/Container';
@@ -381,16 +382,12 @@ export default function CourseApproval() {
       <Card className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search courses..."
-              value={searchTerm}
-              onChange={(e) => handleFilterChange(e.target.value, 'search')}
-              className="pl-10 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
-            />
-          </div>
+          <SearchBar
+            value={searchTerm}
+            onChange={(value) => handleFilterChange(value, 'search')}
+            placeholder="Search courses..."
+            size="md"
+          />
 
           {/* Status Filter */}
           <select

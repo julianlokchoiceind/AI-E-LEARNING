@@ -41,12 +41,22 @@ interface CourseCardProps {
     current_lesson_id?: string;
     progress_percentage?: number;
   };
+  variant?: 'catalog' | 'homepage';
   onEnroll?: (courseId: string) => void;
   isEnrolling?: boolean;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling = false }) => {
+const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', onEnroll, isEnrolling = false }) => {
   const router = useRouter();
+
+  // Text truncation utility
+  const truncateText = (text: string, limit: number) => {
+    return text.length > limit ? text.substring(0, limit).trim() + '...' : text;
+  };
+
+  // Apply consistent text limits for both variants
+  const displayTitle = truncateText(course.title, 60);
+  const displayDescription = truncateText(course.description, 200); // Increased from 120 to 200 for better card layout
 
   // Status badge helper function - only for public-visible statuses
   const getStatusBadge = (status: string) => {
@@ -58,6 +68,10 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
         return null; // No badge for published status (shows pricing instead)
     }
   };
+
+  // Smart button logic for homepage variant
+  const hasStatusBadge = getStatusBadge(course.status) !== null;
+  const showComingSoonButton = variant === 'catalog' || !hasStatusBadge;
 
   const handleEnroll = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -99,11 +113,11 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
   };
 
   return (
-    <Card 
-      className="hover:shadow-lg transition-shadow duration-300"
+    <Card
+      className="hover:shadow-lg transition-shadow duration-300 min-h-[420px] sm:min-h-[440px] md:min-h-[460px] lg:min-h-[500px] flex flex-col"
     >
       {/* Course Thumbnail */}
-      <div className="relative h-40 sm:h-48 bg-muted rounded-t-lg overflow-hidden">
+      <div className="relative h-48 sm:h-52 md:h-56 lg:h-64 bg-muted rounded-t-lg overflow-hidden">
         {course.thumbnail ? (
           <img
             src={getAttachmentUrl(course.thumbnail)}
@@ -145,47 +159,53 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
       </div>
 
       {/* Course Content */}
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-6 flex-1 flex flex-col">
         {/* Category */}
         <p className="text-xs sm:text-sm text-muted-foreground mb-2">{getCategoryDisplay(course.category)}</p>
 
         {/* Title */}
-        <h3 className="text-lg sm:text-xl font-semibold mb-2 line-clamp-2 leading-tight">{course.title}</h3>
+        <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-2 leading-tight">{displayTitle}</h3>
 
         {/* Description */}
-        <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4 line-clamp-2">
-          {course.short_description || course.description}
+        <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4 line-clamp-2 md:line-clamp-3">
+          {displayDescription}
         </p>
 
-        {/* Creator */}
-        <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">by {course.creator_name}</p>
+        {/* Creator - Show only for catalog variant */}
+        {variant === 'catalog' && (
+          <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">by {course.creator_name}</p>
+        )}
 
-        {/* Course Stats - Mobile: Stack vertically, Desktop: Horizontal */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-            <span>{formatDuration(course.total_duration)}</span>
+        {/* Course Stats - Show only for catalog variant */}
+        {variant === 'catalog' && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span>{formatDuration(course.total_duration)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span>{course.total_lessons} lessons</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span>{course.stats.total_enrollments} students</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-            <span>{course.total_lessons} lessons</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-            <span>{course.stats.total_enrollments} students</span>
-          </div>
-        </div>
+        )}
 
-        {/* Rating */}
-        <div className="mb-4">
-          <CourseRatingMini
-            averageRating={course.stats.average_rating}
-            totalReviews={course.stats.total_reviews}
-          />
-        </div>
+        {/* Rating - Show only for catalog variant */}
+        {variant === 'catalog' && (
+          <div className="mb-4">
+            <CourseRatingMini
+              averageRating={course.stats.average_rating}
+              totalReviews={course.stats.total_reviews}
+            />
+          </div>
+        )}
 
         {/* Action Button - Larger touch target on mobile */}
-        {course.status === 'coming_soon' ? (
+        {course.status === 'coming_soon' && showComingSoonButton ? (
           <Button
             className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium touch-manipulation"
             variant="secondary"
@@ -193,7 +213,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onEnroll, isEnrolling =
           >
             Coming Soon
           </Button>
-        ) : course.status === 'archived' ? null : (
+        ) : course.status === 'archived' ? null : course.status === 'coming_soon' ? null : (
           <Button
             onClick={handleEnroll}
             className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium touch-manipulation"

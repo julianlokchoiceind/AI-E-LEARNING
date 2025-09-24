@@ -17,6 +17,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
 import { Container } from '@/components/ui/Container';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { 
   useAdminSupportTicketsQuery, 
   useSupportStatsQuery, 
@@ -283,14 +284,13 @@ export default function AdminSupportPage() {
       <Card className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Search */}
-          <div className="relative md:col-span-2">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search tickets..."
+          <div className="md:col-span-2">
+            <SearchBar
               value={searchQuery}
-              onChange={(e) => handleFilterChange(e.target.value, 'search')}
-              className="pl-10 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
+              onChange={(value) => handleFilterChange(value, 'search')}
+              placeholder="Search tickets..."
+              size="sm"
+              className="w-full"
             />
           </div>
           

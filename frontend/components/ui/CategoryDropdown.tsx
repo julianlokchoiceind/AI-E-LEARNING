@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import { useCoursesQuery } from '@/hooks/queries/useCourses';
@@ -13,16 +13,17 @@ interface CategoryDropdownProps {
 export function CategoryDropdown({ onClose, buttonRef }: CategoryDropdownProps) {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [position, setPosition] = useState({ left: 0, top: 64 });
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   const categories = [
-    { name: "AI Fundamentals", slug: "ml-basics" },
-    { name: "Machine Learning", slug: "machine-learning" },
-    { name: "Deep Learning", slug: "deep-learning" },
-    { name: "NLP", slug: "nlp" },
-    { name: "Computer Vision", slug: "computer-vision" },
-    { name: "Generative AI", slug: "generative-ai" },
+    { name: "AI Ethics", slug: "ai-ethics" },
     { name: "AI in Business", slug: "ai-in-business" },
+    { name: "Computer Vision", slug: "computer-vision" },
+    { name: "Deep Learning", slug: "deep-learning" },
+    { name: "Generative AI", slug: "generative-ai" },
+    { name: "Machine Learning", slug: "ml-basics" },
+    { name: "NLP", slug: "nlp" },
   ];
 
   // Fetch courses when hovering a category
@@ -44,6 +45,26 @@ export function CategoryDropdown({ onClose, buttonRef }: CategoryDropdownProps) 
     }
   }, [buttonRef]);
 
+  // Close dropdown on click outside or scroll
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    const handleScroll = () => {
+      onClose();
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('scroll', handleScroll, true); // Use capture phase for all scroll events
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [onClose]);
+
   const handleCategoryClick = (slug: string) => {
     router.push(`/courses?category=${slug}`);
     onClose();
@@ -57,8 +78,8 @@ export function CategoryDropdown({ onClose, buttonRef }: CategoryDropdownProps) 
 
   return (
     <div
+      ref={dropdownRef}
       className="category-dropdown fixed bg-card shadow-lg border border-border rounded-lg z-50 flex"
-      onMouseLeave={onClose}
       style={{
         left: position.left,
         top: position.top

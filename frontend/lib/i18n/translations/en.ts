@@ -292,7 +292,7 @@ export const en = {
   // Support
   support: {
     title: 'Support',
-    helpCenter: 'Help Center',
+    helpCenter: 'Support',
     contactSupport: 'Contact Support',
     submitTicket: 'Submit Ticket',
     myTickets: 'My Tickets',

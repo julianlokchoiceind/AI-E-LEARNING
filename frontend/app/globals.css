@@ -1,3 +1,4 @@
+/* PostCSS directives - processed at build time */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -184,9 +185,27 @@
   .gradient-text {
     @apply bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent;
   }
-  
+
   .card-hover {
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* Hero Section Utilities */
+  .hero-overlay {
+    @apply absolute inset-0 bg-black/50;
+  }
+
+  .hero-content {
+    @apply relative z-10;
+  }
+
+  /* Responsive text sizes for hero */
+  .hero-title {
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6;
+  }
+
+  .hero-subtitle {
+    @apply text-lg md:text-xl lg:text-xl mb-6 md:mb-8;
   }
   
   /* Mobile: reduce transform effect */

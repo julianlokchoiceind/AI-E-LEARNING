@@ -71,8 +71,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/help" className="link-hover text-sm">
-                  Help Center
+                <Link href="/support" className="link-hover text-sm">
+                  Support
                 </Link>
               </li>
               <li>

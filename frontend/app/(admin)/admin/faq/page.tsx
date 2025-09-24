@@ -15,6 +15,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { Input } from '@/components/ui/Input';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -386,14 +387,13 @@ export default function AdminFAQPage() {
           <div className="flex flex-col gap-4">
             {/* Search and Category Filter */}
             <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search FAQs..."
+              <div className="flex-1">
+                <SearchBar
                   value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-10"
+                  onChange={handleSearchChange}
+                  placeholder="Search FAQs..."
+                  size="sm"
+                  className="w-full"
                 />
               </div>
               <select

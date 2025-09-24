@@ -5,6 +5,7 @@ Unified email service combining all email functionality
 import logging
 from typing import Optional, List, Dict, Any
 from pathlib import Path
+from datetime import datetime
 import json
 import requests
 from msal import ConfidentialClientApplication
@@ -746,6 +747,59 @@ class EmailService:
         
         return await self.send_email(
             to_email=user_email,
+            subject=subject,
+            html_content=html_content
+        )
+
+    async def send_waitlist_notification_email(
+        self,
+        email: str,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None
+    ) -> bool:
+        """
+        Send waitlist notification to admin email.
+
+        Args:
+            email: User's email who joined waitlist
+            ip_address: User's IP address
+            user_agent: User's browser info
+
+        Returns:
+            bool: True if email sent successfully
+        """
+        admin_email = "info@choiceind.com"
+        subject = f"New Waitlist Signup: {email}"
+
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
+                <h1 style="margin: 0; font-size: 28px;">🎉 New Waitlist Signup!</h1>
+                <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Someone just joined the AI E-Learning Platform waitlist</p>
+            </div>
+
+            <div style="background-color: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin: 0 0 15px 0; color: #1e40af;">Email Address</h3>
+                <p style="font-size: 18px; font-weight: bold; color: #1e40af; margin: 0;">{email}</p>
+            </div>
+
+            <div style="background-color: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <h4 style="margin: 0 0 10px 0; color: #374151;">Technical Details</h4>
+                <p style="margin: 5px 0; color: #6b7280; font-size: 14px;"><strong>IP Address:</strong> {ip_address or 'Not available'}</p>
+                <p style="margin: 5px 0; color: #6b7280; font-size: 14px;"><strong>Browser:</strong> {user_agent or 'Not available'}</p>
+                <p style="margin: 5px 0; color: #6b7280; font-size: 14px;"><strong>Joined:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+            </div>
+
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e5e5;">
+            <p style="color: #666; font-size: 14px;">
+                This notification was automatically generated when someone joined the waitlist on the AI E-Learning Platform.<br>
+                You can manage waitlist entries in the admin dashboard.
+            </p>
+        </div>
+        """
+
+        return await self.send_email(
+            to_email=admin_email,
             subject=subject,
             html_content=html_content
         )

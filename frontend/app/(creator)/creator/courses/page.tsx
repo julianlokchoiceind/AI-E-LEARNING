@@ -24,7 +24,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Input } from '@/components/ui/Input';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { EmptyState, SkeletonBox, SkeletonText } from '@/components/ui/LoadingStates';
 import { Pagination } from '@/components/ui/Pagination';
 import { Modal } from '@/components/ui/Modal';
@@ -407,14 +407,12 @@ const CreatorCoursesPage = () => {
         <Container variant="admin" className="py-4">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-              <Input
-                type="text"
-                placeholder="Search courses..."
-                className="pl-10"
+            <div className="flex-1">
+              <SearchBar
                 value={searchTerm}
-                onChange={(e) => handleFilterChange(e.target.value, 'search')}
+                onChange={(value) => handleFilterChange(value, 'search')}
+                placeholder="Search courses..."
+                size="md"
               />
             </div>
 

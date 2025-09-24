@@ -7,7 +7,7 @@ const nextConfig = {
   
   // Image optimization
   images: {
-    domains: ['localhost', 'i.ytimg.com', 'img.youtube.com'],
+    domains: ['localhost', 'i.ytimg.com', 'img.youtube.com', 'storage.googleapis.com'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -16,6 +16,16 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '**.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        pathname: '/ai-elearning-uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        pathname: '/choiceind-ai-elearning-images/**',
       },
     ],
     formats: ['image/webp', 'image/avif'],

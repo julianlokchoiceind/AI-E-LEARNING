@@ -6,6 +6,7 @@ import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, BookOpen, Settings
 import { useState, useRef, useEffect } from 'react'
 import { CategoryDropdown } from '@/components/ui/CategoryDropdown'
 import { MobileMenu } from '@/components/ui/MobileMenu'
+import { HeaderSearchBar } from '@/components/ui/HeaderSearchBar'
 import { useNavigationTranslations } from '@/lib/i18n/hooks'
 import { LanguageSwitcherCompact } from '@/components/ui/LanguageSwitcher'
 import { useLocalizedRouter } from '@/lib/i18n/context'
@@ -30,7 +31,7 @@ export function Header() {
   // Support notifications polling every 30 seconds
   const { unreadCount } = useSupportNotifications()
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside or scrolling
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -41,8 +42,17 @@ export function Header() {
       }
     }
 
+    const handleScroll = () => {
+      setUserMenuOpen(false)
+      setExplorerOpen(false)
+    }
+
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('scroll', handleScroll, true) // Use capture phase for all scroll events
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('scroll', handleScroll, true)
+    }
   }, [])
 
   // Calculate user menu position
@@ -60,104 +70,111 @@ export function Header() {
     <>
       <header className="bg-background shadow-sm border-b relative">
         <Container variant="header">
-          <div className="flex h-16 justify-between items-center">
-            {/* Mobile Layout: 3-column structure */}
-            <div className="flex items-center flex-1 md:flex-none">
-              {/* Mobile hamburger menu - LEFT */}
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md nav-hover mr-3 md:hidden"
-              >
-                <span className="sr-only">Open main menu</span>
-                <Menu className="block h-6 w-6" />
-              </button>
+          <div className="flex h-16 items-center justify-between md:gap-4">
+            {/* Mobile: Hamburger Menu */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-md nav-hover"
+            >
+              <span className="sr-only">Open main menu</span>
+              <Menu className="h-6 w-6" />
+            </button>
 
-              {/* Logo - Center on mobile, left on desktop */}
-              <div className="flex-1 flex justify-center md:flex-none md:justify-start">
-                <Link href="/" className="flex-shrink-0">
-                  <h1 className="text-2xl font-bold gradient-text">AI E-Learning</h1>
-                </Link>
+            {/* Desktop: Left Side - Logo + Explorer */}
+            <div className="hidden md:flex items-center gap-4">
+              <Link href="/" className="flex-shrink-0">
+                <h1 className="text-2xl font-bold gradient-text">AI E-Learning</h1>
+              </Link>
+
+              {/* Explorer (Desktop Only) */}
+              <div className="relative" ref={explorerRef}>
+                <button
+                  ref={exploreButtonRef}
+                  onMouseEnter={() => setExplorerOpen(true)}
+                  className="px-3 py-2 text-sm font-medium rounded-md border border-transparent text-muted-foreground hover:text-primary hover:bg-primary/10 hover:border-primary/20 transition-all duration-200"
+                >
+                  Explore
+                </button>
               </div>
+            </div>
 
-              {/* Desktop Navigation */}
-              <div className="hidden md:ml-10 md:flex md:space-x-8">
-                {/* Explorer Dropdown */}
-                <div className="relative" ref={explorerRef}>
-                  <button
-                    ref={exploreButtonRef}
-                    onMouseEnter={() => setExplorerOpen(true)}
-                    className="text-muted-foreground hover:text-primary hover:bg-primary/10 hover:border-primary/20 border border-transparent px-3 py-2 text-sm font-medium transition-all duration-200 rounded-md"
-                  >
-                    Explore
-                  </button>
-                </div>
+            {/* Mobile: Logo on Right */}
+            <div className="md:hidden">
+              <Link href="/" className="flex-shrink-0">
+                <h1 className="text-2xl font-bold gradient-text">AI E-Learning</h1>
+              </Link>
+            </div>
 
+            {/* Center: Search Bar (Desktop Only - Full Width) */}
+            <div className="hidden md:flex flex-1 max-w-2xl mx-auto">
+              <HeaderSearchBar />
+            </div>
+
+            {/* Right: Navigation + Auth - Hidden on mobile for centered logo */}
+            <div className="hidden md:flex items-center gap-2 md:gap-3">
+              {/* Navigation Links (Desktop Only) */}
               <button
                 onClick={() => router.push('/about')}
-                className="link-hover px-3 py-2 text-sm font-medium"
+                className="px-3 py-2 text-sm font-medium link-hover whitespace-nowrap"
               >
                 {navItems.about}
               </button>
               <button
                 onClick={() => router.push('/faq')}
-                className="link-hover px-3 py-2 text-sm font-medium"
+                className="px-3 py-2 text-sm font-medium link-hover whitespace-nowrap"
               >
                 {navItems.faq}
               </button>
+
+              {/* Language Switcher */}
+              <LanguageSwitcherCompact />
+
+              {/* Auth Section */}
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <SkeletonCircle className="w-8 h-8" />
+                  <SkeletonBox className="w-20 h-4" />
+                </div>
+              ) : isAuthenticated ? (
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    ref={userButtonRef}
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-1 px-3 py-2 text-sm nav-hover rounded-md transition-colors relative"
+                  >
+                    <div className="relative">
+                      <User className="h-5 w-5" />
+                      {unreadCount > 0 && (
+                        <div className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-destructive rounded-full flex items-center justify-center border-[1.5px] border-background shadow-sm px-0.5 translate-x-1/4 -translate-y-1/4">
+                          <span className="text-[9px] font-bold text-white leading-none">
+                            {unreadCount}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="hidden md:inline">{user?.name || user?.email || 'User'}</span>
+                    <ChevronDown className={`hidden md:inline h-4 w-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => router.push('/login')}
+                    className="px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-[hsl(var(--primary-light))] transition-colors"
+                  >
+                    {t('auth.signIn')}
+                  </button>
+                  <button
+                    onClick={() => router.push('/register')}
+                    className="px-4 py-2 text-sm btn-primary"
+                  >
+                    {t('auth.getStarted')}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Auth Section - Mobile: compact, Desktop: full */}
-          <div className="flex items-center space-x-2 md:space-x-4">
-            <LanguageSwitcherCompact className="hidden md:block mr-2" />
-            {loading ? (
-              /* Show loading skeleton to prevent hydration mismatch */
-              <div className="flex items-center space-x-2">
-                <SkeletonCircle className="w-8 h-8" />
-                <SkeletonBox className="w-20 h-4" />
-              </div>
-            ) : isAuthenticated ? (
-              <div className="relative" ref={userMenuRef}>
-                <button
-                  ref={userButtonRef}
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center text-sm nav-hover px-3 py-2 rounded-md transition-colors relative"
-                >
-                  <div className="relative inline-block mr-1 md:mr-1">
-                    <User className="h-5 w-5" />
-                    {/* Support notification badge - consistent with AdminHeader */}
-                    {unreadCount > 0 && (
-                      <div className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-destructive rounded-full flex items-center justify-center border-[1.5px] border-background shadow-sm px-0.5 transform translate-x-1/4 -translate-y-1/4">
-                        <span className="text-[9px] font-bold text-white leading-none">
-                          {unreadCount}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <span className="hidden md:inline">{user?.name || user?.email || 'User'}</span>
-                  <ChevronDown className={`h-4 w-4 ml-1 transition-transform hidden md:inline ${userMenuOpen ? 'rotate-180' : ''}`} />
-                </button>
-              </div>
-            ) : (
-              <>
-                <button
-                  onClick={() => router.push('/login')}
-                  className="hidden md:inline-flex link-hover px-3 py-2 text-sm font-medium"
-                >
-                  {t('auth.signIn')}
-                </button>
-                <button
-                  onClick={() => router.push('/register')}
-                  className="hidden md:inline-flex btn-primary text-sm px-4"
-                >
-                  {t('auth.getStarted')}
-                </button>
-              </>
-            )}
-          </div>
-
-        </div>
 
       </Container>
     </header>

@@ -1,8 +1,17 @@
-// Simple layout without auth check to avoid conflicts with auth layout
+import { Header } from '@/components/layout/Header'
+import { Footer } from '@/components/layout/Footer'
+
+// Dashboard layout with header and footer
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  return (
+    <>
+      <Header />
+      {children}
+      <Footer />
+    </>
+  )
 }

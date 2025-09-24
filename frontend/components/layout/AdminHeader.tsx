@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { useRouter } from 'next/navigation';
 import { useSupportNotifications } from '@/hooks/useSupportNotifications';
 import { 
@@ -37,6 +38,7 @@ export function AdminHeader() {
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [userMenuPosition, setUserMenuPosition] = useState({ right: 0, top: 64 });
   const [notificationsPosition, setNotificationsPosition] = useState({ right: 0, top: 64 });
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -68,7 +70,7 @@ export function AdminHeader() {
     }
   }, [showNotifications]);
 
-  // Close dropdowns when clicking outside
+  // Close dropdowns when clicking outside or scrolling
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
@@ -79,12 +81,19 @@ export function AdminHeader() {
       }
     };
 
+    const handleScroll = () => {
+      setShowNotifications(false);
+      setShowUserMenu(false);
+    };
+
     if (showNotifications || showUserMenu) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('scroll', handleScroll, true); // Use capture phase for all scroll events
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('scroll', handleScroll, true);
     };
   }, [showNotifications, showUserMenu]);
 
@@ -113,14 +122,13 @@ export function AdminHeader() {
         </Button>
 
         {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search users, courses, payments..."
-            className="pl-10 pr-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary w-80"
-          />
-        </div>
+        <SearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Search users, courses, payments..."
+          size="sm"
+          className="w-80"
+        />
       </div>
 
       {/* Right Section */}

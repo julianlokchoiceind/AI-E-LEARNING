@@ -5,7 +5,9 @@ import { Search, Filter, ChevronDown } from 'lucide-react';
 import CourseCard from '@/components/feature/CourseCard';
 import { Button } from '@/components/ui/Button';
 import { Container } from '@/components/ui/Container';
+import { HeroSection } from '@/components/ui/HeroSection';
 import { SkeletonBox, SkeletonCircle, EmptyState, LoadingSpinner } from '@/components/ui/LoadingStates';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { useCoursesQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -19,6 +21,12 @@ const CourseCatalogPage = () => {
   const [selectedLevel, setSelectedLevel] = useState('');
   const [priceFilter, setPriceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+
+  // Update selectedCategory when URL params change (for View All functionality)
+  React.useEffect(() => {
+    const categoryFromUrl = searchParams.get('category') || '';
+    setSelectedCategory(categoryFromUrl);
+  }, [searchParams]);
   
   const { user } = useAuth();
   const router = useRouter();
@@ -84,31 +92,24 @@ const CourseCatalogPage = () => {
   return (
     <div className="min-h-screen bg-muted">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-primary to-primary/80 text-white py-16">
-        <Container variant="header">
-          <h1 className="text-4xl font-bold mb-4">Explore Our Courses</h1>
-          <p className="text-xl mb-8">Learn AI programming from industry experts</p>
-          
-          {/* Search Bar */}
-          <form onSubmit={handleSearch}>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search for courses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-6 py-4 pr-12 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground"
-              >
-                <Search className="w-6 h-6" />
-              </button>
-            </div>
-          </form>
-        </Container>
-      </div>
+      <HeroSection
+        title="Explore Our Courses"
+        subtitle="Learn AI programming from industry experts"
+        align="left"
+        size="lg"
+        backgroundImage="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&h=600&fit=crop"
+        tabletImage="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1024&h=400&fit=crop"
+        mobileImage="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=768&h=300&fit=crop"
+      >
+        {/* Search Bar */}
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSubmit={handleSearch}
+          placeholder="Search for courses..."
+          className="w-full max-w-2xl"
+        />
+      </HeroSection>
 
       {/* Filters and Course Grid */}
       <Container variant="public">
@@ -238,6 +239,7 @@ const CourseCatalogPage = () => {
               <CourseCard
                 key={course.id}
                 course={course}
+                variant="catalog"
               />
             ))}
           </div>

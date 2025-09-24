@@ -2,21 +2,25 @@
 
 import { Metadata } from 'next'
 import { Container } from '@/components/ui/Container'
+import { HeroSection } from '@/components/ui/HeroSection'
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-muted">
-      <Container variant="public" className="py-8">
+      {/* Hero Section */}
+      <HeroSection
+        title="About AI E-Learning Platform"
+        subtitle="Empowering developers to master AI/ML through high-quality video courses and intelligent AI assistants"
+        align="center"
+        size="md"
+        backgroundImage="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1920&h=600&fit=crop"
+        tabletImage="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1024&h=400&fit=crop"
+        mobileImage="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=768&h=300&fit=crop"
+      />
+
+      <Container variant="public" className="py-8 md:py-12 lg:py-24">
         <div>
-          <h1 className="text-4xl font-bold text-center mb-8 gradient-text">
-            About AI E-Learning Platform
-          </h1>
-          
           <div className="prose prose-lg mx-auto">
-            <p className="text-xl text-muted-foreground text-center mb-12">
-              Empowering developers to master AI/ML through high-quality video courses 
-              and intelligent AI assistants.
-            </p>
 
             <section className="mb-12">
               <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>

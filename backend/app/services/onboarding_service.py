@@ -2,7 +2,7 @@
 Onboarding service for user onboarding flow.
 Following PRD specifications and memory guidelines.
 """
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from datetime import datetime
 from app.models.user import User, OnboardingStep, LearningPath, SkillLevel, TimeCommitment
 from app.models.course import Course
@@ -115,26 +115,26 @@ class OnboardingService:
             interests = user.onboarding.interests
             
             # Build course query based on preferences
-            course_query = {"status": "published"}
-            
+            course_query: Dict[str, Any] = {"status": "published"}
+
             # Add category filter based on learning paths
             if selected_paths:
                 categories = []
                 for path in selected_paths:
                     if path == LearningPath.PROGRAMMING_BASICS:
-                        categories.append("programming")
+                        categories.append("nlp")  # Start with NLP (text is easier)
                     elif path == LearningPath.AI_FUNDAMENTALS:
-                        categories.append("ai-fundamentals")
+                        categories.append("ai-ethics")  # Fundamentals = ethics/principles
                     elif path == LearningPath.MACHINE_LEARNING:
-                        categories.append("machine-learning")
+                        categories.append("ml-basics")  # Direct match
                     elif path == LearningPath.AI_TOOLS:
-                        categories.append("ai-tools")
+                        categories.append("generative-ai")  # AI tools
                     elif path == LearningPath.PRODUCTION_AI:
-                        categories.append("production-ai")
-                
+                        categories.append("ai-in-business")  # Business use
+
                 if categories:
                     course_query["category"] = {"$in": categories}
-            
+
             # Add level filter based on skill level
             if skill_level:
                 if skill_level in [SkillLevel.COMPLETE_BEGINNER, SkillLevel.SOME_PROGRAMMING]:

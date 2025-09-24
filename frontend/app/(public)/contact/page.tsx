@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { useApiMutation } from '@/hooks/useApiMutation';
 import { supportAPI } from '@/lib/api/support';
 import { Container } from '@/components/ui/Container';
+import { HeroSection } from '@/components/ui/HeroSection';
 import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { InlineMessage } from '@/components/ui/InlineMessage';
 
@@ -131,18 +132,20 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-primary/5">
-      <Container variant="public" className="py-8">
+    <div className="min-h-screen bg-muted">
+      {/* Hero Section */}
+      <HeroSection
+        title="Contact Us"
+        subtitle="Get in touch with our team. We'd love to hear from you!"
+        align="center"
+        size="md"
+        backgroundImage="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1920&h=600&fit=crop"
+        tabletImage="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1024&h=400&fit=crop"
+        mobileImage="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=768&h=300&fit=crop"
+      />
+
+      <Container variant="public" className="py-8 md:py-12 lg:py-24">
         <div>
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-foreground mb-4">
-              Contact Us
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Get in touch with our team. We'd love to hear from you!
-            </p>
-          </div>
 
           <div className="grid md:grid-cols-2 gap-12">
             {/* Contact Information */}

@@ -37,9 +37,11 @@ async def connect_to_mongo():
         )
         
         # Test connection trước
+        if db.client is None:
+            raise RuntimeError("Failed to create MongoDB client")
         await db.client.admin.command('ping')
         # MongoDB ping successful
-        
+
         # Use "ai-elearning" as the database name
         db.database = db.client["ai-elearning"]
         
@@ -57,6 +59,7 @@ async def connect_to_mongo():
         from app.models.support_ticket import SupportTicket, TicketMessage
         from app.models.review import Review, ReviewVote, ReviewReport
         from app.models.certificate import Certificate
+        from app.models.waitlist import Waitlist
         
         # Initialize Beanie with all document models
         await init_beanie(
@@ -78,7 +81,8 @@ async def connect_to_mongo():
                 Review,
                 ReviewVote,
                 ReviewReport,
-                Certificate
+                Certificate,
+                Waitlist
             ]
         )
         
@@ -86,6 +90,8 @@ async def connect_to_mongo():
         logger.info(f"✅ Successfully connected to MongoDB at {settings.MONGODB_URI.split('@')[1]}")
         
         # Count collections
+        if db.database is None:
+            raise RuntimeError("Database not initialized")
         collections = await db.database.list_collection_names()
         logger.info(f"📁 Database ready with {len(collections)} collections")
         

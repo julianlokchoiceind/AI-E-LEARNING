@@ -265,6 +265,27 @@ export function useFeaturedCoursesQuery() {
 }
 
 /**
+ * CATEGORY STATISTICS - Homepage categories display
+ * Medium-impact: Shows course count by category for homepage
+ */
+export function useCategoryStatsQuery() {
+  return useApiQuery(
+    ['category-stats'],
+    async () => {
+      const response = await api.get<StandardResponse<Record<string, number>>>('/courses/categories/stats', { requireAuth: false });
+      if (!response.success) {
+        throw new Error(response.message || 'Something went wrong');
+      }
+      return response;
+    },
+    {
+      showToast: false, // Disable toasts - use graceful degradation
+      ...getCacheConfig('COURSE_CATALOG'), // Homepage content
+    }
+  );
+}
+
+/**
  * COURSE RECOMMENDATIONS - Personalized suggestions
  * Medium-impact: Improves user engagement
  */

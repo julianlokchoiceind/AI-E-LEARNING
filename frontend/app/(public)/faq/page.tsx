@@ -11,7 +11,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { Card, CardContent } from '@/components/ui/Card';
 import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { InlineMessage } from '@/components/ui/InlineMessage';
@@ -20,6 +20,7 @@ import { useFAQsQuery, useVoteFAQ } from '@/hooks/queries/useFAQ';
 import { useFAQCategoriesQuery } from '@/hooks/queries/useFAQCategories';
 import { FAQ, FAQListResponse } from '@/lib/api/faq';
 import { Container } from '@/components/ui/Container';
+import { HeroSection } from '@/components/ui/HeroSection';
 import { SkeletonBox, SkeletonCircle, EmptyState } from '@/components/ui/LoadingStates';
 
 export default function FAQPage() {
@@ -170,19 +171,28 @@ export default function FAQPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted py-12">
-      <Container variant="public">
-        <div>
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-foreground mb-4">
-              Frequently Asked Questions
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Find answers to common questions about our AI E-Learning platform
-            </p>
-          </div>
+    <div className="min-h-screen bg-muted">
+      {/* Hero Section */}
+      <HeroSection
+        title="Frequently Asked Questions"
+        subtitle="Find answers to common questions about our platform"
+        align="center"
+        size="md"
+        backgroundImage="https://images.unsplash.com/photo-1555421689-491a97ff2040?w=1920&h=600&fit=crop"
+        tabletImage="https://images.unsplash.com/photo-1555421689-491a97ff2040?w=1024&h=400&fit=crop"
+        mobileImage="https://images.unsplash.com/photo-1555421689-491a97ff2040?w=768&h=300&fit=crop"
+      >
+        {/* Search Bar */}
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search FAQ..."
+          className="w-full max-w-2xl mx-auto"
+        />
+      </HeroSection>
 
+      <Container variant="public" className="py-8 md:py-12 lg:py-24">
+        <div>
           {/* FAQ Messages */}
           {faqLoginMessage.message && (
             <InlineMessage
@@ -208,20 +218,8 @@ export default function FAQPage() {
             />
           )}
 
-        {/* Search and Filter */}
-        <div className="mb-8 space-y-4">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search FAQs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-3 text-lg"
-            />
-          </div>
-
+        {/* Category Filter */}
+        <div className="mb-8">
           {/* Category Filter */}
           <div className="flex flex-wrap gap-2">
             <Button

@@ -41,7 +41,7 @@ export function LanguageSwitcher({
     }
   }, [isOpen]);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside or scrolling
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) &&
@@ -50,10 +50,18 @@ export function LanguageSwitcher({
       }
     };
 
+    const handleScroll = () => {
+      setIsOpen(false);
+    };
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('scroll', handleScroll, true); // Use capture phase for all scroll events
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('scroll', handleScroll, true);
+    };
   }, [isOpen]);
 
   if (variant === 'inline') {

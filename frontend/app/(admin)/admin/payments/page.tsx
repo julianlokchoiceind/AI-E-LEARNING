@@ -8,6 +8,7 @@ import { AdminPaymentHistory } from '@/components/ui/AdminPaymentHistory';
 import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
 import { Container } from '@/components/ui/Container';
 import { Pagination } from '@/components/ui/Pagination';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
 import { usePaymentAnalyticsQuery, useAdminPaymentHistoryQuery } from '@/hooks/queries/usePayments';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -346,17 +347,16 @@ export default function AdminPaymentsPage() {
       {/* Filters - Thống nhất với các modules khác */}
       <Card className="p-6">
         <div className="flex items-center gap-4">
-          <div className="flex-1 relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search payments..."
-              className="pl-10 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
+          <div className="flex-1">
+            <SearchBar
               value={searchQuery}
-              onChange={(e) => {
+              onChange={(value) => {
                 setCurrentPage(1); // Reset to first page when search changes
-                setSearchQuery(e.target.value);
+                setSearchQuery(value);
               }}
+              placeholder="Search payments..."
+              size="sm"
+              className="w-full"
             />
           </div>
           <select

@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Pagination } from '@/components/ui/Pagination';
 import { LoadingSpinner, EmptyState, SkeletonBox, SkeletonCircle, SkeletonText } from '@/components/ui/LoadingStates';
 import { Container } from '@/components/ui/Container';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { useAuth } from '@/hooks/useAuth';
 import {
   useAdminUsersQuery,
@@ -317,17 +318,17 @@ export default function UserManagement() {
       <Card className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => handleFilterChange(e.target.value, 'search')}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              className="pl-10 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
+          <SearchBar
+            value={searchTerm}
+            onChange={(value) => handleFilterChange(value, 'search')}
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSearch();
+            }}
+            placeholder="Search users..."
+            size="sm"
+            className="w-full"
+          />
 
           {/* Role Filter */}
           <select

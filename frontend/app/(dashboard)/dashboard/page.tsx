@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { InlineChatComponent } from '@/components/feature/InlineChatComponent';
 import { AccessDenied } from '@/components/feature/AccessDenied';
@@ -18,6 +19,7 @@ import { SkeletonBox, SkeletonCircle, EmptyState } from '@/components/ui/Loading
 import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { InlineMessage } from '@/components/ui/InlineMessage';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
+import { BookOpen, CheckCircle, Clock, Flame } from 'lucide-react';
 
 interface DashboardData {
   user: {
@@ -139,11 +141,11 @@ export default function DashboardPage() {
 
   if (authLoading || loading) {
     return (
-      <Container variant="public">
+      <Container variant="public" className="pt-8">
         {/* Welcome Section - STATIC */}
-        <div className="mb-8">
+        <div className="mb-10">
           <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {user?.name}!
+            <span className="gradient-text">Welcome back, {user?.name}!</span>
           </h1>
           <p className="text-muted-foreground">
             Continue your learning journey and track your progress
@@ -151,7 +153,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="bg-background rounded-lg border p-6">
               <SkeletonBox className="h-4 w-20 mb-2" />
@@ -217,7 +219,7 @@ export default function DashboardPage() {
 
   if (!dashboardData) {
     return (
-      <Container variant="public">
+      <Container variant="public" className="pt-8">
         <EmptyState
           title="Unable to load dashboard"
           description="There was a problem loading your dashboard data. Please try again."
@@ -231,7 +233,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <Container variant="public">
+    <Container variant="public" className="pt-8">
       {/* Dashboard Messages */}
       {dashboardAccessMessage.message && (
         <InlineMessage 
@@ -249,9 +251,9 @@ export default function DashboardPage() {
       )}
       
       {/* Welcome Section */}
-      <div className="mb-8">
+      <div className="mb-10">
         <h1 className="text-3xl font-bold mb-2">
-          Welcome back, {dashboardData.user.name}!
+          <span className="gradient-text">Welcome back, {dashboardData.user.name}!</span>
         </h1>
         <p className="text-muted-foreground">
           Continue your learning journey and track your progress
@@ -259,14 +261,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Enrolled Courses</p>
               <p className="text-2xl font-bold">{dashboardData.stats.total_courses}</p>
             </div>
-            <div className="text-4xl">📚</div>
+            <BookOpen className="w-8 h-8 text-primary" />
           </div>
         </Card>
 
@@ -276,7 +278,7 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">Completed</p>
               <p className="text-2xl font-bold">{dashboardData.stats.completed_courses}</p>
             </div>
-            <div className="text-4xl">✅</div>
+            <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
         </Card>
 
@@ -286,7 +288,7 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">Hours Learned</p>
               <p className="text-2xl font-bold">{dashboardData.stats.total_hours_learned}</p>
             </div>
-            <div className="text-4xl">⏱️</div>
+            <Clock className="w-8 h-8 text-blue-500" />
           </div>
         </Card>
 
@@ -296,12 +298,12 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">Current Streak</p>
               <p className="text-2xl font-bold">{dashboardData.stats.current_streak} days</p>
             </div>
-            <div className="text-4xl">🔥</div>
+            <Flame className="w-8 h-8 text-orange-500" />
           </div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Recent Courses */}
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
@@ -338,7 +340,7 @@ export default function DashboardPage() {
                       />
                     ) : (
                       <div className="w-24 h-16 bg-muted rounded flex items-center justify-center">
-                        <span className="text-muted-foreground">📚</span>
+                        <BookOpen className="w-6 h-6 text-muted-foreground" />
                       </div>
                     )}
                     
@@ -437,55 +439,56 @@ export default function DashboardPage() {
 
           {/* Quick Actions */}
           <div>
-            <h3 className="text-lg font-bold mb-3">Quick Actions</h3>
-            <div className="space-y-2">
-              <Link
-                href="/courses"
-                className="block w-full text-center bg-muted hover:bg-muted/80 py-2 rounded transition-colors"
-              >
-                Browse New Courses
+            <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
+            <div className="space-y-3">
+              <Link href="/courses" className="block w-full">
+                <Button variant="primary" className="w-full">
+                  Browse New Courses
+                </Button>
               </Link>
-              <Link
-                href="/certificates"
-                className="block w-full text-center bg-muted hover:bg-muted/80 py-2 rounded transition-colors"
-              >
-                View Certificates
+              <Link href="/certificates" className="block w-full">
+                <Button variant="outline" className="w-full">
+                  View Certificates
+                </Button>
               </Link>
-              <Link
-                href="/profile"
-                className="block w-full text-center bg-muted hover:bg-muted/80 py-2 rounded transition-colors"
-              >
-                Edit Profile
+              <Link href="/profile" className="block w-full">
+                <Button variant="outline" className="w-full">
+                  Edit Profile
+                </Button>
               </Link>
-              <button
+              <Button
                 onClick={() => setShowExportModal(true)}
-                className="block w-full text-center bg-primary/20 hover:bg-primary/30 py-2 rounded transition-colors text-primary"
+                variant="outline"
+                className="w-full"
               >
                 📊 Export Progress
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setShowOnboardingModal(true)}
-                className="block w-full text-center bg-secondary/20 hover:bg-secondary/30 py-2 rounded transition-colors text-secondary"
+                variant="outline"
+                className="w-full"
               >
                 🚀 Platform Tour
-              </button>
+              </Button>
             </div>
           </div>
         </div>
 
-        {/* AI Study Assistant */}
-        <div className="mt-8">
-          <InlineChatComponent
-            title="Ask Your AI Study Buddy"
-            placeholder="What would you like to learn today? Ask me anything about your courses!"
-            suggestions={[
-              "What should I study next?",
-              "Help me review my progress",
-              "Explain a concept I'm struggling with",
-              "Suggest a learning plan for this week"
-            ]}
-          />
-        </div>
+        {/* AI Study Assistant - Temporarily Hidden */}
+        {false && (
+          <div className="mt-8">
+            <InlineChatComponent
+              title="Ask Your AI Study Buddy"
+              placeholder="What would you like to learn today? Ask me anything about your courses!"
+              suggestions={[
+                "What should I study next?",
+                "Help me review my progress",
+                "Explain a concept I'm struggling with",
+                "Suggest a learning plan for this week"
+              ]}
+            />
+          </div>
+        )}
       </div>
 
       {/* Export Progress Modal */}

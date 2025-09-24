@@ -6,7 +6,7 @@ export default function PrivacyPage() {
 
   return (
     <div className="min-h-screen bg-muted">
-      <Container variant="public" className="py-8">
+      <Container variant="public" className="py-8 md:py-12 lg:py-24">
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Header */}
           <div className="text-center mb-12">

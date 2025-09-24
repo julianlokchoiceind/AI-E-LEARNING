@@ -20,6 +20,7 @@ import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { InlineMessage } from '@/components/ui/InlineMessage';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { SearchBar } from '@/components/ui/SearchBar';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
@@ -206,14 +207,12 @@ export default function SupportPage() {
       <Card className="mb-6">
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search tickets..."
+            <div className="flex-1">
+              <SearchBar
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                onChange={setSearchQuery}
+                placeholder="Search tickets..."
+                size="md"
               />
             </div>
             <select
@@ -394,7 +393,7 @@ export default function SupportPage() {
             </label>
             <Input
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, title: e.target.value })}
               placeholder="Brief description of your issue"
             />
           </div>
