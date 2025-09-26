@@ -53,7 +53,12 @@ export function WaitlistSection({
   }
 
   return (
-    <div className="relative bg-gradient-to-r from-primary to-primary/80 text-white">
+    <div
+      className="relative text-white"
+      style={{
+        background: `radial-gradient(ellipse 100% 80% at center 50%, hsl(221 83% 50%) 0%, hsl(221 83% 40%) 40%, hsl(221 83% 25%) 70%, hsl(221 83% 15%) 90%, hsl(221 83% 10%) 100%)`
+      }}
+    >
       <Container variant="public" className={containerClassName}>
         <div className="text-center max-w-2xl mx-auto">
           {/* Header */}
@@ -75,7 +80,7 @@ export function WaitlistSection({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleJoinWaitlist()}
-                className="w-full sm:flex-1 h-10 sm:h-11 lg:h-12 px-4 bg-transparent border border-white/30 text-white placeholder-white/70 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 outline-none box-border"
+                className="w-full sm:flex-1 h-10 sm:h-11 lg:h-12 px-4 bg-white/10 border border-white/40 text-white placeholder-white/80 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/70 outline-none box-border backdrop-blur-sm"
                 disabled={loading}
               />
               <Button
