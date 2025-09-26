@@ -9,6 +9,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { getLocaleFromPath, isValidLocale, DEFAULT_LOCALE, getTextDirection } from '@/lib/i18n/config'
 import { generateMetadata as generateSEOMetadata } from '@/lib/seo/metadata'
 import { OrganizationStructuredData, WebsiteStructuredData } from '@/components/seo/StructuredData'
+import { AICursor } from '@/components/ui/AICursor'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -88,6 +89,7 @@ export default function RootLayout({
                   }}
                 />
                 {children}
+                <AICursor />
               </I18nProvider>
             </QueryProvider>
           </SessionProvider>
