@@ -209,6 +209,48 @@ async def get_my_courses(
         raise HTTPException(status_code=500, detail="Failed to fetch creator courses")
 
 
+@router.get("/categories/stats", response_model=StandardResponse[dict])
+async def get_categories_stats() -> StandardResponse[dict]:
+    """
+    Get course count statistics for each category.
+
+    Returns a dictionary with category values as keys and course counts as values.
+    Used for displaying category statistics on the homepage.
+    """
+    try:
+        # Count courses by category (published and coming_soon courses - visible to users)
+        pipeline = [
+            {"$match": {"status": {"$in": [CourseStatus.PUBLISHED, CourseStatus.COMING_SOON]}}},
+            {"$group": {
+                "_id": "$category",
+                "count": {"$sum": 1}
+            }}
+        ]
+
+        cursor = db.database["courses"].aggregate(pipeline)  # type: ignore
+        results = await cursor.to_list(None)  # type: ignore
+
+        # Convert to dictionary format
+        stats = {}
+        for result in results:
+            if result["_id"]:  # Skip null categories
+                stats[result["_id"]] = result["count"]
+
+        # Ensure all categories have a count (even if 0)
+        for category in CourseCategory:
+            if category.value not in stats:
+                stats[category.value] = 0
+
+        return StandardResponse(
+            success=True,
+            data=stats,
+            message="Category statistics retrieved successfully"
+        )
+    except Exception as e:
+        logger.error(f"Error fetching category statistics: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch category statistics")
+
+
 @router.get("/{course_id}", response_model=StandardResponse[CourseResponse])
 @measure_performance("api.courses.get")
 async def get_course(

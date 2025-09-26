@@ -22,11 +22,20 @@ const CourseCatalogPage = () => {
   const [priceFilter, setPriceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
+  // Pagination state
+  const COURSES_PER_PAGE = 20;
+  const [displayCount, setDisplayCount] = useState(COURSES_PER_PAGE);
+
   // Update selectedCategory when URL params change (for View All functionality)
   React.useEffect(() => {
     const categoryFromUrl = searchParams.get('category') || '';
     setSelectedCategory(categoryFromUrl);
   }, [searchParams]);
+
+  // Reset display count when filters change
+  React.useEffect(() => {
+    setDisplayCount(COURSES_PER_PAGE);
+  }, [selectedCategory, selectedLevel, priceFilter, sortBy, searchQuery]);
   
   const { user } = useAuth();
   const router = useRouter();
@@ -42,6 +51,11 @@ const CourseCatalogPage = () => {
   
   // Extract courses from React Query response
   const courses = coursesData?.data?.courses || [];
+
+  // Pagination logic
+  const displayedCourses = courses.slice(0, displayCount);
+  const remainingCount = courses.length - displayCount;
+  const hasMore = remainingCount > 0;
 
   const categories = [
     { value: '', label: 'All Categories' },
@@ -234,15 +248,48 @@ const CourseCatalogPage = () => {
             }}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course: any) => (
-              <CourseCard
-                key={course.id}
-                course={course}
-                variant="catalog"
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {displayedCourses.map((course: any) => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  variant="catalog"
+                />
+              ))}
+            </div>
+
+            {/* Show More Button */}
+            {hasMore && (
+              <div className="mt-8 flex justify-center">
+                <Button
+                  onClick={() => {
+                    const nextBatch = Math.min(remainingCount, COURSES_PER_PAGE);
+                    setDisplayCount(prev => prev + nextBatch);
+                  }}
+                  variant="primary"
+                  size="lg"
+                  className="min-w-[200px]"
+                >
+                  Show {Math.min(remainingCount, COURSES_PER_PAGE)} more
+                </Button>
+              </div>
+            )}
+
+            {/* Show Fewer Button */}
+            {!hasMore && displayCount > COURSES_PER_PAGE && (
+              <div className="mt-8 flex justify-center">
+                <Button
+                  onClick={() => setDisplayCount(COURSES_PER_PAGE)}
+                  variant="primary"
+                  size="lg"
+                  className="min-w-[200px]"
+                >
+                  Show fewer
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </Container>
     </div>

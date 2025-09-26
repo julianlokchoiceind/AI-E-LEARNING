@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Card } from '@/components/ui/Card';
 
 interface CategoryCardProps {
   value: string;
@@ -17,13 +18,14 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
 }) => {
   return (
     <Link href={`/courses?category=${value}`}>
-      <div className="group cursor-pointer">
-        <div className="relative h-64 rounded-lg overflow-hidden bg-muted">
+      <Card className="group cursor-pointer card-hover">
+        <div className="p-2 pb-2">
+          <div className="relative h-56 sm:h-64 rounded-lg overflow-hidden bg-muted">
           <Image
             src={image}
             alt={label}
             fill
-            className="object-cover group-hover:scale-110 transition-transform duration-300"
+            className="object-cover transition-transform duration-300"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
 
@@ -39,8 +41,9 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
               {count} course{count !== 1 ? 's' : ''}
             </p>
           </div>
+          </div>
         </div>
-      </div>
+      </Card>
     </Link>
   );
 };

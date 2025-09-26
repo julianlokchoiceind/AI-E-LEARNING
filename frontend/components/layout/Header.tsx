@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
-import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, BookOpen, Settings } from 'lucide-react'
+import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, BookOpen, Settings, Headphones, CreditCard } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { CategoryDropdown } from '@/components/ui/CategoryDropdown'
 import { MobileMenu } from '@/components/ui/MobileMenu'
@@ -161,7 +161,7 @@ export function Header() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => router.push('/login')}
-                    className="px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-[hsl(var(--primary-light))] transition-colors"
+                    className="px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
                   >
                     {t('auth.signIn')}
                   </button>
@@ -235,9 +235,7 @@ export function Header() {
           className="flex items-center w-full px-4 py-2 text-sm nav-hover relative"
         >
           <div className="relative inline-block mr-3">
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
+            <Headphones className="h-4 w-4" />
             {/* Support notification badge - consistent with AdminHeader */}
             {unreadCount > 0 && (
               <div className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-destructive rounded-full flex items-center justify-center border-[1.5px] border-background shadow-sm px-0.5 transform translate-x-1/4 -translate-y-1/4">
@@ -257,9 +255,7 @@ export function Header() {
           }}
           className="flex items-center w-full px-4 py-2 text-sm nav-hover"
         >
-          <svg className="h-4 w-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-          </svg>
+          <CreditCard className="h-4 w-4 mr-3" />
           Billing
         </button>
         <button

@@ -60,7 +60,8 @@ export function HeroSection({
         className={cn(
           'absolute inset-0',
           // If no backgroundImage, use gradient fallback like courses page
-          !backgroundImage && 'bg-gradient-to-r from-primary to-primary/80'
+          !backgroundImage && 'bg-gradient-to-r from-primary to-primary/80',
+          backgroundImage && 'animate-kenburns' // Add Ken Burns effect for images
         )}
         style={backgroundImage ? {
           backgroundImage: `url(${backgroundImage})`,
@@ -72,7 +73,7 @@ export function HeroSection({
       {/* Tablet Background - Image or inherit from desktop */}
       {tabletImage && (
         <div
-          className="absolute inset-0 hidden md:block lg:hidden"
+          className="absolute inset-0 hidden md:block lg:hidden animate-kenburns"
           style={{
             backgroundImage: `url(${tabletImage})`,
             backgroundSize: 'cover',
@@ -84,7 +85,7 @@ export function HeroSection({
       {/* Mobile Background - Image or inherit gradient */}
       {mobileImage && (
         <div
-          className="absolute inset-0 md:hidden"
+          className="absolute inset-0 md:hidden animate-kenburns"
           style={{
             backgroundImage: `url(${mobileImage})`,
             backgroundSize: 'cover',
@@ -112,7 +113,7 @@ export function HeroSection({
         <h1 className="hero-title">{title}</h1>
         {subtitle && <p className="hero-subtitle opacity-90">{subtitle}</p>}
         {children && (
-          <div className={cn('flex flex-wrap gap-4', justifyClasses[align])}>
+          <div className={cn('flex flex-col sm:flex-row gap-4 w-full sm:w-auto', justifyClasses[align])}>
             {children}
           </div>
         )}

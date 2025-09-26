@@ -16,15 +16,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const variants = {
       primary: 'bg-primary text-white hover:bg-primary/90 active:bg-primary/95 focus-visible:ring-primary',
       secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/85 focus-visible:ring-secondary',
-      outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground active:bg-accent/80 focus-visible:ring-accent',
-      ghost: 'hover:bg-accent hover:text-accent-foreground active:bg-accent/80 focus-visible:ring-accent',
+      outline: 'border border-input bg-background hover:bg-primary/10 hover:text-primary active:bg-primary/20 focus-visible:ring-primary',
+      ghost: 'hover:bg-primary/10 hover:text-primary active:bg-primary/20 focus-visible:ring-primary',
       danger: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/95 focus-visible:ring-destructive',
     }
     
     const sizes = {
-      sm: 'h-8 px-3 text-sm min-h-[32px]', // Ensure minimum touch target
-      md: 'h-10 px-4 py-2 min-h-[40px]',   // Standard touch target
-      lg: 'h-12 px-6 text-lg min-h-[48px]', // Large touch target for primary actions
+      sm: 'h-8 px-3 text-xs sm:text-sm min-h-[32px]', // Ensure minimum touch target
+      md: 'h-9 sm:h-10 px-3 sm:px-4 py-2 text-sm sm:text-base min-h-[36px] sm:min-h-[40px]',   // Standard touch target
+      lg: 'h-10 sm:h-11 lg:h-12 px-4 sm:px-5 lg:px-6 text-base sm:text-lg min-h-[40px] sm:min-h-[44px] lg:min-h-[48px]', // Large touch target for primary actions
     }
     
     return (

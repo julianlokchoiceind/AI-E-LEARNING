@@ -87,23 +87,31 @@ export default function HomePage() {
         subtitle="Learn from industry experts with intelligent AI assistance"
         size="lg"
         align="center"
-        backgroundImage="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1920&h=600&fit=crop"
-        tabletImage="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1024&h=400&fit=crop"
-        mobileImage="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=768&h=300&fit=crop"
+        backgroundImage="/images/backgrounds/homepage-hero-section.jpg"
+        overlayOpacity={0.38}
       >
-        <Link href={isAuthenticated ? '/dashboard' : '/register'}>
-          <Button size="lg">Start Learning</Button>
+        <Link href={isAuthenticated ? '/dashboard' : '/register'} className="w-full sm:w-auto">
+          <Button size="lg" className="w-full sm:w-auto">Start Learning</Button>
         </Link>
-        <Link href="/courses">
-          <Button size="lg" variant="outline" className="!text-white !border-white !bg-white/10 hover:!bg-white/20">
+        <Link href="/courses" className="w-full sm:w-auto">
+          <Button size="lg" variant="outline" className="w-full sm:w-auto !text-white !border-white !bg-white/10 hover:!bg-white/20">
             Browse Courses
           </Button>
         </Link>
       </HeroSection>
 
-      {/* Course Categories Section - White Background */}
-      <div className="flex-1 bg-white">
-        <Container variant="public" className="py-8 md:py-12 lg:py-24">
+      {/* Course Categories Section - With Background Image */}
+      <div
+        className="flex-1 relative"
+        style={{
+          backgroundImage: 'url(/images/backgrounds/category-section-bg.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
+        {/* White overlay for readability */}
+        <div className="absolute inset-0 bg-white/95"></div>
+        <Container variant="public" className="py-8 md:py-12 lg:py-24 relative z-10">
           <SectionHeader
             title={<span>Start Your <span className="gradient-text">AI Journey</span></span>}
             subtitle="From machine learning basics to cutting-edge applications"
@@ -206,8 +214,8 @@ export default function HomePage() {
       <div className="flex-1 bg-muted">
         <Container variant="public" className="py-8 md:py-12 lg:py-24">
           <SectionHeader
-            title="What Our Students Say"
-            subtitle="Join thousands of developers mastering AI with our platform"
+            title="Early Access Feedback"
+            subtitle="Early testers are excited about what's coming"
             align="left"
           />
           <TestimonialsSection />

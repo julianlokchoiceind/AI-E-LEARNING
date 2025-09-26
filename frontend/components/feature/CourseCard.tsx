@@ -114,24 +114,25 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', on
 
   return (
     <Card
-      className="hover:shadow-lg transition-shadow duration-300 min-h-[420px] sm:min-h-[440px] md:min-h-[460px] lg:min-h-[500px] flex flex-col"
+      className="card-hover min-h-[420px] sm:min-h-[440px] md:min-h-[460px] lg:min-h-[500px] flex flex-col"
     >
-      {/* Course Thumbnail */}
-      <div className="relative h-48 sm:h-52 md:h-56 lg:h-64 bg-muted rounded-t-lg overflow-hidden">
-        {course.thumbnail ? (
-          <img
-            src={getAttachmentUrl(course.thumbnail)}
-            alt={course.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-primary/80">
-            <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
-          </div>
-        )}
-        
-        {/* Pricing Badge or Status Badge */}
-        <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
+      {/* Course Thumbnail with minimal padding like Coursera */}
+      <div className="p-2 pb-2">
+        <div className="relative h-48 sm:h-52 md:h-56 lg:h-64 bg-muted rounded-lg overflow-hidden">
+          {course.thumbnail ? (
+            <img
+              src={getAttachmentUrl(course.thumbnail)}
+              alt={course.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary to-primary/80">
+              <BookOpen className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
+            </div>
+          )}
+
+          {/* Pricing Badge or Status Badge */}
+          <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
           {getStatusBadge(course.status) ? (
             getStatusBadge(course.status)
           ) : course.pricing.is_free ? (
@@ -148,13 +149,14 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', on
               )}
             </Badge>
           )}
-        </div>
+          </div>
 
-        {/* Level Badge */}
-        <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
-          <Badge variant={getLevelVariant(course.level)} className="text-xs sm:text-sm">
-            {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
-          </Badge>
+          {/* Level Badge */}
+          <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
+            <Badge variant={getLevelVariant(course.level)} className="text-xs sm:text-sm">
+              {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+            </Badge>
+          </div>
         </div>
       </div>
 
@@ -205,15 +207,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', on
         )}
 
         {/* Action Button - Larger touch target on mobile */}
-        {course.status === 'coming_soon' && showComingSoonButton ? (
-          <Button
-            className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium touch-manipulation"
-            variant="secondary"
-            disabled
-          >
-            Coming Soon
-          </Button>
-        ) : course.status === 'archived' ? null : course.status === 'coming_soon' ? null : (
+        {course.status === 'coming_soon' || course.status === 'archived' ? null : (
           <Button
             onClick={handleEnroll}
             className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium touch-manipulation"

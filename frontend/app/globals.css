@@ -398,6 +398,30 @@
     }
   }
   
+  /* Custom animations */
+  @keyframes sway {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(4px);
+    }
+  }
+
+  /* Ken Burns effect - reusable for any image/background */
+  @keyframes kenburns {
+    0% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(1.1);
+    }
+  }
+
+  .animate-kenburns {
+    animation: kenburns 20s ease-in-out infinite alternate;
+  }
+
   /* Mobile-optimized forms */
   .form-mobile {
     @apply space-y-4;

@@ -48,7 +48,7 @@ export function FeaturesSection() {
         return (
           <div
             key={feature.id}
-            className="card-hover p-6 border rounded-lg bg-white group transition-all duration-200 hover:-translate-y-1 hover:border-primary"
+            className="card-hover p-6 border rounded-lg bg-white group hover:border-primary"
           >
             {/* Icon Container */}
             <div className={`inline-flex p-3 rounded-lg ${feature.iconBg} mb-4 group-hover:scale-110 transition-transform duration-200`}>

@@ -59,7 +59,7 @@ export function WaitlistSection({
           {/* Header */}
           <div className="mb-6">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6">
-              Get notified when we're launching
+              <span className="bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-transparent">Get notified</span> when we're launching
             </h2>
             <p className="text-lg md:text-xl lg:text-xl mb-6 md:mb-8 text-white/90">
               Be Part of the Excitement: Receive Exclusive Launch Updates and Notifications
@@ -68,19 +68,20 @@ export function WaitlistSection({
 
           {/* Email Form */}
           <div className="mb-6">
-            <div className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto items-center">
+            <div className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto items-stretch">
               <input
                 type="email"
                 placeholder="Email address..."
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleJoinWaitlist()}
-                className="w-full sm:flex-1 px-4 py-3 bg-transparent border border-white/30 text-white placeholder-white/70 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 outline-none"
+                className="w-full sm:flex-1 h-10 sm:h-11 lg:h-12 px-4 bg-transparent border border-white/30 text-white placeholder-white/70 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 outline-none box-border"
                 disabled={loading}
               />
               <Button
-                size="md"
-                className="w-full sm:w-auto sm:min-w-[120px] h-12 bg-white text-primary hover:bg-white/90 border-0"
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto sm:min-w-[120px] bg-white text-primary border-white hover:bg-white/95"
                 onClick={handleJoinWaitlist}
                 loading={loading}
               >

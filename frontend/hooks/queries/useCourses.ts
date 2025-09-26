@@ -69,7 +69,7 @@ type CachedCoursesData = StandardResponse<any> | any | null;
  * High-impact: Used by 100% of users browsing courses
  */
 export function useCoursesQuery(filters: CoursesFilters = {}) {
-  const { search = '', category = '', level = '', pricing = 'all', sort = 'newest', page = 1, limit = 12 } = filters;
+  const { search = '', category = '', level = '', pricing = 'all', sort = 'newest', page = 1, limit = 50 } = filters;
   
   // Build query string from filters
   const buildQueryString = () => {
@@ -81,7 +81,7 @@ export function useCoursesQuery(filters: CoursesFilters = {}) {
     if (pricing !== 'all') params.append('is_free', pricing === 'free' ? 'true' : 'false');
     if (sort) params.append('sort', sort);
     if (page > 1) params.append('page', page.toString());
-    if (limit !== 12) params.append('per_page', limit.toString());
+    params.append('per_page', limit.toString()); // Always send per_page to match backend
     
     return params.toString();
   };

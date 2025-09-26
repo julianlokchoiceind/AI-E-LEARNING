@@ -111,7 +111,18 @@ export default withAuth(
     
     const isAdminRoute = pathnameWithoutLocale.startsWith('/admin')
     const isCreatorRoute = pathnameWithoutLocale.startsWith('/creator')
-    
+
+    // Define protected routes that require authentication
+    const isProtectedRoute = pathnameWithoutLocale.startsWith('/dashboard') ||
+                           pathnameWithoutLocale.startsWith('/learn') ||
+                           pathnameWithoutLocale.startsWith('/my-courses') ||
+                           pathnameWithoutLocale.startsWith('/profile') ||
+                           pathnameWithoutLocale.startsWith('/billing') ||
+                           pathnameWithoutLocale.startsWith('/support') ||
+                           pathnameWithoutLocale.startsWith('/certificates') ||
+                           pathnameWithoutLocale.startsWith('/checkout') ||
+                           pathnameWithoutLocale.startsWith('/payment')
+
     // Redirect authenticated users away from auth pages
     if (isAuthPage) {
       if (isAuth) {
@@ -129,13 +140,13 @@ export default withAuth(
       return response
     }
 
-    // Require authentication for protected routes
-    if (!isAuth) {
+    // Only require authentication for explicitly protected routes
+    if (!isAuth && (isProtectedRoute || isAdminRoute || isCreatorRoute)) {
       let from = pathname
       if (req.nextUrl.search) {
         from += req.nextUrl.search
       }
-      
+
       const currentLocale = getLocaleFromPath(pathname)
       const loginPath = getLocalizedPath('/login', currentLocale)
       return NextResponse.redirect(
@@ -143,7 +154,7 @@ export default withAuth(
       )
     }
 
-    // Role-based access control
+    // Role-based access control (for authenticated users)
     if (isAdminRoute) {
       if (userRole !== 'admin') {
         // Redirect to 404 page for unauthorized admin access
