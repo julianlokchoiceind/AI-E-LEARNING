@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Container } from '@/components/ui/Container'
 
 export function Footer() {
@@ -8,7 +9,20 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
-            <h3 className="text-lg font-bold gradient-text mb-4">AI E-Learning Platform</h3>
+            <div className="mb-4">
+              <div className="flex mb-2">
+                <Link href="/" className="flex-shrink-0">
+                  <Image
+                    src="/images/logo/choice-logo-192x192.png"
+                    alt="CHOICE"
+                    width={48}
+                    height={48}
+                    className="w-10 h-10 md:w-12 md:h-12"
+                  />
+                </Link>
+              </div>
+              <h3 className="text-lg font-bold gradient-text">AI E-Learning Platform</h3>
+            </div>
             <p className="text-muted-foreground text-sm mb-4">
               Empowering developers to master AI/ML through high-quality video courses and intelligent AI assistants.
             </p>
@@ -79,7 +93,11 @@ export function Footer() {
 
         <div className="mt-8 pt-8 border-t border-border">
           <p className="text-center text-sm text-muted-foreground">
-            © 2025 AI E-Learning Platform. All rights reserved.
+            © 2025{' '}
+            <Link href="/" className="link-hover font-medium">
+              CHOICE
+            </Link>{' '}
+            AI E-Learning Platform. All rights reserved.
           </p>
         </div>
       </Container>

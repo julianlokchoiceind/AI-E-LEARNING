@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/hooks/useAuth'
 import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, BookOpen, Settings, Headphones, CreditCard } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
@@ -84,7 +85,13 @@ export function Header() {
             {/* Desktop: Left Side - Logo + Explorer */}
             <div className="hidden md:flex items-center gap-4">
               <Link href="/" className="flex-shrink-0">
-                <h1 className="text-2xl font-bold gradient-text">AI E-Learning</h1>
+                <Image
+                  src="/images/logo/choice-logo-192x192.png"
+                  alt="CHOICE"
+                  width={48}
+                  height={48}
+                  className="w-10 h-10 md:w-12 md:h-12"
+                />
               </Link>
 
               {/* Explorer (Desktop Only) */}
@@ -102,7 +109,13 @@ export function Header() {
             {/* Mobile: Logo on Right */}
             <div className="md:hidden">
               <Link href="/" className="flex-shrink-0">
-                <h1 className="text-2xl font-bold gradient-text">AI E-Learning</h1>
+                <Image
+                  src="/images/logo/choice-logo-192x192.png"
+                  alt="CHOICE"
+                  width={48}
+                  height={48}
+                  className="w-10 h-10 md:w-12 md:h-12"
+                />
               </Link>
             </div>
 

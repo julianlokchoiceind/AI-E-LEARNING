@@ -85,13 +85,14 @@ export function generateMetadata({
   }, {} as Record<string, string>);
 
   const metadata: Metadata = {
+    metadataBase: new URL(DEFAULT_SEO.siteUrl),
     title: fullTitle,
     description: finalDescription,
     keywords: finalKeywords.join(', '),
     authors: author ? [{ name: author }] : [{ name: 'AI E-Learning Team' }],
     creator: 'AI E-Learning Platform',
     publisher: 'AI E-Learning Platform',
-    
+
     // Canonical URL
     alternates: {
       canonical: canonicalUrl,

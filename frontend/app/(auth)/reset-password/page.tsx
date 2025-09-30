@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { useApiMutation } from '@/hooks/useApiMutation'
 import { resetPassword } from '@/lib/api/auth'
@@ -109,10 +110,29 @@ export default function ResetPasswordPage() {
   
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted">
-      <Container variant="auth" className="space-y-8">
+      <div
+        className="min-h-screen flex items-center justify-center py-4 sm:py-8 md:py-12"
+        style={{
+          background: `
+            linear-gradient(135deg, #1e40af 0%, #2563eb 25%, #3b82f6 50%, #2563eb 75%, #1e40af 100%),
+            radial-gradient(circle 450px at center, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 25%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.2) 70%, transparent 85%)
+          `
+        }}
+      >
+      <Container
+        variant="auth"
+        className="bg-white rounded-lg"
+        style={{
+          boxShadow: `
+            0 0 40px rgba(255, 255, 255, 0.18),
+            0 0 80px rgba(255, 255, 255, 0.12),
+            0 20px 40px rgba(0, 0, 0, 0.15),
+            0 10px 20px rgba(0, 0, 0, 0.1)
+          `
+        }}
+      >
           <div className="text-center">
-            <h2 className="mt-6 text-3xl font-extrabold text-foreground">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-foreground mb-4">
               Password reset successful
             </h2>
           </div>
@@ -140,16 +160,46 @@ export default function ResetPasswordPage() {
 }
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted">
-      <Container variant="auth" className="space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
-            Reset your password
-          </h2>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            Enter your new password below
-          </p>
+    <div
+      className="min-h-screen flex items-center justify-center py-4 sm:py-8 md:py-12"
+      style={{
+        background: `
+          linear-gradient(135deg, #1e40af 0%, #2563eb 25%, #3b82f6 50%, #2563eb 75%, #1e40af 100%),
+          radial-gradient(circle 450px at center, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 25%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.2) 70%, transparent 85%)
+        `
+      }}
+    >
+      <Container
+        variant="auth"
+        className="bg-white rounded-lg"
+        style={{
+          boxShadow: `
+            0 0 40px rgba(255, 255, 255, 0.18),
+            0 0 80px rgba(255, 255, 255, 0.12),
+            0 20px 40px rgba(0, 0, 0, 0.15),
+            0 10px 20px rgba(0, 0, 0, 0.1)
+          `
+        }}
+      >
+        <div className="flex justify-center mb-4 sm:mb-6">
+          <Link href="/">
+            <Image
+              src="/images/logo/choice-logo-192x192.png"
+              alt="CHOICE"
+              width={80}
+              height={80}
+              className="w-20 h-20"
+              priority
+            />
+          </Link>
         </div>
+
+        <h2 className="text-center text-xl sm:text-2xl font-extrabold text-foreground">
+          Reset your password
+        </h2>
+        <p className="mt-2 text-center text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
+          Enter your new password below
+        </p>
         
         {/* Page-level messages */}
         {resetPasswordMessage.message && (
@@ -160,11 +210,11 @@ export default function ResetPasswordPage() {
           />
         )}
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          
-          <div className="space-y-4">
+        <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+
+          <div className="space-y-3">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground">
+              <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-foreground">
                 New password
               </label>
               <div className="mt-1">
@@ -182,13 +232,13 @@ export default function ResetPasswordPage() {
                       setErrors({ ...errors, password: '' })
                     }
                   }}
-                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary text-xs sm:text-sm ${
                     errors.password ? 'border-red-500 bg-red-50' : 'border-border'
                   }`}
                   placeholder="Enter new password"
                 />
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.password}</p>
                 )}
               </div>
             </div>
@@ -212,13 +262,13 @@ export default function ResetPasswordPage() {
                       setErrors({ ...errors, confirmPassword: '' })
                     }
                   }}
-                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary text-xs sm:text-sm ${
                     errors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-border'
                   }`}
                   placeholder="Confirm new password"
                 />
                 {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                  <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.confirmPassword}</p>
                 )}
               </div>
             </div>
@@ -235,7 +285,7 @@ export default function ResetPasswordPage() {
           </div>
           
           <div className="text-center">
-            <Link href="/login" className="text-sm text-primary hover:text-primary/80">
+            <Link href="/login" className="text-xs font-medium text-primary hover:text-primary/80">
               Back to login
             </Link>
           </div>

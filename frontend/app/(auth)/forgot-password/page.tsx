@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { useApiMutation } from '@/hooks/useApiMutation'
 import { forgotPassword } from '@/lib/api/auth'
@@ -59,13 +60,32 @@ export default function ForgotPasswordPage() {
   
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted">
-      <Container variant="auth" className="space-y-8">
+      <div
+        className="min-h-screen flex items-center justify-center py-4 sm:py-8 md:py-12"
+        style={{
+          background: `
+            linear-gradient(135deg, #1e40af 0%, #2563eb 25%, #3b82f6 50%, #2563eb 75%, #1e40af 100%),
+            radial-gradient(circle 450px at center, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 25%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.2) 70%, transparent 85%)
+          `
+        }}
+      >
+      <Container
+        variant="auth"
+        className="bg-white rounded-lg"
+        style={{
+          boxShadow: `
+            0 0 40px rgba(255, 255, 255, 0.18),
+            0 0 80px rgba(255, 255, 255, 0.12),
+            0 20px 40px rgba(0, 0, 0, 0.15),
+            0 10px 20px rgba(0, 0, 0, 0.1)
+          `
+        }}
+      >
           <div className="text-center">
-            <h2 className="mt-6 text-3xl font-extrabold text-foreground">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-foreground mb-4">
               Check your email
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               If an account exists for {email}, you will receive a password reset link.
             </p>
           </div>
@@ -89,16 +109,46 @@ export default function ForgotPasswordPage() {
 }
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted">
-      <Container variant="auth" className="space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
-            Forgot your password?
-          </h2>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            Enter your email address and we'll send you a link to reset your password.
-          </p>
+    <div
+      className="min-h-screen flex items-center justify-center py-4 sm:py-8 md:py-12"
+      style={{
+        background: `
+          linear-gradient(135deg, #1e40af 0%, #2563eb 25%, #3b82f6 50%, #2563eb 75%, #1e40af 100%),
+          radial-gradient(circle 450px at center, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 25%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.2) 70%, transparent 85%)
+        `
+      }}
+    >
+      <Container
+        variant="auth"
+        className="bg-white rounded-lg"
+        style={{
+          boxShadow: `
+            0 0 40px rgba(255, 255, 255, 0.18),
+            0 0 80px rgba(255, 255, 255, 0.12),
+            0 20px 40px rgba(0, 0, 0, 0.15),
+            0 10px 20px rgba(0, 0, 0, 0.1)
+          `
+        }}
+      >
+        <div className="flex justify-center mb-4 sm:mb-6">
+          <Link href="/">
+            <Image
+              src="/images/logo/choice-logo-192x192.png"
+              alt="CHOICE"
+              width={80}
+              height={80}
+              className="w-20 h-20"
+              priority
+            />
+          </Link>
         </div>
+
+        <h2 className="text-center text-xl sm:text-2xl font-extrabold text-foreground">
+          Forgot your password?
+        </h2>
+        <p className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
+          Enter your email address and we'll send you a link to reset your password.
+        </p>
         
         {/* Page-level messages */}
         {forgotPasswordMessage.message && (
@@ -109,10 +159,10 @@ export default function ForgotPasswordPage() {
           />
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          
+        <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-foreground">
+            <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-foreground">
               Email address
             </label>
             <div className="mt-1">
@@ -130,13 +180,13 @@ export default function ForgotPasswordPage() {
                     setEmailError('')
                   }
                 }}
-                className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm ${
+                className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary text-xs sm:text-sm ${
                   emailError ? 'border-red-500 bg-red-50' : 'border-border'
                 }`}
                 placeholder="Enter your email"
               />
               {emailError && (
-                <p className="mt-1 text-sm text-red-600">{emailError}</p>
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{emailError}</p>
               )}
             </div>
           </div>
@@ -152,10 +202,10 @@ export default function ForgotPasswordPage() {
           </div>
           
           <div className="flex items-center justify-between">
-            <Link href="/login" className="text-sm text-primary hover:text-primary/80">
+            <Link href="/login" className="text-xs font-medium text-primary hover:text-primary/80">
               Back to login
             </Link>
-            <Link href="/register" className="text-sm text-primary hover:text-primary/80">
+            <Link href="/register" className="text-xs font-medium text-primary hover:text-primary/80">
               Create new account
             </Link>
           </div>

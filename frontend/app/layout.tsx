@@ -45,6 +45,11 @@ export default function RootLayout({
   return (
     <html lang={locale} dir={direction} suppressHydrationWarning>
       <head>
+        {/* Favicon - Single high-quality logo */}
+        <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+        <link rel="apple-touch-icon" href="/images/logo/android-chrome-512x512.png" />
+        <link rel="manifest" href="/manifest.json" />
+
         {/* Google Search Console Verification */}
         <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE" />
         

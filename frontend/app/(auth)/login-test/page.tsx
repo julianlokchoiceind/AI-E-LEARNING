@@ -6,11 +6,10 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { LoadingButton } from '@/components/ui/LoadingStates'
-import { Container } from '@/components/ui/Container'
 import { useInlineMessage } from '@/hooks/useInlineMessage'
 import { InlineMessage } from '@/components/ui/InlineMessage'
 
-export default function LoginPage() {
+export default function LoginTestPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -86,7 +85,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Clear existing messages
     clear()
     setErrors({ email: '', password: '' })
@@ -97,14 +96,14 @@ export default function LoginPage() {
     }
 
     setIsLoading(true)
-    
+
     try {
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
       })
-      
+
       if (result?.error) {
         // Use the actual error message from NextAuth or fallback
         showError(result.error || 'Something went wrong')
@@ -129,7 +128,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center py-4 sm:py-8 md:py-12"
+      className="min-h-screen flex items-center justify-center"
       style={{
         background: `
           linear-gradient(135deg, #1e40af 0%, #2563eb 25%, #3b82f6 50%, #2563eb 75%, #1e40af 100%),
@@ -137,9 +136,9 @@ export default function LoginPage() {
         `
       }}
     >
-      <Container
-        variant="auth"
-        className="bg-white rounded-lg"
+      {/* Optimized Login Card */}
+      <div
+        className="bg-white rounded-lg p-6 sm:p-7 w-full max-w-xs sm:max-w-sm mx-4 sm:mx-auto"
         style={{
           boxShadow: `
             0 0 40px rgba(255, 255, 255, 0.18),
@@ -149,30 +148,33 @@ export default function LoginPage() {
           `
         }}
       >
-        <div className="flex justify-center mb-4 sm:mb-6">
-          <Link href="/">
-            <Image
-              src="/images/logo/choice-logo-192x192.png"
-              alt="CHOICE"
-              width={80}
-              height={80}
-              className="w-20 h-20"
-              priority
-            />
-          </Link>
+        {/* Header Section */}
+        <div className="text-center">
+          <div className="flex justify-center mb-6">
+            <Link href="/">
+              <Image
+                src="/images/logo/choice-logo-192x192.png"
+                alt="CHOICE"
+                width={80}
+                height={80}
+                className="w-20 h-20"
+                priority
+              />
+            </Link>
+          </div>
+          <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
+            Sign in
+          </h2>
+          <p className="text-sm text-gray-600">
+            Or{' '}
+            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+              create a new account
+            </Link>
+          </p>
         </div>
-        
-        <h2 className="text-center text-xl sm:text-2xl font-extrabold text-foreground">
-          Sign in
-        </h2>
-        <p className="mt-2 text-center text-sm text-muted-foreground mb-4 sm:mb-6">
-          Or{' '}
-          <Link href="/register" className="font-medium text-primary hover:text-primary/80">
-            create a new account
-          </Link>
-        </p>
 
-        <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+        {/* Login Form */}
+        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
           {message && (
             <InlineMessage
               message={message.message}
@@ -180,49 +182,51 @@ export default function LoginPage() {
               onDismiss={clear}
             />
           )}
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-sm ${
-                  errors.email ? 'border-red-500 bg-red-50' : 'border-border'
-                }`}
-                placeholder="Email address"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-sm ${
-                  errors.password ? 'border-red-500 bg-red-50' : 'border-border'
-                }`}
-                placeholder="Password"
-              />
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-              )}
-            </div>
+
+          {/* Email Input */}
+          <div>
+            <label htmlFor="email" className="sr-only">
+              Email address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-md text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              }`}
+              placeholder="Email address"
+            />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+            )}
+          </div>
+
+          {/* Password Input */}
+          <div>
+            <label htmlFor="password" className="sr-only">
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-md text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.password ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              }`}
+              placeholder="Password"
+            />
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+            )}
           </div>
 
           {/* Remember me */}
@@ -231,42 +235,48 @@ export default function LoginPage() {
               id="remember-me"
               name="remember-me"
               type="checkbox"
-              className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-foreground">
+            <label htmlFor="remember-me" className="ml-2 text-sm text-gray-900">
               Remember me
             </label>
           </div>
 
           {/* Forgot password */}
           <div className="text-left">
-            <Link href="/forgot-password" className="text-xs font-medium text-primary hover:text-primary/80">
+            <Link href="/forgot-password" className="text-xs font-medium text-blue-600 hover:text-blue-500">
               Forgot your password?
             </Link>
           </div>
 
-          <div>
-            <LoadingButton
-              loading={isLoading}
-              loadingText="Signing in..."
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Sign in
-            </LoadingButton>
-          </div>
+          {/* Submit Button */}
+          <LoadingButton
+            loading={isLoading}
+            loadingText="Signing in..."
+            className="w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 transition-all duration-150"
+          >
+            Sign in
+          </LoadingButton>
 
+          {/* Social Login Divider */}
           <div className="mt-6">
-            <div className="text-center text-sm text-muted-foreground">
-              Or continue with
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+            {/* Social Login Buttons */}
+            <div className="mt-4 grid grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => handleSocialLogin('google')}
                 disabled={isLoading}
                 aria-label="Sign in with Google"
-                className="w-full flex justify-center items-center py-2 px-2 sm:px-3 md:px-4 border border-border rounded-md bg-background hover:bg-muted disabled:opacity-50"
+                className="w-full flex justify-center items-center py-2 px-3 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -281,7 +291,7 @@ export default function LoginPage() {
                 onClick={() => handleSocialLogin('github')}
                 disabled={isLoading}
                 aria-label="Sign in with GitHub"
-                className="w-full flex justify-center items-center py-2 px-2 sm:px-3 md:px-4 border border-border rounded-md bg-background hover:bg-muted disabled:opacity-50"
+                className="w-full flex justify-center items-center py-2 px-3 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="#181717">
                   <path d="M12 0.297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
@@ -293,7 +303,7 @@ export default function LoginPage() {
                 onClick={() => handleSocialLogin('azure-ad')}
                 disabled={isLoading}
                 aria-label="Sign in with Microsoft"
-                className="w-full flex justify-center items-center py-2 px-2 sm:px-3 md:px-4 border border-border rounded-md bg-background hover:bg-muted disabled:opacity-50"
+                className="w-full flex justify-center items-center py-2 px-3 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path d="M0 0h11.377v11.372H0V0z" fill="#F25022"/>
@@ -305,7 +315,7 @@ export default function LoginPage() {
             </div>
           </div>
         </form>
-      </Container>
+      </div>
     </div>
   )
 }

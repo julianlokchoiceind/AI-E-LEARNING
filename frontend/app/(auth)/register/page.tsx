@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { useApiMutation } from '@/hooks/useApiMutation'
@@ -137,20 +138,50 @@ export default function RegisterPage() {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted">
-      <Container variant="auth" className="space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            Or{' '}
-            <Link href="/login" className="font-medium text-primary hover:text-primary/80">
-              sign in to existing account
-            </Link>
-          </p>
+    <div
+      className="min-h-screen flex items-center justify-center py-4 sm:py-6 md:py-8"
+      style={{
+        background: `
+          linear-gradient(135deg, #1e40af 0%, #2563eb 25%, #3b82f6 50%, #2563eb 75%, #1e40af 100%),
+          radial-gradient(circle 450px at center, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 25%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.2) 70%, transparent 85%)
+        `
+      }}
+    >
+      <Container
+        variant="auth"
+        className="bg-white rounded-lg"
+        style={{
+          boxShadow: `
+            0 0 40px rgba(255, 255, 255, 0.18),
+            0 0 80px rgba(255, 255, 255, 0.12),
+            0 20px 40px rgba(0, 0, 0, 0.15),
+            0 10px 20px rgba(0, 0, 0, 0.1)
+          `
+        }}
+      >
+        <div className="flex justify-center mb-4">
+          <Link href="/">
+            <Image
+              src="/images/logo/choice-logo-192x192.png"
+              alt="CHOICE"
+              width={80}
+              height={80}
+              className="w-20 h-20"
+              priority
+            />
+          </Link>
         </div>
         
+        <h2 className="text-center text-xl sm:text-2xl font-extrabold text-foreground">
+          Create your account
+        </h2>
+        <p className="mt-2 text-center text-xs sm:text-sm text-muted-foreground mb-4">
+          Or{' '}
+          <Link href="/login" className="font-medium text-primary hover:text-primary/80">
+            sign in to existing account
+          </Link>
+        </p>
+
         {/* Page-level messages */}
         {registerMessage.message && (
           <InlineMessage
@@ -160,10 +191,10 @@ export default function RegisterPage() {
           />
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-3">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-foreground">
+              <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-foreground">
                 Full Name
               </label>
               <input
@@ -180,7 +211,7 @@ export default function RegisterPage() {
                     setErrors({ ...errors, name: '' })
                   }
                 }}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-xs sm:text-sm ${
                   errors.name ? 'border-red-500 bg-red-50' : 'border-border'
                 }`}
                 placeholder="John Doe"
@@ -189,7 +220,7 @@ export default function RegisterPage() {
                 <p className="mt-1 text-sm text-red-600">{errors.name}</p>
               )}
             </div>
-            
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground">
                 Email Address
@@ -208,7 +239,7 @@ export default function RegisterPage() {
                     setErrors({ ...errors, email: '' })
                   }
                 }}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-xs sm:text-sm ${
                   errors.email ? 'border-red-500 bg-red-50' : 'border-border'
                 }`}
                 placeholder="john@example.com"
@@ -217,7 +248,7 @@ export default function RegisterPage() {
                 <p className="mt-1 text-sm text-red-600">{errors.email}</p>
               )}
             </div>
-            
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-foreground">
                 Password
@@ -236,7 +267,7 @@ export default function RegisterPage() {
                     setErrors({ ...errors, password: '' })
                   }
                 }}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-xs sm:text-sm ${
                   errors.password ? 'border-red-500 bg-red-50' : 'border-border'
                 }`}
                 placeholder="At least 8 characters"
@@ -245,7 +276,7 @@ export default function RegisterPage() {
                 <p className="mt-1 text-sm text-red-600">{errors.password}</p>
               )}
             </div>
-            
+
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
                 Confirm Password
@@ -264,7 +295,7 @@ export default function RegisterPage() {
                     setErrors({ ...errors, confirmPassword: '' })
                   }
                 }}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-xs sm:text-sm ${
                   errors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-border'
                 }`}
                 placeholder="Confirm your password"
@@ -283,7 +314,7 @@ export default function RegisterPage() {
               required
               className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
             />
-            <label htmlFor="terms" className="ml-2 block text-sm text-foreground">
+            <label htmlFor="terms" className="ml-2 block text-xs sm:text-sm text-foreground">
               I agree to the{' '}
               <Link href="/terms" className="text-primary hover:text-primary/80">
                 Terms of Service

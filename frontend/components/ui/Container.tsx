@@ -4,6 +4,7 @@ interface ContainerProps {
   children: React.ReactNode;
   variant?: 'admin' | 'public' | 'auth' | 'header';
   className?: string;
+  style?: React.CSSProperties;
 }
 
 /**
@@ -13,7 +14,8 @@ interface ContainerProps {
 export function Container({
   children,
   variant = 'public',
-  className = ''
+  className = '',
+  style
 }: ContainerProps) {
   const variantClasses = {
     // Admin/Creator: Full width with padding (matches current layout)
@@ -25,12 +27,12 @@ export function Container({
     // Public/Dashboard: Content width with responsive padding
     public: 'container mx-auto px-4 lg:px-8 py-12',
 
-    // Auth: Narrow centered with padding
-    auth: 'p-8 max-w-md mx-auto'
+    // Auth: Comfortable width - responsive padding across breakpoints
+    auth: 'p-5 sm:p-6 md:p-8 w-full max-w-xs sm:max-w-sm mx-auto'
   };
 
   return (
-    <div className={`${variantClasses[variant]} ${className}`}>
+    <div className={`${variantClasses[variant]} ${className}`} style={style}>
       {children}
     </div>
   );
