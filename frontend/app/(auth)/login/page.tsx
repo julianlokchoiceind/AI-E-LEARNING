@@ -15,7 +15,6 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({
     email: '',
@@ -103,7 +102,6 @@ export default function LoginPage() {
       const result = await signIn('credentials', {
         email,
         password,
-        rememberMe: rememberMe.toString(),
         redirect: false,
       })
       
@@ -225,21 +223,6 @@ export default function LoginPage() {
                 <p className="mt-1 text-sm text-red-600">{errors.password}</p>
               )}
             </div>
-          </div>
-
-          {/* Remember me */}
-          <div className="flex items-center">
-            <input
-              id="remember-me"
-              name="remember-me"
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
-            />
-            <label htmlFor="remember-me" className="ml-2 block text-xs text-foreground">
-              Remember me
-            </label>
           </div>
 
           {/* Forgot password */}
