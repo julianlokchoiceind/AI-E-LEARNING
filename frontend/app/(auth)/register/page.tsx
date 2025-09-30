@@ -115,8 +115,14 @@ export default function RegisterPage() {
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters'
       hasErrors = true
+    } else if (!/^[A-Z]/.test(formData.password)) {
+      newErrors.password = 'Password must start with an uppercase letter'
+      hasErrors = true
+    } else if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one special character'
+      hasErrors = true
     }
-    
+
     // Confirm password validation
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password'
@@ -270,7 +276,7 @@ export default function RegisterPage() {
                 className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-xs sm:text-sm ${
                   errors.password ? 'border-red-500 bg-red-50' : 'border-border'
                 }`}
-                placeholder="At least 8 characters"
+                placeholder="Start with uppercase + 8 chars + special char"
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password}</p>
@@ -314,7 +320,7 @@ export default function RegisterPage() {
               required
               className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
             />
-            <label htmlFor="terms" className="ml-2 block text-xs sm:text-sm text-foreground">
+            <label htmlFor="terms" className="ml-2 block text-[10px] sm:text-xs text-foreground leading-tight">
               I agree to the{' '}
               <Link href="/terms" className="text-primary hover:text-primary/80">
                 Terms of Service

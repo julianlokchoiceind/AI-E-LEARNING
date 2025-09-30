@@ -83,6 +83,12 @@ export default function ResetPasswordPage() {
     } else if (password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters'
       hasErrors = true
+    } else if (!/^[A-Z]/.test(password)) {
+      newErrors.password = 'Password must start with an uppercase letter'
+      hasErrors = true
+    } else if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
+      newErrors.password = 'Password must contain at least one special character'
+      hasErrors = true
     }
     
     // Confirm password validation
@@ -235,7 +241,7 @@ export default function ResetPasswordPage() {
                   className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary text-xs sm:text-sm ${
                     errors.password ? 'border-red-500 bg-red-50' : 'border-border'
                   }`}
-                  placeholder="Enter new password"
+                  placeholder="Start with uppercase + 8 chars + special char"
                 />
                 {errors.password && (
                   <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.password}</p>

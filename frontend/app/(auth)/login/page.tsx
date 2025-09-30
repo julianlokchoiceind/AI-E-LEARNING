@@ -15,6 +15,7 @@ export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({
     email: '',
@@ -63,8 +64,8 @@ export default function LoginPage() {
     // Validate password
     if (!password.trim()) {
       newErrors.password = 'Password is required'
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters'
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters'
     }
 
     setErrors(newErrors)
@@ -102,6 +103,7 @@ export default function LoginPage() {
       const result = await signIn('credentials', {
         email,
         password,
+        rememberMe: rememberMe.toString(),
         redirect: false,
       })
       
@@ -231,9 +233,11 @@ export default function LoginPage() {
               id="remember-me"
               name="remember-me"
               type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
               className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
             />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-foreground">
+            <label htmlFor="remember-me" className="ml-2 block text-xs text-foreground">
               Remember me
             </label>
           </div>

@@ -10,6 +10,7 @@ beanie
 # Authentication & Security
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt==4.0.1  # Pin to compatible version with passlib 1.7.4
 python-multipart
 email-validator
 pydantic[email]>=2.10

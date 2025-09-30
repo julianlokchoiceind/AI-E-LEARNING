@@ -16,6 +16,10 @@ class UserCreate(BaseModel):
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters long')
+        if not v[0].isupper():
+            raise ValueError('Password must start with an uppercase letter')
+        if not any(char in '!@#$%^&*()_+-=[]{}|;:,.<>?' for char in v):
+            raise ValueError('Password must contain at least one special character')
         return v
 
 
@@ -60,11 +64,15 @@ class PasswordReset(BaseModel):
     """Schema for password reset with token."""
     token: str
     new_password: str = Field(..., min_length=8)
-    
+
     @validator('new_password')
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters long')
+        if not v[0].isupper():
+            raise ValueError('Password must start with an uppercase letter')
+        if not any(char in '!@#$%^&*()_+-=[]{}|;:,.<>?' for char in v):
+            raise ValueError('Password must contain at least one special character')
         return v
 
 
@@ -99,11 +107,15 @@ class ChangePasswordRequest(BaseModel):
     """Schema for changing user password."""
     current_password: str
     new_password: str = Field(..., min_length=8)
-    
+
     @validator('new_password')
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters long')
+        if not v[0].isupper():
+            raise ValueError('Password must start with an uppercase letter')
+        if not any(char in '!@#$%^&*()_+-=[]{}|;:,.<>?' for char in v):
+            raise ValueError('Password must contain at least one special character')
         return v
 
 

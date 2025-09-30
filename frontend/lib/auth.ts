@@ -26,7 +26,8 @@ export const authOptions: NextAuthOptions = {
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
+        password: { label: 'Password', type: 'password' },
+        rememberMe: { label: 'Remember Me', type: 'text' }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -59,7 +60,8 @@ export const authOptions: NextAuthOptions = {
             role: tokenPayload.role || 'student',
             premiumStatus: tokenPayload.premium_status || false,
             accessToken: authResponse.data.access_token,
-            refreshToken: authResponse.data.refresh_token
+            refreshToken: authResponse.data.refresh_token,
+            rememberMe: credentials.rememberMe === 'true'
           }
         } catch (error: any) {
           console.error('Login error:', error)
@@ -90,7 +92,7 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name || ''
         token.role = user.role || 'student'
         token.premiumStatus = user.premiumStatus || false
-        
+
         // Store backend tokens
         if ('accessToken' in user && user.accessToken) {
           token.accessToken = user.accessToken
@@ -98,8 +100,17 @@ export const authOptions: NextAuthOptions = {
         if ('refreshToken' in user && user.refreshToken) {
           token.refreshToken = user.refreshToken
         }
-        
-        // Calculate token expiry (30 minutes from now)
+
+        // Store remember me preference and set session expiry accordingly
+        const rememberMe = 'rememberMe' in user ? user.rememberMe : false
+        token.rememberMe = rememberMe
+
+        // Set session expiry based on remember me
+        // Remember me: 30 days, otherwise: 1 day
+        const sessionDuration = rememberMe ? (30 * 24 * 60 * 60) : (24 * 60 * 60)
+        token.sessionExpiresAt = Math.floor(Date.now() / 1000) + sessionDuration
+
+        // Calculate access token expiry (30 minutes from now)
         token.expiresAt = Math.floor(Date.now() / 1000) + (30 * 60)
       } else if (trigger === 'update') {
         // Handle session updates if needed
@@ -167,13 +178,19 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       // Quick return if no token or session.user
       if (!token || !session.user) return session
-      
+
+      // Check session expiry based on rememberMe preference
+      if (token.sessionExpiresAt && Date.now() > (token.sessionExpiresAt as number) * 1000) {
+        // Session has expired
+        throw new Error("SessionExpired")
+      }
+
       // Check for refresh errors
       if (token.error === "RefreshTokenError") {
         // Token refresh failed, force re-authentication
         throw new Error("RefreshTokenError")
       }
-      
+
       // Efficiently copy token data to session
       Object.assign(session.user, {
         id: token.id,
@@ -182,11 +199,11 @@ export const authOptions: NextAuthOptions = {
         role: token.role,
         premiumStatus: token.premiumStatus
       })
-      
+
       // Include tokens for API calls
       session.accessToken = token.accessToken as string
       session.refreshToken = token.refreshToken as string
-      
+
       return session
     },
     async signIn({ user, account, profile }) {
@@ -257,7 +274,18 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    maxAge: 30 * 24 * 60 * 60, // 30 days max (actual duration controlled by rememberMe)
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production'
+      }
+    }
   },
   secret: process.env.NEXTAUTH_SECRET,
 }
