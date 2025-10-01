@@ -127,34 +127,26 @@ export default function ResetPasswordPage() {
       >
       <Container
         variant="auth"
-        className="bg-white rounded-lg"
-        style={{
-          boxShadow: `
-            0 0 40px rgba(255, 255, 255, 0.18),
-            0 0 80px rgba(255, 255, 255, 0.12),
-            0 20px 40px rgba(0, 0, 0, 0.15),
-            0 10px 20px rgba(0, 0, 0, 0.1)
-          `
-        }}
+        className="glass-container rounded-2xl"
       >
           <div className="text-center">
-            <h2 className="text-xl sm:text-2xl font-extrabold text-foreground mb-4">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg mb-4">
               Password reset successful
             </h2>
           </div>
-          
-          <div className="rounded-md bg-success/20 p-4">
+
+          <div className="rounded-md bg-green-500/20 backdrop-blur-md border border-white/30 border-l-4 border-l-green-400 p-4">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-success" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-success">
+                <p className="text-sm font-medium text-white">
                   Password reset successfully!
                 </p>
-                <p className="mt-2 text-sm text-success">
+                <p className="mt-2 text-sm text-white/90">
                   Redirecting to login page...
                 </p>
               </div>
@@ -177,15 +169,7 @@ export default function ResetPasswordPage() {
     >
       <Container
         variant="auth"
-        className="bg-white rounded-lg"
-        style={{
-          boxShadow: `
-            0 0 40px rgba(255, 255, 255, 0.18),
-            0 0 80px rgba(255, 255, 255, 0.12),
-            0 20px 40px rgba(0, 0, 0, 0.15),
-            0 10px 20px rgba(0, 0, 0, 0.1)
-          `
-        }}
+        className="glass-container rounded-2xl"
       >
         <div className="flex justify-center mb-4 sm:mb-6">
           <Link href="/">
@@ -200,27 +184,28 @@ export default function ResetPasswordPage() {
           </Link>
         </div>
 
-        <h2 className="text-center text-xl sm:text-2xl font-extrabold text-foreground">
+        <h2 className="text-center text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
           Reset your password
         </h2>
-        <p className="mt-2 text-center text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
+        <p className="mt-2 text-center text-xs sm:text-sm text-white/95 mb-4 sm:mb-6">
           Enter your new password below
         </p>
-        
+
         {/* Page-level messages */}
         {resetPasswordMessage.message && (
           <InlineMessage
             message={resetPasswordMessage.message.message}
             type={resetPasswordMessage.message.type}
             onDismiss={resetPasswordMessage.clear}
+            variant="glass"
           />
         )}
         
-        <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit}>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-foreground">
+              <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-white/95">
                 New password
               </label>
               <div className="mt-1">
@@ -238,19 +223,19 @@ export default function ResetPasswordPage() {
                       setErrors({ ...errors, password: '' })
                     }
                   }}
-                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary text-xs sm:text-sm ${
-                    errors.password ? 'border-red-500 bg-red-50' : 'border-border'
+                  className={`glass-input appearance-none block w-full px-3 py-2 rounded-md placeholder-white/85 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 text-xs sm:text-sm ${
+                    errors.password ? '!border-red-500 !bg-red-500/20' : ''
                   }`}
                   placeholder="Start with uppercase + 8 chars + special char"
                 />
                 {errors.password && (
-                  <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.password}</p>
+                  <p className="mt-1 glass-error">{errors.password}</p>
                 )}
               </div>
             </div>
-            
+
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/95">
                 Confirm new password
               </label>
               <div className="mt-1">
@@ -268,13 +253,13 @@ export default function ResetPasswordPage() {
                       setErrors({ ...errors, confirmPassword: '' })
                     }
                   }}
-                  className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary text-xs sm:text-sm ${
-                    errors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-border'
+                  className={`glass-input appearance-none block w-full px-3 py-2 rounded-md placeholder-white/85 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 text-xs sm:text-sm ${
+                    errors.confirmPassword ? '!border-red-500 !bg-red-500/20' : ''
                   }`}
                   placeholder="Confirm new password"
                 />
                 {errors.confirmPassword && (
-                  <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.confirmPassword}</p>
+                  <p className="mt-1 glass-error">{errors.confirmPassword}</p>
                 )}
               </div>
             </div>
@@ -284,14 +269,15 @@ export default function ResetPasswordPage() {
             <Button
               type="submit"
               loading={loading}
-              className="w-full"
+              className="glass-button w-full !bg-white/20 hover:!bg-white/30 !text-white !border-white/40"
+              size="md"
             >
               Reset password
             </Button>
           </div>
-          
+
           <div className="text-center">
-            <Link href="/login" className="text-xs font-medium text-primary hover:text-primary/80">
+            <Link href="/login" className="glass-text text-xs font-medium hover:text-white/80">
               Back to login
             </Link>
           </div>

@@ -90,6 +90,15 @@
     --shadow-md: 0 4px 6px hsl(var(--foreground) / 0.1);
     --shadow-lg: 0 10px 15px hsl(var(--foreground) / 0.1);
     --shadow-xl: 0 20px 25px hsl(var(--foreground) / 0.1);
+
+    /* Glassmorphism System */
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-bg-strong: rgba(255, 255, 255, 0.2);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-border-strong: rgba(255, 255, 255, 0.4);
+    --glass-blur: blur(20px);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.13);
+    --glass-shadow-inset: inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
   }
 
   .dark {
@@ -500,5 +509,66 @@
   /* Navigation item with background hover - consistent with AdminSidebar active state */
   .nav-hover {
     @apply text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary;
+  }
+
+  /* Glassmorphism Components */
+  .glass-container {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow), var(--glass-shadow-inset);
+  }
+
+  .glass-input {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border-strong);
+  }
+
+  .glass-button {
+    background: var(--glass-bg-strong);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border-strong);
+    transition: all var(--transition-base);
+  }
+
+  .glass-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Glass Text Utilities - Improved Readability */
+  .glass-text {
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-text-strong {
+    color: white;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  .glass-error {
+    color: white;
+    background: rgba(239, 68, 68, 0.3);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-success {
+    color: white;
+    background: rgba(16, 185, 129, 0.3); /* green-500/30 */
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
 }

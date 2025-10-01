@@ -71,35 +71,28 @@ export default function ForgotPasswordPage() {
       >
       <Container
         variant="auth"
-        className="bg-white rounded-lg"
-        style={{
-          boxShadow: `
-            0 0 40px rgba(255, 255, 255, 0.18),
-            0 0 80px rgba(255, 255, 255, 0.12),
-            0 20px 40px rgba(0, 0, 0, 0.15),
-            0 10px 20px rgba(0, 0, 0, 0.1)
-          `
-        }}
+        className="glass-container rounded-2xl"
       >
           <div className="text-center">
-            <h2 className="text-xl sm:text-2xl font-extrabold text-foreground mb-4">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg mb-4">
               Check your email
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-white/95">
               If an account exists for {email}, you will receive a password reset link.
             </p>
           </div>
-          
+
           {forgotPasswordMessage.message && (
             <InlineMessage
               message={forgotPasswordMessage.message.message}
               type={forgotPasswordMessage.message.type}
               onDismiss={forgotPasswordMessage.clear}
+              variant="glass"
             />
           )}
-          
+
           <div className="text-center">
-            <Link href="/login" className="font-medium text-primary hover:text-primary/80">
+            <Link href="/login" className="glass-text font-medium hover:text-white/80">
               Back to login
             </Link>
           </div>
@@ -120,15 +113,7 @@ export default function ForgotPasswordPage() {
     >
       <Container
         variant="auth"
-        className="bg-white rounded-lg"
-        style={{
-          boxShadow: `
-            0 0 40px rgba(255, 255, 255, 0.18),
-            0 0 80px rgba(255, 255, 255, 0.12),
-            0 20px 40px rgba(0, 0, 0, 0.15),
-            0 10px 20px rgba(0, 0, 0, 0.1)
-          `
-        }}
+        className="glass-container rounded-2xl"
       >
         <div className="flex justify-center mb-4 sm:mb-6">
           <Link href="/">
@@ -143,26 +128,27 @@ export default function ForgotPasswordPage() {
           </Link>
         </div>
 
-        <h2 className="text-center text-xl sm:text-2xl font-extrabold text-foreground">
+        <h2 className="text-center text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
           Forgot your password?
         </h2>
-        <p className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
+        <p className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-white/95 mb-4 sm:mb-6">
           Enter your email address and we'll send you a link to reset your password.
         </p>
-        
+
         {/* Page-level messages */}
         {forgotPasswordMessage.message && (
           <InlineMessage
             message={forgotPasswordMessage.message.message}
             type={forgotPasswordMessage.message.type}
             onDismiss={forgotPasswordMessage.clear}
+            variant="glass"
           />
         )}
 
-        <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit}>
 
           <div>
-            <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-foreground">
+            <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-white/95">
               Email address
             </label>
             <div className="mt-1">
@@ -180,13 +166,13 @@ export default function ForgotPasswordPage() {
                     setEmailError('')
                   }
                 }}
-                className={`appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary text-xs sm:text-sm ${
-                  emailError ? 'border-red-500 bg-red-50' : 'border-border'
+                className={`glass-input appearance-none block w-full px-3 py-2 rounded-md placeholder-white/85 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 text-xs sm:text-sm ${
+                  emailError ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
                 placeholder="Enter your email"
               />
               {emailError && (
-                <p className="mt-1 text-xs sm:text-sm text-red-600">{emailError}</p>
+                <p className="mt-1 glass-error">{emailError}</p>
               )}
             </div>
           </div>
@@ -195,17 +181,17 @@ export default function ForgotPasswordPage() {
             <Button
               type="submit"
               loading={loading}
-              className="w-full"
+              className="glass-button w-full !bg-white/20 hover:!bg-white/30 !text-white !border-white/40"
             >
               Send reset email
             </Button>
           </div>
           
           <div className="flex items-center justify-between">
-            <Link href="/login" className="text-xs font-medium text-primary hover:text-primary/80">
+            <Link href="/login" className="glass-text text-xs font-medium hover:text-white/80">
               Back to login
             </Link>
-            <Link href="/register" className="text-xs font-medium text-primary hover:text-primary/80">
+            <Link href="/register" className="glass-text text-xs font-medium hover:text-white/80">
               Create new account
             </Link>
           </div>

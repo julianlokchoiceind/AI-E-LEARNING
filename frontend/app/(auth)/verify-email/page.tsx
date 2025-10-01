@@ -46,38 +46,47 @@ export default function VerifyEmailPage() {
   }, [searchParams, router])
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted">
-      <Container variant="auth" className="space-y-8">
+    <div
+      className="min-h-screen flex items-center justify-center py-4 sm:py-8 md:py-12"
+      style={{
+        background: `
+          linear-gradient(135deg, #1e40af 0%, #2563eb 25%, #3b82f6 50%, #2563eb 75%, #1e40af 100%),
+          radial-gradient(circle 450px at center, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 25%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.2) 70%, transparent 85%)
+        `
+      }}
+    >
+      <Container variant="auth" className="glass-container rounded-2xl space-y-6">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-foreground">
+          <h2 className="mt-6 text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
             Email Verification
           </h2>
         </div>
-        
+
         <div className="mt-8">
           {status === 'loading' && (
             <div className="text-center">
               <div className="inline-flex items-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span className="text-muted-foreground">Verifying your email...</span>
+                <span className="text-white/95">Verifying your email...</span>
               </div>
             </div>
           )}
-          
+
           {message && status !== 'loading' && (
             <InlineMessage
               message={message.message + (status === 'success' ? ' Redirecting to login page...' : '')}
               type={message.type}
               onDismiss={clear}
+              variant="glass"
             />
           )}
         </div>
-        
+
         <div className="text-center">
-          <Link href="/login" className="font-medium text-primary hover:text-primary/80">
+          <Link href="/login" className="glass-text font-medium hover:text-white/80">
             Back to login
           </Link>
         </div>

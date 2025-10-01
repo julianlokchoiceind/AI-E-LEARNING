@@ -155,15 +155,7 @@ export default function RegisterPage() {
     >
       <Container
         variant="auth"
-        className="bg-white rounded-lg"
-        style={{
-          boxShadow: `
-            0 0 40px rgba(255, 255, 255, 0.18),
-            0 0 80px rgba(255, 255, 255, 0.12),
-            0 20px 40px rgba(0, 0, 0, 0.15),
-            0 10px 20px rgba(0, 0, 0, 0.1)
-          `
-        }}
+        className="glass-container rounded-2xl"
       >
         <div className="flex justify-center mb-4">
           <Link href="/">
@@ -178,12 +170,12 @@ export default function RegisterPage() {
           </Link>
         </div>
         
-        <h2 className="text-center text-xl sm:text-2xl font-extrabold text-foreground">
+        <h2 className="text-center text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
           Create your account
         </h2>
-        <p className="mt-2 text-center text-xs sm:text-sm text-muted-foreground mb-4">
+        <p className="mt-2 text-center text-xs sm:text-sm text-white/95 mb-4">
           Or{' '}
-          <Link href="/login" className="font-medium text-primary hover:text-primary/80">
+          <Link href="/login" className="glass-text font-medium hover:text-white/80">
             sign in to existing account
           </Link>
         </p>
@@ -194,13 +186,14 @@ export default function RegisterPage() {
             message={registerMessage.message.message}
             type={registerMessage.message.type}
             onDismiss={registerMessage.clear}
+            variant="glass"
           />
         )}
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-3">
+        <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit}>
+          <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-foreground">
+              <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-white/95">
                 Full Name
               </label>
               <input
@@ -217,18 +210,18 @@ export default function RegisterPage() {
                     setErrors({ ...errors, name: '' })
                   }
                 }}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-xs sm:text-sm ${
-                  errors.name ? 'border-red-500 bg-red-50' : 'border-border'
+                className={`glass-input mt-1 appearance-none relative block w-full px-3 py-2 placeholder-white/85 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 focus:z-10 text-xs sm:text-sm ${
+                  errors.name ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
                 placeholder="John Doe"
               />
               {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                <p className="mt-1 glass-error">{errors.name}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground">
+              <label htmlFor="email" className="block text-sm font-medium text-white/95">
                 Email Address
               </label>
               <input
@@ -245,18 +238,18 @@ export default function RegisterPage() {
                     setErrors({ ...errors, email: '' })
                   }
                 }}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-xs sm:text-sm ${
-                  errors.email ? 'border-red-500 bg-red-50' : 'border-border'
+                className={`glass-input mt-1 appearance-none relative block w-full px-3 py-2 placeholder-white/85 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 focus:z-10 text-xs sm:text-sm ${
+                  errors.email ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
                 placeholder="john@example.com"
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                <p className="mt-1 glass-error">{errors.email}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground">
+              <label htmlFor="password" className="block text-sm font-medium text-white/95">
                 Password
               </label>
               <input
@@ -273,18 +266,18 @@ export default function RegisterPage() {
                     setErrors({ ...errors, password: '' })
                   }
                 }}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-xs sm:text-sm ${
-                  errors.password ? 'border-red-500 bg-red-50' : 'border-border'
+                className={`glass-input mt-1 appearance-none relative block w-full px-3 py-2 placeholder-white/85 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 focus:z-10 text-xs sm:text-sm ${
+                  errors.password ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
                 placeholder="Start with uppercase + 8 chars + special char"
               />
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                <p className="mt-1 glass-error">{errors.password}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/95">
                 Confirm Password
               </label>
               <input
@@ -301,13 +294,13 @@ export default function RegisterPage() {
                     setErrors({ ...errors, confirmPassword: '' })
                   }
                 }}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-muted-foreground text-foreground rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 text-xs sm:text-sm ${
-                  errors.confirmPassword ? 'border-red-500 bg-red-50' : 'border-border'
+                className={`glass-input mt-1 appearance-none relative block w-full px-3 py-2 placeholder-white/85 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 focus:z-10 text-xs sm:text-sm ${
+                  errors.confirmPassword ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
                 placeholder="Confirm your password"
               />
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                <p className="mt-1 glass-error">{errors.confirmPassword}</p>
               )}
             </div>
           </div>
@@ -320,13 +313,13 @@ export default function RegisterPage() {
               required
               className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
             />
-            <label htmlFor="terms" className="ml-2 block text-[10px] sm:text-xs text-foreground leading-tight">
+            <label htmlFor="terms" className="ml-2 block text-[10px] sm:text-xs text-white/95 leading-tight">
               I agree to the{' '}
-              <Link href="/terms" className="text-primary hover:text-primary/80">
+              <Link href="/terms" className="glass-text hover:text-white/80">
                 Terms of Service
               </Link>{' '}
               and{' '}
-              <Link href="/privacy" className="text-primary hover:text-primary/80">
+              <Link href="/privacy" className="glass-text hover:text-white/80">
                 Privacy Policy
               </Link>
             </label>
@@ -336,7 +329,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               loading={isLoading}
-              className="w-full"
+              className="glass-button w-full !bg-white/20 hover:!bg-white/30 !text-white !border-white/40"
               size="md"
             >
               Create account
