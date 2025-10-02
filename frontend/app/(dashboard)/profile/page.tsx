@@ -1,8 +1,6 @@
 'use client';
-import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import { useState, useEffect } from 'react';
-import { } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -13,14 +11,17 @@ import { useUserProfileManagement } from '@/hooks/queries/useUserProfile';
 import { useI18n } from '@/lib/i18n/context';
 import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { InlineMessage } from '@/components/ui/InlineMessage';
+import { AvatarUpload } from '@/components/feature/AvatarUpload';
 
 interface ProfileData {
   name: string;
   email: string;
+  phone: string;
   bio: string;
   location: string;
   website: string;
   github: string;
+  facebook: string;
   linkedin: string;
 }
 
@@ -33,26 +34,34 @@ export default function ProfilePage() {
     profile,
     loading,
     updateProfile,
-    updating
+    updating,
+    uploadAvatar,
+    uploadingAvatar,
+    deleteAvatar,
+    deletingAvatar
   } = useUserProfileManagement(!!user);
   
   const [profileData, setProfileData] = useState<ProfileData>({
     name: '',
     email: '',
+    phone: '',
     bio: '',
     location: '',
     website: '',
     github: '',
+    facebook: '',
     linkedin: ''
   });
 
   // Field validation errors
   const [errors, setErrors] = useState({
     name: '',
+    phone: '',
     bio: '',
     location: '',
     website: '',
     github: '',
+    facebook: '',
     linkedin: ''
   });
 
@@ -65,10 +74,12 @@ export default function ProfilePage() {
       setProfileData({
         name: profile.name || '',
         email: profile.email || '',
+        phone: profile.profile?.phone || '',
         bio: profile.profile?.bio || '',
         location: profile.profile?.location || '',
         website: profile.profile?.website || '',
         github: profile.profile?.github || '',
+        facebook: profile.profile?.facebook || '',
         linkedin: profile.profile?.linkedin || ''
       });
     }
@@ -96,9 +107,19 @@ export default function ProfilePage() {
         if (!value.trim()) return 'Name is required';
         if (value.trim().length < 2) return 'Name must be at least 2 characters';
         break;
+      case 'phone':
+        if (value && !/^\+?[0-9\s\-()]+$/.test(value)) {
+          return 'Phone must be a valid phone number';
+        }
+        break;
       case 'website':
         if (value && !/^https?:\/\/.+\..+/.test(value)) {
           return 'Website must be a valid URL (e.g., https://example.com)';
+        }
+        break;
+      case 'facebook':
+        if (value && !value.includes('facebook.com')) {
+          return 'Facebook must be a valid Facebook URL';
         }
         break;
       case 'linkedin':
@@ -121,10 +142,12 @@ export default function ProfilePage() {
     // Clear previous errors and messages
     setErrors({
       name: '',
+      phone: '',
       bio: '',
       location: '',
       website: '',
       github: '',
+      facebook: '',
       linkedin: ''
     });
     profileMessage.clear();
@@ -132,10 +155,12 @@ export default function ProfilePage() {
     // Field validation
     const newErrors = {
       name: validateField('name', profileData.name),
+      phone: validateField('phone', profileData.phone),
       bio: validateField('bio', profileData.bio),
       location: '',
       website: validateField('website', profileData.website),
       github: '',
+      facebook: validateField('facebook', profileData.facebook),
       linkedin: validateField('linkedin', profileData.linkedin)
     };
     
@@ -147,14 +172,14 @@ export default function ProfilePage() {
       return;
     }
 
+    // Destructure to separate name/email from profile fields for auto-sync
+    const { name, email, ...profileFields } = profileData;
+
     updateProfile({
-      name: profileData.name,
+      name,
       profile: {
-        bio: profileData.bio,
-        location: profileData.location,
-        website: profileData.website,
-        github: profileData.github,
-        linkedin: profileData.linkedin
+        ...profile?.profile,  // Preserve all existing fields (avatar, title, skills, learning_goals)
+        ...profileFields      // Auto-sync ALL profile fields (bio, location, website, github, linkedin)
       }
     }, {
       onSuccess: (response) => {
@@ -229,7 +254,35 @@ export default function ProfilePage() {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
+          <h2 className="text-xl font-semibold mb-6">Basic Information</h2>
+
+          {/* Avatar Upload Section */}
+          <div className="mb-6 pb-6 border-b">
+            <AvatarUpload
+              currentAvatar={profile?.profile?.avatar}
+              userName={profile?.name || ''}
+              onUpload={async (file) => {
+                try {
+                  await uploadAvatar(file);
+                  profileMessage.showSuccess('Avatar updated successfully!');
+                } catch (error: any) {
+                  console.error('Upload avatar failed:', error);
+                  profileMessage.showError(error.message || 'Something went wrong');
+                }
+              }}
+              onDelete={async () => {
+                try {
+                  await deleteAvatar(undefined);
+                  profileMessage.showSuccess('Avatar removed successfully!');
+                } catch (error: any) {
+                  profileMessage.showError(error.message || 'Something went wrong');
+                }
+              }}
+              uploading={uploadingAvatar}
+              deleting={deletingAvatar}
+            />
+          </div>
+
           <div className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
@@ -242,6 +295,7 @@ export default function ProfilePage() {
                 value={profileData.name}
                 onChange={handleInputChange}
                 required
+                autoComplete="name"
                 className={errors.name ? 'border-red-500 bg-red-50' : ''}
               />
               {errors.name && (
@@ -259,9 +313,28 @@ export default function ProfilePage() {
                 type="email"
                 value={profileData.email}
                 disabled
+                autoComplete="email"
                 className="bg-muted"
               />
-              <p className="text-sm text-muted-foreground mt-1">Email cannot be changed</p>
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-1">
+                Phone
+              </label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                value={profileData.phone}
+                onChange={handleInputChange}
+                placeholder="+84 123 456 789"
+                autoComplete="tel"
+                className={errors.phone ? 'border-red-500 bg-red-50' : ''}
+              />
+              {errors.phone && (
+                <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+              )}
             </div>
 
             <div>
@@ -298,6 +371,7 @@ export default function ProfilePage() {
                 value={profileData.location}
                 onChange={handleInputChange}
                 placeholder="City, Country"
+                autoComplete="address-level2"
               />
             </div>
           </div>
@@ -318,6 +392,7 @@ export default function ProfilePage() {
                 value={profileData.website}
                 onChange={handleInputChange}
                 placeholder="https://example.com"
+                autoComplete="url"
                 className={errors.website ? 'border-red-500 bg-red-50' : ''}
               />
               {errors.website && (
@@ -336,7 +411,27 @@ export default function ProfilePage() {
                 value={profileData.github}
                 onChange={handleInputChange}
                 placeholder="username"
+                autoComplete="username"
               />
+            </div>
+
+            <div>
+              <label htmlFor="facebook" className="block text-sm font-medium text-foreground mb-1">
+                Facebook
+              </label>
+              <Input
+                id="facebook"
+                name="facebook"
+                type="text"
+                value={profileData.facebook}
+                onChange={handleInputChange}
+                placeholder="facebook.com/username"
+                autoComplete="url"
+                className={errors.facebook ? 'border-red-500 bg-red-50' : ''}
+              />
+              {errors.facebook && (
+                <p className="mt-1 text-sm text-red-600">{errors.facebook}</p>
+              )}
             </div>
 
             <div>
@@ -350,6 +445,7 @@ export default function ProfilePage() {
                 value={profileData.linkedin}
                 onChange={handleInputChange}
                 placeholder="linkedin.com/in/username"
+                autoComplete="url"
                 className={errors.linkedin ? 'border-red-500 bg-red-50' : ''}
               />
               {errors.linkedin && (

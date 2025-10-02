@@ -359,10 +359,12 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
 
             {/* Quiz Configuration */}
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
+              <label htmlFor="pass-percentage" className="block text-sm font-medium text-muted-foreground mb-1">
                 Pass Percentage
               </label>
               <input
+                id="pass-percentage"
+                name="pass_percentage"
                 type="number"
                 value={formData.pass_percentage}
                 onChange={(e) => handleInputChange('pass_percentage', parseInt(e.target.value) || 70)}
@@ -370,6 +372,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                 min="1"
                 max="100"
                 disabled={loading}
+                aria-label="Pass percentage for quiz"
               />
               {errors.pass_percentage && <p className="text-destructive text-sm mt-1">{errors.pass_percentage}</p>}
             </div>

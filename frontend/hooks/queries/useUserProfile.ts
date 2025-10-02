@@ -10,8 +10,10 @@ interface ProfileUpdateData {
   profile: {
     bio: string;
     location: string;
+    phone: string;
     website: string;
     github: string;
+    facebook: string;
     linkedin: string;
   };
 }
@@ -50,12 +52,48 @@ export function useUpdateUserProfile() {
 }
 
 /**
+ * Mutation for uploading user avatar
+ */
+export function useUploadAvatar() {
+  return useApiMutation(
+    (file: File) => usersApi.uploadAvatar(file),
+    {
+      operationName: 'upload-avatar',
+      invalidateQueries: [
+        ['user-profile'], // Refresh profile data
+        ['user'], // Refresh auth user data
+      ],
+      showToast: false, // Disable automatic toast - component handles feedback
+    }
+  );
+}
+
+/**
+ * Mutation for deleting user avatar
+ */
+export function useDeleteAvatar() {
+  return useApiMutation(
+    () => usersApi.deleteAvatar(),
+    {
+      operationName: 'delete-avatar',
+      invalidateQueries: [
+        ['user-profile'], // Refresh profile data
+        ['user'], // Refresh auth user data
+      ],
+      showToast: false, // Disable automatic toast - component handles feedback
+    }
+  );
+}
+
+/**
  * Hook for user profile management
  * Combines profile data and update functionality
  */
 export function useUserProfileManagement(enabled: boolean = true) {
   const profileQuery = useUserProfileQuery(enabled);
   const updateMutation = useUpdateUserProfile();
+  const uploadAvatarMutation = useUploadAvatar();
+  const deleteAvatarMutation = useDeleteAvatar();
 
   return {
     profile: profileQuery.data?.data,
@@ -63,6 +101,10 @@ export function useUserProfileManagement(enabled: boolean = true) {
     error: profileQuery.error,
     updateProfile: updateMutation.mutate,
     updating: updateMutation.loading,
+    uploadAvatar: uploadAvatarMutation.mutateAsync, // Use async version for await support
+    uploadingAvatar: uploadAvatarMutation.loading,
+    deleteAvatar: deleteAvatarMutation.mutateAsync, // Use async version for await support
+    deletingAvatar: deleteAvatarMutation.loading,
     refetch: profileQuery.execute,
   };
 }

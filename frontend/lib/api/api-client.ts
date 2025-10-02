@@ -357,6 +357,9 @@ class ApiClient {
       if (typeof body === 'string') {
         // Body is already a string (e.g., URLSearchParams)
         requestOptions.body = body;
+      } else if (body instanceof FormData) {
+        // FormData - send as is (DO NOT stringify!)
+        requestOptions.body = body;
       } else {
         // JSON body - stringify
         requestOptions.body = JSON.stringify(body);
@@ -367,18 +370,38 @@ class ApiClient {
   }
 
   async put<T>(url: string, body?: any, options?: RequestOptions): Promise<T> {
+    // Handle body serialization (same logic as POST)
+    let serializedBody: any = undefined;
+    if (body !== undefined) {
+      if (typeof body === 'string' || body instanceof FormData) {
+        serializedBody = body;
+      } else {
+        serializedBody = JSON.stringify(body);
+      }
+    }
+
     return this.request<T>(url, {
       ...options,
       method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined
+      body: serializedBody
     });
   }
 
   async patch<T>(url: string, body?: any, options?: RequestOptions): Promise<T> {
+    // Handle body serialization (same logic as POST)
+    let serializedBody: any = undefined;
+    if (body !== undefined) {
+      if (typeof body === 'string' || body instanceof FormData) {
+        serializedBody = body;
+      } else {
+        serializedBody = JSON.stringify(body);
+      }
+    }
+
     return this.request<T>(url, {
       ...options,
       method: 'PATCH',
-      body: body ? JSON.stringify(body) : undefined
+      body: serializedBody
     });
   }
 

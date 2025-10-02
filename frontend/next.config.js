@@ -84,6 +84,23 @@ const nextConfig = {
   // NOTE: HTTP cache headers removed - CDN will handle HTTP caching
   // React Query handles all client-side caching for optimal performance
   
+  // Security headers - Allow eval in dev mode for React DevTools/HMR
+  async headers() {
+    return [
+      {
+        source: '/(.*)',  // Match ALL paths including root
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: process.env.NODE_ENV === 'development' 
+              ? "script-src 'self' 'unsafe-eval' 'unsafe-inline';" 
+              : "script-src 'self' 'unsafe-inline';",
+          },
+        ],
+      },
+    ];
+  },
+  
   // Output configuration for Docker deployment
   output: 'standalone',
 

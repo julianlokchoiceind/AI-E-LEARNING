@@ -304,6 +304,8 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
             {/* Duration */}
             <div>
               <MobileInput
+                id="lesson-duration"
+                name="duration"
                 label="Duration (Optional)"
                 placeholder="15"
                 value={formData.duration}

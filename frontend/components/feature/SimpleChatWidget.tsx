@@ -311,11 +311,14 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                     
                     <div className="flex space-x-1">
                       <input
+                        id="ai-learning-goal"
+                        name="learning-goal"
                         type="text"
                         value={newGoal}
                         onChange={(e) => setNewGoal(e.target.value)}
                         placeholder="Add learning goal..."
                         className="flex-1 text-xs border border-border rounded px-2 py-1"
+                        aria-label="Add learning goal"
                         onKeyPress={(e) => {
                           if (e.key === 'Enter' && newGoal.trim()) {
                             addLearningGoal(newGoal.trim());
@@ -430,6 +433,8 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
         <div className="border-t p-3">
           <div className="flex items-center space-x-2">
             <input
+              id="ai-chat-message"
+              name="message"
               ref={inputRef}
               type="text"
               value={inputValue}
@@ -437,6 +442,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
               onKeyPress={handleKeyPress}
               placeholder="Ask me anything..."
               className="flex-1 px-2 py-1 text-sm border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent"
+              aria-label="AI chat message input"
               disabled={isLoading}
             />
             <Button

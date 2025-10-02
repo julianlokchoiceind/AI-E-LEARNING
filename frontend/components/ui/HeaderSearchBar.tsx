@@ -98,6 +98,8 @@ export function HeaderSearchBar() {
       <form onSubmit={handleSubmit}>
         <div className="relative">
           <input
+            id="header-search"
+            name="search"
             ref={inputRef}
             type="text"
             value={query}
@@ -105,6 +107,7 @@ export function HeaderSearchBar() {
             onFocus={() => query && setShowDropdown(true)}
             placeholder="Search courses and FAQ..."
             className="w-full px-4 py-2 pl-10 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            aria-label="Search courses and FAQ"
           />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         </div>

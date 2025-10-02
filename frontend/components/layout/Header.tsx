@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Container } from '@/components/ui/Container'
 import { SkeletonBox, SkeletonCircle } from '@/components/ui/LoadingStates'
 import { useSupportNotifications } from '@/hooks/useSupportNotifications'
+import { useUserProfileQuery } from '@/hooks/queries/useUserProfile'
 
 export function Header() {
   const { user, isAuthenticated, logout, loading } = useAuth()
@@ -28,9 +29,23 @@ export function Header() {
   const userButtonRef = useRef<HTMLButtonElement>(null)
   const explorerRef = useRef<HTMLDivElement>(null)
   const exploreButtonRef = useRef<HTMLButtonElement>(null)
-  
+
   // Support notifications polling every 30 seconds
   const { unreadCount } = useSupportNotifications()
+
+  // Fetch user profile for realtime avatar and name updates
+  const { data: profileData } = useUserProfileQuery(isAuthenticated)
+  const profile = profileData?.data
+
+  // Generate user initials for avatar placeholder
+  const getInitials = (name?: string): string => {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
 
   // Close dropdown when clicking outside or scrolling
   useEffect(() => {
@@ -154,10 +169,25 @@ export function Header() {
                   <button
                     ref={userButtonRef}
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-1 px-3 py-2 text-sm nav-hover rounded-md transition-colors relative"
+                    className="flex items-center gap-2 px-2 py-2 text-sm nav-hover rounded-md transition-colors relative"
                   >
+                    {/* Avatar with notification badge */}
                     <div className="relative">
-                      <User className="h-5 w-5" />
+                      <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-border">
+                        {profile?.profile?.avatar ? (
+                          <img
+                            src={profile.profile.avatar}
+                            alt={profile?.name || user?.name || 'User'}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-400 flex items-center justify-center">
+                            <span className="text-sm font-bold text-white">
+                              {getInitials(profile?.name || user?.name || user?.email)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                       {unreadCount > 0 && (
                         <div className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-destructive rounded-full flex items-center justify-center border-[1.5px] border-background shadow-sm px-0.5 translate-x-1/4 -translate-y-1/4">
                           <span className="text-[9px] font-bold text-white leading-none">
@@ -166,8 +196,7 @@ export function Header() {
                         </div>
                       )}
                     </div>
-                    <span className="hidden md:inline">{user?.name || user?.email || 'User'}</span>
-                    <ChevronDown className={`hidden md:inline h-4 w-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-4 w-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
                 </div>
               ) : (
@@ -204,12 +233,39 @@ export function Header() {
     {userMenuOpen && (
       <div
         ref={userMenuRef}
-        className="fixed bg-card rounded-md shadow-lg py-1 z-50 border border-border w-56"
+        className="fixed bg-card rounded-md shadow-lg z-50 border border-border w-64"
         style={{
           right: userMenuPosition.right,
           top: userMenuPosition.top
         }}
       >
+        {/* User Info Header - GitHub Style */}
+        <div className="px-4 py-3 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-border">
+              {profile?.profile?.avatar ? (
+                <img
+                  src={profile.profile.avatar}
+                  alt={profile?.name || user?.name || 'User'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-400 flex items-center justify-center">
+                  <span className="text-base font-bold text-white">
+                    {getInitials(profile?.name || user?.name || user?.email)}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold truncate text-sm">{profile?.name || user?.name || 'User'}</p>
+              <p className="text-xs text-muted-foreground truncate">{profile?.email || user?.email}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Menu Items */}
+        <div className="py-1">
         <button
           onClick={() => {
             router.push('/dashboard')
@@ -260,7 +316,12 @@ export function Header() {
           </div>
           {t('nav.support')}
         </button>
-        <div className="border-t border-border my-1"></div>
+        </div>
+
+        <div className="border-t border-border"></div>
+
+        {/* Settings Section */}
+        <div className="py-1">
         <button
           onClick={() => {
             router.push('/billing')
@@ -281,7 +342,12 @@ export function Header() {
           <Settings className="h-4 w-4 mr-3" />
           Settings
         </button>
-        <div className="border-t border-border my-1"></div>
+        </div>
+
+        <div className="border-t border-border"></div>
+
+        {/* Logout Section */}
+        <div className="py-1">
         <button
           onClick={() => {
             logout()
@@ -292,6 +358,7 @@ export function Header() {
           <LogOut className="h-4 w-4 mr-3" />
           {t('auth.logout')}
         </button>
+        </div>
       </div>
     )}
 

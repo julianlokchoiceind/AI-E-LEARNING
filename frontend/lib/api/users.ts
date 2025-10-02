@@ -67,8 +67,10 @@ export interface UserProfile {
     avatar?: string;
     bio?: string;
     location?: string;
+    phone?: string;
     linkedin?: string;
     github?: string;
+    facebook?: string;
     website?: string;
     title?: string;
     skills?: string[];
@@ -195,10 +197,48 @@ export const usersApi = {
         API_ENDPOINTS.USERS.PROGRESS,
         { requireAuth: true }
       );
-      
+
       return response;
     } catch (error) {
       console.error('Get progress failed:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Upload user avatar
+   */
+  uploadAvatar: async (file: File): Promise<StandardResponse<{ url: string; filename: string; size: number }>> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post<StandardResponse<{ url: string; filename: string; size: number }>>(
+        `${API_ENDPOINTS.USERS.PROFILE}/avatar`,
+        formData,
+        { requireAuth: true }
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Upload avatar failed:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete user avatar
+   */
+  deleteAvatar: async (): Promise<StandardResponse<{ avatar: null }>> => {
+    try {
+      const response = await api.delete<StandardResponse<{ avatar: null }>>(
+        `${API_ENDPOINTS.USERS.PROFILE}/avatar`,
+        { requireAuth: true }
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Delete avatar failed:', error);
       throw error;
     }
   },

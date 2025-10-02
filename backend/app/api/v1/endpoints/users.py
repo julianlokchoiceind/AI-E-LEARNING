@@ -1,5 +1,5 @@
 from typing import Dict, Any, Tuple, List
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile
 from fastapi.responses import StreamingResponse
 from app.models.user import User
 from app.models.enrollment import Enrollment
@@ -117,24 +117,26 @@ async def get_my_profile(
     current_user: User = Depends(get_current_user)
 ) -> StandardResponse[UserResponse]:
     """Get current user's profile information."""
-    user_data = UserResponse(
-        id=str(current_user.id),
-        email=current_user.email,
-        name=current_user.name,
-        role=current_user.role,
-        premium_status=current_user.premium_status,
-        is_verified=current_user.is_verified,
-        profile=current_user.profile,
-        stats=current_user.stats,
-        preferences=current_user.preferences,
-        subscription=current_user.subscription,
-        created_at=current_user.created_at,
-        updated_at=current_user.updated_at,
-        last_login=current_user.last_login
-    )
+    # Convert to dict to ensure all fields are serialized properly
+    user_dict = {
+        "id": str(current_user.id),
+        "email": current_user.email,
+        "name": current_user.name,
+        "role": current_user.role,
+        "premium_status": current_user.premium_status,
+        "is_verified": current_user.is_verified,
+        "profile": current_user.profile.dict() if current_user.profile else {},
+        "stats": current_user.stats.dict() if current_user.stats else {},
+        "preferences": current_user.preferences.dict() if current_user.preferences else {},
+        "subscription": current_user.subscription.dict() if current_user.subscription else None,
+        "created_at": current_user.created_at,
+        "updated_at": current_user.updated_at,
+        "last_login": current_user.last_login
+    }
+    
     return StandardResponse(
         success=True,
-        data=user_data,
+        data=user_dict,
         message="Profile retrieved successfully"
     )
 
@@ -145,63 +147,51 @@ async def update_my_profile(
 ) -> StandardResponse[UserResponse]:
     """Update current user's profile."""
     try:
-        # Update profile fields
-        if profile_data.name:
-            current_user.name = profile_data.name
-        
-        if profile_data.profile:
-            # Update profile nested fields
-            if profile_data.profile.bio is not None:
-                current_user.profile.bio = profile_data.profile.bio
-            if profile_data.profile.location is not None:
-                current_user.profile.location = profile_data.profile.location
-            if profile_data.profile.linkedin is not None:
-                current_user.profile.linkedin = profile_data.profile.linkedin
-            if profile_data.profile.github is not None:
-                current_user.profile.github = profile_data.profile.github
-            if profile_data.profile.website is not None:
-                current_user.profile.website = profile_data.profile.website
-            if profile_data.profile.title is not None:
-                current_user.profile.title = profile_data.profile.title
-            if profile_data.profile.skills is not None:
-                current_user.profile.skills = profile_data.profile.skills
-            if profile_data.profile.learning_goals is not None:
-                current_user.profile.learning_goals = profile_data.profile.learning_goals
-        
-        if profile_data.preferences:
-            # Update preferences
-            if profile_data.preferences.language is not None:
-                current_user.preferences.language = profile_data.preferences.language
-            if profile_data.preferences.timezone is not None:
-                current_user.preferences.timezone = profile_data.preferences.timezone
-            if profile_data.preferences.email_notifications is not None:
-                current_user.preferences.email_notifications = profile_data.preferences.email_notifications
-            if profile_data.preferences.push_notifications is not None:
-                current_user.preferences.push_notifications = profile_data.preferences.push_notifications
-            if profile_data.preferences.marketing_emails is not None:
-                current_user.preferences.marketing_emails = profile_data.preferences.marketing_emails
-        
+        # Auto-update all fields using exclude_unset pattern
+        update_dict = profile_data.dict(exclude_unset=True)
+
+        # Update top-level fields (name)
+        for field, value in update_dict.items():
+            if field in ['profile', 'preferences']:
+                # Handle nested objects separately
+                continue
+            setattr(current_user, field, value)
+
+        # Update nested profile fields
+        if 'profile' in update_dict:
+            profile_updates = update_dict['profile']
+            for field, value in profile_updates.items():
+                setattr(current_user.profile, field, value)
+
+        # Update nested preferences fields
+        if 'preferences' in update_dict:
+            preferences_updates = update_dict['preferences']
+            for field, value in preferences_updates.items():
+                setattr(current_user.preferences, field, value)
+
         current_user.updated_at = datetime.utcnow()
         await current_user.save()
+
+        # Convert to dict to ensure all fields are serialized properly
+        user_dict = {
+            "id": str(current_user.id),
+            "email": current_user.email,
+            "name": current_user.name,
+            "role": current_user.role,
+            "premium_status": current_user.premium_status,
+            "is_verified": current_user.is_verified,
+            "profile": current_user.profile.dict() if current_user.profile else {},
+            "stats": current_user.stats.dict() if current_user.stats else {},
+            "preferences": current_user.preferences.dict() if current_user.preferences else {},
+            "subscription": current_user.subscription.dict() if current_user.subscription else None,
+            "created_at": current_user.created_at,
+            "updated_at": current_user.updated_at,
+            "last_login": current_user.last_login
+        }
         
-        user_data = UserResponse(
-            id=str(current_user.id),
-            email=current_user.email,
-            name=current_user.name,
-            role=current_user.role,
-            premium_status=current_user.premium_status,
-            is_verified=current_user.is_verified,
-            profile=current_user.profile,
-            stats=current_user.stats,
-            preferences=current_user.preferences,
-            subscription=current_user.subscription,
-            created_at=current_user.created_at,
-            updated_at=current_user.updated_at,
-            last_login=current_user.last_login
-        )
         return StandardResponse(
             success=True,
-            data=user_data,
+            data=user_dict,
             message="Profile updated successfully"
         )
     except Exception as e:
@@ -209,6 +199,136 @@ async def update_my_profile(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+
+@router.post("/me/avatar", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """
+    Upload avatar image for current user.
+
+    Supports image files (JPG, PNG) up to 5MB.
+    Automatically replaces old avatar if exists.
+    """
+    from app.core.config import get_file_upload_service
+    import os
+    import time
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Get file upload service
+        upload_service = get_file_upload_service()
+
+        # Configure for avatar images (5MB max, images only)
+        upload_service.max_file_size = 5 * 1024 * 1024  # 5MB
+        upload_service.allowed_extensions = ['.jpg', '.jpeg', '.png']
+        upload_service.allowed_mime_types = ['image/jpeg', 'image/png']
+
+        # Delete old avatar file if replacing (support both GCS and local paths)
+        if current_user.profile.avatar:
+            # Extract file path for deletion
+            if 'storage.googleapis.com' in current_user.profile.avatar:
+                # GCS URL format: https://storage.googleapis.com/bucket-name/path/to/file
+                old_file_path = '/'.join(current_user.profile.avatar.split('/')[-2:])  # Get last 2 parts (folder/filename)
+            elif '/uploads/' in current_user.profile.avatar:
+                # Local URL format: /uploads/path/to/file
+                old_file_path = current_user.profile.avatar.split('/uploads/')[-1]
+            else:
+                old_file_path = None
+
+            if old_file_path:
+                try:
+                    deleted = await upload_service.delete_file(old_file_path)
+                    if deleted:
+                        logger.info(f"Deleted old avatar: {old_file_path}")
+                except Exception as e:
+                    logger.error(f"Error deleting old avatar: {e}")
+
+        # Upload new avatar
+        _, ext = os.path.splitext(file.filename)
+        timestamp = int(time.time())
+        upload_result = await upload_service.upload_file(
+            file=file,
+            context="user-avatars",
+            custom_filename=f"user-{current_user.id}-avatar-{timestamp}{ext}"
+        )
+
+        # Update user profile - Use explicit update to ensure nested field is saved
+        await current_user.set({
+            "profile.avatar": upload_result["url"],
+            "updated_at": datetime.utcnow()
+        })
+
+        return StandardResponse(
+            success=True,
+            data={
+                "url": upload_result["url"],
+                "filename": upload_result["filename"],
+                "size": upload_result["size"]
+            },
+            message="Avatar uploaded successfully"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Avatar upload error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to upload avatar: {str(e)}")
+
+@router.delete("/me/avatar", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
+async def delete_avatar(
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """
+    Delete current user's avatar.
+
+    Removes both file from storage and avatar URL from database.
+    """
+    from app.core.config import get_file_upload_service
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Delete file from storage if exists (support both GCS and local paths)
+        if current_user.profile.avatar:
+            # Extract file path for deletion
+            if 'storage.googleapis.com' in current_user.profile.avatar:
+                # GCS URL format: https://storage.googleapis.com/bucket-name/path/to/file
+                file_path = '/'.join(current_user.profile.avatar.split('/')[-2:])  # Get last 2 parts (folder/filename)
+            elif '/uploads/' in current_user.profile.avatar:
+                # Local URL format: /uploads/path/to/file
+                file_path = current_user.profile.avatar.split('/uploads/')[-1]
+            else:
+                file_path = None
+
+            if file_path:
+                upload_service = get_file_upload_service()
+                try:
+                    deleted = await upload_service.delete_file(file_path)
+                    if deleted:
+                        logger.info(f"Deleted avatar: {file_path}")
+                except Exception as e:
+                    logger.error(f"Error deleting avatar file: {e}")
+
+        # Clear avatar from database - Use explicit update to ensure nested field is saved
+        await current_user.set({
+            "profile.avatar": None,
+            "updated_at": datetime.utcnow()
+        })
+
+        return StandardResponse(
+            success=True,
+            data={"avatar": None},
+            message="Avatar removed successfully"
+        )
+
+    except Exception as e:
+        logger.error(f"Avatar delete error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete avatar: {str(e)}")
 
 @router.get("/dashboard", response_model=StandardResponse[DashboardData], status_code=status.HTTP_200_OK)
 @measure_performance("api.users.dashboard")

@@ -11,6 +11,8 @@ interface SearchBarProps {
   className?: string
   disabled?: boolean
   size?: 'sm' | 'md' | 'lg'
+  id?: string
+  name?: string
 }
 
 export function SearchBar({
@@ -20,7 +22,9 @@ export function SearchBar({
   placeholder = "Search...",
   className = "",
   disabled = false,
-  size = 'lg'
+  size = 'lg',
+  id = 'search-bar',
+  name = 'search'
 }: SearchBarProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,12 +56,15 @@ export function SearchBar({
     <form onSubmit={handleSubmit} className={`w-full ${className}`}>
       <div className="relative">
         <input
+          id={id}
+          name={name}
           type="text"
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           className={`w-full ${sizeClasses[size]} rounded-lg text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary`}
+          aria-label={placeholder}
         />
         <button
           type="submit"

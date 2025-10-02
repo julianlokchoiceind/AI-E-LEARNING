@@ -23,8 +23,10 @@ class UserProfile(BaseModel):
     avatar: Optional[str] = None
     bio: Optional[str] = None
     location: Optional[str] = None
+    phone: Optional[str] = None
     linkedin: Optional[str] = None
     github: Optional[str] = None
+    facebook: Optional[str] = None
     website: Optional[str] = None
     title: Optional[str] = None
     skills: List[str] = []

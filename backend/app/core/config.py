@@ -101,7 +101,7 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: Optional[str] = None
     
     # File Upload Configuration
-    USE_LOCAL_STORAGE: bool = True
+    USE_LOCAL_STORAGE: bool = False  # Default to GCS for production
     UPLOAD_DIR: Optional[str] = None
     API_BASE_URL: Optional[str] = None
     LOCAL_UPLOAD_DIR: str = "./uploads"
