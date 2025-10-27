@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/Badge';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { useRouter } from 'next/navigation';
 import { useSupportNotifications } from '@/hooks/useSupportNotifications';
-import { 
-  Search, 
-  Menu, 
-  LogOut, 
-  Settings, 
+import { useUserProfileQuery } from '@/hooks/queries/useUserProfile';
+import {
+  Search,
+  Menu,
+  LogOut,
+  Settings,
   User,
   ChevronDown,
   Home,
@@ -33,6 +34,16 @@ const getCategoryDisplayName = (category: string): string => {
   return categoryMap[category] || category;
 };
 
+// Generate user initials for avatar placeholder
+const getInitials = (name?: string): string => {
+  if (!name) return 'U';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
 export function AdminHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -45,9 +56,13 @@ export function AdminHeader() {
   const notificationsButtonRef = useRef<HTMLButtonElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userButtonRef = useRef<HTMLButtonElement>(null);
-  
+
   // Get support ticket notifications for admin
   const { unreadCount, recentTickets } = useSupportNotifications();
+
+  // Fetch user profile for realtime avatar updates
+  const { data: profileData } = useUserProfileQuery(true);
+  const profile = profileData?.data;
   
   // Calculate dropdown positions
   useEffect(() => {
@@ -158,12 +173,24 @@ export function AdminHeader() {
         <button
           ref={userButtonRef}
           onClick={() => setShowUserMenu(!showUserMenu)}
-          className="flex items-center space-x-2 text-sm nav-hover focus:outline-none"
+          className="flex items-center gap-2 px-2 py-2 text-sm nav-hover rounded-md transition-colors"
         >
-          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-            <User className="h-4 w-4 text-white" />
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-border">
+            {profile?.profile?.avatar ? (
+              <img
+                src={profile.profile.avatar}
+                alt={profile?.name || user?.name || 'Admin'}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-primary flex items-center justify-center">
+                <span className="text-sm font-bold text-white">
+                  {getInitials(profile?.name || user?.name || user?.email)}
+                </span>
+              </div>
+            )}
           </div>
-          <span className="hidden md:block font-medium">{user?.name}</span>
+          <span className="hidden md:block font-medium">{profile?.name || user?.name}</span>
           <ChevronDown className="h-4 w-4" />
         </button>
       </div>
@@ -262,9 +289,28 @@ export function AdminHeader() {
         }}
       >
         <div className="px-4 py-3 border-b border-border">
-          <p className="text-sm font-medium text-foreground">{user?.name}</p>
-          <p className="text-sm text-muted-foreground">{user?.email}</p>
-          <p className="text-xs text-destructive font-medium">Administrator</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-border">
+              {profile?.profile?.avatar ? (
+                <img
+                  src={profile.profile.avatar}
+                  alt={profile?.name || user?.name || 'Admin'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-primary flex items-center justify-center">
+                  <span className="text-base font-bold text-white">
+                    {getInitials(profile?.name || user?.name || user?.email)}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{profile?.name || user?.name}</p>
+              <p className="text-sm text-muted-foreground truncate">{profile?.email || user?.email}</p>
+              <p className="text-xs text-destructive font-medium">Administrator</p>
+            </div>
+          </div>
         </div>
 
         <div className="py-2">

@@ -8,16 +8,18 @@ import { Container } from '@/components/ui/Container';
 import { useAdminOverviewQuery } from '@/hooks/queries/useAdminStats';
 import { usePaymentAnalyticsQuery } from '@/hooks/queries/usePayments';
 import { ToastService } from '@/lib/toast/ToastService';
-import { 
-  Users, 
-  BookOpen, 
-  DollarSign, 
-  TrendingUp, 
+import {
+  Users,
+  BookOpen,
+  DollarSign,
+  TrendingUp,
   AlertTriangle,
   CheckCircle,
   Clock,
   Star,
-  Crown
+  Crown,
+  CreditCard,
+  Headphones
 } from 'lucide-react';
 
 // Map the AdminDashboardStats to the format expected by the component
@@ -109,8 +111,8 @@ export default function AdminDashboard() {
       system: {
         active_sessions: adminStats?.active_users_today || 0,
         pending_support_tickets: health?.pending_tickets || 0,
-        server_status: health?.status || 'Healthy',
-        last_backup: health?.last_backup || '2 hours ago'
+        server_status: health?.status || 'Unknown',
+        last_backup: health?.last_backup || 'No data available'
       }
     };
 
@@ -145,10 +147,10 @@ export default function AdminDashboard() {
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Users */}
-        <Card className="p-6">
+        <Card className="p-6 card-hover group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Total Users</p>
+              <p className="text-sm font-medium text-muted-foreground">Total Users</p>
               {loading || analyticsLoading ? (
                 <>
                   <SkeletonBox className="h-8 w-20 mb-1" />
@@ -156,26 +158,30 @@ export default function AdminDashboard() {
                 </>
               ) : (
                 <>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-3xl font-bold text-foreground mt-1">
                     {stats?.users.total.toLocaleString() || '0'}
                   </p>
-                  <p className="text-sm text-success">
-                    +{stats?.users.new_today || 0} today
-                  </p>
+                  <div className="flex items-center gap-1 mt-2">
+                    <TrendingUp className="w-4 h-4 text-success" />
+                    <span className="text-sm font-medium text-success">
+                      +{stats?.users.new_today || 0} today
+                    </span>
+                  </div>
                 </>
               )}
             </div>
-            <div className="h-12 w-12 bg-primary/20 rounded-lg flex items-center justify-center">
-              <Users className="w-8 h-8 text-primary" />
+            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg"
+                 style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}>
+              <Users className="w-7 h-7 text-white" />
             </div>
           </div>
         </Card>
 
         {/* Total Courses */}
-        <Card className="p-6">
+        <Card className="p-6 card-hover group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Total Courses</p>
+              <p className="text-sm font-medium text-muted-foreground">Total Courses</p>
               {loading || analyticsLoading ? (
                 <>
                   <SkeletonBox className="h-8 w-16 mb-1" />
@@ -183,26 +189,30 @@ export default function AdminDashboard() {
                 </>
               ) : (
                 <>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-3xl font-bold text-foreground mt-1">
                     {stats?.courses.total || '0'}
                   </p>
-                  <p className="text-sm text-warning">
-                    {stats?.courses.pending_approval || 0} pending approval
-                  </p>
+                  <div className="flex items-center gap-1 mt-2">
+                    <AlertTriangle className="w-4 h-4 text-warning" />
+                    <span className="text-sm font-medium text-warning">
+                      {stats?.courses.pending_approval || 0} pending
+                    </span>
+                  </div>
                 </>
               )}
             </div>
-            <div className="h-12 w-12 bg-success/20 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-8 h-8 text-success" />
+            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg"
+                 style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+              <BookOpen className="w-7 h-7 text-white" />
             </div>
           </div>
         </Card>
 
         {/* Monthly Revenue - NOW WITH REAL PAYMENT DATA */}
-        <Card className="p-6">
+        <Card className="p-6 card-hover group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Monthly Revenue</p>
+              <p className="text-sm font-medium text-muted-foreground">Monthly Revenue</p>
               {loading || analyticsLoading ? (
                 <>
                   <SkeletonBox className="h-8 w-24 mb-1" />
@@ -210,26 +220,30 @@ export default function AdminDashboard() {
                 </>
               ) : (
                 <>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-3xl font-bold text-foreground mt-1">
                     ${stats?.revenue.total_monthly.toLocaleString() || '0'}
                   </p>
-                  <p className="text-sm text-success">
-                    {stats?.revenue.success_rate.toFixed(1) || 100}% success rate
-                  </p>
+                  <div className="flex items-center gap-1 mt-2">
+                    <CheckCircle className="w-4 h-4 text-success" />
+                    <span className="text-sm font-medium text-success">
+                      {stats?.revenue.success_rate.toFixed(1) || 100}% success
+                    </span>
+                  </div>
                 </>
               )}
             </div>
-            <div className="h-12 w-12 bg-primary/20 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-8 h-8 text-primary" />
+            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg"
+                 style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
+              <DollarSign className="w-7 h-7 text-white" />
             </div>
           </div>
         </Card>
 
         {/* Active Sessions */}
-        <Card className="p-6">
+        <Card className="p-6 card-hover group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Active Sessions</p>
+              <p className="text-sm font-medium text-muted-foreground">Active Sessions</p>
               {loading || analyticsLoading ? (
                 <>
                   <SkeletonBox className="h-8 w-16 mb-1" />
@@ -237,17 +251,21 @@ export default function AdminDashboard() {
                 </>
               ) : (
                 <>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-3xl font-bold text-foreground mt-1">
                     {stats?.system.active_sessions || '0'}
                   </p>
-                  <p className="text-sm text-primary">
-                    {stats?.users.active_this_week || 0} weekly active
-                  </p>
+                  <div className="flex items-center gap-1 mt-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-primary">
+                      {stats?.users.active_this_week || 0} weekly
+                    </span>
+                  </div>
                 </>
               )}
             </div>
-            <div className="h-12 w-12 bg-warning/20 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-8 h-8 text-warning" />
+            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg"
+                 style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+              <TrendingUp className="w-7 h-7 text-white" />
             </div>
           </div>
         </Card>
@@ -258,43 +276,49 @@ export default function AdminDashboard() {
         {/* System Status */}
         <Card className="p-6">
           <h2 className="text-lg font-semibold mb-4">System Status</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-success mr-3" />
-                <span className="text-muted-foreground">Server Status</span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-3 rounded-lg nav-hover">
+              <div className="flex items-center gap-3">
+                {stats?.system.server_status === 'Unknown' ? (
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                ) : (
+                  <CheckCircle className="h-5 w-5 text-success" />
+                )}
+                <span className="font-medium">Server Status</span>
               </div>
-              <span className="text-success font-medium">
-                {stats?.system.server_status || 'Healthy'}
+              <span className={`font-semibold ${
+                stats?.system.server_status === 'Unknown' ? 'text-destructive' : 'text-success'
+              }`}>
+                {stats?.system.server_status || 'Unknown'}
               </span>
             </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Clock className="h-5 w-5 text-primary mr-3" />
-                <span className="text-muted-foreground">Last Backup</span>
+
+            <div className="flex items-center justify-between p-3 rounded-lg nav-hover">
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-primary" />
+                <span className="font-medium">Last Backup</span>
               </div>
-              <span className="text-muted-foreground">
-                {stats?.system.last_backup || '2 hours ago'}
+              <span className="text-muted-foreground font-medium">
+                {stats?.system.last_backup || 'No data available'}
               </span>
             </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <AlertTriangle className="h-5 w-5 text-warning mr-3" />
-                <span className="text-muted-foreground">Pending Tickets</span>
+
+            <div className="flex items-center justify-between p-3 rounded-lg nav-hover">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-5 w-5 text-warning" />
+                <span className="font-medium">Pending Tickets</span>
               </div>
-              <span className="text-warning font-medium">
+              <span className="text-warning font-bold text-lg">
                 {stats?.system.pending_support_tickets || 0}
               </span>
             </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Crown className="h-5 w-5 text-primary mr-3" />
-                <span className="text-muted-foreground">Premium Users</span>
+
+            <div className="flex items-center justify-between p-3 rounded-lg nav-hover">
+              <div className="flex items-center gap-3">
+                <Crown className="h-5 w-5 text-primary" />
+                <span className="font-medium">Premium Users</span>
               </div>
-              <span className="text-primary font-medium">
+              <span className="text-primary font-bold text-lg">
                 {stats?.users.premium_users || 0}
               </span>
             </div>
@@ -305,110 +329,45 @@ export default function AdminDashboard() {
         <Card className="p-6">
           <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Button 
-              variant="outline" 
-              size="sm"
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex-col gap-2 transition-all hover:border-primary hover:bg-primary/5 hover:scale-105"
               onClick={() => window.open('/admin/users', '_blank')}
             >
-              Manage Users
+              <Users className="w-5 h-5" />
+              <span className="text-sm font-medium">Manage Users</span>
             </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
+
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex-col gap-2 transition-all hover:border-success hover:bg-success/5 hover:scale-105"
               onClick={() => window.open('/admin/courses', '_blank')}
             >
-              Review Courses
+              <BookOpen className="w-5 h-5" />
+              <span className="text-sm font-medium">Review Courses</span>
             </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
+
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex-col gap-2 transition-all hover:border-purple-500 hover:bg-purple-50 hover:scale-105"
               onClick={() => window.open('/admin/payments', '_blank')}
             >
-              View Payments
+              <CreditCard className="w-5 h-5" />
+              <span className="text-sm font-medium">View Payments</span>
             </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
+
+            <Button
+              variant="outline"
+              className="h-auto py-4 flex-col gap-2 transition-all hover:border-warning hover:bg-warning/5 hover:scale-105"
               onClick={() => window.open('/admin/support', '_blank')}
             >
-              Support Queue
+              <Headphones className="w-5 h-5" />
+              <span className="text-sm font-medium">Support Queue</span>
             </Button>
           </div>
         </Card>
       </div>
 
-      {/* Recent Activity & Revenue Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Breakdown - NOW WITH REAL PAYMENT DATA */}
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Revenue Breakdown</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Course Purchases</span>
-              <span className="font-semibold">
-                {stats?.revenue.course_sales_revenue || '0'} payments
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Subscriptions</span>
-              <span className="font-semibold">
-                {stats?.revenue.subscription_revenue || '0'} payments
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Average Payment</span>
-              <span className="font-semibold">
-                ${stats?.revenue.average_payment.toLocaleString() || '0'}
-              </span>
-            </div>
-            <div className="border-t pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-foreground font-medium">Total All Time</span>
-                <span className="text-lg font-bold text-success">
-                  ${stats?.revenue.total_all_time.toLocaleString() || '0'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Platform Statistics */}
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Platform Statistics</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Published Courses</span>
-              <span className="font-semibold">
-                {stats?.courses.published || 0}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Total Enrollments</span>
-              <span className="font-semibold">
-                {stats?.courses.total_enrollments?.toLocaleString() || '0'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Weekly Active Users</span>
-              <span className="font-semibold">
-                {stats?.users.active_this_week || 0}
-              </span>
-            </div>
-            <div className="border-t pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-foreground font-medium">Platform Health</span>
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-success mr-1" />
-                  <span className="text-success font-medium">Excellent</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
       </div>
     </Container>
   );
