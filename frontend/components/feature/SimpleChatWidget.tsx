@@ -1,11 +1,24 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, MessageCircle, X, Settings, Target, Languages, Brain, Lightbulb } from 'lucide-react';
+import { Send, Bot, User, MessageCircle, X, Settings, Target, Languages, Brain, Lightbulb, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAIChat } from '@/hooks/useAIChat';
 import { useAISuggestionsQuery } from '@/hooks/queries/useAI';
 import { useAuth } from '@/hooks/useAuth';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import Prism from 'prismjs';
+
+// Import Prism languages
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-tsx';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-json';
 
 interface SimpleChatWidgetProps {
   courseId?: string;
@@ -19,6 +32,141 @@ interface SimpleChatWidgetProps {
   enableEnhancedFeatures?: boolean;
   onShowMessage?: (message: string, type: 'info' | 'error') => void;
 }
+
+// Message content component with markdown and code highlighting
+const MessageContent: React.FC<{ content: string; type: 'user' | 'ai' }> = ({ content, type }) => {
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const codeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (type === 'ai' && codeRef.current) {
+      Prism.highlightAllUnder(codeRef.current);
+    }
+  }, [content, type]);
+
+  const copyToClipboard = async (code: string, language: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(language);
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // User messages: plain text
+  if (type === 'user') {
+    return <div className="text-sm whitespace-pre-wrap">{content}</div>;
+  }
+
+  // AI messages: full markdown with syntax highlighting
+  return (
+    <div ref={codeRef}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          code: ({ node, inline, className, children, ...props }: any) => {
+            const match = /language-(\w+)/.exec(className || '');
+            const language = match ? match[1] : '';
+            const codeString = String(children).replace(/\n$/, '');
+
+            if (!inline && language) {
+              return (
+                <div className="relative my-3 rounded-lg overflow-hidden shadow-md">
+                  <div className="flex items-center justify-between bg-[#1e1e1e] px-3 py-2 border-b border-gray-700">
+                    <span className="text-xs text-gray-400 font-mono">{language}</span>
+                    <button
+                      onClick={() => copyToClipboard(codeString, language)}
+                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded hover:bg-gray-700"
+                      title="Copy code"
+                    >
+                      {copiedCode === language ? (
+                        <>
+                          <Check className="w-3 h-3" />
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <pre className="!m-0 !bg-[#1e1e1e] overflow-x-auto">
+                    <code className={`language-${language} !text-sm`}>
+                      {codeString}
+                    </code>
+                  </pre>
+                </div>
+              );
+            }
+
+            return (
+              <code
+                className="bg-[#4A90E2]/10 text-[#4A90E2] px-1.5 py-0.5 rounded text-xs font-mono"
+                {...props}
+              >
+                {children}
+              </code>
+            );
+          },
+          h1: ({ children }) => (
+            <h1 className="text-lg font-semibold mb-2 pb-1 border-b-2 border-[#1E3A8A] text-[#4A90E2]">
+              {children}
+            </h1>
+          ),
+          h2: ({ children }) => (
+            <h2 className="text-base font-semibold mb-2 text-[#4A90E2]">
+              {children}
+            </h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className="text-sm font-semibold mb-1 text-[#4A90E2]">
+              {children}
+            </h3>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-semibold text-[#4A90E2]">{children}</strong>
+          ),
+          ul: ({ children }) => (
+            <ul className="list-disc list-inside space-y-1 my-2 ml-2">
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="list-decimal list-inside space-y-1 my-2 ml-2">
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => (
+            <li className="text-sm text-foreground">{children}</li>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-4 border-[#4A90E2] pl-3 py-1 my-2 bg-[#4A90E2]/5 italic text-sm">
+              {children}
+            </blockquote>
+          ),
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#4A90E2] hover:underline"
+            >
+              {children}
+            </a>
+          ),
+          p: ({ children }) => (
+            <p className="text-sm mb-2 last:mb-0">{children}</p>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+};
 
 export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
   courseId,
@@ -36,23 +184,23 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
   const [inputValue, setInputValue] = useState('');
   const { isAuthenticated } = useAuth();
   
-  // React Query hook for AI suggestions - replaces manual fetch
+  // React Query hook for AI suggestions
   const { data: suggestionsResponse } = useAISuggestionsQuery(
     {
       course_id: courseId,
       lesson_id: lessonId,
       user_level: userLevel
     },
-    isAuthenticated && !!(courseId || lessonId) // Only fetch when authenticated AND we have context
+    isAuthenticated && !!(courseId || lessonId)
   );
 
-  // Extract suggestions from React Query response or use fallback
   const quickSuggestions = suggestionsResponse?.data?.suggestions?.slice(0, 4) || [
     enableEnhancedFeatures ? "What should I focus on in this lesson?" : "Explain this concept in simple terms",
     enableEnhancedFeatures ? "Can you explain this concept?" : "Give me a code example", 
     enableEnhancedFeatures ? "How does this relate to my goals?" : "What should I learn next?",
     enableEnhancedFeatures ? "Give me a practical example" : "Help me understand this better"
   ];
+  
   const [showQuickSuggestions, setShowQuickSuggestions] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showLearningGoals, setShowLearningGoals] = useState(false);
@@ -90,8 +238,6 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, isTyping]);
 
   // Focus input when opened
@@ -99,8 +245,6 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
     if (isOpen) {
       inputRef.current?.focus();
     }
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Add welcome message when first opened
@@ -112,11 +256,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
           courseId ? "I can see you're working on a course" : "Feel free to ask me anything!"
         } How can I assist you today?`
       });
-      
-      // AI suggestions are now automatically fetched via React Query
     }
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, messages.length, courseId, addMessage]);
 
   // Hide suggestions after first user message
@@ -124,16 +264,11 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
     if (messages.some(m => m.type === 'user')) {
       setShowQuickSuggestions(false);
     }
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
-
-  // Removed manual fetchQuickSuggestions - already using React Query via useAISuggestionsQuery
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
     
-    // Check authentication before sending
     if (!isAuthenticated) {
       addMessage({
         type: 'ai',
@@ -173,10 +308,13 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
       <div className={`${positionClasses[position]} ${className}`}>
         <Button
           onClick={() => setIsOpen(true)}
-          className="bg-primary hover:bg-primary/90 text-white rounded-full p-4 shadow-lg transition-transform hover:scale-105"
+          className="rounded-full p-4 shadow-lg transition-transform hover:scale-105"
+          style={{
+            background: 'linear-gradient(135deg, #4A90E2 0%, #1E3A8A 100%)',
+          }}
           aria-label="Open AI Assistant"
         >
-          <MessageCircle className="w-6 h-6" />
+          <MessageCircle className="w-6 h-6 text-white" />
         </Button>
       </div>
     );
@@ -184,9 +322,14 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
 
   return (
     <div className={`${position !== 'embedded' ? positionClasses[position] : ''} ${className}`}>
-      <div className="bg-white border border-border rounded-lg shadow-xl w-80 h-96 flex flex-col">
-        {/* Header */}
-        <div className="bg-primary text-white p-3 rounded-t-lg flex items-center justify-between">
+      <div className="bg-white border border-border rounded-lg shadow-xl w-80 h-96 flex flex-col overflow-hidden">
+        {/* Header with gradient */}
+        <div 
+          className="text-white p-3 rounded-t-lg flex items-center justify-between"
+          style={{
+            background: 'linear-gradient(135deg, #4A90E2 0%, #1E3A8A 100%)',
+          }}
+        >
           <div className="flex items-center space-x-2">
             <Bot className="w-5 h-5" />
             <div>
@@ -200,8 +343,8 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
             {isLoading && (
               <div className="flex space-x-1 ml-2">
                 <div className="w-1 h-1 bg-white rounded-full animate-bounce" />
-                <div className="w-1 h-1 bg-white rounded-full animate-bounce delay-100" />
-                <div className="w-1 h-1 bg-white rounded-full animate-bounce delay-200" />
+                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
               </div>
             )}
           </div>
@@ -212,7 +355,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowSettings(!showSettings)}
-                className="text-white hover:bg-primary/90 p-1"
+                className="text-white hover:bg-white/20 p-1"
                 title="AI Settings"
               >
                 <Settings className="w-4 h-4" />
@@ -224,7 +367,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsOpen(false)}
-                className="text-white hover:bg-primary/90 p-1"
+                className="text-white hover:bg-white/20 p-1"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -346,30 +489,47 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
           </div>
         )}
 
-        {/* Messages */}
-        <div className="flex-1 p-3 overflow-y-auto space-y-3">
+        {/* Messages with gradient background */}
+        <div 
+          className="flex-1 p-3 overflow-y-auto space-y-3"
+          style={{
+            background: 'linear-gradient(180deg, #dbeafe 0%, #bfdbfe 30%, #eff6ff 60%, #ffffff 100%)',
+          }}
+        >
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex animate-fadeIn ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`flex items-start space-x-2 max-w-[85%] ${
                 message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
               }`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white flex-shrink-0 ${
-                  message.type === 'user' ? 'bg-muted/500' : 'bg-primary'
-                }`}>
-                  {message.type === 'user' ? <User className="w-3 h-3" /> : <Bot className="w-3 h-3" />}
+                <div 
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-white flex-shrink-0"
+                  style={message.type === 'user' ? {
+                    background: 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)',
+                  } : {
+                    background: 'linear-gradient(135deg, #4A90E2 0%, #1E3A8A 100%)',
+                  }}
+                >
+                  {message.type === 'user' ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                 </div>
                 
-                <div className={`rounded-lg p-2 ${
-                  message.type === 'user' 
-                    ? 'bg-primary text-white' 
-                    : 'bg-muted text-foreground'
-                }`}>
-                  <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                <div 
+                  className={`rounded-xl p-3 shadow-md backdrop-blur-sm ${
+                    message.type === 'user' ? 'text-white' : 'text-foreground'
+                  }`}
+                  style={message.type === 'user' ? {
+                    background: 'linear-gradient(135deg, #4A90E2 0%, #1E3A8A 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)'
+                  } : {
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    border: '1px solid rgba(74, 144, 226, 0.1)'
+                  }}
+                >
+                  <MessageContent content={message.content} type={message.type} />
                   <div className={`text-xs mt-1 ${
-                    message.type === 'user' ? 'text-primary-foreground' : 'text-muted-foreground'
+                    message.type === 'user' ? 'text-white/80' : 'text-muted-foreground'
                   }`}>
                     {formatTime(message.timestamp)}
                   </div>
@@ -380,16 +540,27 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
           
           {/* Typing indicator */}
           {isTyping && (
-            <div className="flex justify-start">
+            <div className="flex justify-start animate-fadeIn">
               <div className="flex items-start space-x-2 max-w-[85%]">
-                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white">
-                  <Bot className="w-3 h-3" />
+                <div 
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-white"
+                  style={{
+                    background: 'linear-gradient(135deg, #4A90E2 0%, #1E3A8A 100%)',
+                  }}
+                >
+                  <Bot className="w-3.5 h-3.5" />
                 </div>
-                <div className="bg-muted text-foreground rounded-lg p-2">
+                <div 
+                  className="rounded-xl p-3 shadow-md backdrop-blur-sm"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    border: '1px solid rgba(74, 144, 226, 0.1)'
+                  }}
+                >
                   <div className="flex space-x-1">
-                    <div className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce" />
-                    <div className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce delay-100" />
-                    <div className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce delay-200" />
+                    <div className="w-2 h-2 bg-[#4A90E2] rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-[#4A90E2] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                    <div className="w-2 h-2 bg-[#4A90E2] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                   </div>
                 </div>
               </div>
@@ -401,7 +572,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
 
         {/* Quick Suggestions */}
         {showQuickSuggestions && quickSuggestions.length > 0 && (
-          <div className="border-t border-border/50 p-2">
+          <div className="border-t border-border/50 p-2 bg-white">
             <p className="text-xs text-muted-foreground mb-2">Quick questions:</p>
             <div className="space-y-1">
               {quickSuggestions.map((suggestion: any, index: number) => (
@@ -420,7 +591,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                     sendMessage(suggestion);
                     setShowQuickSuggestions(false);
                   }}
-                  className="w-full text-left justify-start text-xs text-muted-foreground hover:text-primary hover:bg-primary/10 p-1 h-auto"
+                  className="w-full text-left justify-start text-xs text-muted-foreground hover:text-[#4A90E2] hover:bg-[#4A90E2]/10 p-1 h-auto transition-colors"
                 >
                   {suggestion}
                 </Button>
@@ -430,7 +601,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
         )}
 
         {/* Input */}
-        <div className="border-t p-3">
+        <div className="border-t p-3 bg-white">
           <div className="flex items-center space-x-2">
             <input
               id="ai-chat-message"
@@ -441,7 +612,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask me anything..."
-              className="flex-1 px-2 py-1 text-sm border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent"
+              className="flex-1 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4A90E2] focus:border-transparent transition-all"
               aria-label="AI chat message input"
               disabled={isLoading}
             />
@@ -449,13 +620,18 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
               onClick={handleSend}
               disabled={!inputValue.trim() || isLoading}
               size="sm"
-              className="bg-primary hover:bg-primary/90 text-white p-1"
+              className="p-2 transition-transform hover:scale-105"
+              style={{
+                background: inputValue.trim() && !isLoading 
+                  ? 'linear-gradient(135deg, #4A90E2 0%, #1E3A8A 100%)'
+                  : undefined,
+              }}
             >
               <Send className="w-4 h-4" />
             </Button>
           </div>
           
-          <div className="flex justify-between items-center mt-1">
+          <div className="flex justify-between items-center mt-2">
             <div className="text-xs text-muted-foreground">
               {enableEnhancedFeatures ? (
                 <div className="flex items-center space-x-2">
@@ -489,7 +665,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
                     const goalText = learningGoals.join(', ');
                     sendMessage(`Help me with my learning goals: ${goalText}`);
                   }}
-                  className="text-xs text-primary hover:text-primary/80 p-1"
+                  className="text-xs text-[#4A90E2] hover:text-[#1E3A8A] p-1 transition-colors"
                   title="Ask about learning goals"
                 >
                   <Lightbulb className="w-3 h-3" />
@@ -507,6 +683,51 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Custom styles */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Custom scrollbar for chat */
+        .overflow-y-auto::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+          background: #4A90E2;
+          border-radius: 3px;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+          background: #1E3A8A;
+        }
+
+        /* Prism theme override for dark code blocks */
+        pre[class*="language-"] {
+          background: #1e1e1e !important;
+        }
+        
+        code[class*="language-"] {
+          background: transparent !important;
+        }
+      `}</style>
     </div>
   );
 };

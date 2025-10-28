@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { getLevelVariant } from '@/lib/utils/badge-helpers';
 import { Card } from '@/components/ui/Card';
-import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
 import { PreviewVideoPlayer } from '@/components/feature/PreviewVideoPlayer';
 import { CourseReviews } from '@/components/feature/CourseReviews';
 import { CourseRating } from '@/components/feature/CourseRating';
@@ -658,14 +657,6 @@ const CourseDetailPage = () => {
           </div>
         )}
       </Container>
-
-      {/* AI Assistant Widget */}
-      <SimpleChatWidget
-        courseId={courseId}
-        userLevel={course?.level || 'beginner'}
-        position="bottom-right"
-        onShowMessage={(message, type) => type === 'error' ? courseEnrollmentMessage.showError(message) : courseEnrollmentMessage.showInfo(message)}
-      />
     </div>
   );
 };
