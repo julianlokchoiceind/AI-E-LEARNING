@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-RUN npm install && npm cache clean --force
+RUN npm install --legacy-peer-deps && npm cache clean --force
 
 # Builder stage
 FROM node:18-alpine AS builder
@@ -13,7 +13,7 @@ WORKDIR /app
 
 # Copy package files and install all dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
