@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/hooks/useAuth'
-import { Menu, X, User, LogOut, ChevronDown, LayoutDashboard, BookOpen, Settings, Headphones, CreditCard } from 'lucide-react'
+import { Menu, X, LogOut, ChevronDown, LayoutDashboard, BookOpen, Settings, Headphones } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { CategoryDropdown } from '@/components/ui/CategoryDropdown'
 import { MobileMenu } from '@/components/ui/MobileMenu'
@@ -288,16 +288,6 @@ export function Header() {
         </button>
         <button
           onClick={() => {
-            router.push('/profile')
-            setUserMenuOpen(false)
-          }}
-          className="flex items-center w-full px-4 py-2 text-sm nav-hover"
-        >
-          <User className="h-4 w-4 mr-3" />
-          {navItems.profile}
-        </button>
-        <button
-          onClick={() => {
             router.push('/support')
             setUserMenuOpen(false)
           }}
@@ -322,16 +312,6 @@ export function Header() {
 
         {/* Settings Section */}
         <div className="py-1">
-        <button
-          onClick={() => {
-            router.push('/billing')
-            setUserMenuOpen(false)
-          }}
-          className="flex items-center w-full px-4 py-2 text-sm nav-hover"
-        >
-          <CreditCard className="h-4 w-4 mr-3" />
-          Billing
-        </button>
         <button
           onClick={() => {
             router.push('/settings')
