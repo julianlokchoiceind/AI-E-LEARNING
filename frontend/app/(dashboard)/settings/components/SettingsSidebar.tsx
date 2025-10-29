@@ -4,7 +4,7 @@ import React from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfileQuery } from '@/hooks/queries/useUserProfile';
-import { User, CreditCard } from 'lucide-react';
+import { User, CreditCard, Shield } from 'lucide-react';
 
 const navigationItems = [
   {
@@ -16,6 +16,11 @@ const navigationItems = [
     name: 'Billing',
     tab: 'billing',
     icon: CreditCard,
+  },
+  {
+    name: 'Account',
+    tab: 'account',
+    icon: Shield,
   },
 ];
 

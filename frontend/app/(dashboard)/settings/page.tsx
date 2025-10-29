@@ -6,6 +6,7 @@ import { Container } from '@/components/ui/Container';
 import { SettingsSidebar } from './components/SettingsSidebar';
 import ProfileContent from './components/ProfileContent';
 import BillingContent from './components/BillingContent';
+import { AccountContent } from './components/AccountContent';
 import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 function SettingsContent() {
@@ -24,6 +25,8 @@ function SettingsContent() {
         return <ProfileContent />;
       case 'billing':
         return <BillingContent />;
+      case 'account':
+        return <AccountContent />;
       default:
         return <ProfileContent />;
     }
@@ -53,6 +56,16 @@ function SettingsContent() {
             }`}
           >
             Billing
+          </button>
+          <button
+            onClick={() => handleTabChange('account')}
+            className={`flex-shrink-0 px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+              currentTab === 'account'
+                ? 'text-primary border-b-2 border-primary bg-primary/5'
+                : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
+            }`}
+          >
+            Account
           </button>
         </div>
       </div>

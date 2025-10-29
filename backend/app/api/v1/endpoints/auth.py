@@ -762,15 +762,15 @@ async def resend_verification(request: Request, email_request: EmailVerification
 async def change_password(
     request: Request,
     password_data: ChangePasswordRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> StandardResponse[dict]:
     """
     Change password for authenticated user.
     """
     db = get_database()
-    
+
     # Get full user data with password
-    user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
+    user = await db.users.find_one({"_id": ObjectId(current_user.id)})
     
     if not user:
         raise HTTPException(
@@ -816,15 +816,15 @@ async def change_password(
 @limiter.limit(AUTH_RATE_LIMITS["preferences"])
 async def get_preferences(
     request: Request,
-    current_user: dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> StandardResponse[UserPreferencesResponse]:
     """
     Get user preferences.
     """
     db = get_database()
-    
+
     # Get user data
-    user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
+    user = await db.users.find_one({"_id": ObjectId(current_user.id)})
     
     if not user:
         raise HTTPException(
@@ -855,15 +855,15 @@ async def get_preferences(
 async def update_preferences(
     request: Request,
     preferences_data: UserPreferencesUpdate,
-    current_user: dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> StandardResponse[UserPreferencesResponse]:
     """
     Update user preferences.
     """
     db = get_database()
-    
+
     # Get current user preferences
-    user = await db.users.find_one({"_id": ObjectId(current_user["sub"])})
+    user = await db.users.find_one({"_id": ObjectId(current_user.id)})
     
     if not user:
         raise HTTPException(

@@ -242,4 +242,22 @@ export const usersApi = {
       throw error;
     }
   },
+
+  /**
+   * Delete user account (soft delete)
+   * Requires password confirmation for security
+   */
+  deleteAccount: async (password: string): Promise<StandardResponse<{ message: string }>> => {
+    try {
+      const response = await api.delete<StandardResponse<{ message: string }>>(
+        `${API_ENDPOINTS.USERS.PROFILE}?password=${encodeURIComponent(password)}`,
+        { requireAuth: true }
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Delete account failed:', error);
+      throw error;
+    }
+  },
 };

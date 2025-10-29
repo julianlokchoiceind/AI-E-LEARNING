@@ -1,5 +1,5 @@
 from typing import Dict, Any, Tuple, List
-from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile, Request
 from fastapi.responses import StreamingResponse
 from app.models.user import User
 from app.models.enrollment import Enrollment
@@ -27,8 +27,16 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch
+from passlib.context import CryptContext
 
 router = APIRouter()
+
+# Password hashing context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against a hash."""
+    return pwd_context.verify(plain_password, hashed_password)
 
 # =============================================================================
 # UTILITY FUNCTIONS - Streak Calculation Optimized
@@ -1048,4 +1056,83 @@ async def get_my_certificates(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
+        )
+
+@router.delete("/me", response_model=StandardResponse[dict], status_code=status.HTTP_200_OK)
+@measure_performance("api.users.delete_account")
+async def delete_my_account(
+    password: str,
+    current_user: User = Depends(get_current_user)
+) -> StandardResponse[dict]:
+    """
+    Delete current user's account (soft delete).
+    Requires password confirmation for security.
+
+    This is a destructive action that:
+    - Marks user account as deleted
+    - Prevents future logins
+    - Preserves data for audit/recovery purposes
+    """
+    try:
+        from app.core.database import get_database
+        from bson import ObjectId
+        import logging
+
+        logger = logging.getLogger(__name__)
+        db = get_database()
+
+        # Get user with password from database
+        user_doc = await db.users.find_one({"_id": ObjectId(current_user.id)})
+
+        if not user_doc:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+
+        # Check if user is OAuth user (no password)
+        if not user_doc.get("password"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="OAuth users cannot delete account this way. Please contact support."
+            )
+
+        # Verify password
+        if not verify_password(password, user_doc["password"]):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Password is incorrect"
+            )
+
+        # Soft delete: Mark as deleted and change email to prevent reuse
+        deleted_email = f"deleted_{user_doc['_id']}_{user_doc['email']}"
+        await db.users.update_one(
+            {"_id": user_doc["_id"]},
+            {
+                "$set": {
+                    "is_deleted": True,
+                    "deleted_at": datetime.utcnow(),
+                    "email": deleted_email,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+
+        logger.info(f"✅ Account deleted for user: {user_doc['email']}")
+
+        return StandardResponse(
+            success=True,
+            data={"email": user_doc["email"]},
+            message="Account deleted successfully. We're sorry to see you go!"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"❌ Error deleting account: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete account. Please try again later."
         )
