@@ -133,6 +133,7 @@ async def get_my_profile(
         "role": current_user.role,
         "premium_status": current_user.premium_status,
         "is_verified": current_user.is_verified,
+        "has_password": bool(current_user.password),  # OAuth users have no password
         "profile": current_user.profile.dict() if current_user.profile else {},
         "stats": current_user.stats.dict() if current_user.stats else {},
         "preferences": current_user.preferences.dict() if current_user.preferences else {},

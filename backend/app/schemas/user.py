@@ -70,6 +70,7 @@ class UserResponse(BaseModel):
     role: UserRole
     premium_status: bool = False
     is_verified: bool
+    has_password: bool  # Indicates if user has password (false for OAuth users)
     profile: UserProfile
     stats: UserStats
     preferences: UserPreferences

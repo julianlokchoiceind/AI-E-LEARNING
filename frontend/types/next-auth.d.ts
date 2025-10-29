@@ -9,6 +9,7 @@ declare module 'next-auth' {
       name: string
       role: string
       premiumStatus: boolean
+      hasPassword?: boolean
     } & DefaultSession['user']
     accessToken: string
     refreshToken: string
@@ -17,6 +18,7 @@ declare module 'next-auth' {
   interface User extends DefaultUser {
     role?: string
     premiumStatus?: boolean
+    hasPassword?: boolean
     accessToken?: string
     refreshToken?: string
   }

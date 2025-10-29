@@ -55,7 +55,7 @@ export function AccountContent() {
   const [oauthConfirmed, setOauthConfirmed] = useState(false);
 
   // Detect if user is OAuth user (no password field)
-  const isOAuthUser = !user?.password;
+  const isOAuthUser = user?.hasPassword === false;
 
   // Change Password Mutation
   const { mutate: changePasswordMutation, loading: changingPassword } = useApiMutation(
