@@ -52,6 +52,10 @@ export function AccountContent() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
+  const [oauthConfirmed, setOauthConfirmed] = useState(false);
+
+  // Detect if user is OAuth user (no password field)
+  const isOAuthUser = !user?.password;
 
   // Change Password Mutation
   const { mutate: changePasswordMutation, loading: changingPassword } = useApiMutation(
@@ -177,17 +181,28 @@ export function AccountContent() {
     setShowDeleteModal(true);
     setDeletePassword('');
     setDeleteError('');
+    setOauthConfirmed(false);
   };
 
   const handleConfirmDelete = async () => {
     setDeleteError('');
 
-    if (!deletePassword) {
-      setDeleteError('Password is required to delete your account');
-      return;
+    // OAuth users: Check confirmation checkbox
+    if (isOAuthUser) {
+      if (!oauthConfirmed) {
+        setDeleteError('Please confirm you understand this action cannot be undone');
+        return;
+      }
+    } else {
+      // Regular users: Check password
+      if (!deletePassword) {
+        setDeleteError('Password is required to delete your account');
+        return;
+      }
     }
 
-    deleteAccountMutation(deletePassword, {
+    // Pass empty string for OAuth users, password for regular users
+    deleteAccountMutation(isOAuthUser ? '' : deletePassword, {
       onSuccess: (response) => {
         if (!response.success) {
           throw new Error(response.message || 'Something went wrong');
@@ -203,9 +218,7 @@ export function AccountContent() {
         console.error('Delete account failed:', error);
 
         // Handle specific error cases
-        if (error.message?.includes('OAuth')) {
-          setDeleteError('You signed in with Google/GitHub. Cannot delete account with password.');
-        } else if (error.message?.includes('incorrect') || error.message?.includes('Password is incorrect')) {
+        if (error.message?.includes('incorrect') || error.message?.includes('Password is incorrect')) {
           setDeleteError('Password is incorrect');
         } else {
           setDeleteError(error.message || 'Something went wrong');
@@ -409,23 +422,47 @@ export function AccountContent() {
             </ul>
           </div>
 
-          {/* Password Confirmation */}
-          <div>
-            <label htmlFor="deletePassword" className="block text-sm font-medium text-foreground mb-2">
-              Enter your password to confirm
-            </label>
-            <Input
-              id="deletePassword"
-              type="password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-              placeholder="Enter your password"
-              className={deleteError ? 'border-red-500' : ''}
-            />
-            {deleteError && (
-              <p className="mt-2 text-sm text-red-600">{deleteError}</p>
-            )}
-          </div>
+          {/* Password Confirmation (Regular Users) or Extra Confirmation (OAuth Users) */}
+          {!isOAuthUser ? (
+            <div>
+              <label htmlFor="deletePassword" className="block text-sm font-medium text-foreground mb-2">
+                Enter your password to confirm
+              </label>
+              <Input
+                id="deletePassword"
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                placeholder="Enter your password"
+                className={deleteError ? 'border-red-500' : ''}
+              />
+              {deleteError && (
+                <p className="mt-2 text-sm text-red-600">{deleteError}</p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <div className="bg-warning/10 border border-warning/30 p-4 rounded-lg">
+                <p className="text-sm text-warning font-medium mb-3">
+                  ⚠️ You signed in with Google/GitHub. Deleting your account will permanently remove all your data.
+                </p>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={oauthConfirmed}
+                    onChange={(e) => setOauthConfirmed(e.target.checked)}
+                    className="mt-1 w-4 h-4 text-primary border-gray-300 rounded focus:ring-2 focus:ring-primary focus:ring-offset-0"
+                  />
+                  <span className="text-sm text-foreground">
+                    I understand this action cannot be undone and all my data will be permanently deleted
+                  </span>
+                </label>
+              </div>
+              {deleteError && (
+                <p className="mt-2 text-sm text-red-600">{deleteError}</p>
+              )}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">

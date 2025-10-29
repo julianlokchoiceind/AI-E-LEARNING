@@ -618,7 +618,15 @@ class AdminService:
                     # Smart Backend: Pre-calculated status for Dumb Frontend
                     "status_display": AdminService.get_user_status_display(user),
                     # Additional field for active/deactivated display
-                    "activity_status": "Deactivated" if user.get("status") == "deactivated" else "Active"
+                    "activity_status": "Deactivated" if user.get("status") == "deactivated" else "Active",
+                    # Deletion metadata (for soft-deleted users)
+                    "is_deleted": user.get("is_deleted", False),
+                    "deleted_at": user.get("deleted_at"),
+                    "deleted_by": user.get("deleted_by"),
+                    "deleted_by_name": user.get("deleted_by_name"),
+                    "deletion_reason": user.get("deletion_reason"),
+                    "original_email": user.get("original_email"),
+                    "original_name": user.get("original_name")
                 }
                 formatted_users.append(user_data)
 
@@ -756,67 +764,83 @@ class AdminService:
                     "message": "Only super administrator can delete admin accounts"
                 }
 
-            # Check if user has active enrollments (mirroring course deletion pattern)
-            enrollment_count = 0
+            # Conditional Smart Delete: Check if user has important data
+            # Check for payments (legal requirement to keep)
+            has_payments = await db.payments.count_documents({"user_id": user_id}) > 0
 
-            # Try string format first
-            enrollment_count += await db.enrollments.count_documents({
+            # Check for certificates (educational credentials cannot be revoked)
+            has_certificates = await db.certificates.count_documents({
                 "user_id": user_id,
                 "is_active": True
-            })
+            }) > 0
 
-            # Try ObjectId format
-            try:
-                enrollment_count += await db.enrollments.count_documents({
-                    "user_id": ObjectId(user_id),
-                    "is_active": True
-                })
-            except:
-                pass
+            if has_payments or has_certificates:
+                # SOFT DELETE: User has important data - anonymize and deactivate
+                logger.info(f"📦 SOFT DELETE: User has payments ({has_payments}) or certificates ({has_certificates}) - performing soft delete with anonymization")
 
-            if enrollment_count > 0:
-                # Deactivate instead of delete when has enrollments (mirroring course archive)
-                logger.info(f"📦 DEACTIVATE USER: User has {enrollment_count} enrollments - deactivating instead of deleting")
                 result = await db.users.update_one(
                     {"_id": ObjectId(user_id)},
-                    {"$set": {"status": UserStatus.DEACTIVATED.value, "updated_at": datetime.now(timezone.utc)}}
+                    {"$set": {
+                        "status": UserStatus.DEACTIVATED.value,
+                        "is_deleted": True,
+                        "deleted_at": datetime.now(timezone.utc),
+                        "deleted_by": str(admin.id),
+                        "deleted_by_name": admin.name,
+                        "deletion_reason": "admin_action",
+                        "original_email": user["email"],
+                        "original_name": user["name"],
+                        "name": "Deleted User",
+                        "email": f"deleted_{user_id}_{user['email']}",
+                        "profile": {},  # Clear profile data
+                        "updated_at": datetime.now(timezone.utc)
+                    }}
                 )
 
                 if result.modified_count == 0:
                     return {
                         "success": False,
-                        "message": "Failed to deactivate user"
+                        "message": "Failed to soft delete user"
                     }
 
-                # Blacklist all tokens for deactivated user
-                await token_blacklist_service.blacklist_all_user_tokens(str(user_id))
-                logger.info(f"🔒 Blacklisted all tokens for deactivated user: {user_id}")
-
-                logger.info(f"✅ DEACTIVATE USER: Successfully deactivated user {user_id}")
+                logger.info(f"✅ SOFT DELETE: Successfully soft deleted and anonymized user {user_id}")
                 return {
                     "success": True,
-                    "action": "deactivated",
-                    "message": f"User account deactivated ({enrollment_count} active enrollments)",
+                    "action": "soft_deleted",
+                    "message": "User account deactivated and anonymized (has payments or certificates)",
                     "user_id": user_id
                 }
 
-            # Hard delete when no enrollments (existing behavior)
-            # Transfer course ownership if creator (before deleting user)
+            # HARD DELETE: User has no important data - safe to remove completely
+            logger.info(f"🗑️ HARD DELETE: User has no payments/certificates - performing complete deletion")
+
+            # 1. Transfer course ownership if creator (before deleting user)
             if user["role"] == "creator":
                 await db.courses.update_many(
                     {"creator_id": ObjectId(user_id)},
-                    {"$set": {"creator_id": admin.id, "creator_name": "Platform Admin"}}
+                    {"$set": {
+                        "creator_id": admin.id,
+                        "creator_name": "Platform Admin",
+                        "updated_at": datetime.now(timezone.utc)
+                    }}
                 )
 
-            # Delete user progress records - try both formats
+            # 2. Delete ALL learning progress data
             await db.progress.delete_many({"user_id": user_id})
-            await db.progress.delete_many({"user_id": ObjectId(user_id)})
+            await db.quiz_progress.delete_many({"user_id": user_id})
 
-            # Delete all enrollments - try both formats (should be empty at this point)
+            # 3. Delete enrollments
             await db.enrollments.delete_many({"user_id": user_id})
-            await db.enrollments.delete_many({"user_id": ObjectId(user_id)})
 
-            # Delete the user account itself
+            # 4. Delete reviews and engagement
+            await db.reviews.delete_many({"user_id": user_id})
+            await db.review_votes.delete_many({"user_id": user_id})
+            await db.review_reports.delete_many({"reported_by": user_id})
+
+            # 5. Delete support tickets
+            await db.support_tickets.delete_many({"user_id": user_id})
+            await db.ticket_messages.delete_many({"sender_id": user_id})
+
+            # 6. Delete the user account itself
             result = await db.users.delete_one({"_id": ObjectId(user_id)})
 
             if result.deleted_count == 0:
@@ -825,9 +849,10 @@ class AdminService:
                     "message": "Failed to delete user from database"
                 }
 
+            logger.info(f"✅ HARD DELETE: Successfully deleted user {user_id} and all related data")
             return {
                 "success": True,
-                "action": "deleted",
+                "action": "hard_deleted",
                 "message": "User account permanently deleted",
                 "user_id": user_id
             }
@@ -974,11 +999,44 @@ class AdminService:
                             if user and user["email"] == "julian.lok88@icloud.com":
                                 raise ValueError("Cannot reactivate super administrator account")
 
-                            # Reactivate user
-                            await db.users.update_one(
-                                {"_id": ObjectId(user_id)},
-                                {"$set": {"status": UserStatus.ACTIVE.value, "updated_at": datetime.now(timezone.utc)}}
-                            )
+                            # Check if user was soft-deleted
+                            is_soft_deleted = user.get("is_deleted", False)
+
+                            if is_soft_deleted:
+                                # Restore soft-deleted user: Restore original data
+                                logger.info(f"🔄 RESTORING SOFT-DELETED USER: {user_id}")
+
+                                # Restore original email and name
+                                original_email = user.get("original_email")
+                                original_name = user.get("original_name")
+
+                                if not original_email or not original_name:
+                                    raise ValueError("Cannot restore user: Original data not found")
+
+                                await db.users.update_one(
+                                    {"_id": ObjectId(user_id)},
+                                    {"$set": {
+                                        "status": UserStatus.ACTIVE.value,
+                                        "is_deleted": False,
+                                        "email": original_email,
+                                        "name": original_name,
+                                        "updated_at": datetime.now(timezone.utc)
+                                    }, "$unset": {
+                                        "deleted_at": "",
+                                        "deleted_by": "",
+                                        "deleted_by_name": "",
+                                        "deletion_reason": "",
+                                        "original_email": "",
+                                        "original_name": ""
+                                    }}
+                                )
+                                logger.info(f"✅ Restored user {user_id}: {original_email}")
+                            else:
+                                # Regular reactivation (just change status)
+                                await db.users.update_one(
+                                    {"_id": ObjectId(user_id)},
+                                    {"$set": {"status": UserStatus.ACTIVE.value, "updated_at": datetime.now(timezone.utc)}}
+                                )
 
                             # Clear blacklist entries for reactivated user
                             result = await db.blacklisted_tokens.delete_many({

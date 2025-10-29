@@ -162,7 +162,16 @@ class User(Document):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: Optional[datetime] = None
-    
+
+    # Account deletion tracking (soft delete metadata)
+    is_deleted: bool = False
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None  # user_id or "self"
+    deleted_by_name: Optional[str] = None
+    deletion_reason: Optional[str] = None  # "user_request" | "admin_action"
+    original_email: Optional[str] = None  # Backup for admin tracking
+    original_name: Optional[str] = None  # Backup for admin tracking
+
     class Settings:
         name = "users"
         indexes = [

@@ -535,12 +535,38 @@ export default function UserManagement() {
                           <User className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-foreground">
-                            {user.name}
+                          <div className="flex items-center gap-2">
+                            {user.is_deleted ? (
+                              <>
+                                <span className="text-sm font-medium line-through text-muted-foreground">
+                                  {user.original_name || user.name}
+                                </span>
+                                <Badge variant="destructive" className="text-xs">
+                                  Deleted
+                                </Badge>
+                              </>
+                            ) : (
+                              <span className="text-sm font-medium text-foreground">
+                                {user.name}
+                              </span>
+                            )}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {user.email}
+                            {user.is_deleted ? user.original_email : user.email}
                           </div>
+                          {user.is_deleted && (
+                            <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                              <div>
+                                Deleted by {user.deleted_by_name || 'Unknown'} on{' '}
+                                {user.deleted_at ? new Date(user.deleted_at).toLocaleDateString() : 'N/A'}
+                              </div>
+                              {user.deletion_reason && (
+                                <div className="text-xs">
+                                  Reason: {user.deletion_reason === 'admin_action' ? 'Admin Action' : 'User Request'}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>

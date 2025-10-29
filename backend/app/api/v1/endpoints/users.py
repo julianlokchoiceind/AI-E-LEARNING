@@ -1090,33 +1090,82 @@ async def delete_my_account(
                 detail="User not found"
             )
 
-        # Check if user is OAuth user (no password)
-        if not user_doc.get("password"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="OAuth users cannot delete account this way. Please contact support."
-            )
+        # OAuth users: Allow delete without password (extra confirmation via UI)
+        is_oauth_user = not user_doc.get("password")
 
-        # Verify password
-        if not verify_password(password, user_doc["password"]):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Password is incorrect"
-            )
+        if not is_oauth_user:
+            # Regular users: Require password verification
+            if not password:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Password is required"
+                )
 
-        # Soft delete: Mark as deleted and change email to prevent reuse
-        deleted_email = f"deleted_{user_doc['_id']}_{user_doc['email']}"
-        await db.users.update_one(
-            {"_id": user_doc["_id"]},
-            {
-                "$set": {
-                    "is_deleted": True,
-                    "deleted_at": datetime.utcnow(),
-                    "email": deleted_email,
-                    "updated_at": datetime.utcnow()
+            if not verify_password(password, user_doc["password"]):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Password is incorrect"
+                )
+        # OAuth users: Skip password check (password param can be empty)
+
+        # Conditional Smart Delete: Check if user has important data
+        user_id = str(user_doc["_id"])
+
+        # Check for payments (legal requirement to keep)
+        has_payments = await db.payments.count_documents({"user_id": user_id}) > 0
+
+        # Check for certificates (educational credentials cannot be revoked)
+        has_certificates = await db.certificates.count_documents({
+            "user_id": user_id,
+            "is_active": True
+        }) > 0
+
+        if has_payments or has_certificates:
+            # SOFT DELETE: User has important data - anonymize and deactivate
+            logger.info(f"📦 SOFT DELETE: User {user_id} has payments ({has_payments}) or certificates ({has_certificates}) - performing soft delete")
+
+            deleted_email = f"deleted_{user_id}_{user_doc['email']}"
+            await db.users.update_one(
+                {"_id": user_doc["_id"]},
+                {
+                    "$set": {
+                        "status": "deactivated",
+                        "is_deleted": True,
+                        "deleted_at": datetime.utcnow(),
+                        "deleted_by": "self",
+                        "deleted_by_name": user_doc["name"],
+                        "deletion_reason": "user_request",
+                        "original_email": user_doc["email"],
+                        "original_name": user_doc["name"],
+                        "name": "Deleted User",
+                        "email": deleted_email,
+                        "profile": {},  # Clear profile data
+                        "updated_at": datetime.utcnow()
+                    }
                 }
-            }
-        )
+            )
+        else:
+            # HARD DELETE: User has no important data - safe to remove completely
+            logger.info(f"🗑️ HARD DELETE: User {user_id} has no payments/certificates - performing complete deletion")
+
+            # 1. Delete ALL learning progress data
+            await db.progress.delete_many({"user_id": user_id})
+            await db.quiz_progress.delete_many({"user_id": user_id})
+
+            # 2. Delete enrollments
+            await db.enrollments.delete_many({"user_id": user_id})
+
+            # 3. Delete reviews and engagement
+            await db.reviews.delete_many({"user_id": user_id})
+            await db.review_votes.delete_many({"user_id": user_id})
+            await db.review_reports.delete_many({"reported_by": user_id})
+
+            # 4. Delete support tickets
+            await db.support_tickets.delete_many({"user_id": user_id})
+            await db.ticket_messages.delete_many({"sender_id": user_id})
+
+            # 5. Delete the user account itself
+            await db.users.delete_one({"_id": user_doc["_id"]})
 
         logger.info(f"✅ Account deleted for user: {user_doc['email']}")
 
