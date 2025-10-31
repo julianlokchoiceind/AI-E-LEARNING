@@ -15,7 +15,7 @@ import logging
 from app.core.config import settings
 from app.core.database import get_database
 from app.core.email import email_service
-from app.core.rate_limit import limiter, AUTH_RATE_LIMITS
+from app.core.rate_limit import rate_limit, reset_rate_limit, get_client_ip
 from app.models.user import User
 from app.schemas.auth import (
     UserCreate,
@@ -109,7 +109,7 @@ def create_refresh_jwt(subject: str, expires_delta: timedelta = None) -> str:
 
 
 @router.post("/register", response_model=StandardResponse[UserResponse], status_code=status.HTTP_201_CREATED)
-@limiter.limit(AUTH_RATE_LIMITS["register"])
+@rate_limit("register")
 async def register(request: Request, user_data: UserCreate) -> StandardResponse[UserResponse]:
     """
     Register a new user.
@@ -173,7 +173,7 @@ async def register(request: Request, user_data: UserCreate) -> StandardResponse[
 
 
 @router.post("/login", response_model=StandardResponse[TokenWithRefresh])
-@limiter.limit(AUTH_RATE_LIMITS["login"])
+@rate_limit("login")
 async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()) -> StandardResponse[TokenWithRefresh]:
     """
     OAuth2 compatible token login, get an access token for future requests.
@@ -217,7 +217,11 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
             {"_id": user["_id"]},
             {"$set": {"last_login": datetime.utcnow()}}
         )
-        
+
+        # Reset rate limit on successful login
+        ip = get_client_ip(request)
+        await reset_rate_limit(ip, "login")
+
         # Create access token and refresh token
         logger.info("🔑 Creating tokens...")
         logger.info(f"User data: {user.keys()}")
@@ -259,7 +263,7 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
 
 
 @router.get("/verify-email", response_model=StandardResponse[dict])
-@limiter.limit(AUTH_RATE_LIMITS["verify_email"])
+@rate_limit("verify_email")
 async def verify_email(request: Request, token: str) -> StandardResponse[dict]:
     """
     Verify user email with token.
@@ -367,7 +371,7 @@ async def verify_email(request: Request, token: str) -> StandardResponse[dict]:
 
 
 @router.post("/oauth", response_model=StandardResponse[TokenWithRefresh])
-@limiter.limit(AUTH_RATE_LIMITS["login"])
+@rate_limit("oauth_login")
 async def oauth_login(request: Request, oauth_data: OAuthUserCreate) -> StandardResponse[TokenWithRefresh]:
     """
     Handle OAuth user login/registration.
@@ -606,7 +610,7 @@ async def logout(request: Request) -> StandardResponse[dict]:
 
 
 @router.post("/forgot-password", response_model=StandardResponse[dict])
-@limiter.limit(AUTH_RATE_LIMITS["forgot_password"])
+@rate_limit("forgot_password")
 async def forgot_password(request: Request, reset_request: PasswordResetRequest) -> StandardResponse[dict]:
     """
     Request password reset email.
@@ -698,7 +702,7 @@ async def reset_password(reset_data: PasswordReset) -> StandardResponse[dict]:
 
 
 @router.post("/resend-verification", response_model=StandardResponse[dict])
-@limiter.limit(AUTH_RATE_LIMITS["resend_verification"])
+@rate_limit("resend_verification")
 async def resend_verification(request: Request, email_request: EmailVerificationResend) -> StandardResponse[dict]:
     """
     Resend email verification.
@@ -758,7 +762,7 @@ async def resend_verification(request: Request, email_request: EmailVerification
 
 
 @router.put("/change-password", response_model=StandardResponse[dict])
-@limiter.limit(AUTH_RATE_LIMITS["change_password"])
+@rate_limit("change_password")
 async def change_password(
     request: Request,
     password_data: ChangePasswordRequest,
@@ -813,7 +817,7 @@ async def change_password(
 
 
 @router.get("/preferences", response_model=StandardResponse[UserPreferencesResponse])
-@limiter.limit(AUTH_RATE_LIMITS["preferences"])
+@rate_limit("preferences")
 async def get_preferences(
     request: Request,
     current_user: User = Depends(get_current_user)
@@ -851,7 +855,7 @@ async def get_preferences(
 
 
 @router.put("/preferences", response_model=StandardResponse[UserPreferencesResponse])
-@limiter.limit(AUTH_RATE_LIMITS["preferences"])
+@rate_limit("preferences")
 async def update_preferences(
     request: Request,
     preferences_data: UserPreferencesUpdate,

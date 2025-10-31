@@ -6,11 +6,20 @@
 - **OWASP Compliance:** Follow OWASP Top 10 security practices
 - **Data Encryption:** AES-256 encryption for sensitive data at rest
 - **Transport Security:** TLS 1.3 for all API communications
-- **Authentication Security:** 
+- **Authentication Security:**
   - JWT tokens with 15-minute expiry
   - Refresh tokens with 7-day expiry
-  - Rate limiting: 100 requests/minute per user
-- **Password Policy:** Minimum 8 characters, complexity requirements
+  - **Rate Limiting (Sliding Window + Lockout):**
+    - **Login:** 5 attempts/minute → block 15 minutes
+    - **Register:** 5 attempts/hour → block 1 hour
+    - **OAuth Login:** 10 attempts/minute (no lockout)
+    - **Forgot Password:** 3 attempts/5 minutes → block 15 minutes
+    - **Email Verification:** 10 attempts/minute (no lockout)
+    - **Resend Verification:** 3 attempts/hour → block 1 hour
+    - **Change Password:** 5 attempts/minute → block 5 minutes
+    - **User Preferences:** 30 attempts/minute (no lockout)
+    - Auto-reset on successful authentication
+- **Password Policy:** Minimum 8 characters, must start with uppercase, require special character
 - **Session Management:** Secure session handling with automatic timeout
 
 ### Data Privacy & GDPR Compliance

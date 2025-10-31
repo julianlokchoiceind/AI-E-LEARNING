@@ -14,13 +14,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from slowapi import _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
 
 # Local application imports
 from app.core.config import settings
 from app.core.database import close_mongo_connection, connect_to_mongo
-from app.core.rate_limit import limiter
 from app.middleware.input_validation import InputValidationMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.middleware.token_blacklist import TokenBlacklistMiddleware
@@ -96,12 +93,6 @@ app = FastAPI(
     redoc_url=f"{settings.API_V1_STR}/redoc",
     lifespan=lifespan
 )
-
-# Configure rate limiting
-app.state.limiter = limiter
-
-# Keep using the default rate limit handler but ensure CORS headers
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Custom exception handler to ensure CORS headers are included in error responses
 from fastapi import HTTPException
