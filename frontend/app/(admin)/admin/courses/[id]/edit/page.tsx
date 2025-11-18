@@ -849,6 +849,37 @@ const CourseBuilderPage = () => {
                       </div>
                     </div>
 
+                    {/* Learning Mode */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Learning Mode
+                      </label>
+                      <div className="space-y-3">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            checked={courseData.sequential_learning_enabled !== false}
+                            onChange={() => updateCourseData({ sequential_learning_enabled: true })}
+                            className="mr-2"
+                          />
+                          <span className="text-sm">Sequential Learning (Complete lessons in order)</span>
+                        </label>
+
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            checked={courseData.sequential_learning_enabled === false}
+                            onChange={() => updateCourseData({ sequential_learning_enabled: false })}
+                            className="mr-2"
+                          />
+                          <span className="text-sm">Free Learning (Access any lesson)</span>
+                        </label>
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Sequential learning maintains structured learning paths. Free learning allows flexible exploration.
+                      </p>
+                    </div>
+
                     {/* Status */}
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">

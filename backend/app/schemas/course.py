@@ -31,6 +31,8 @@ class CourseUpdate(BaseModel):
     target_audience: Optional[List[str]] = None
     # Pricing update (admin/creator only)
     pricing: Optional[Pricing] = None
+    # Learning mode
+    sequential_learning_enabled: Optional[bool] = None
     # Admin only fields
     status: Optional[CourseStatus] = None
 
@@ -86,7 +88,8 @@ class CourseResponse(BaseModel):
     has_access: Optional[bool] = False
     progress_percentage: Optional[float] = 0
     continue_lesson_id: Optional[str] = None
-    
+    sequential_learning_enabled: bool = True
+
     class Config:
         populate_by_name = True
 

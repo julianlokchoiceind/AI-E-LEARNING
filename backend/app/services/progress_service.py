@@ -308,6 +308,14 @@ class ProgressService:
     
     async def _check_lesson_unlock_status(self, lesson: Lesson, user_id: str) -> bool:
         """Check if a lesson is unlocked based on sequential learning rules."""
+        # Fetch course to check sequential learning setting
+        from app.models.course import Course
+        course = await Course.get(lesson.course_id)
+
+        # Early return if sequential learning is disabled - all lessons unlocked
+        if course and not course.sequential_learning_enabled:
+            return True
+
         # First lesson in the course is always unlocked
         if lesson.order == 1:
             return True
@@ -331,6 +339,14 @@ class ProgressService:
     
     async def _unlock_next_lesson(self, current_lesson: Lesson, user_id: str) -> None:
         """Unlock the next lesson in sequence."""
+        # Fetch course to check sequential learning setting
+        from app.models.course import Course
+        course = await Course.get(current_lesson.course_id)
+
+        # Early return if sequential learning is disabled - all lessons already unlocked
+        if course and not course.sequential_learning_enabled:
+            return
+
         # First, try to find next lesson in the same chapter
         next_lesson = await Lesson.find_one({
             "chapter_id": current_lesson.chapter_id,

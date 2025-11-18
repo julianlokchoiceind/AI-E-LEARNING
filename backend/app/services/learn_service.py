@@ -124,10 +124,10 @@ class LearnService:
             
             # Phase 3: Data serialization and enrichment
             serialized_course = LearnService._serialize_course(course)
-            
+
             # Enrich chapters and lessons with progress data
             enriched_chapters = await LearnService._enrich_chapters_with_progress(
-                chapters_data, user_data['progress_map'], user_id
+                chapters_data, user_data['progress_map'], user_id, course
             )
             
             # Enrich current lesson with progress
@@ -294,7 +294,8 @@ class LearnService:
     async def _enrich_chapters_with_progress(
         chapters_data: List[Dict],
         progress_map: Dict[str, LessonProgressSchema],
-        user_id: Optional[str]
+        user_id: Optional[str],
+        course: Course
     ) -> List[ChapterSchema]:
         """Enrich chapters and lessons with user progress."""
         enriched_chapters = []
@@ -324,7 +325,7 @@ class LearnService:
                     # Default progress for guest users or lessons without progress
                     # Check if this lesson should be unlocked based on previous lesson completion
                     should_unlock = False
-                    if not user_id:  # Guest mode - all unlocked
+                    if not course.sequential_learning_enabled or not user_id:  # Free learning mode or Guest mode - all unlocked
                         should_unlock = True
                     elif i == 0:  # First lesson in chapter
                         # Check if this is the first chapter or previous chapter is completed

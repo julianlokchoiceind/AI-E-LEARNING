@@ -132,6 +132,7 @@ class CourseSchema(BaseModel):
     tags: List[str] = Field(default_factory=list)
     status: str = Field(default="draft")
     is_free: bool = Field(default=False)
+    sequential_learning_enabled: bool = Field(default=True)
     created_at: datetime
     updated_at: datetime
 

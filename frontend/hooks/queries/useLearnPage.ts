@@ -110,6 +110,7 @@ export interface CourseData {
   tags: string[];
   status: string;
   is_free: boolean;
+  sequential_learning_enabled?: boolean;
   created_at: string;
   updated_at: string;
 }

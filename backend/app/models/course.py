@@ -86,7 +86,10 @@ class Course(Document):
     total_chapters: int = 0
     total_lessons: int = 0
     total_duration: int = 0  # in minutes
-    
+
+    # Learning mode
+    sequential_learning_enabled: bool = True  # Default to sequential learning
+
     # Course status
     status: CourseStatus = CourseStatus.DRAFT
     published_at: Optional[datetime] = None
