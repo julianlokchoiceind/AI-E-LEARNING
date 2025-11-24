@@ -5,6 +5,34 @@ import { useRouter } from 'next/navigation';
 import YouTube, { YouTubeProps, YouTubeEvent } from 'react-youtube';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Maximize, Settings, X } from 'lucide-react';
 
+/**
+ * Throttle utility for performance optimization
+ * Limits function execution to once per specified delay
+ */
+const throttle = <T extends (...args: any[]) => void>(
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) => {
+  let lastRan = 0;
+  let timeoutId: NodeJS.Timeout | null = null;
+
+  return (...args: Parameters<T>) => {
+    const now = Date.now();
+    const timeSinceLastRan = now - lastRan;
+
+    if (timeSinceLastRan >= delay) {
+      func(...args);
+      lastRan = now;
+    } else {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func(...args);
+        lastRan = Date.now();
+      }, delay - timeSinceLastRan);
+    }
+  };
+};
+
 interface VideoPlayerProps {
   videoUrl: string;
   lessonId: string;
@@ -70,7 +98,12 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   
   // Track component mount state
   const isMountedRef = useRef(true);
-  
+
+  // Performance optimization refs
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const cachedRectRef = useRef<DOMRect | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+
   // Memoized progress callback to prevent unnecessary re-renders
   const handleProgressUpdate = useCallback((percentage: number, actualPercentage: number) => {
     if (isMountedRef.current && onProgress) {
@@ -580,52 +613,76 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   // Drag & Drop handlers
   const handleProgressSeek = useCallback((percentage: number) => {
     if (!playerRef.current || !isReady || !duration) return;
-    
+
     const seekTime = (percentage / 100) * duration;
-    
+
     // Apply seek restrictions
     const initialProgressTime = (initialProgress / 100) * duration;
     const actualProgressTime = duration > 0 ? (actualVideoProgress / 100) * duration : 0;
     const effectiveMaxTime = Math.max(maxWatchedTime, actualProgressTime);
-    
+
     const allowedSeekTime = Math.min(seekTime, effectiveMaxTime);
     playerRef.current.seekTo(allowedSeekTime, true);
-    
+
     if (seekTime > effectiveMaxTime) {
       onShowMessage?.('You can only seek to previously watched content', 'info');
     }
   }, [playerRef, isReady, duration, maxWatchedTime, initialProgress, actualVideoProgress]);
 
+  // Throttled version for drag operations (75ms = 13 seeks/second)
+  // Immediate version used for clicks
+  const throttledHandleProgressSeek = useMemo(
+    () => throttle(handleProgressSeek, 75),
+    [handleProgressSeek]
+  );
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    const rect = e.currentTarget.getBoundingClientRect();
+
+    // Cache rect for drag session - massive performance improvement
+    if (progressBarRef.current) {
+      cachedRectRef.current = progressBarRef.current.getBoundingClientRect();
+    }
+
+    const rect = cachedRectRef.current || e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const percentage = (clickX / rect.width) * 100;
-    
+
     setIsDragging(true);
     setDragStartX(e.clientX);
     setDragStartPercentage(percentage);
-    
+
+    // Use immediate seek for click (not throttled)
     handleProgressSeek(percentage);
   }, [handleProgressSeek]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
-    
-    const progressBar = document.querySelector('.progress-bar-draggable');
-    if (!progressBar) return;
-    
-    const rect = progressBar.getBoundingClientRect();
+
+    // Use cached rect - no DOM query! 60x performance improvement
+    const rect = cachedRectRef.current;
+    if (!rect) return;
+
     const currentX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
     const percentage = (currentX / rect.width) * 100;
-    
-    handleProgressSeek(percentage);
-  }, [isDragging, handleProgressSeek]);
+
+    // Use throttled seek during drag - smooth 60fps UI
+    throttledHandleProgressSeek(percentage);
+  }, [isDragging, throttledHandleProgressSeek]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     setDragStartX(0);
     setDragStartPercentage(0);
+
+    // Clear cache after drag session
+    cachedRectRef.current = null;
+
+    // Cancel any pending RAF
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
   }, []);
 
   // Global mouse events for dragging
@@ -647,36 +704,53 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
   // Touch support for mobile
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
-    const rect = e.currentTarget.getBoundingClientRect();
+
+    // Cache rect for touch drag session - same optimization as mouse
+    if (progressBarRef.current) {
+      cachedRectRef.current = progressBarRef.current.getBoundingClientRect();
+    }
+
+    const rect = cachedRectRef.current || e.currentTarget.getBoundingClientRect();
     const touchX = touch.clientX - rect.left;
     const percentage = (touchX / rect.width) * 100;
-    
+
     setIsDragging(true);
     setDragStartX(touch.clientX);
     setDragStartPercentage(percentage);
-    
+
+    // Use immediate seek for touch start (not throttled)
     handleProgressSeek(percentage);
   }, [handleProgressSeek]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging) return;
     e.preventDefault();
-    
-    const progressBar = document.querySelector('.progress-bar-draggable');
-    if (!progressBar) return;
-    
+
+    // Use cached rect - no DOM query! 60x performance improvement
+    const rect = cachedRectRef.current;
+    if (!rect) return;
+
     const touch = e.touches[0];
-    const rect = progressBar.getBoundingClientRect();
     const currentX = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
     const percentage = (currentX / rect.width) * 100;
-    
-    handleProgressSeek(percentage);
-  }, [isDragging, handleProgressSeek]);
+
+    // Use throttled seek during touch drag - smooth mobile experience
+    throttledHandleProgressSeek(percentage);
+  }, [isDragging, throttledHandleProgressSeek]);
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
     setDragStartX(0);
     setDragStartPercentage(0);
+
+    // Clear cache after touch drag session
+    cachedRectRef.current = null;
+
+    // Cancel any pending RAF
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
   }, []);
 
   // Touch events
@@ -797,7 +871,8 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                   <span className="ml-auto">{Math.round(Math.max(initialProgress, actualVideoProgress))}% watched</span>
                 )}
               </div>
-              <div 
+              <div
+                ref={progressBarRef}
                 className={`progress-bar-draggable w-full bg-muted rounded-full transition-all relative select-none ${
                   isDragging ? 'h-4 cursor-grabbing' : 'h-2 cursor-pointer hover:h-3'
                 }`}

@@ -4,18 +4,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { SearchBar } from '@/components/ui/SearchBar';
 import { useRouter } from 'next/navigation';
 import { useSupportNotifications } from '@/hooks/useSupportNotifications';
 import { useUserProfileQuery } from '@/hooks/queries/useUserProfile';
 import {
-  Search,
-  Menu,
   LogOut,
   Settings,
   User,
   ChevronDown,
-  Home,
   AlertCircle,
   CheckCircle,
   Bell
@@ -49,7 +45,6 @@ export function AdminHeader() {
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [userMenuPosition, setUserMenuPosition] = useState({ right: 0, top: 64 });
   const [notificationsPosition, setNotificationsPosition] = useState({ right: 0, top: 64 });
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -117,35 +112,9 @@ export function AdminHeader() {
     router.push('/login');
   };
 
-  const handleBackToDashboard = () => {
-    router.push('/dashboard');
-  };
-
   return (
     <>
-    <header className="bg-card border-b border-border h-16 flex items-center justify-between px-6">
-      {/* Left Section */}
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBackToDashboard}
-          className="text-muted-foreground"
-        >
-          <Home className="h-4 w-4 mr-2" />
-          Back to Dashboard
-        </Button>
-
-        {/* Search */}
-        <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Search users, courses, payments..."
-          size="sm"
-          className="w-80"
-        />
-      </div>
-
+    <header className="bg-card border-b border-border h-16 flex items-center justify-end px-6">
       {/* Right Section */}
       <div className="flex items-center space-x-4">
 
