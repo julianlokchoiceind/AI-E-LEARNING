@@ -37,8 +37,6 @@ const CourseDetailPage = () => {
   const [checkingEnrollment, setCheckingEnrollment] = useState(false);
   
   // Inline message hooks
-  const courseNoChaptersMessage = useInlineMessage('course-no-chapters');
-  const courseNoLessonsMessage = useInlineMessage('course-no-lessons');
   const courseEnrollmentMessage = useInlineMessage('course-enrollment');
 
   // React Query hooks - automatic caching and state management
@@ -277,22 +275,6 @@ const CourseDetailPage = () => {
     <div className="min-h-screen bg-muted">
       {/* Course Messages */}
       <Container variant="public" className="pt-6">
-        {courseNoChaptersMessage.message && (
-          <InlineMessage
-            message={courseNoChaptersMessage.message.message}
-            type={courseNoChaptersMessage.message.type}
-            onDismiss={courseNoChaptersMessage.clear}
-          />
-        )}
-        
-        {courseNoLessonsMessage.message && (
-          <InlineMessage
-            message={courseNoLessonsMessage.message.message}
-            type={courseNoLessonsMessage.message.type}
-            onDismiss={courseNoLessonsMessage.clear}
-          />
-        )}
-        
         {courseEnrollmentMessage.message && (
           <InlineMessage
             message={courseEnrollmentMessage.message.message}
@@ -414,68 +396,62 @@ const CourseDetailPage = () => {
                   )}
                 </div>
 
-                {/* Enroll Button */}
-                {!isEnrolled ? (
-                  <Button
-                    onClick={handleEnroll}
-                    loading={enrolling || checkingEnrollment}
-                    className="w-full mb-4"
-                    size="lg"
-                  >
-                    {checkingEnrollment
-                      ? <LoadingSpinner size="sm" />
-                      : course.pricing.is_free
-                        ? 'Enroll for Free'
-                        : 'Enroll Now'}
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => {
-                      // 3-level fallback: continue_lesson_id → current_lesson_id → first lesson
-                      if (course.continue_lesson_id) {
-                        if (isCreatorOrAdmin) {
-                          router.push(
-                            `/learn/${courseId}/${course.continue_lesson_id}?preview=true`
-                          );
+                {/* Enroll Button - Hidden for coming_soon status (sync with CourseCard) */}
+                {course.status !== 'coming_soon' && (
+                  !isEnrolled ? (
+                    <Button
+                      onClick={handleEnroll}
+                      loading={enrolling || checkingEnrollment}
+                      className="w-full mb-4"
+                      size="lg"
+                    >
+                      {checkingEnrollment
+                        ? <LoadingSpinner size="sm" />
+                        : course.pricing.is_free
+                          ? 'Enroll for Free'
+                          : 'Enroll Now'}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        // 3-level fallback: continue_lesson_id → current_lesson_id → first lesson
+                        if (course.continue_lesson_id) {
+                          if (isCreatorOrAdmin) {
+                            router.push(
+                              `/learn/${courseId}/${course.continue_lesson_id}?preview=true`
+                            );
+                          } else {
+                            router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
+                          }
+                        } else if (course.current_lesson_id) {
+                          // Navigate to current lesson (last lesson for completed courses)
+                          if (isCreatorOrAdmin) {
+                            router.push(`/learn/${courseId}/${course.current_lesson_id}?preview=true`);
+                          } else {
+                            router.push(`/learn/${courseId}/${course.current_lesson_id}`);
+                          }
                         } else {
-                          router.push(`/learn/${courseId}/${course.continue_lesson_id}`);
+                          // Fallback to first lesson (admin should set coming_soon if no content)
+                          const firstLesson = chapters[0]?.lessons?.[0];
+                          if (firstLesson) {
+                            if (isCreatorOrAdmin) {
+                              router.push(`/learn/${courseId}/${firstLesson.id}?preview=true`);
+                            } else {
+                              router.push(`/learn/${courseId}/${firstLesson.id}`);
+                            }
+                          }
                         }
-                      } else if (course.current_lesson_id) {
-                        // Navigate to current lesson (last lesson for completed courses)
-                        if (isCreatorOrAdmin) {
-                          router.push(`/learn/${courseId}/${course.current_lesson_id}?preview=true`);
-                        } else {
-                          router.push(`/learn/${courseId}/${course.current_lesson_id}`);
-                        }
-                      } else {
-                        // Fallback to first lesson
-                        if (!chapters || chapters.length === 0) {
-                          courseNoChaptersMessage.showError('Course has no chapters yet');
-                          return;
-                        }
-
-                        const firstLesson = chapters[0]?.lessons?.[0];
-                        if (!firstLesson) {
-                          courseNoLessonsMessage.showError('No lessons available');
-                          return;
-                        }
-
-                        if (isCreatorOrAdmin) {
-                          router.push(`/learn/${courseId}/${firstLesson.id}?preview=true`);
-                        } else {
-                          router.push(`/learn/${courseId}/${firstLesson.id}`);
-                        }
-                      }
-                    }}
-                    className="w-full mb-4"
-                    size="lg"
-                  >
-                    {course.progress_percentage && course.progress_percentage >= 95
-                      ? 'Review Course'
-                      : course.continue_lesson_id || course.current_lesson_id || (course.progress_percentage && course.progress_percentage > 0)
-                      ? 'Continue Learning'
-                      : 'Start Learning'}
-                  </Button>
+                      }}
+                      className="w-full mb-4"
+                      size="lg"
+                    >
+                      {course.progress_percentage && course.progress_percentage >= 95
+                        ? 'Review Course'
+                        : course.continue_lesson_id || course.current_lesson_id || (course.progress_percentage && course.progress_percentage > 0)
+                        ? 'Continue Learning'
+                        : 'Start Learning'}
+                    </Button>
+                  )
                 )}
 
                 {/* Course Includes */}

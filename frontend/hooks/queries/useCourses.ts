@@ -122,7 +122,7 @@ export function useCourseQuery(courseId: string, enabled: boolean = true) {
 export function useCourseSearchQuery(query: string, filters: Omit<CoursesFilters, 'search'> = {}) {
   return useApiQuery(
     ['course-search', query, filters],
-    () => getCourses(),
+    () => getCourses(`search=${encodeURIComponent(query)}`),
     {
       enabled: query.length > 2, // Only search after 3 characters
       ...getCacheConfig('COURSE_CATALOG'), // 30s fresh - search results same as catalog
