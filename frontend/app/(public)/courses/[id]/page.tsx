@@ -273,16 +273,16 @@ const CourseDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-muted">
-      {/* Course Messages */}
-      <Container variant="public" className="pt-6">
-        {courseEnrollmentMessage.message && (
+      {/* Course Messages - Only render when message exists */}
+      {courseEnrollmentMessage.message && (
+        <Container variant="public" className="pt-6">
           <InlineMessage
             message={courseEnrollmentMessage.message.message}
             type={courseEnrollmentMessage.message.type}
             onDismiss={courseEnrollmentMessage.clear}
           />
-        )}
-      </Container>
+        </Container>
+      )}
 
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-primary to-primary/80 text-white">
