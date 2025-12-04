@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Search, 
   ChevronDown, 
@@ -35,6 +35,9 @@ export default function FAQPage() {
   const faqVotingMessage = useInlineMessage('faq-already-voted');
   const faqVotingFeedbackMessage = useInlineMessage('faq-voting-feedback');
 
+  // Refs for FAQ elements (for scroll-to functionality)
+  const faqRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
   // React Query hooks - automatic caching and state management
   const { data: faqResponse, loading } = useFAQsQuery({
     search: searchQuery,
@@ -66,15 +69,40 @@ export default function FAQPage() {
     }
   }, []);
 
-  const toggleExpanded = (faqId: string) => {
+  const toggleExpanded = useCallback((faqId: string, scrollTo: boolean = false) => {
     const newExpanded = new Set(expandedFaqs);
     if (newExpanded.has(faqId)) {
       newExpanded.delete(faqId);
+      // Clear hash when collapsing
+      window.history.replaceState(null, '', window.location.pathname);
     } else {
       newExpanded.add(faqId);
+      // Update URL hash when expanding
+      window.history.replaceState(null, '', `#${faqId}`);
+
+      // Scroll to FAQ if requested (e.g., from URL hash)
+      if (scrollTo) {
+        setTimeout(() => {
+          faqRefs.current[faqId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
     }
     setExpandedFaqs(newExpanded);
-  };
+  }, [expandedFaqs]);
+
+  // Handle URL hash on page load - auto-expand and scroll to FAQ
+  useEffect(() => {
+    if (loading || faqs.length === 0) return;
+
+    const hash = window.location.hash.slice(1); // Remove #
+    if (hash && !expandedFaqs.has(hash)) {
+      // Check if FAQ with this ID exists
+      const faqExists = faqs.some((faq: any) => faq.id === hash);
+      if (faqExists) {
+        toggleExpanded(hash, true);
+      }
+    }
+  }, [loading, faqs]);
 
   const handleVote = async (faqId: string, isHelpful: boolean) => {
     faqLoginMessage.clear();
@@ -265,7 +293,11 @@ export default function FAQPage() {
               const categoryInfo = getCategoryInfo(faq.category_id);
               
               return (
-                <Card key={faq.id} className="overflow-hidden">
+                <div
+                  key={faq.id}
+                  ref={(el) => { faqRefs.current[faq.id] = el; }}
+                >
+                <Card className="overflow-hidden">
                   <CardContent className="p-0">
                     <button
                       onClick={() => toggleExpanded(faq.id)}
@@ -337,6 +369,7 @@ export default function FAQPage() {
                     )}
                   </CardContent>
                 </Card>
+                </div>
               );
             })}
           </div>
