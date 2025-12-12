@@ -393,7 +393,7 @@ export default function CourseApproval() {
           <select
             value={statusFilter}
             onChange={(e) => handleFilterChange(e.target.value, 'status')}
-            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">All Status</option>
             <option value="review">Pending Review</option>
@@ -407,7 +407,7 @@ export default function CourseApproval() {
           <select
             value={categoryFilter}
             onChange={(e) => handleFilterChange(e.target.value, 'category')}
-            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">All Categories</option>
             <option value="ml-basics">ML Basics</option>

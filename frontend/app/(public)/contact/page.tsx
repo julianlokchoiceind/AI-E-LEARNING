@@ -200,7 +200,7 @@ export default function ContactPage() {
               </div>
 
               {/* FAQ Link */}
-              <div className="bg-primary/10 rounded-lg p-6">
+              <div className="bg-primary/10 rounded-lg p-6 card-glow">
                 <h3 className="font-medium text-foreground mb-2">
                   Frequently Asked Questions
                 </h3>

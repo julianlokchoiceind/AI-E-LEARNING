@@ -122,7 +122,7 @@ export default function AdminPaymentsPage() {
       </div>
       {/* Analytics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="p-6">
+          <Card className="p-6 card-glow animate-fade-in-up stagger-1">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
@@ -146,7 +146,7 @@ export default function AdminPaymentsPage() {
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 card-glow animate-fade-in-up stagger-2">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Payments</p>
@@ -170,7 +170,7 @@ export default function AdminPaymentsPage() {
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 card-glow animate-fade-in-up stagger-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Success Rate</p>
@@ -194,7 +194,7 @@ export default function AdminPaymentsPage() {
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 card-glow animate-fade-in-up stagger-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Active Subscriptions</p>
@@ -360,7 +360,7 @@ export default function AdminPaymentsPage() {
             />
           </div>
           <select
-            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             value={statusFilter}
             onChange={(e) => {
               setCurrentPage(1); // Reset to first page when filter changes
@@ -374,7 +374,7 @@ export default function AdminPaymentsPage() {
             <option value="refunded">Refunded</option>
           </select>
           <select
-            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             value={typeFilter}
             onChange={(e) => {
               setCurrentPage(1); // Reset to first page when filter changes  

@@ -224,7 +224,7 @@ export default function AdminSupportPage() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-4">
+        <Card className="p-4 card-glow animate-fade-in-up stagger-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold">
@@ -238,7 +238,7 @@ export default function AdminSupportPage() {
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 card-glow animate-fade-in-up stagger-2">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold">
@@ -252,7 +252,7 @@ export default function AdminSupportPage() {
           </div>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4 card-glow animate-fade-in-up stagger-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold">
@@ -298,7 +298,7 @@ export default function AdminSupportPage() {
           <select
             value={filters.status}
             onChange={(e) => handleFilterChange(e.target.value, 'status')}
-            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">All Status</option>
             {TICKET_FILTER_OPTIONS.map(status => (
@@ -312,7 +312,7 @@ export default function AdminSupportPage() {
           <select
             value={filters.priority}
             onChange={(e) => handleFilterChange(e.target.value, 'priority')}
-            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive"
+            className="px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">All Priority</option>
             {TICKET_PRIORITIES.map(priority => (

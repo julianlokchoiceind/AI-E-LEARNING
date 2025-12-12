@@ -103,23 +103,23 @@ export default function PricingPage() {
         {/* FAQ Section */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
-          
+
           <div className="space-y-6">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
+            <div className="bg-white rounded-lg p-6 shadow-sm card-glow">
               <h3 className="font-semibold text-lg mb-2">Can I switch between plans?</h3>
               <p className="text-muted-foreground">
                 Yes! You can upgrade to Pro at any time. If you cancel Pro, you'll still have access until the end of your billing period.
               </p>
             </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-sm">
+
+            <div className="bg-white rounded-lg p-6 shadow-sm card-glow">
               <h3 className="font-semibold text-lg mb-2">What payment methods do you accept?</h3>
               <p className="text-muted-foreground">
                 We accept all major credit cards, debit cards, and popular e-wallets through our secure payment processor Stripe.
               </p>
             </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-sm">
+
+            <div className="bg-white rounded-lg p-6 shadow-sm card-glow">
               <h3 className="font-semibold text-lg mb-2">Is there a refund policy?</h3>
               <p className="text-muted-foreground">
                 Yes, we offer a 14-day money-back guarantee for Pro subscriptions and individual course purchases if you're not satisfied.

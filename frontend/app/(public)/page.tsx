@@ -91,10 +91,10 @@ export default function HomePage() {
         overlayOpacity={0.38}
       >
         <Link href={isAuthenticated ? '/dashboard' : '/register'} className="w-full sm:w-auto">
-          <Button size="lg" className="w-full sm:w-auto">Start Learning</Button>
+          <Button size="lg" className="w-full sm:w-auto btn-interactive animate-fade-in-up stagger-1">Start Learning</Button>
         </Link>
         <Link href="/courses" className="w-full sm:w-auto">
-          <Button size="lg" variant="outline" className="w-full sm:w-auto !text-white !border-white !bg-white/10 hover:!bg-white/20">
+          <Button size="lg" variant="outline" className="w-full sm:w-auto btn-interactive animate-fade-in-up stagger-2 !text-white !border-white !bg-white/10 hover:!bg-white/20">
             Browse Courses
           </Button>
         </Link>

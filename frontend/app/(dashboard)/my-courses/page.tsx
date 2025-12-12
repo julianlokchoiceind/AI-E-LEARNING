@@ -245,7 +245,7 @@ export default function MyCoursesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedCourses.map((enrollment) => (
-            <Card key={enrollment.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <Card key={enrollment.id} className="overflow-hidden hover:shadow-lg transition-shadow card-glow">
               {/* Course Thumbnail */}
               <div className="relative h-48">
                 {enrollment.course.thumbnail ? (

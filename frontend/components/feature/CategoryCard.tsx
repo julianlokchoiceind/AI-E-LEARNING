@@ -18,14 +18,14 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
 }) => {
   return (
     <Link href={`/courses?category=${value}`}>
-      <Card className="group cursor-pointer card-hover">
+      <Card className="group cursor-pointer card-hover card-glow">
         <div className="p-2 pb-2">
           <div className="relative h-56 sm:h-64 rounded-lg overflow-hidden bg-muted">
           <Image
             src={image}
             alt={label}
             fill
-            className="object-cover transition-transform duration-300"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
 

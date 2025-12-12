@@ -261,7 +261,7 @@ export default function DashboardPage() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <Card className="p-6">
+        <Card className="p-6 card-glow animate-fade-in-up stagger-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Enrolled Courses</p>
@@ -271,7 +271,7 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 card-glow animate-fade-in-up stagger-2">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Completed</p>
@@ -281,7 +281,7 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 card-glow animate-fade-in-up stagger-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Hours Learned</p>
@@ -291,7 +291,7 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 card-glow animate-fade-in-up stagger-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Current Streak</p>

@@ -35,25 +35,25 @@ export default function AboutPage() {
             <section className="mb-12">
               <h2 className="text-2xl font-semibold mb-4">What Makes Us Different</h2>
               <div className="grid md:grid-cols-2 gap-6 not-prose">
-                <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="bg-white p-6 rounded-lg shadow-sm card-glow">
                   <h3 className="text-lg font-semibold mb-2">🤖 AI Study Buddy</h3>
                   <p className="text-muted-foreground">
                     Get instant help from our Claude 3.5 Sonnet AI assistant 24/7
                   </p>
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="bg-white p-6 rounded-lg shadow-sm card-glow">
                   <h3 className="text-lg font-semibold mb-2">🎓 Expert Content</h3>
                   <p className="text-muted-foreground">
                     Learn from industry professionals with real-world experience
                   </p>
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="bg-white p-6 rounded-lg shadow-sm card-glow">
                   <h3 className="text-lg font-semibold mb-2">📈 Progress Tracking</h3>
                   <p className="text-muted-foreground">
                     Monitor your learning journey with detailed analytics
                   </p>
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="bg-white p-6 rounded-lg shadow-sm card-glow">
                   <h3 className="text-lg font-semibold mb-2">🇻🇳 Vietnamese Focus</h3>
                   <p className="text-muted-foreground">
                     Content optimized for Vietnamese developers and market

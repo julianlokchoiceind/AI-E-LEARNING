@@ -147,7 +147,7 @@ export default function AdminDashboard() {
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Users */}
-        <Card className="p-6 card-hover group">
+        <Card className="p-6 card-hover card-glow metric-card group animate-fade-in-up stagger-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Users</p>
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
                 </>
               )}
             </div>
-            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg"
+            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg animate-float"
                  style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}>
               <Users className="w-7 h-7 text-white" />
             </div>
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Total Courses */}
-        <Card className="p-6 card-hover group">
+        <Card className="p-6 card-hover card-glow metric-card group animate-fade-in-up stagger-2">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Courses</p>
@@ -201,7 +201,7 @@ export default function AdminDashboard() {
                 </>
               )}
             </div>
-            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg"
+            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg animate-float"
                  style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
               <BookOpen className="w-7 h-7 text-white" />
             </div>
@@ -209,7 +209,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Monthly Revenue - NOW WITH REAL PAYMENT DATA */}
-        <Card className="p-6 card-hover group">
+        <Card className="p-6 card-hover card-glow metric-card group animate-fade-in-up stagger-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Monthly Revenue</p>
@@ -232,7 +232,7 @@ export default function AdminDashboard() {
                 </>
               )}
             </div>
-            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg"
+            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg animate-float"
                  style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
               <DollarSign className="w-7 h-7 text-white" />
             </div>
@@ -240,7 +240,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Active Sessions */}
-        <Card className="p-6 card-hover group">
+        <Card className="p-6 card-hover card-glow metric-card group animate-fade-in-up stagger-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Active Sessions</p>
@@ -263,7 +263,7 @@ export default function AdminDashboard() {
                 </>
               )}
             </div>
-            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg"
+            <div className="h-14 w-14 rounded-xl flex items-center justify-center shadow-lg animate-float"
                  style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
               <TrendingUp className="w-7 h-7 text-white" />
             </div>
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
       {/* System Status & Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* System Status */}
-        <Card className="p-6">
+        <Card className="p-6 animate-fade-in-up stagger-5">
           <h2 className="text-lg font-semibold mb-4">System Status</h2>
           <div className="space-y-2">
             <div className="flex items-center justify-between p-3 rounded-lg nav-hover">
@@ -326,12 +326,12 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Quick Actions */}
-        <Card className="p-6">
+        <Card className="p-6 animate-fade-in-up stagger-6">
           <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
-              className="h-auto py-4 flex-col gap-2 transition-all hover:border-primary hover:bg-primary/5 hover:scale-105"
+              className="h-auto py-4 flex-col items-center justify-center gap-2 btn-interactive transition-all hover:border-primary hover:bg-primary/5 hover:scale-105"
               onClick={() => window.open('/admin/users', '_blank')}
             >
               <Users className="w-5 h-5" />
@@ -340,7 +340,7 @@ export default function AdminDashboard() {
 
             <Button
               variant="outline"
-              className="h-auto py-4 flex-col gap-2 transition-all hover:border-success hover:bg-success/5 hover:scale-105"
+              className="h-auto py-4 flex-col items-center justify-center gap-2 btn-interactive transition-all hover:border-success hover:bg-success/5 hover:scale-105"
               onClick={() => window.open('/admin/courses', '_blank')}
             >
               <BookOpen className="w-5 h-5" />
@@ -349,7 +349,7 @@ export default function AdminDashboard() {
 
             <Button
               variant="outline"
-              className="h-auto py-4 flex-col gap-2 transition-all hover:border-purple-500 hover:bg-purple-50 hover:scale-105"
+              className="h-auto py-4 flex-col items-center justify-center gap-2 btn-interactive transition-all hover:border-purple-500 hover:bg-purple-50 hover:scale-105"
               onClick={() => window.open('/admin/payments', '_blank')}
             >
               <CreditCard className="w-5 h-5" />
@@ -358,7 +358,7 @@ export default function AdminDashboard() {
 
             <Button
               variant="outline"
-              className="h-auto py-4 flex-col gap-2 transition-all hover:border-warning hover:bg-warning/5 hover:scale-105"
+              className="h-auto py-4 flex-col items-center justify-center gap-2 btn-interactive transition-all hover:border-warning hover:bg-warning/5 hover:scale-105"
               onClick={() => window.open('/admin/support', '_blank')}
             >
               <Headphones className="w-5 h-5" />
