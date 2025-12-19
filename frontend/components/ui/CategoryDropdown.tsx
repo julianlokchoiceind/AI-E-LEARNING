@@ -16,14 +16,12 @@ export function CategoryDropdown({ onClose, buttonRef }: CategoryDropdownProps) 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  // 4 main categories only
   const categories = [
-    { name: "AI Ethics", slug: "ai-ethics" },
-    { name: "AI in Business", slug: "ai-in-business" },
-    { name: "Computer Vision", slug: "computer-vision" },
-    { name: "Deep Learning", slug: "deep-learning" },
+    { name: "Machine Learning Basics", slug: "ml-basics" },
     { name: "Generative AI", slug: "generative-ai" },
-    { name: "Machine Learning", slug: "ml-basics" },
-    { name: "NLP", slug: "nlp" },
+    { name: "Deep Learning", slug: "deep-learning" },
+    { name: "AI in Business", slug: "ai-in-business" },
   ];
 
   // Fetch courses when hovering a category

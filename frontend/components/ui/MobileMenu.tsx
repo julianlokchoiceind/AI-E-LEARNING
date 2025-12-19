@@ -17,15 +17,12 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
-  // Categories from CategoryDropdown - tái sử dụng data, sorted alphabetically
+  // 4 main categories only
   const categories = [
-    { name: "AI Ethics", slug: "ai-ethics" },
-    { name: "AI in Business", slug: "ai-in-business" },
-    { name: "Computer Vision", slug: "computer-vision" },
-    { name: "Deep Learning", slug: "deep-learning" },
+    { name: "Machine Learning Basics", slug: "ml-basics" },
     { name: "Generative AI", slug: "generative-ai" },
-    { name: "ML Basics", slug: "ml-basics" },
-    { name: "NLP", slug: "nlp" },
+    { name: "Deep Learning", slug: "deep-learning" },
+    { name: "AI in Business", slug: "ai-in-business" },
   ];
 
   // Fetch courses when category selected - tái sử dụng từ CategoryDropdown
