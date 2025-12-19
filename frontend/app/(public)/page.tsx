@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useCategoryStatsQuery, useCoursesQuery } from '@/hooks/queries/useCourses'
 import Link from 'next/link'
@@ -18,7 +17,6 @@ import { SkeletonBox } from '@/components/ui/LoadingStates'
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth()
-  const [showAllCategories, setShowAllCategories] = useState(false)
 
   // Fetch category statistics with global cache
   const { data: categoryStats, loading: statsLoading } = useCategoryStatsQuery()
@@ -30,7 +28,7 @@ export default function HomePage() {
   })
   const latestCourses = latestCoursesData?.data?.courses || []
 
-  // All categories - Top 4 featured + remaining 3
+  // Featured categories (4 main categories)
   const allCategories = [
     {
       value: 'ml-basics',
@@ -39,34 +37,10 @@ export default function HomePage() {
       count: (categoryStats?.data as any)?.['ml-basics'] || 0,
     },
     {
-      value: 'computer-vision',
-      label: 'Computer Vision',
-      image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_n60jtln60jtln60j.png',
-      count: (categoryStats?.data as any)?.['computer-vision'] || 0,
-    },
-    {
-      value: 'nlp',
-      label: 'Natural Language Processing',
-      image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_18asfy18asfy18as.png',
-      count: (categoryStats?.data as any)?.['nlp'] || 0,
-    },
-    {
       value: 'generative-ai',
       label: 'Generative AI',
       image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_e208j5e208j5e208.png',
       count: (categoryStats?.data as any)?.['generative-ai'] || 0,
-    },
-    {
-      value: 'ai-ethics',
-      label: 'AI Ethics',
-      image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_afdqw4afdqw4afdq.png',
-      count: (categoryStats?.data as any)?.['ai-ethics'] || 0,
-    },
-    {
-      value: 'ai-in-business',
-      label: 'AI in Business',
-      image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_t7yezit7yezit7ye.png',
-      count: (categoryStats?.data as any)?.['ai-in-business'] || 0,
     },
     {
       value: 'deep-learning',
@@ -74,10 +48,16 @@ export default function HomePage() {
       image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_qv0tn8qv0tn8qv0t.png',
       count: (categoryStats?.data as any)?.['deep-learning'] || 0,
     },
+    {
+      value: 'ai-in-business',
+      label: 'AI in Business',
+      image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_t7yezit7yezit7ye.png',
+      count: (categoryStats?.data as any)?.['ai-in-business'] || 0,
+    },
   ]
 
-  // Show first 4 by default, all when expanded
-  const categoriesToShow = showAllCategories ? allCategories : allCategories.slice(0, 4)
+  // Show all 4 categories
+  const categoriesToShow = allCategories
 
   return (
     <div>
@@ -128,16 +108,6 @@ export default function HomePage() {
                 count={statsLoading ? 0 : category.count}
               />
             ))}
-          </div>
-
-          {/* Show All Categories Button */}
-          <div className="mt-8">
-            <Button
-              size="md"
-              onClick={() => setShowAllCategories(!showAllCategories)}
-            >
-              {showAllCategories ? 'Show Less' : 'Show All Categories'}
-            </Button>
           </div>
         </Container>
       </div>
