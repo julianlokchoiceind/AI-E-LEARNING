@@ -208,6 +208,9 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
       iv_load_policy: 3,    // Hide annotations
       fs: 0,                // Disable fullscreen button
       playsinline: 1,       // Play inline on mobile
+      cc_load_policy: 1,    // Force show captions
+      cc_lang_pref: 'vi',   // Prefer Vietnamese captions
+      hl: 'vi',             // Set player interface language to Vietnamese
       origin: typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL
     }
   }), []);
@@ -817,13 +820,24 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           />
         </div>
         
+        {/* Clickable overlay for play/pause - like YouTube */}
+        <div
+          className="absolute inset-0 cursor-pointer"
+          onClick={(e) => {
+            // Only toggle if clicking on the overlay itself, not on controls
+            if (e.target === e.currentTarget) {
+              handlePlayPause();
+            }
+          }}
+        />
+
         {/* Custom Control Overlay */}
-        <div className={`absolute inset-0 transition-opacity duration-300 ${
-          showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        <div className={`absolute inset-0 transition-opacity duration-300 pointer-events-none ${
+          showControls ? 'opacity-100' : 'opacity-0'
         }`}>
           {/* Top Controls (Mobile) */}
           {isMobile && (
-            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent p-4">
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent p-4 pointer-events-auto">
               <div className="flex items-center justify-between text-white">
                 <button
                   onClick={() => router.back()}
@@ -848,9 +862,15 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           
           {/* Center Play/Pause Button */}
           {!isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div
+              className="absolute inset-0 flex items-center justify-center pointer-events-auto cursor-pointer"
+              onClick={handlePlayPause}
+            >
               <button
-                onClick={handlePlayPause}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePlayPause();
+                }}
                 className="bg-background/90 hover:bg-background rounded-full p-6 transition-all duration-200 transform hover:scale-110"
                 aria-label="Play video"
               >
@@ -860,7 +880,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           )}
           
           {/* Bottom Controls */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-auto">
             {/* Progress Bar */}
             <div className={`px-4 ${isMobile ? 'pt-4 pb-2' : 'pt-6 pb-4'}`}>
               <div className={`flex items-center text-white text-sm mb-2 ${isMobile ? 'text-xs' : ''}`}>
@@ -1037,7 +1057,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
           
           {/* Mobile Settings Panel */}
           {isMobile && showSettings && (
-            <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/90 flex items-center justify-center pointer-events-auto">
               <div className="bg-card rounded-lg p-6 max-w-sm w-full mx-4">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-white text-lg font-semibold">Settings</h3>

@@ -153,10 +153,10 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               <div className="border-t border-border/30 mx-4 my-2" />
 
               <div className="py-2">
-                {/* Language Switcher */}
-                <div className="px-4 py-1">
+                {/* Language Switcher - Hidden for future implementation */}
+                {/* <div className="px-4 py-1">
                   <LanguageSwitcherCompact />
-                </div>
+                </div> */}
 
                 {/* Auth Section - Show for non-authenticated users */}
                 {!isAuthenticated && (

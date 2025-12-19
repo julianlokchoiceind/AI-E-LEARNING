@@ -155,8 +155,8 @@ export function Header() {
                 {navItems.faq}
               </button>
 
-              {/* Language Switcher */}
-              <LanguageSwitcherCompact />
+              {/* Language Switcher - Hidden for future implementation */}
+              {/* <LanguageSwitcherCompact /> */}
 
               {/* Auth Section */}
               {loading ? (
