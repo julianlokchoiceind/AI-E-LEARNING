@@ -85,16 +85,21 @@ const nextConfig = {
   // React Query handles all client-side caching for optimal performance
   
   // Security headers - Allow eval in dev mode for React DevTools/HMR
+  // YouTube requires: script-src for iframe_api, frame-src for embeds
+  // Note: react-youtube may load via HTTP on localhost, so allow both protocols
   async headers() {
+    const youtubeScriptSrc = "https://www.youtube.com http://www.youtube.com https://s.ytimg.com http://s.ytimg.com";
+    const youtubeFrameSrc = "https://www.youtube.com http://www.youtube.com https://www.youtube-nocookie.com";
+
     return [
       {
         source: '/(.*)',  // Match ALL paths including root
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: process.env.NODE_ENV === 'development' 
-              ? "script-src 'self' 'unsafe-eval' 'unsafe-inline';" 
-              : "script-src 'self' 'unsafe-inline';",
+            value: process.env.NODE_ENV === 'development'
+              ? `script-src 'self' 'unsafe-eval' 'unsafe-inline' ${youtubeScriptSrc}; frame-src 'self' ${youtubeFrameSrc};`
+              : `script-src 'self' 'unsafe-inline' ${youtubeScriptSrc}; frame-src 'self' ${youtubeFrameSrc};`,
           },
         ],
       },
