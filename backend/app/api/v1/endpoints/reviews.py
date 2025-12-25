@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 
 from app.models.user import User
-from app.models.review import ReviewStatus
+from app.models.review import ReviewStatus, ReviewVote
 from app.schemas.review import (
     ReviewCreateRequest,
     ReviewUpdateRequest,
@@ -134,7 +134,7 @@ async def get_user_reviews(
         )
 
 
-@router.get("/reviews/{review_id}", response_model=StandardResponse[dict])
+@router.get("/{review_id}", response_model=StandardResponse[dict])
 async def get_review(
     review_id: str,
     current_user: Optional[User] = Depends(get_current_optional_user)
@@ -152,7 +152,7 @@ async def get_review(
         
         # Add user vote if authenticated
         if current_user:
-            vote = await review_service.ReviewVote.find_one({
+            vote = await ReviewVote.find_one({
                 "review_id": review_id,
                 "user_id": str(current_user.id)
             })
@@ -172,7 +172,7 @@ async def get_review(
         )
 
 
-@router.put("/reviews/{review_id}", response_model=StandardResponse[dict])
+@router.put("/{review_id}", response_model=StandardResponse[dict])
 async def update_review(
     review_id: str,
     update_data: ReviewUpdateRequest,
@@ -206,7 +206,7 @@ async def update_review(
         )
 
 
-@router.delete("/reviews/{review_id}", response_model=StandardResponse[dict])
+@router.delete("/{review_id}", response_model=StandardResponse[dict])
 async def delete_review(
     review_id: str,
     current_user: User = Depends(get_current_user)
@@ -239,7 +239,7 @@ async def delete_review(
         )
 
 
-@router.post("/reviews/{review_id}/vote", response_model=StandardResponse[dict])
+@router.post("/{review_id}/vote", response_model=StandardResponse[dict])
 async def vote_review(
     review_id: str,
     vote_data: ReviewVoteRequest,
@@ -265,7 +265,7 @@ async def vote_review(
         )
 
 
-@router.post("/reviews/{review_id}/report", response_model=StandardResponse[dict])
+@router.post("/{review_id}/report", response_model=StandardResponse[dict])
 async def report_review(
     review_id: str,
     report_data: ReviewReportRequest,
@@ -291,7 +291,7 @@ async def report_review(
         )
 
 
-@router.post("/reviews/{review_id}/respond", response_model=StandardResponse[dict])
+@router.post("/{review_id}/respond", response_model=StandardResponse[dict])
 async def respond_to_review(
     review_id: str,
     response_data: CreatorResponseRequest,
@@ -317,7 +317,7 @@ async def respond_to_review(
         )
 
 
-@router.put("/reviews/{review_id}/moderate", response_model=StandardResponse[dict])
+@router.put("/{review_id}/moderate", response_model=StandardResponse[dict])
 async def moderate_review(
     review_id: str,
     moderation_data: ReviewModerationRequest,

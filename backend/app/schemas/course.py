@@ -54,6 +54,8 @@ class CourseStatsResponse(BaseModel):
     average_rating: float
     total_reviews: int
     total_revenue: float
+    total_likes: int = 0
+    total_dislikes: int = 0
 
 
 class CourseResponse(BaseModel):

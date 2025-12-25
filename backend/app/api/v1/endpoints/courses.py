@@ -273,10 +273,15 @@ async def get_course(
         
         # Convert to dict for response
         course_dict = course.dict()
-        
+
         # Convert ObjectId fields to strings - Fixed conversion
         course_dict["id"] = str(course.id)
         course_dict["creator_id"] = str(course.creator_id)
+
+        # Ensure stats has total_likes and total_dislikes (for older documents)
+        if "stats" in course_dict:
+            course_dict["stats"].setdefault("total_likes", 0)
+            course_dict["stats"].setdefault("total_dislikes", 0)
         
         # Check access
         access_info = await CourseService.check_course_access(course, current_user)

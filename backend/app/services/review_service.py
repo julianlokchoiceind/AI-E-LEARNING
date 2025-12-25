@@ -47,8 +47,8 @@ class ReviewService:
         if existing_review:
             raise ValueError("You have already reviewed this course")
         
-        # Check if user completed the course
-        is_verified = enrollment.progress.get("is_completed", False)
+        # Check if user completed the course (CourseProgress is Pydantic model, not dict)
+        is_verified = enrollment.progress.is_completed
         
         # Create review
         review = Review(
@@ -109,6 +109,9 @@ class ReviewService:
         skip = (query.page - 1) * query.per_page
         reviews = await Review.find(filter_dict).sort(sort_field).skip(skip).limit(query.per_page).to_list()
         
+        # Format reviews using _format_review to properly serialize PydanticObjectId
+        review_dicts = [self._format_review(r) for r in reviews]
+
         # Add user vote info if user is authenticated
         if current_user:
             review_ids = [str(r.id) for r in reviews]
@@ -116,23 +119,12 @@ class ReviewService:
                 "review_id": {"$in": review_ids},
                 "user_id": str(current_user.id)
             }).to_list()
-            
+
             vote_map = {v.review_id: v.is_helpful for v in user_votes}
-            
-            # Convert to response format
-            review_dicts = []
-            for review in reviews:
-                review_dict = review.dict()
-                review_dict["user"] = {
-                    "id": review.user_id,
-                    "name": review.user_name,
-                    "avatar": review.user_avatar,
-                    "is_verified_purchase": review.is_verified_purchase
-                }
-                review_dict["user_vote"] = vote_map.get(str(review.id))
-                review_dicts.append(review_dict)
-        else:
-            review_dicts = [self._format_review(r) for r in reviews]
+
+            # Add user_vote to each review
+            for review_dict in review_dicts:
+                review_dict["user_vote"] = vote_map.get(review_dict["id"])
         
         # Get stats if requesting course reviews
         stats = None
@@ -222,19 +214,24 @@ class ReviewService:
         })
         
         if existing_vote:
-            # Update vote
-            if existing_vote.is_helpful != vote_data.is_helpful:
-                # Change vote
+            if existing_vote.is_helpful == vote_data.is_helpful:
+                # Same vote - toggle OFF (remove vote)
                 if existing_vote.is_helpful:
-                    review.helpful_count -= 1
+                    review.helpful_count = max(0, review.helpful_count - 1)
+                else:
+                    review.unhelpful_count = max(0, review.unhelpful_count - 1)
+                await existing_vote.delete()
+            else:
+                # Different vote - switch vote
+                if existing_vote.is_helpful:
+                    review.helpful_count = max(0, review.helpful_count - 1)
                     review.unhelpful_count += 1
                 else:
                     review.helpful_count += 1
-                    review.unhelpful_count -= 1
-                
+                    review.unhelpful_count = max(0, review.unhelpful_count - 1)
+
                 existing_vote.is_helpful = vote_data.is_helpful
                 await existing_vote.save()
-            # else: same vote, no change
         else:
             # New vote
             vote = ReviewVote(
@@ -407,14 +404,14 @@ class ReviewService:
         # Update course model
         course = await Course.get(course_id)
         if course:
-            course.stats["average_rating"] = stats["average_rating"]
-            course.stats["total_reviews"] = stats["total_reviews"]
+            course.stats.average_rating = stats["average_rating"]
+            course.stats.total_reviews = stats["total_reviews"]
             await course.save()
 
     def _format_review(self, review: Review) -> Dict:
         """Format review for response"""
         return {
-            "_id": str(review.id),
+            "id": str(review.id),
             "course_id": review.course_id,
             "user": {
                 "id": review.user_id,

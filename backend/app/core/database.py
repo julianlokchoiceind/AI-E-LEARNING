@@ -60,6 +60,7 @@ async def connect_to_mongo():
         from app.models.review import Review, ReviewVote, ReviewReport
         from app.models.certificate import Certificate
         from app.models.waitlist import Waitlist
+        from app.models.course_like import CourseReaction
         
         # Initialize Beanie with all document models
         await init_beanie(
@@ -82,7 +83,8 @@ async def connect_to_mongo():
                 ReviewVote,
                 ReviewReport,
                 Certificate,
-                Waitlist
+                Waitlist,
+                CourseReaction
             ]
         )
         

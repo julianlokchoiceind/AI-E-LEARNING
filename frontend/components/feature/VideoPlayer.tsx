@@ -625,12 +625,23 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
     const effectiveMaxTime = Math.max(maxWatchedTime, actualProgressTime);
 
     const allowedSeekTime = Math.min(seekTime, effectiveMaxTime);
+
+    // Seek to the position
     playerRef.current.seekTo(allowedSeekTime, true);
+
+    // Immediately update UI state for responsive feedback (like YouTube)
+    setCurrentTime(allowedSeekTime);
+    setWatchPercentage((allowedSeekTime / duration) * 100);
+
+    // Notify parent of time update
+    if (onTimeUpdate && isMountedRef.current) {
+      onTimeUpdate(allowedSeekTime);
+    }
 
     if (seekTime > effectiveMaxTime) {
       onShowMessage?.('You can only seek to previously watched content', 'info');
     }
-  }, [playerRef, isReady, duration, maxWatchedTime, initialProgress, actualVideoProgress]);
+  }, [playerRef, isReady, duration, maxWatchedTime, initialProgress, actualVideoProgress, onTimeUpdate]);
 
   // Throttled version for drag operations (75ms = 13 seeks/second)
   // Immediate version used for clicks
@@ -893,7 +904,7 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
               </div>
               <div
                 ref={progressBarRef}
-                className={`progress-bar-draggable w-full bg-muted rounded-full transition-all relative select-none ${
+                className={`group progress-bar-draggable w-full bg-muted rounded-full transition-all relative select-none ${
                   isDragging ? 'h-4 cursor-grabbing' : 'h-2 cursor-pointer hover:h-3'
                 }`}
                 onMouseDown={handleMouseDown}
@@ -925,11 +936,11 @@ const VideoPlayerComponent: React.FC<VideoPlayerProps> = ({
                   className="bg-primary h-full rounded-full transition-all duration-300 relative"
                   style={{ width: `${watchPercentage}%` }}
                 >
-                  {/* Draggable thumb */}
+                  {/* Draggable thumb - scales when hovering anywhere on progress bar */}
                   <div className={`absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-primary border-2 border-white shadow-lg transition-all duration-200 ${
-                    isDragging 
-                      ? 'w-4 h-4 -mr-2' 
-                      : 'w-3 h-3 -mr-1.5 hover:w-4 hover:h-4 hover:-mr-2'
+                    isDragging
+                      ? 'w-4 h-4 -mr-2'
+                      : 'w-3 h-3 -mr-1.5 group-hover:w-4 group-hover:h-4 group-hover:-mr-2'
                   }`} />
                 </div>
               </div>

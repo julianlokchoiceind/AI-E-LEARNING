@@ -49,6 +49,8 @@ export interface CourseStats {
   average_rating: number
   total_reviews: number
   total_revenue: number
+  total_likes: number
+  total_dislikes: number
 }
 
 export interface CourseSEO {

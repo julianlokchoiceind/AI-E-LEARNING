@@ -3,7 +3,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingStates';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Clock, Users, BookOpen, PlayCircle, Check, Lock, Star } from 'lucide-react';
+import { Clock, Users, BookOpen, PlayCircle, Check, Lock, Star, ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { getLevelVariant } from '@/lib/utils/badge-helpers';
@@ -322,6 +322,14 @@ const CourseDetailPage = () => {
                   <Users className="w-5 h-5" />
                   <span>{course.stats.total_enrollments} students</span>
                 </div>
+
+                {/* Like count - social proof */}
+                {(course.stats.total_likes ?? 0) > 0 && (
+                  <div className="flex items-center gap-1">
+                    <ThumbsUp className="w-5 h-5" />
+                    <span>{course.stats.total_likes} likes</span>
+                  </div>
+                )}
               </div>
 
               {/* Rating */}

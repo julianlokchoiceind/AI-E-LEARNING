@@ -4,12 +4,15 @@ from .chapter import Chapter
 from .lesson import Lesson
 from .progress import Progress
 from .enrollment import Enrollment
+from .course_like import CourseReaction, CourseLike
 
 __all__ = [
     "User",
-    "Course", 
+    "Course",
     "Chapter",
     "Lesson",
     "Progress",
-    "Enrollment"
+    "Enrollment",
+    "CourseReaction",
+    "CourseLike"
 ]

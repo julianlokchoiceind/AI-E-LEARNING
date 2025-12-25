@@ -48,6 +48,8 @@ class CourseStats(BaseModel):
     average_rating: float = 0
     total_reviews: int = 0
     total_revenue: float = 0
+    total_likes: int = 0
+    total_dislikes: int = 0
 
 
 class SEO(BaseModel):

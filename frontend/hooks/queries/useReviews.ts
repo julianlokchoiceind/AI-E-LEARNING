@@ -108,7 +108,7 @@ export function useVoteReview() {
       invalidateQueries: [
         ['course-reviews'], // Refresh course reviews to show updated vote counts
       ],
-      showToast: false, // Don't show automatic toast for votes
+      showToast: false, // Don't show automatic success toast, but errors are handled manually in component
     }
   );
 }

@@ -8,6 +8,7 @@ import { SimpleChatWidget } from '@/components/feature/SimpleChatWidget';
 import { StudentQuizPlayer } from '@/components/feature/StudentQuizPlayer';
 import { ResourceDisplay } from '@/components/feature/ResourceDisplay';
 import { MobileNavigationDrawer } from '@/components/feature/MobileNavigationDrawer';
+import { CourseLikeButton } from '@/components/feature/CourseLikeButton';
 import { LessonBreadcrumbs } from '@/components/seo/Breadcrumbs';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { ErrorState } from '@/components/ui/LoadingStates';
@@ -102,11 +103,12 @@ const getResourceType = (type: string): 'pdf' | 'doc' | 'zip' | 'link' | 'code' 
   return validTypes.includes(type) ? type as any : 'other';
 };
 
-// Memoized VideoSection component (unchanged from original)
+// Memoized VideoSection component - YouTube-style seamless design
 interface VideoSectionProps {
   lesson: LessonData;
   lessonId: string;
   courseId: string;
+  courseTitle?: string;
   handleVideoProgress: (percentage: number, actualPercentage: number) => void;
   handleVideoComplete: () => void;
   handleVideoDurationChange: (duration: number) => void;
@@ -125,6 +127,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
   lesson,
   lessonId,
   courseId,
+  courseTitle,
   handleVideoProgress,
   handleVideoComplete,
   handleVideoDurationChange,
@@ -139,11 +142,13 @@ const VideoSection = React.memo<VideoSectionProps>(({
   onShowMessage
 }) => {
   const progress = lesson.progress;
-  
+  const isCompleted = actualVideoProgress >= 95;
+
   return (
-    <section className="bg-white rounded-lg shadow-sm overflow-hidden">
+    <section className="rounded-xl overflow-hidden shadow-lg bg-gradient-to-b from-slate-900 to-slate-800">
       {lesson.video ? (
         <>
+          {/* Video Player - No borders, seamless top */}
           <VideoPlayer
             videoUrl={lesson.video.youtube_url || ''}
             lessonId={lessonId}
@@ -160,105 +165,104 @@ const VideoSection = React.memo<VideoSectionProps>(({
             actualVideoProgress={actualVideoProgress}
             onShowMessage={onShowMessage}
           />
-          
-          {/* Enhanced Video Info Bar */}
-          <div className="px-4 md:px-6 py-3 md:py-4 border-t border-border bg-muted">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-sm">
-              {/* Duration */}
-              <div className="flex items-center">
-                <Clock className="w-4 h-4 text-muted-foreground mr-2" />
-                <div>
-                  <div className="text-muted-foreground text-xs">Duration</div>
-                  <div className="font-medium text-foreground">
-                    {formatDuration(currentVideoDuration || lesson.video.duration || 0)}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Progress - FIXED consistency issue */}
-              <div className="flex items-center">
-                <div className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
-                  actualVideoProgress >= 95 ? 'bg-success/200' : 'bg-primary/200'
-                }`}>
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground text-xs">Progress</div>
-                  <div className="font-medium text-foreground">
-                    {Math.round(actualVideoProgress)}%
-                  </div>
-                </div>
-              </div>
-              
-              {/* Current Position */}
-              <div className="flex items-center">
-                <BookOpen className="w-4 h-4 text-muted-foreground mr-2" />
-                <div>
-                  <div className="text-muted-foreground text-xs">Current Time</div>
-                  <div className="font-medium text-foreground">
-                    {formatDuration(currentVideoTime)}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Status */}
-              <div className="flex items-center">
-                {actualVideoProgress >= 95 ? (
-                  <CheckCircle className="w-4 h-4 mr-2 text-success" />
-                ) : (
-                  <PlayCircle className="w-4 h-4 mr-2 text-primary" />
+
+          {/* Seamless Progress Strip - Right below video */}
+          <div className="h-1 bg-slate-700/50 relative">
+            <div
+              className={`h-full transition-all duration-300 ${
+                isCompleted ? 'bg-emerald-500' : 'bg-blue-500'
+              }`}
+              style={{ width: `${actualVideoProgress}%` }}
+            />
+          </div>
+
+          {/* Video Info Section - Dark theme continuation */}
+          <div className="px-4 md:px-6 py-4 md:py-5">
+            {/* Title Row with Like/Dislike - YouTube Style */}
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg md:text-xl font-semibold text-white leading-tight">
+                  {lesson.title}
+                </h1>
+                {courseTitle && (
+                  <p className="text-sm text-slate-400 mt-1 truncate">
+                    {courseTitle}
+                  </p>
                 )}
-                <div>
-                  <div className="text-muted-foreground text-xs">Status</div>
-                  <div className={`font-medium text-sm ${
-                    actualVideoProgress >= 95
-                      ? 'text-success' 
-                      : 'text-muted-foreground'
-                  }`}>
-                    {actualVideoProgress >= 95
-                      ? 'Completed' 
-                      : 'In progress'
-                    }
-                  </div>
-                </div>
+              </div>
+              <CourseLikeButton courseId={courseId} />
+            </div>
+
+            {/* Stats Row - Minimal, horizontal */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-300">
+              {/* Duration */}
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-slate-500" />
+                <span>{formatDuration(currentVideoDuration || lesson.video.duration || 0)}</span>
+              </div>
+
+              {/* Current Position */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500">•</span>
+                <span>{formatDuration(currentVideoTime)} / {formatDuration(currentVideoDuration || lesson.video.duration || 0)}</span>
+              </div>
+
+              {/* Progress Percentage */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500">•</span>
+                <span className={isCompleted ? 'text-emerald-400' : 'text-blue-400'}>
+                  {Math.round(actualVideoProgress)}% watched
+                </span>
+              </div>
+
+              {/* Status Badge */}
+              <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
+                isCompleted
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : 'bg-blue-500/20 text-blue-400'
+              }`}>
+                {isCompleted ? (
+                  <>
+                    <CheckCircle className="w-3 h-3" />
+                    <span>Completed</span>
+                  </>
+                ) : (
+                  <>
+                    <PlayCircle className="w-3 h-3" />
+                    <span>In progress</span>
+                  </>
+                )}
               </div>
             </div>
-            
-            {/* Progress Bar - FIXED to use consistent videoProgress */}
-            <div className="mt-6">
-              <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                <span>Watch Progress</span>
-                <span>{Math.round(actualVideoProgress)}% watched</span>
+
+            {/* Sequential Learning Notice - Subtle bottom message */}
+            {!isCompleted && (
+              <div className="mt-4 pt-3 border-t border-slate-700/50">
+                <p className="text-xs text-amber-400/90 flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5" />
+                  Watch 95% to unlock the next lesson
+                </p>
               </div>
-              <ProgressBar 
-                value={actualVideoProgress} 
-                className="h-2"
-              />
-              {/* Sequential Learning Notice - Below progress bar */}
-              {actualVideoProgress < 95 && (
-                <div className="mt-2 text-xs text-warning flex items-center">
-                  <Info className="w-3 h-3 mr-1" />
-                  Watch 95% of the video to unlock the next lesson
-                </div>
-              )}
-              {actualVideoProgress >= 95 && !progress?.is_completed && (
-                <div className="mt-2 text-xs text-warning flex items-center">
-                  <Info className="w-3 h-3 mr-1" />
+            )}
+            {isCompleted && !progress?.is_completed && (
+              <div className="mt-4 pt-3 border-t border-slate-700/50">
+                <p className="text-xs text-amber-400/90 flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5" />
                   Complete the quiz below to finish this lesson
-                </div>
-              )}
-            </div>
+                </p>
+              </div>
+            )}
           </div>
         </>
       ) : (
-        <div className="aspect-video bg-muted flex items-center justify-center">
-          <div className="text-center">
-            <VideoOff className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">
+        <div className="aspect-video bg-slate-800 flex items-center justify-center">
+          <div className="text-center px-6">
+            <VideoOff className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-200 mb-2">
               Video content is being prepared
             </h3>
-            <p className="text-muted-foreground max-w-sm mx-auto">
-              The video for this lesson will be available soon. 
+            <p className="text-slate-400 max-w-sm mx-auto text-sm">
+              The video for this lesson will be available soon.
               Please check back later or continue with the lesson materials below.
             </p>
           </div>
@@ -279,7 +283,8 @@ const VideoSection = React.memo<VideoSectionProps>(({
     prevProps.currentVideoDuration === nextProps.currentVideoDuration &&
     prevProps.videoProgress === nextProps.videoProgress &&
     prevProps.actualVideoProgress === nextProps.actualVideoProgress &&
-    prevProps.navigation?.next_lesson_id === nextProps.navigation?.next_lesson_id
+    prevProps.navigation?.next_lesson_id === nextProps.navigation?.next_lesson_id &&
+    prevProps.courseTitle === nextProps.courseTitle
   );
 });
 
@@ -322,7 +327,7 @@ const QuizSection = React.memo<QuizSectionProps>(({
   }
 
   return (
-    <section className="bg-white rounded-lg shadow-sm border border-border">
+    <section className="rounded-lg shadow-sm border border-border overflow-hidden">
       <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-warning/20">
         <h2 className="text-base md:text-lg font-semibold text-foreground flex items-center">
           <CheckCircle className="w-4 md:w-5 h-4 md:h-5 mr-2 text-warning" />
@@ -332,8 +337,8 @@ const QuizSection = React.memo<QuizSectionProps>(({
           Check your understanding immediately after learning.
         </p>
       </div>
-      <div className="p-4 md:p-6">
-        <StudentQuizPlayer 
+      <div className="p-4 md:p-6 bg-white">
+        <StudentQuizPlayer
           lessonId={lessonId}
           onComplete={handleQuizComplete}
           isPreviewMode={isPreviewMode}
@@ -1040,11 +1045,12 @@ export default function OptimizedLessonPlayerPage() {
         <main className="flex-1 overflow-y-auto min-w-0">
           <Container variant="public" className="space-y-4 md:space-y-6">
             
-            {/* Video Section */}
+            {/* Video Section - YouTube-style seamless design */}
             <VideoSection
               lesson={lesson}
               lessonId={lessonId}
               courseId={courseId}
+              courseTitle={course?.title}
               handleVideoProgress={handleVideoProgress}
               handleVideoComplete={handleVideoComplete}
               handleVideoDurationChange={handleVideoDurationChange}
@@ -1060,14 +1066,14 @@ export default function OptimizedLessonPlayerPage() {
             />
 
             {/* Lesson Information */}
-            <section className="bg-white rounded-lg shadow-sm border border-border">
+            <section className="rounded-lg shadow-sm border border-border overflow-hidden">
               <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted">
                 <h2 className="text-base md:text-lg font-semibold text-foreground flex items-center">
                   <Info className="w-4 md:w-5 h-4 md:h-5 mr-2 text-primary" />
                   About this lesson
                 </h2>
               </div>
-              <div className="p-4 md:p-6">
+              <div className="p-4 md:p-6 bg-white">
                 {lesson.description ? (
                   <div className="prose max-w-none text-foreground leading-relaxed">
                     {lesson.description}
@@ -1085,14 +1091,14 @@ export default function OptimizedLessonPlayerPage() {
 
             {/* Learning Resources */}
             {lesson.resources && lesson.resources.length > 0 && (
-              <section className="bg-white rounded-lg shadow-sm border border-border">
+              <section className="rounded-lg shadow-sm border border-border overflow-hidden">
                 <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted">
                   <h2 className="text-base md:text-lg font-semibold text-foreground flex items-center">
                     <BookOpen className="w-4 md:w-5 h-4 md:h-5 mr-2 text-success" />
                     Learning Resources
                   </h2>
                 </div>
-                <div className="p-4 md:p-6">
+                <div className="p-4 md:p-6 bg-white">
                   <ResourceDisplay 
                     resources={convertResourcesForDisplay(lesson.resources)}
                     className=""
