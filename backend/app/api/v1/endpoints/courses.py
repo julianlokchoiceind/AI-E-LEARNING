@@ -75,11 +75,12 @@ async def list_courses(
     level: Optional[CourseLevel] = None,
     search: Optional[str] = None,
     is_free: Optional[bool] = None,
+    language: Optional[str] = Query(None, description="Filter by course language (vi, en)"),
     current_user: Optional[User] = Depends(get_current_optional_user)
 ) -> StandardResponse[CourseListResponse]:
     """
     List courses with filters and pagination.
-    
+
     Query parameters:
     - page: Page number (default: 1)
     - per_page: Items per page (default: 20, max: 100)
@@ -87,7 +88,8 @@ async def list_courses(
     - level: Filter by level (beginner, intermediate, advanced)
     - search: Search in title and description
     - is_free: Filter free/paid courses
-    
+    - language: Filter by course language (vi, en)
+
     Access control:
     - Students/Unauthenticated: Only published courses
     - Content Creators: Only their own courses (all statuses)
@@ -106,7 +108,8 @@ async def list_courses(
             search=search,
             status=status,
             creator_id=creator_id,
-            is_free=is_free
+            is_free=is_free,
+            language=language
         )
         
         # Batch check access for all courses at once (avoid N+1 queries)

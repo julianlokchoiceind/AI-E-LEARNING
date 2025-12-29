@@ -7,10 +7,12 @@ import { verifyEmail } from '@/lib/api/auth'
 import { Container } from '@/components/ui/Container'
 import { useInlineMessage } from '@/hooks/useInlineMessage'
 import { InlineMessage } from '@/components/ui/InlineMessage'
+import { useI18n } from '@/lib/i18n/context'
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { t } = useI18n()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const { message, showSuccess, showError, clear } = useInlineMessage('email-verification')
   
@@ -19,15 +21,15 @@ export default function VerifyEmailPage() {
     
     if (!token) {
       setStatus('error')
-      showError('Invalid verification link. No token provided.')
+      showError(t('verifyEmailPage.invalidToken'))
       return
     }
-    
+
     // Verify email with backend
     verifyEmail(token)
       .then((response) => {
         setStatus('success')
-        showSuccess(response.message || 'Email verified successfully!')
+        showSuccess(response.message || t('verifyEmailPage.successMessage'))
         // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push('/login?verified=true')
@@ -35,7 +37,7 @@ export default function VerifyEmailPage() {
       })
       .catch((error) => {
         setStatus('error')
-        showError(error.message || 'Email verification failed. Please try again.')
+        showError(error.message || t('verifyEmailPage.verificationFailed'))
         // If the link was already used, show login button
         if (error.message?.includes('already been used')) {
           setTimeout(() => {
@@ -58,7 +60,7 @@ export default function VerifyEmailPage() {
       <Container variant="auth" className="glass-container rounded-2xl space-y-6">
         <div className="text-center">
           <h2 className="mt-6 text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
-            Email Verification
+            {t('verifyEmailPage.title')}
           </h2>
         </div>
 
@@ -70,14 +72,14 @@ export default function VerifyEmailPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span className="text-white/95">Verifying your email...</span>
+                <span className="text-white/95">{t('verifyEmailPage.verifying')}</span>
               </div>
             </div>
           )}
 
           {message && status !== 'loading' && (
             <InlineMessage
-              message={message.message + (status === 'success' ? ' Redirecting to login page...' : '')}
+              message={message.message + (status === 'success' ? ` ${t('verifyEmailPage.redirecting')}` : '')}
               type={message.type}
               onDismiss={clear}
               variant="glass"
@@ -87,7 +89,7 @@ export default function VerifyEmailPage() {
 
         <div className="text-center">
           <Link href="/login" className="glass-text font-medium hover:text-white/80">
-            Back to login
+            {t('verifyEmailPage.backToLogin')}
           </Link>
         </div>
       </Container>

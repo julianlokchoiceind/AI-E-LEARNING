@@ -14,17 +14,20 @@ import { TestimonialsSection } from '@/components/feature/TestimonialsSection'
 import { PricingSection } from '@/components/feature/PricingSection'
 import { FeaturesSection } from '@/components/feature/FeaturesSection'
 import { SkeletonBox } from '@/components/ui/LoadingStates'
+import { useI18n } from '@/lib/i18n/context'
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth()
+  const { t, locale } = useI18n()
 
   // Fetch category statistics with global cache
   const { data: categoryStats, loading: statsLoading } = useCategoryStatsQuery()
 
-  // Fetch latest 3 courses
+  // Fetch latest 3 courses (filtered by current language)
   const { data: latestCoursesData, loading: coursesLoading } = useCoursesQuery({
     limit: 3,
-    sort: 'newest'
+    sort: 'newest',
+    language: locale
   })
   const latestCourses = latestCoursesData?.data?.courses || []
 
@@ -32,25 +35,25 @@ export default function HomePage() {
   const allCategories = [
     {
       value: 'ml-basics',
-      label: 'Machine Learning Basics',
+      label: t('categories.ml_basics'),
       image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_4purvm4purvm4pur.png',
       count: (categoryStats?.data as any)?.['ml-basics'] || 0,
     },
     {
       value: 'generative-ai',
-      label: 'Generative AI',
+      label: t('categories.generative_ai'),
       image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_e208j5e208j5e208.png',
       count: (categoryStats?.data as any)?.['generative-ai'] || 0,
     },
     {
       value: 'deep-learning',
-      label: 'Deep Learning',
+      label: t('categories.deep_learning'),
       image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_qv0tn8qv0tn8qv0t.png',
       count: (categoryStats?.data as any)?.['deep-learning'] || 0,
     },
     {
       value: 'ai-in-business',
-      label: 'AI in Business',
+      label: t('categories.ai_in_business'),
       image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_t7yezit7yezit7ye.png',
       count: (categoryStats?.data as any)?.['ai-in-business'] || 0,
     },
@@ -63,19 +66,19 @@ export default function HomePage() {
     <div>
       {/* Hero Section */}
       <HeroSection
-        title={<span className="bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-transparent">Master AI Programming</span>}
-        subtitle="Learn from industry experts with intelligent AI assistance"
+        title={<span className="bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-transparent">{t('homepage.heroTitle')}</span>}
+        subtitle={t('homepage.heroSubtitle')}
         size="lg"
         align="center"
         backgroundImage="/images/backgrounds/homepage-hero-section.jpg"
         overlayOpacity={0.38}
       >
         <Link href={isAuthenticated ? '/dashboard' : '/register'} className="w-full sm:w-auto">
-          <Button size="lg" className="w-full sm:w-auto btn-interactive animate-fade-in-up stagger-1">Start Learning</Button>
+          <Button size="lg" className="w-full sm:w-auto btn-interactive animate-fade-in-up stagger-1">{t('homepage.startLearning')}</Button>
         </Link>
         <Link href="/courses" className="w-full sm:w-auto">
           <Button size="lg" variant="outline" className="w-full sm:w-auto btn-interactive animate-fade-in-up stagger-2 !text-white !border-white !bg-white/10 hover:!bg-white/20">
-            Browse Courses
+            {t('homepage.browseCourses')}
           </Button>
         </Link>
       </HeroSection>
@@ -93,8 +96,8 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-white/95"></div>
         <Container variant="public" className="py-8 md:py-12 lg:py-24 relative z-10">
           <SectionHeader
-            title={<span>Start Your <span className="gradient-text">AI Journey</span></span>}
-            subtitle="From machine learning basics to cutting-edge applications"
+            title={<span>{t('homepage.categoriesTitle')} <span className="gradient-text">{t('homepage.categoriesTitleHighlight')}</span></span>}
+            subtitle={t('homepage.categoriesSubtitle')}
             align="left"
           />
 
@@ -116,8 +119,8 @@ export default function HomePage() {
       <div className="flex-1 bg-muted">
         <Container variant="public" className="py-8 md:py-12 lg:py-24">
           <SectionHeader
-            title={<span>Coming Soon: <span className="gradient-text">First Courses</span></span>}
-            subtitle="Be among the first to access our premium AI programming courses"
+            title={<span>{t('homepage.latestCoursesTitle')} <span className="gradient-text">{t('homepage.latestCoursesTitleHighlight')}</span></span>}
+            subtitle={t('homepage.latestCoursesSubtitle')}
             align="left"
           />
 
@@ -146,7 +149,7 @@ export default function HomePage() {
           <div className="mt-8">
             <Link href="/courses" className="inline-block">
               <Button size="md">
-                Show all courses
+                {t('homepage.showAllCourses')}
               </Button>
             </Link>
           </div>
@@ -160,8 +163,8 @@ export default function HomePage() {
       <div className="flex-1 bg-muted">
         <Container variant="public" className="py-8 md:py-12 lg:py-24">
           <SectionHeader
-            title="Why Choose Our Platform"
-            subtitle="Discover the features that make learning AI programming more effective and enjoyable"
+            title={t('homepage.featuresTitle')}
+            subtitle={t('homepage.featuresSubtitle')}
             align="left"
           />
           <FeaturesSection />
@@ -172,8 +175,8 @@ export default function HomePage() {
       <div className="flex-1 bg-white">
         <Container variant="public" className="py-8 md:py-12 lg:py-24">
           <SectionHeader
-            title="Choose Your Learning Path"
-            subtitle="Select the plan that best fits your learning goals and budget"
+            title={t('homepage.pricingTitle')}
+            subtitle={t('homepage.pricingSubtitle')}
             align="left"
           />
           <PricingSection />
@@ -184,8 +187,8 @@ export default function HomePage() {
       <div className="flex-1 bg-muted">
         <Container variant="public" className="py-8 md:py-12 lg:py-24">
           <SectionHeader
-            title="Early Access Feedback"
-            subtitle="Early testers are excited about what's coming"
+            title={t('homepage.testimonialsTitle')}
+            subtitle={t('homepage.testimonialsSubtitle')}
             align="left"
           />
           <TestimonialsSection />

@@ -216,7 +216,8 @@ class CourseService:
         search: Optional[str] = None,
         status: Optional[Union[CourseStatus, List[CourseStatus]]] = None,
         creator_id: Optional[str] = None,
-        is_free: Optional[bool] = None
+        is_free: Optional[bool] = None,
+        language: Optional[str] = None
     ) -> Dict[str, Any]:
         """List courses with filters and pagination"""
         # Build query
@@ -244,7 +245,11 @@ class CourseService:
         
         if is_free is not None:
             query_conditions.append(Course.pricing.is_free == is_free)
-        
+
+        # Language filter
+        if language:
+            query_conditions.append(Course.language == language)
+
         # Text search
         if search:
             # MongoDB text search would be better, but for now use regex
@@ -559,6 +564,10 @@ class CourseService:
         # Check thumbnail
         if not course.thumbnail:
             errors.append("Please upload a course thumbnail before publishing")
+
+        # Check language is set
+        if not course.language or course.language not in ['vi', 'en']:
+            errors.append("Please select a course language (Vietnamese or English)")
 
         # Check duration
         if course.total_duration == 0:

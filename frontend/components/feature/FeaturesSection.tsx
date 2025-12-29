@@ -2,12 +2,14 @@
 
 import React from 'react'
 import { GraduationCap, Bot, TrendingUp, LucideIcon } from 'lucide-react'
+import { useI18n } from '@/lib/i18n/context'
+import { TranslationKey } from '@/lib/i18n/utils'
 
 interface Feature {
   id: number
   icon: LucideIcon
-  title: string
-  description: string
+  titleKey: TranslationKey
+  descriptionKey: TranslationKey
   iconBg: string
   iconColor: string
 }
@@ -16,30 +18,32 @@ const features: Feature[] = [
   {
     id: 1,
     icon: GraduationCap,
-    title: 'Quality Courses',
-    description: 'Learn from expert creators with structured video content',
+    titleKey: 'homepage.featureQualityCourses',
+    descriptionKey: 'homepage.featureQualityCoursesDesc',
     iconBg: 'bg-blue-100',
     iconColor: 'text-blue-600'
   },
   {
     id: 2,
     icon: Bot,
-    title: 'AI Study Buddy',
-    description: 'Get instant help from our intelligent AI assistant 24/7',
+    titleKey: 'homepage.featureAIBuddy',
+    descriptionKey: 'homepage.featureAIBuddyDesc',
     iconBg: 'bg-purple-100',
     iconColor: 'text-purple-600'
   },
   {
     id: 3,
     icon: TrendingUp,
-    title: 'Track Progress',
-    description: 'Monitor your learning journey and earn certificates',
+    titleKey: 'homepage.featureTrackProgress',
+    descriptionKey: 'homepage.featureTrackProgressDesc',
     iconBg: 'bg-green-100',
     iconColor: 'text-green-600'
   }
 ]
 
 export function FeaturesSection() {
+  const { t } = useI18n()
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {features.map((feature) => {
@@ -57,10 +61,10 @@ export function FeaturesSection() {
 
             {/* Content */}
             <h3 className="text-xl font-semibold mb-2">
-              {feature.title}
+              {t(feature.titleKey)}
             </h3>
             <p className="text-muted-foreground">
-              {feature.description}
+              {t(feature.descriptionKey)}
             </p>
           </div>
         )

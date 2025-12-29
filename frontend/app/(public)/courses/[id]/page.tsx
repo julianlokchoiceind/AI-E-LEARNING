@@ -21,10 +21,12 @@ import { InlineMessage } from '@/components/ui/InlineMessage';
 import { Course, Chapter, Lesson } from '@/lib/types/course';
 import { Container } from '@/components/ui/Container';
 import { SkeletonBox, SkeletonCircle, EmptyState, ErrorState } from '@/components/ui/LoadingStates';
+import { useI18n } from '@/lib/i18n/context';
 
 const CourseDetailPage = () => {
   const params = useParams();
   const router = useRouter();
+  const { t } = useI18n();
   const { user, loading: authLoading } = useAuth();
   const courseId = params.id as string;
   const isCreatorOrAdmin = user?.role === 'creator' || user?.role === 'admin';
@@ -118,7 +120,7 @@ const CourseDetailPage = () => {
         {
           onSuccess: (response) => {
             // Show success message with inline feedback
-            courseEnrollmentMessage.showSuccess('Successfully enrolled! Redirecting to first lesson...');
+            courseEnrollmentMessage.showSuccess(t('courseDetail.enrollSuccess'));
             
             // React Query will automatically invalidate and refetch enrollment data
             // Check if the enrollment response has progress information
@@ -138,7 +140,7 @@ const CourseDetailPage = () => {
           onError: (error: any) => {
             // If "already enrolled" error → treat as success and redirect
             if (error.message?.includes('already enrolled')) {
-              courseEnrollmentMessage.showSuccess('You\'re already enrolled! Redirecting to continue learning...');
+              courseEnrollmentMessage.showSuccess(t('courseDetail.alreadyEnrolled'));
               
               // Use 3-level fallback: continue_lesson_id → current_lesson_id → first lesson
               if (course?.continue_lesson_id) {
@@ -157,7 +159,7 @@ const CourseDetailPage = () => {
               return;
             }
             console.error('Failed to enroll:', error);
-            courseEnrollmentMessage.showError(error.message || 'Failed to enroll in course. Please try again.');
+            courseEnrollmentMessage.showError(error.message || t('courseDetail.enrollFailed'));
           },
         }
       );
@@ -260,10 +262,10 @@ const CourseDetailPage = () => {
     return (
       <Container variant="public">
         <ErrorState
-          title="Course not found"
-          description="The course you're looking for doesn't exist or has been removed."
+          title={t('courseDetail.courseNotFound')}
+          description={t('courseDetail.courseNotFoundDesc')}
           action={{
-            label: 'Browse Courses',
+            label: t('courseDetail.browseCourses'),
             onClick: () => router.push('/courses'),
           }}
         />
@@ -293,7 +295,7 @@ const CourseDetailPage = () => {
               {/* Breadcrumb */}
               <nav className="mb-4 text-sm">
                 <a href="/courses" className="hover:underline">
-                  Courses
+                  {t('courseDetail.breadcrumbCourses')}
                 </a>
                 <span className="mx-2">/</span>
                 <span>{course.category}</span>
@@ -315,19 +317,19 @@ const CourseDetailPage = () => {
 
                 <div className="flex items-center gap-1">
                   <BookOpen className="w-5 h-5" />
-                  <span>{course.total_lessons} lessons</span>
+                  <span>{course.total_lessons} {t('courseDetail.lessons')}</span>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <Users className="w-5 h-5" />
-                  <span>{course.stats.total_enrollments} students</span>
+                  <span>{course.stats.total_enrollments} {t('courseDetail.students')}</span>
                 </div>
 
                 {/* Like count - social proof */}
                 {(course.stats.total_likes ?? 0) > 0 && (
                   <div className="flex items-center gap-1">
                     <ThumbsUp className="w-5 h-5" />
-                    <span>{course.stats.total_likes} likes</span>
+                    <span>{course.stats.total_likes} {t('courseDetail.likes')}</span>
                   </div>
                 )}
               </div>
@@ -348,12 +350,12 @@ const CourseDetailPage = () => {
                     ))}
                   </div>
                   <span className="font-semibold">{course.stats.average_rating.toFixed(1)}</span>
-                  <span>({course.stats.total_reviews} reviews)</span>
+                  <span>({course.stats.total_reviews} {t('courseDetail.reviews')})</span>
                 </div>
               )}
 
               <p className="text-lg">
-                Created by <span className="font-semibold">{course.creator_name}</span>
+                {t('courseDetail.createdBy')} <span className="font-semibold">{course.creator_name}</span>
               </p>
             </div>
 
@@ -377,7 +379,7 @@ const CourseDetailPage = () => {
                   <div className="w-full h-48 bg-muted rounded-lg mb-6 flex items-center justify-center">
                     <div className="text-center text-muted-foreground">
                       <PlayCircle className="w-12 h-12 mx-auto mb-2" />
-                      <p className="text-sm">No preview available</p>
+                      <p className="text-sm">{t('courseDetail.noPreviewAvailable')}</p>
                     </div>
                   </div>
                 )}
@@ -385,7 +387,7 @@ const CourseDetailPage = () => {
                 {/* Price */}
                 <div className="mb-6">
                   {course.pricing.is_free ? (
-                    <div className="text-3xl font-bold text-success">Free</div>
+                    <div className="text-3xl font-bold text-success">{t('courseDetail.free')}</div>
                   ) : (
                     <div>
                       {course.pricing.discount_price ? (
@@ -416,8 +418,8 @@ const CourseDetailPage = () => {
                       {checkingEnrollment
                         ? <LoadingSpinner size="sm" />
                         : course.pricing.is_free
-                          ? 'Enroll for Free'
-                          : 'Enroll Now'}
+                          ? t('courseDetail.enrollForFree')
+                          : t('courseDetail.enrollNow')}
                     </Button>
                   ) : (
                     <Button
@@ -454,32 +456,32 @@ const CourseDetailPage = () => {
                       size="lg"
                     >
                       {course.progress_percentage && course.progress_percentage >= 95
-                        ? 'Review Course'
+                        ? t('courseDetail.reviewCourse')
                         : course.continue_lesson_id || course.current_lesson_id || (course.progress_percentage && course.progress_percentage > 0)
-                        ? 'Continue Learning'
-                        : 'Start Learning'}
+                        ? t('courseDetail.continueLearning')
+                        : t('courseDetail.startLearning')}
                     </Button>
                   )
                 )}
 
                 {/* Course Includes */}
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-lg mb-2">This course includes:</h3>
+                  <h3 className="font-semibold text-lg mb-2">{t('courseDetail.courseIncludes')}</h3>
                   <div className="flex items-center gap-2 text-sm">
                     <PlayCircle className="w-4 h-4 text-muted-foreground" />
-                    <span>{formatDuration(course.total_duration)} on-demand video</span>
+                    <span>{formatDuration(course.total_duration)} {t('courseDetail.onDemandVideo')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <BookOpen className="w-4 h-4 text-muted-foreground" />
-                    <span>{course.total_lessons} lessons</span>
+                    <span>{course.total_lessons} {t('courseDetail.lessons')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Check className="w-4 h-4 text-muted-foreground" />
-                    <span>Full lifetime access</span>
+                    <span>{t('courseDetail.fullLifetimeAccess')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Check className="w-4 h-4 text-muted-foreground" />
-                    <span>Certificate of completion</span>
+                    <span>{t('courseDetail.certificateOfCompletion')}</span>
                   </div>
                 </div>
               </Card>
@@ -497,13 +499,13 @@ const CourseDetailPage = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-4 capitalize font-medium transition-colors ${
+                className={`pb-4 font-medium transition-colors ${
                   activeTab === tab
                     ? 'text-primary border-b-2 border-primary'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {tab}
+                {t(`courseDetail.tab${tab.charAt(0).toUpperCase() + tab.slice(1)}` as any)}
               </button>
             ))}
           </nav>
@@ -513,7 +515,7 @@ const CourseDetailPage = () => {
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <h2 className="text-2xl font-bold mb-4">What you'll learn</h2>
+              <h2 className="text-2xl font-bold mb-4">{t('courseDetail.whatYoullLearn')}</h2>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
                 {course.syllabus?.map((item: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
@@ -523,7 +525,7 @@ const CourseDetailPage = () => {
                 ))}
               </ul>
 
-              <h2 className="text-2xl font-bold mb-4">Requirements</h2>
+              <h2 className="text-2xl font-bold mb-4">{t('courseDetail.requirements')}</h2>
               <ul className="space-y-2 mb-8">
                 {course.prerequisites?.map((item: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
@@ -533,7 +535,7 @@ const CourseDetailPage = () => {
                 ))}
               </ul>
 
-              <h2 className="text-2xl font-bold mb-4">Who this course is for</h2>
+              <h2 className="text-2xl font-bold mb-4">{t('courseDetail.whoThisCourseIsFor')}</h2>
               <ul className="space-y-2">
                 {course.target_audience?.map((item: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
@@ -548,11 +550,11 @@ const CourseDetailPage = () => {
 
         {activeTab === 'curriculum' && (
           <div>
-            <h2 className="text-2xl font-bold mb-6">Course Curriculum</h2>
+            <h2 className="text-2xl font-bold mb-6">{t('courseDetail.courseCurriculum')}</h2>
             {chapters.length === 0 ? (
               <div className="text-muted-foreground text-center py-8">
-                <p>No curriculum available yet.</p>
-                <p className="text-sm mt-2">Chapters and lessons will appear here once added.</p>
+                <p>{t('courseDetail.noCurriculumYet')}</p>
+                <p className="text-sm mt-2">{t('courseDetail.curriculumComingSoon')}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -561,7 +563,7 @@ const CourseDetailPage = () => {
                     <div className="p-4 bg-muted">
                       <h3 className="font-semibold text-lg">{chapter.title}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {chapter.total_lessons} lessons • {formatDuration(chapter.total_duration)}
+                        {chapter.total_lessons} {t('courseDetail.lessons')} • {formatDuration(chapter.total_duration)}
                       </p>
                     </div>
                     <div className="divide-y">
@@ -584,10 +586,10 @@ const CourseDetailPage = () => {
                                 <span>
                                   {formatDuration(Math.floor(lesson.video.duration / 60))}
                                 </span>
-                                {lesson.has_quiz && <span>• Quiz</span>}
+                                {lesson.has_quiz && <span>• {t('courseDetail.quiz')}</span>}
                                 {lesson.is_free_preview && (
                                   <Badge variant="outline" className="text-xs">
-                                    Preview
+                                    {t('courseDetail.preview')}
                                   </Badge>
                                 )}
                               </div>
@@ -599,7 +601,7 @@ const CourseDetailPage = () => {
                               size="sm"
                               onClick={() => router.push(`/preview/${courseId}/${lesson.id}`)}
                             >
-                              Preview
+                              {t('courseDetail.preview')}
                             </Button>
                           )}
                         </div>
@@ -614,16 +616,15 @@ const CourseDetailPage = () => {
 
         {activeTab === 'creator' && (
           <div>
-            <h2 className="text-2xl font-bold mb-6">About the Creator</h2>
+            <h2 className="text-2xl font-bold mb-6">{t('courseDetail.aboutCreator')}</h2>
             <Card className="p-6">
               <div className="flex items-start gap-4">
                 <div className="w-20 h-20 bg-muted rounded-full flex-shrink-0"></div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2">{course.creator_name}</h3>
-                  <p className="text-muted-foreground mb-4">AI/ML Expert & Educator</p>
+                  <p className="text-muted-foreground mb-4">{t('courseDetail.creatorTitle')}</p>
                   <p className="text-foreground">
-                    Experienced creator with expertise in AI and machine learning. Passionate about
-                    teaching and helping students master complex concepts.
+                    {t('courseDetail.creatorDescription')}
                   </p>
                 </div>
               </div>

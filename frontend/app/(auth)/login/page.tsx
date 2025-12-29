@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/Button'
 import { Container } from '@/components/ui/Container'
 import { useInlineMessage } from '@/hooks/useInlineMessage'
 import { InlineMessage } from '@/components/ui/InlineMessage'
+import { useI18n } from '@/lib/i18n/context'
 
 export default function LoginPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { t } = useI18n()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -26,25 +28,25 @@ export default function LoginPage() {
     // Check for error messages in URL params
     const error = searchParams.get('error')
     if (error === 'AccessDenied') {
-      showError('Your account has been deactivated')
+      showError(t('loginPage.accountDeactivated'))
     } else if (error) {
-      showError('Login failed. Please try again.')
+      showError(t('loginPage.loginFailed'))
     }
 
     // Check for success messages in URL params
     if (searchParams.get('registered') === 'true') {
-      showSuccess('Registration successful! Please check your email to verify your account before logging in.')
+      showSuccess(t('loginPage.registrationSuccess'))
     }
     if (searchParams.get('verified') === 'true') {
-      showSuccess('Email verified successfully! You can now log in to your account.')
+      showSuccess(t('loginPage.emailVerified'))
     }
     if (searchParams.get('reset') === 'true') {
-      showSuccess('Password reset successfully! You can now log in with your new password.')
+      showSuccess(t('loginPage.passwordResetSuccess'))
     }
     if (searchParams.get('message') === 'already_verified') {
-      showSuccess('Your email has already been verified. You can log in to your account.')
+      showSuccess(t('loginPage.emailAlreadyVerified'))
     }
-  }, [searchParams, showSuccess, showError])
+  }, [searchParams, showSuccess, showError, t])
 
   // Field validation function
   const validateForm = (): boolean => {
@@ -55,16 +57,16 @@ export default function LoginPage() {
 
     // Validate email
     if (!email.trim()) {
-      newErrors.email = 'Email is required'
+      newErrors.email = t('loginPage.emailRequired')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      newErrors.email = 'Please enter a valid email address'
+      newErrors.email = t('loginPage.emailInvalid')
     }
 
     // Validate password
     if (!password.trim()) {
-      newErrors.password = 'Password is required'
+      newErrors.password = t('loginPage.passwordRequired')
     } else if (password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters'
+      newErrors.password = t('loginPage.passwordMinLength')
     }
 
     setErrors(newErrors)
@@ -155,12 +157,12 @@ export default function LoginPage() {
         </div>
         
         <h2 className="text-center text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
-          Sign in
+          {t('loginPage.title')}
         </h2>
         <p className="mt-2 text-center text-sm text-white/95 mb-4 sm:mb-6">
-          Or{' '}
+          {t('loginPage.or')}{' '}
           <Link href="/register" className="glass-text font-medium hover:text-white/80">
-            create a new account
+            {t('loginPage.createAccount')}
           </Link>
         </p>
 
@@ -176,7 +178,7 @@ export default function LoginPage() {
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email" className="sr-only">
-                Email address
+                {t('loginPage.emailPlaceholder')}
               </label>
               <input
                 id="email"
@@ -189,7 +191,7 @@ export default function LoginPage() {
                 className={`glass-input appearance-none rounded-none relative block w-full px-3 py-2 placeholder-white/85 text-white rounded-t-md focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 focus:z-10 text-sm ${
                   errors.email ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
-                placeholder="Email address"
+                placeholder={t('loginPage.emailPlaceholder')}
               />
               {errors.email && (
                 <p className="mt-1 glass-error">{errors.email}</p>
@@ -197,7 +199,7 @@ export default function LoginPage() {
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
-                Password
+                {t('loginPage.passwordPlaceholder')}
               </label>
               <input
                 id="password"
@@ -210,7 +212,7 @@ export default function LoginPage() {
                 className={`glass-input appearance-none rounded-none relative block w-full px-3 py-2 placeholder-white/85 text-white rounded-b-md focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 focus:z-10 text-sm ${
                   errors.password ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
-                placeholder="Password"
+                placeholder={t('loginPage.passwordPlaceholder')}
               />
               {errors.password && (
                 <p className="mt-1 glass-error">{errors.password}</p>
@@ -221,7 +223,7 @@ export default function LoginPage() {
           {/* Forgot password */}
           <div className="text-left">
             <Link href="/forgot-password" className="glass-text text-xs font-medium hover:text-white/80">
-              Forgot your password?
+              {t('loginPage.forgotPassword')}
             </Link>
           </div>
 
@@ -232,13 +234,13 @@ export default function LoginPage() {
               className="glass-button w-full !bg-white/20 hover:!bg-white/30 !text-white !border-white/40"
               size="md"
             >
-              Sign in
+              {t('loginPage.signInButton')}
             </Button>
           </div>
 
           <div className="mt-8">
             <div className="text-center text-sm text-white/90">
-              Or continue with
+              {t('loginPage.orContinueWith')}
             </div>
 
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">

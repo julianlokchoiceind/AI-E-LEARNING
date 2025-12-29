@@ -12,9 +12,11 @@ import { registerUser } from '@/lib/api/auth'
 import { Container } from '@/components/ui/Container'
 import { useInlineMessage } from '@/hooks/useInlineMessage'
 import { InlineMessage } from '@/components/ui/InlineMessage'
+import { useI18n } from '@/lib/i18n/context'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { t } = useI18n()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -45,8 +47,8 @@ export default function RegisterPage() {
       showToast: false, // Disable automatic toast - use inline message instead
       onSuccess: (response) => {
         // Show success message
-        registerMessage.showSuccess(response.message || 'Registration successful! Redirecting to login...');
-        
+        registerMessage.showSuccess(response.message || t('registerPage.registrationSuccess'));
+
         // Clear form
         setFormData({
           name: '',
@@ -54,7 +56,7 @@ export default function RegisterPage() {
           password: '',
           confirmPassword: ''
         });
-        
+
         // Redirect to login after 2 seconds
         setTimeout(() => {
           router.push('/login?registered=true');
@@ -62,7 +64,7 @@ export default function RegisterPage() {
       },
       onError: (error: any) => {
         // Show error in inline message instead of toast for auth pages
-        registerMessage.showError(error.message || 'Registration failed. Please try again.');
+        registerMessage.showError(error.message || t('registerPage.registrationFailed'));
         console.error('Registration failed:', error);
       }
     }
@@ -92,43 +94,43 @@ export default function RegisterPage() {
     
     // Name validation
     if (!formData.name.trim()) {
-      newErrors.name = 'Full name is required'
+      newErrors.name = t('registerPage.fullNameRequired')
       hasErrors = true
     } else if (formData.name.trim().length < 2) {
-      newErrors.name = 'Full name must be at least 2 characters'
+      newErrors.name = t('registerPage.fullNameMinLength')
       hasErrors = true
     }
-    
+
     // Email validation
     if (!formData.email.trim()) {
-      newErrors.email = 'Email address is required'
+      newErrors.email = t('registerPage.emailRequired')
       hasErrors = true
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address'
+      newErrors.email = t('registerPage.emailInvalid')
       hasErrors = true
     }
-    
+
     // Password validation
     if (!formData.password) {
-      newErrors.password = 'Password is required'
+      newErrors.password = t('registerPage.passwordRequired')
       hasErrors = true
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters'
+      newErrors.password = t('registerPage.passwordMinLength')
       hasErrors = true
     } else if (!/^[A-Z]/.test(formData.password)) {
-      newErrors.password = 'Password must start with an uppercase letter'
+      newErrors.password = t('registerPage.passwordUppercase')
       hasErrors = true
     } else if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(formData.password)) {
-      newErrors.password = 'Password must contain at least one special character'
+      newErrors.password = t('registerPage.passwordSpecialChar')
       hasErrors = true
     }
 
     // Confirm password validation
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password'
+      newErrors.confirmPassword = t('registerPage.confirmPasswordRequired')
       hasErrors = true
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match'
+      newErrors.confirmPassword = t('registerPage.passwordsMustMatch')
       hasErrors = true
     }
     
@@ -171,12 +173,12 @@ export default function RegisterPage() {
         </div>
         
         <h2 className="text-center text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
-          Create your account
+          {t('registerPage.title')}
         </h2>
         <p className="mt-2 text-center text-xs sm:text-sm text-white/95 mb-4">
-          Or{' '}
+          {t('registerPage.or')}{' '}
           <Link href="/login" className="glass-text font-medium hover:text-white/80">
-            sign in to existing account
+            {t('registerPage.signInExisting')}
           </Link>
         </p>
 
@@ -194,7 +196,7 @@ export default function RegisterPage() {
           <div className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-white/95">
-                Full Name
+                {t('registerPage.fullNameLabel')}
               </label>
               <input
                 id="name"
@@ -213,7 +215,7 @@ export default function RegisterPage() {
                 className={`glass-input mt-1 appearance-none relative block w-full px-3 py-2 placeholder-white/85 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 focus:z-10 text-xs sm:text-sm ${
                   errors.name ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
-                placeholder="John Doe"
+                placeholder={t('registerPage.fullNamePlaceholder')}
               />
               {errors.name && (
                 <p className="mt-1 glass-error">{errors.name}</p>
@@ -222,7 +224,7 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-white/95">
-                Email Address
+                {t('registerPage.emailLabel')}
               </label>
               <input
                 id="email"
@@ -241,7 +243,7 @@ export default function RegisterPage() {
                 className={`glass-input mt-1 appearance-none relative block w-full px-3 py-2 placeholder-white/85 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 focus:z-10 text-xs sm:text-sm ${
                   errors.email ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
-                placeholder="john@example.com"
+                placeholder={t('registerPage.emailPlaceholder')}
               />
               {errors.email && (
                 <p className="mt-1 glass-error">{errors.email}</p>
@@ -250,7 +252,7 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-white/95">
-                Password
+                {t('registerPage.passwordLabel')}
               </label>
               <input
                 id="password"
@@ -269,7 +271,7 @@ export default function RegisterPage() {
                 className={`glass-input mt-1 appearance-none relative block w-full px-3 py-2 placeholder-white/85 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 focus:z-10 text-xs sm:text-sm ${
                   errors.password ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
-                placeholder="Start with uppercase + 8 chars + special char"
+                placeholder={t('registerPage.passwordPlaceholder')}
               />
               {errors.password && (
                 <p className="mt-1 glass-error">{errors.password}</p>
@@ -278,7 +280,7 @@ export default function RegisterPage() {
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/95">
-                Confirm Password
+                {t('registerPage.confirmPasswordLabel')}
               </label>
               <input
                 id="confirmPassword"
@@ -297,7 +299,7 @@ export default function RegisterPage() {
                 className={`glass-input mt-1 appearance-none relative block w-full px-3 py-2 placeholder-white/85 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 focus:z-10 text-xs sm:text-sm ${
                   errors.confirmPassword ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
-                placeholder="Confirm your password"
+                placeholder={t('registerPage.confirmPasswordPlaceholder')}
               />
               {errors.confirmPassword && (
                 <p className="mt-1 glass-error">{errors.confirmPassword}</p>
@@ -314,13 +316,13 @@ export default function RegisterPage() {
               className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
             />
             <label htmlFor="terms" className="ml-2 block text-[10px] sm:text-xs text-white/95 leading-tight">
-              I agree to the{' '}
+              {t('registerPage.termsAgreement')}{' '}
               <Link href="/terms" className="glass-text hover:text-white/80">
-                Terms of Service
+                {t('registerPage.termsOfService')}
               </Link>{' '}
-              and{' '}
+              {t('registerPage.and')}{' '}
               <Link href="/privacy" className="glass-text hover:text-white/80">
-                Privacy Policy
+                {t('registerPage.privacyPolicy')}
               </Link>
             </label>
           </div>
@@ -332,7 +334,7 @@ export default function RegisterPage() {
               className="glass-button w-full !bg-white/20 hover:!bg-white/30 !text-white !border-white/40"
               size="md"
             >
-              Create account
+              {t('registerPage.createAccountButton')}
             </Button>
           </div>
         </form>

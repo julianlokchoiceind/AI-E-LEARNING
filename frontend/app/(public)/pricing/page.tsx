@@ -14,6 +14,7 @@ import { PricingSection } from '@/components/feature/PricingSection';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { InlineMessage } from '@/components/ui/InlineMessage';
+import { useI18n } from '@/lib/i18n/context';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
@@ -22,6 +23,7 @@ const stripePromise = loadStripe(
 export default function PricingPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { t } = useI18n();
   const [isProcessing, setIsProcessing] = useState(false);
   const pricingLoginMessage = useInlineMessage('pricing-login-required');
   const pricingErrorMessage = useInlineMessage('pricing-error');
@@ -29,16 +31,16 @@ export default function PricingPage() {
   const handleProSubscription = async () => {
     pricingErrorMessage.clear();
     pricingLoginMessage.clear();
-    
+
     if (!user) {
-      pricingLoginMessage.showError('Please login to subscribe');
+      pricingLoginMessage.showError(t('pricing.loginToSubscribe'));
       setTimeout(() => router.push('/login'), 2000);
       return;
     }
 
     // Check premium status instead of subscription object
     if (user.premiumStatus) {
-      pricingErrorMessage.showSuccess('You already have premium access to all courses!');
+      pricingErrorMessage.showSuccess(t('pricing.alreadyPremium'));
       return;
     }
 
@@ -63,8 +65,8 @@ export default function PricingPage() {
     <div className="min-h-screen bg-muted">
       {/* Hero Section */}
       <HeroSection
-        title="Choose Your Learning Path"
-        subtitle="Flexible pricing options to match your learning needs"
+        title={t('pricing.heroTitle')}
+        subtitle={t('pricing.heroSubtitle')}
         align="center"
         size="md"
         backgroundImage="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1920&h=600&fit=crop"
@@ -93,8 +95,8 @@ export default function PricingPage() {
 
           {/* Use PricingSection Component */}
           <SectionHeader
-            title="Choose Your Learning Path"
-            subtitle="Select the plan that best fits your learning goals and budget"
+            title={t('pricing.sectionTitle')}
+            subtitle={t('pricing.sectionSubtitle')}
             align="left"
           />
           <PricingSection />
@@ -102,27 +104,27 @@ export default function PricingPage() {
 
         {/* FAQ Section */}
         <div className="mt-16">
-          <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-bold text-center mb-8">{t('pricing.faqTitle')}</h2>
 
           <div className="space-y-6">
             <div className="bg-white rounded-lg p-6 shadow-sm card-glow">
-              <h3 className="font-semibold text-lg mb-2">Can I switch between plans?</h3>
+              <h3 className="font-semibold text-lg mb-2">{t('pricing.faqSwitchPlans')}</h3>
               <p className="text-muted-foreground">
-                Yes! You can upgrade to Pro at any time. If you cancel Pro, you'll still have access until the end of your billing period.
+                {t('pricing.faqSwitchPlansAnswer')}
               </p>
             </div>
 
             <div className="bg-white rounded-lg p-6 shadow-sm card-glow">
-              <h3 className="font-semibold text-lg mb-2">What payment methods do you accept?</h3>
+              <h3 className="font-semibold text-lg mb-2">{t('pricing.faqPaymentMethods')}</h3>
               <p className="text-muted-foreground">
-                We accept all major credit cards, debit cards, and popular e-wallets through our secure payment processor Stripe.
+                {t('pricing.faqPaymentMethodsAnswer')}
               </p>
             </div>
 
             <div className="bg-white rounded-lg p-6 shadow-sm card-glow">
-              <h3 className="font-semibold text-lg mb-2">Is there a refund policy?</h3>
+              <h3 className="font-semibold text-lg mb-2">{t('pricing.faqRefundPolicy')}</h3>
               <p className="text-muted-foreground">
-                Yes, we offer a 14-day money-back guarantee for Pro subscriptions and individual course purchases if you're not satisfied.
+                {t('pricing.faqRefundPolicyAnswer')}
               </p>
             </div>
           </div>

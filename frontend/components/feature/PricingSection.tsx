@@ -1,73 +1,89 @@
 'use client';
 
-import { Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { useI18n } from '@/lib/i18n/context';
+import { TranslationKey } from '@/lib/i18n/utils';
 
-const plans = [
+interface PlanConfig {
+  nameKey: TranslationKey
+  priceKey: TranslationKey
+  periodKey: TranslationKey
+  descriptionKey: TranslationKey
+  featureKeys: TranslationKey[]
+  limitationKeys: TranslationKey[]
+  buttonKey: TranslationKey
+  buttonVariant: 'outline' | 'primary'
+  isPopular: boolean
+}
+
+const planConfigs: PlanConfig[] = [
   {
-    name: 'Free',
-    price: '$0',
-    period: '/month',
-    description: 'Get started with basics',
-    features: [
-      'Access to free courses',
-      'Basic AI assistant support',
-      'Course completion certificates'
+    nameKey: 'pricingPlans.freeName',
+    priceKey: 'pricingPlans.freePrice',
+    periodKey: 'pricingPlans.freePeriod',
+    descriptionKey: 'pricingPlans.freeDescription',
+    featureKeys: [
+      'pricingPlans.freeFeature1',
+      'pricingPlans.freeFeature2',
+      'pricingPlans.freeFeature3',
     ],
-    limitations: [
-      'Limited course access',
-      'Ads supported'
+    limitationKeys: [
+      'pricingPlans.freeLimitation1',
+      'pricingPlans.freeLimitation2',
     ],
-    buttonText: 'Current Plan',
-    buttonVariant: 'outline' as const,
+    buttonKey: 'pricingPlans.freeButton',
+    buttonVariant: 'outline',
     isPopular: false
   },
   {
-    name: 'Pro',
-    price: '$29',
-    period: '/month',
-    description: 'Everything you need to succeed',
-    features: [
-      'Unlimited access to all courses',
-      'Priority AI assistant support',
-      'Download courses for offline',
-      'Exclusive Pro content',
-      'Ad-free experience',
-      'Early access to new courses'
+    nameKey: 'pricingPlans.proName',
+    priceKey: 'pricingPlans.proPrice',
+    periodKey: 'pricingPlans.proPeriod',
+    descriptionKey: 'pricingPlans.proDescription',
+    featureKeys: [
+      'pricingPlans.proFeature1',
+      'pricingPlans.proFeature2',
+      'pricingPlans.proFeature3',
+      'pricingPlans.proFeature4',
+      'pricingPlans.proFeature5',
+      'pricingPlans.proFeature6',
     ],
-    limitations: [],
-    buttonText: 'Subscribe to Pro',
-    buttonVariant: 'primary' as const,
+    limitationKeys: [],
+    buttonKey: 'pricingPlans.proButton',
+    buttonVariant: 'primary',
     isPopular: true
   },
   {
-    name: 'Pay Per Course',
-    price: '$19-99',
-    period: '/course',
-    description: 'Choose what you learn',
-    features: [
-      'Lifetime access to purchased courses',
-      'Pay only for what you need',
-      'Course completion certificates',
-      'Basic AI assistant support'
+    nameKey: 'pricingPlans.payPerCourseName',
+    priceKey: 'pricingPlans.payPerCoursePrice',
+    periodKey: 'pricingPlans.payPerCoursePeriod',
+    descriptionKey: 'pricingPlans.payPerCourseDescription',
+    featureKeys: [
+      'pricingPlans.payPerCourseFeature1',
+      'pricingPlans.payPerCourseFeature2',
+      'pricingPlans.payPerCourseFeature3',
+      'pricingPlans.payPerCourseFeature4',
     ],
-    limitations: [
-      'No monthly commitment'
+    limitationKeys: [
+      'pricingPlans.payPerCourseLimitation',
     ],
-    buttonText: 'Browse Courses',
-    buttonVariant: 'outline' as const,
+    buttonKey: 'pricingPlans.payPerCourseButton',
+    buttonVariant: 'outline',
     isPopular: false
   }
 ];
 
 export function PricingSection() {
+  const { t } = useI18n()
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {plans.map((plan) => (
+          {planConfigs.map((plan, index) => (
             <Card
-              key={plan.name}
+              key={index}
               className={`relative p-6 ${
                 plan.isPopular ? 'border-primary shadow-lg' : 'border-border'
               }`}
@@ -76,7 +92,7 @@ export function PricingSection() {
               {plan.isPopular && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   <Badge variant="primary" className="px-4 py-1">
-                    Most Popular
+                    {t('pricingPlans.proPopular')}
                   </Badge>
                 </div>
               )}
@@ -84,34 +100,34 @@ export function PricingSection() {
               {/* Plan Header */}
               <div className="text-center mb-6">
                 <h3 className="text-xl font-bold text-foreground mb-2">
-                  {plan.name}
+                  {t(plan.nameKey)}
                 </h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  {plan.description}
+                  {t(plan.descriptionKey)}
                 </p>
                 <div className="flex items-baseline justify-center mb-4">
                   <span className="text-4xl font-bold text-foreground">
-                    {plan.price}
+                    {t(plan.priceKey)}
                   </span>
                   <span className="text-muted-foreground ml-1">
-                    {plan.period}
+                    {t(plan.periodKey)}
                   </span>
                 </div>
               </div>
 
               {/* Features */}
               <div className="mb-6">
-                {plan.features.map((feature, index) => (
-                  <div key={index} className="flex items-center mb-2">
+                {plan.featureKeys.map((featureKey, featureIndex) => (
+                  <div key={featureIndex} className="flex items-center mb-2">
                     <Check className="w-4 h-4 text-success mr-3 flex-shrink-0" />
-                    <span className="text-sm text-foreground">{feature}</span>
+                    <span className="text-sm text-foreground">{t(featureKey)}</span>
                   </div>
                 ))}
 
-                {plan.limitations.map((limitation, index) => (
-                  <div key={index} className="flex items-center mb-2">
+                {plan.limitationKeys.map((limitationKey, limitationIndex) => (
+                  <div key={limitationIndex} className="flex items-center mb-2">
                     <div className="w-4 h-4 rounded-full border-2 border-muted-foreground mr-3 flex-shrink-0" />
-                    <span className="text-sm text-muted-foreground">{limitation}</span>
+                    <span className="text-sm text-muted-foreground">{t(limitationKey)}</span>
                   </div>
                 ))}
               </div>
@@ -120,9 +136,9 @@ export function PricingSection() {
               <Button
                 variant={plan.buttonVariant}
                 className="w-full"
-                disabled={plan.name === 'Free'}
+                disabled={index === 0}
               >
-                {plan.buttonText}
+                {t(plan.buttonKey)}
               </Button>
             </Card>
           ))}

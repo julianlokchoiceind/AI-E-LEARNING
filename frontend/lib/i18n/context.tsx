@@ -1,12 +1,27 @@
 'use client';
 
+/**
+ * I18n Context - Client-side Implementation
+ *
+ * Current approach: Client-side only (localStorage-based)
+ * - Locale stored in localStorage
+ * - No URL changes when switching language
+ * - Works well for authenticated apps
+ *
+ * To upgrade to URL-based (/vi/, /en/):
+ * 1. Create middleware.ts for locale detection
+ * 2. Move pages to /app/[locale]/ structure
+ * 3. Pass initialLocale from [locale]/layout.tsx
+ * 4. Change setLocale to use router.push(`/${newLocale}${pathname}`)
+ * 5. Remove localStorage dependency
+ */
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { 
-  Locale, 
-  DEFAULT_LOCALE, 
+import {
+  Locale,
+  DEFAULT_LOCALE,
   isValidLocale,
-  getLocaleFromPath,
   getPathnameWithoutLocale,
   getLocalizedPath
 } from './config';
@@ -30,69 +45,61 @@ interface I18nProviderProps {
 }
 
 export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
+  // Keep router and pathname for useLocalizedRouter hook
   const router = useRouter();
   const pathname = usePathname();
-  
-  // Initialize locale from URL path or initialLocale or localStorage or default
+
+  // Initialize locale from initialLocale or localStorage or default
+  // Note: Using client-side only i18n (no URL-based routing)
   const [locale, setLocaleState] = useState<Locale>(() => {
     if (initialLocale && isValidLocale(initialLocale)) {
       return initialLocale;
     }
-    
-    // Try to get from URL path
-    const pathLocale = getLocaleFromPath(pathname);
-    if (pathLocale !== DEFAULT_LOCALE) {
-      return pathLocale;
-    }
-    
+
     // Try to get from localStorage (browser only)
     if (typeof window !== 'undefined') {
       const savedLocale = localStorage.getItem('locale');
       if (savedLocale && isValidLocale(savedLocale)) {
         return savedLocale;
       }
-      
+
       // Try to get from browser language
       const browserLocale = navigator.language.split('-')[0];
       if (isValidLocale(browserLocale)) {
         return browserLocale;
       }
     }
-    
+
     return DEFAULT_LOCALE;
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
 
-  // Update URL and localStorage when locale changes
+  // Client-side only locale change (no URL navigation)
   const setLocale = (newLocale: Locale) => {
     if (newLocale === locale) return;
-    
+
     setIsLoading(true);
     setLocaleState(newLocale);
-    
+
     // Save to localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('locale', newLocale);
     }
-    
-    // Update URL path
-    const currentPathWithoutLocale = getPathnameWithoutLocale(pathname);
-    const newPath = getLocalizedPath(currentPathWithoutLocale, newLocale);
-    
-    // Use router.push for navigation
-    router.push(newPath);
-    
+
+    // No URL change - just update state and localStorage
+    // The page will re-render with new translations
+
     setTimeout(() => setIsLoading(false), 100);
   };
 
-  // Sync locale with URL path changes
+  // Load locale from localStorage on mount (hydration fix)
   useEffect(() => {
-    const pathLocale = getLocaleFromPath(pathname);
-    if (pathLocale !== locale) {
-      setLocaleState(pathLocale);
+    const savedLocale = localStorage.getItem('locale');
+    if (savedLocale && isValidLocale(savedLocale) && savedLocale !== locale) {
+      setLocaleState(savedLocale);
     }
-  }, [pathname, locale]);
+  }, []);
 
   // Translation function bound to current locale
   const translate = (key: TranslationKey, values?: Record<string, string | number>) => {

@@ -14,10 +14,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { Course, Lesson } from '@/lib/types/course';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Container } from '@/components/ui/Container';
+import { useI18n } from '@/lib/i18n/context';
 
 const PreviewLessonPage = () => {
   const params = useParams();
   const router = useRouter();
+  const { t } = useI18n();
   const { user } = useAuth();
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
@@ -41,9 +43,9 @@ const PreviewLessonPage = () => {
   const loading = courseLoading || lessonLoading;
 
   // Handle errors
-  const error = courseError || lessonError || 
+  const error = courseError || lessonError ||
     (lessonResponse && !lessonResponse.success ? lessonResponse.message : null) ||
-    (lesson && !lesson.is_free_preview ? 'This lesson is not available for preview' : null);
+    (lesson && !lesson.is_free_preview ? t('lessonPreview.notAvailableForPreview') : null);
 
   const handleEnrollClick = () => {
     if (!user) {
@@ -72,10 +74,10 @@ const PreviewLessonPage = () => {
     return (
       <div className="min-h-screen bg-muted/50 flex items-center justify-center">
         <ErrorState
-          title={typeof error === 'string' ? error : 'Preview Not Available'}
-          description="This lesson preview is not available or the lesson was not found."
+          title={typeof error === 'string' ? error : t('lessonPreview.previewNotAvailable')}
+          description={t('lessonPreview.previewNotAvailableDesc')}
           action={{
-            label: 'View Course Details',
+            label: t('lessonPreview.viewCourseDetails'),
             onClick: () => router.push(`/courses/${courseId}`)
           }}
         />
@@ -96,7 +98,7 @@ const PreviewLessonPage = () => {
                 onClick={() => router.push(`/courses/${courseId}`)}
                 className="flex items-center gap-2"
               >
-                Back to Course
+                {t('lessonPreview.backToCourse')}
               </Button>
               
               <div className="hidden md:block">
@@ -107,11 +109,11 @@ const PreviewLessonPage = () => {
 
             <div className="flex items-center gap-4">
               <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                Preview Mode
+                {t('lessonPreview.previewMode')}
               </Badge>
-              
+
               <Button onClick={handleEnrollClick}>
-                {course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now'}
+                {course.pricing.is_free ? t('lessonPreview.enrollForFree') : t('lessonPreview.enrollNow')}
               </Button>
             </div>
           </div>
@@ -142,7 +144,7 @@ const PreviewLessonPage = () => {
                       <span>{formatDuration(lesson.video?.duration || 0)}</span>
                     </div>
                     <Badge variant="outline" className="bg-success/10 text-success border-success/30">
-                      Free Preview
+                      {t('lessonPreview.freePreview')}
                     </Badge>
                   </div>
                 </div>
@@ -154,7 +156,7 @@ const PreviewLessonPage = () => {
 
               {lesson.content && (
                 <div>
-                  <h3 className="font-semibold mb-3">Lesson Notes</h3>
+                  <h3 className="font-semibold mb-3">{t('lessonPreview.lessonNotes')}</h3>
                   <div className="prose prose-sm max-w-none text-foreground">
                     {lesson.content}
                   </div>
@@ -167,7 +169,7 @@ const PreviewLessonPage = () => {
               <Card className="p-6">
                 <h3 className="font-semibold mb-4 flex items-center gap-2">
                   <BookOpen className="w-5 h-5" />
-                  Lesson Resources
+                  {t('lessonPreview.lessonResources')}
                 </h3>
                 <div className="space-y-3">
                   {lesson.resources.map((resource: any, index: number) => (
@@ -183,7 +185,7 @@ const PreviewLessonPage = () => {
                         size="sm"
                         onClick={() => window.open(getAttachmentUrl(resource.url), '_blank')}
                       >
-                        Download
+                        {t('lessonPreview.download')}
                       </Button>
                     </div>
                   ))}
@@ -200,52 +202,52 @@ const PreviewLessonPage = () => {
                 <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <PlayCircle className="w-8 h-8 text-primary" />
                 </div>
-                
-                <h3 className="font-semibold mb-2">Ready to learn more?</h3>
+
+                <h3 className="font-semibold mb-2">{t('lessonPreview.readyToLearn')}</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  This is just a preview. Enroll to access all {course.total_lessons} lessons and earn your certificate.
+                  {t('lessonPreview.previewMessage').replace('{count}', String(course.total_lessons))}
                 </p>
-                
+
                 <div className="mb-4">
                   {course.pricing.is_free ? (
-                    <div className="text-2xl font-bold text-success">Free</div>
+                    <div className="text-2xl font-bold text-success">{t('lessonPreview.free')}</div>
                   ) : (
                     <div className="text-2xl font-bold">${course.pricing.price}</div>
                   )}
                 </div>
-                
-                <Button 
+
+                <Button
                   onClick={handleEnrollClick}
                   className="w-full"
                 >
-                  {course.pricing.is_free ? 'Enroll for Free' : 'Enroll Now'}
+                  {course.pricing.is_free ? t('lessonPreview.enrollForFree') : t('lessonPreview.enrollNow')}
                 </Button>
               </div>
             </Card>
 
             {/* Course Stats */}
             <Card className="p-6">
-              <h3 className="font-semibold mb-4">Course Info</h3>
+              <h3 className="font-semibold mb-4">{t('lessonPreview.courseInfo')}</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total Lessons:</span>
+                  <span className="text-muted-foreground">{t('lessonPreview.totalLessons')}:</span>
                   <span className="font-medium">{course.total_lessons}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Duration:</span>
+                  <span className="text-muted-foreground">{t('lessonPreview.duration')}:</span>
                   <span className="font-medium">{Math.floor(course.total_duration / 60)}h</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Level:</span>
+                  <span className="text-muted-foreground">{t('lessonPreview.level')}:</span>
                   <span className="font-medium capitalize">{course.level}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Students:</span>
+                  <span className="text-muted-foreground">{t('lessonPreview.students')}:</span>
                   <span className="font-medium">{course.stats.total_enrollments}</span>
                 </div>
                 {course.stats.average_rating > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Rating:</span>
+                    <span className="text-muted-foreground">{t('lessonPreview.rating')}:</span>
                     <span className="font-medium">{course.stats.average_rating.toFixed(1)}/5</span>
                   </div>
                 )}

@@ -3,14 +3,16 @@
 import { Metadata } from 'next'
 import { Container } from '@/components/ui/Container'
 import { HeroSection } from '@/components/ui/HeroSection'
+import { useI18n } from '@/lib/i18n/context'
 
 export default function AboutPage() {
+  const { t } = useI18n()
   return (
     <div className="min-h-screen bg-muted">
       {/* Hero Section */}
       <HeroSection
-        title="About AI E-Learning Platform"
-        subtitle="Empowering developers to master AI/ML through high-quality video courses and intelligent AI assistants"
+        title={t('about.heroTitle')}
+        subtitle={t('about.heroSubtitle')}
         align="center"
         size="md"
         backgroundImage="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1920&h=600&fit=crop"
@@ -23,50 +25,47 @@ export default function AboutPage() {
           <div className="prose prose-lg mx-auto">
 
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
+              <h2 className="text-2xl font-semibold mb-4">{t('about.missionTitle')}</h2>
               <p>
-                We believe that artificial intelligence education should be accessible, 
-                practical, and engaging. Our platform combines expert-led video content 
-                with cutting-edge AI assistance to create the most effective learning 
-                experience for developers.
+                {t('about.missionDescription')}
               </p>
             </section>
 
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-4">What Makes Us Different</h2>
+              <h2 className="text-2xl font-semibold mb-4">{t('about.differentTitle')}</h2>
               <div className="grid md:grid-cols-2 gap-6 not-prose">
                 <div className="bg-white p-6 rounded-lg shadow-sm card-glow">
-                  <h3 className="text-lg font-semibold mb-2">🤖 AI Study Buddy</h3>
+                  <h3 className="text-lg font-semibold mb-2">🤖 {t('about.featureAI')}</h3>
                   <p className="text-muted-foreground">
-                    Get instant help from our Claude 3.5 Sonnet AI assistant 24/7
+                    {t('about.featureAIDesc')}
                   </p>
                 </div>
                 <div className="bg-white p-6 rounded-lg shadow-sm card-glow">
-                  <h3 className="text-lg font-semibold mb-2">🎓 Expert Content</h3>
+                  <h3 className="text-lg font-semibold mb-2">🎓 {t('about.featureExpert')}</h3>
                   <p className="text-muted-foreground">
-                    Learn from industry professionals with real-world experience
+                    {t('about.featureExpertDesc')}
                   </p>
                 </div>
                 <div className="bg-white p-6 rounded-lg shadow-sm card-glow">
-                  <h3 className="text-lg font-semibold mb-2">📈 Progress Tracking</h3>
+                  <h3 className="text-lg font-semibold mb-2">📈 {t('about.featureProgress')}</h3>
                   <p className="text-muted-foreground">
-                    Monitor your learning journey with detailed analytics
+                    {t('about.featureProgressDesc')}
                   </p>
                 </div>
                 <div className="bg-white p-6 rounded-lg shadow-sm card-glow">
-                  <h3 className="text-lg font-semibold mb-2">🇻🇳 Vietnamese Focus</h3>
+                  <h3 className="text-lg font-semibold mb-2">🇻🇳 {t('about.featureVietnam')}</h3>
                   <p className="text-muted-foreground">
-                    Content optimized for Vietnamese developers and market
+                    {t('about.featureVietnamDesc')}
                   </p>
                 </div>
               </div>
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4">Contact Us</h2>
+              <h2 className="text-2xl font-semibold mb-4">{t('about.contactTitle')}</h2>
               <p>
-                Have questions? We'd love to hear from you. Reach out to our team 
-                at <a href="mailto:info@ai-elearning.com" className="text-primary">
+                {t('about.contactDescription')}{' '}
+                <a href="mailto:info@ai-elearning.com" className="text-primary">
                 info@ai-elearning.com</a>
               </p>
             </section>

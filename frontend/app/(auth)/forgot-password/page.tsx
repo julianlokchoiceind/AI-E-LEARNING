@@ -10,9 +10,11 @@ import { forgotPassword } from '@/lib/api/auth'
 import { Container } from '@/components/ui/Container'
 import { useInlineMessage } from '@/hooks/useInlineMessage'
 import { InlineMessage } from '@/components/ui/InlineMessage'
+import { useI18n } from '@/lib/i18n/context'
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
+  const { t } = useI18n()
   const [email, setEmail] = useState('')
   const [success, setSuccess] = useState(false)
   const [emailError, setEmailError] = useState('')
@@ -25,35 +27,35 @@ export default function ForgotPasswordPage() {
       operationName: 'forgot-password', // For toast deduplication
       showToast: false, // Disable automatic toast - use inline message instead
       onSuccess: (response) => {
-        const message = response.message || 'Password reset email sent! Please check your inbox.';
+        const message = response.message || t('forgotPasswordPage.successMessage');
         forgotPasswordMessage.showSuccess(message);
         setSuccess(true);
       },
       onError: (error: any) => {
-        forgotPasswordMessage.showError(error.message || 'Failed to send reset email. Please try again.');
+        forgotPasswordMessage.showError(error.message || t('forgotPasswordPage.sendFailed'));
         console.error('Forgot password failed:', error);
       }
     }
   )
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Clear previous errors
     setEmailError('')
     forgotPasswordMessage.clear()
-    
+
     // Validate email
     if (!email) {
-      setEmailError('Email is required')
+      setEmailError(t('forgotPasswordPage.emailRequired'))
       return
     }
-    
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError('Please enter a valid email address')
+      setEmailError(t('forgotPasswordPage.emailInvalid'))
       return
     }
-    
+
     // React Query mutation handles API call with automatic error handling
     sendResetEmail(email)
   }
@@ -75,10 +77,10 @@ export default function ForgotPasswordPage() {
       >
           <div className="text-center">
             <h2 className="text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg mb-4">
-              Check your email
+              {t('forgotPasswordPage.checkEmailTitle')}
             </h2>
             <p className="text-xs sm:text-sm text-white/95">
-              If an account exists for {email}, you will receive a password reset link.
+              {t('forgotPasswordPage.checkEmailMessage').replace('{email}', email)}
             </p>
           </div>
 
@@ -93,7 +95,7 @@ export default function ForgotPasswordPage() {
 
           <div className="text-center">
             <Link href="/login" className="glass-text font-medium hover:text-white/80">
-              Back to login
+              {t('forgotPasswordPage.backToLogin')}
             </Link>
           </div>
         </Container>
@@ -129,10 +131,10 @@ export default function ForgotPasswordPage() {
         </div>
 
         <h2 className="text-center text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
-          Forgot your password?
+          {t('forgotPasswordPage.title')}
         </h2>
         <p className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-white/95 mb-4 sm:mb-6">
-          Enter your email address and we'll send you a link to reset your password.
+          {t('forgotPasswordPage.subtitle')}
         </p>
 
         {/* Page-level messages */}
@@ -149,7 +151,7 @@ export default function ForgotPasswordPage() {
 
           <div>
             <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-white/95">
-              Email address
+              {t('forgotPasswordPage.emailLabel')}
             </label>
             <div className="mt-1">
               <input
@@ -169,7 +171,7 @@ export default function ForgotPasswordPage() {
                 className={`glass-input appearance-none block w-full px-3 py-2 rounded-md placeholder-white/85 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 text-xs sm:text-sm ${
                   emailError ? '!border-red-500 !bg-red-500/20' : ''
                 }`}
-                placeholder="Enter your email"
+                placeholder={t('forgotPasswordPage.emailPlaceholder')}
               />
               {emailError && (
                 <p className="mt-1 glass-error">{emailError}</p>
@@ -183,16 +185,16 @@ export default function ForgotPasswordPage() {
               loading={loading}
               className="glass-button w-full !bg-white/20 hover:!bg-white/30 !text-white !border-white/40"
             >
-              Send reset email
+              {t('forgotPasswordPage.sendResetButton')}
             </Button>
           </div>
           
           <div className="flex items-center justify-between">
             <Link href="/login" className="glass-text text-xs font-medium hover:text-white/80">
-              Back to login
+              {t('forgotPasswordPage.backToLogin')}
             </Link>
             <Link href="/register" className="glass-text text-xs font-medium hover:text-white/80">
-              Create new account
+              {t('forgotPasswordPage.createNewAccount')}
             </Link>
           </div>
         </form>

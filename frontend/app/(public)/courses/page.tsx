@@ -11,9 +11,11 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { useCoursesQuery } from '@/hooks/queries/useCourses';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useI18n } from '@/lib/i18n/context';
 
 const CourseCatalogPage = () => {
   const searchParams = useSearchParams();
+  const { t, locale } = useI18n();
 
   // UI state only - data fetching handled by React Query
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,21 +34,23 @@ const CourseCatalogPage = () => {
     setSelectedCategory(categoryFromUrl);
   }, [searchParams]);
 
-  // Reset display count when filters change
+  // Reset display count when filters change (including locale)
   React.useEffect(() => {
     setDisplayCount(COURSES_PER_PAGE);
-  }, [selectedCategory, selectedLevel, priceFilter, sortBy, searchQuery]);
+  }, [selectedCategory, selectedLevel, priceFilter, sortBy, searchQuery, locale]);
   
   const { user } = useAuth();
   const router = useRouter();
   
   // React Query hooks - automatic caching and state management
+  // Auto-filter courses by user's selected locale (vi/en)
   const { data: coursesData, loading, execute: refetchCourses } = useCoursesQuery({
     search: searchQuery,
     category: selectedCategory,
     level: selectedLevel,
     pricing: priceFilter === 'all' ? undefined : (priceFilter as "free" | "paid"),
     sort: sortBy as "rating" | "popular" | "newest" | "price",
+    language: locale, // Filter courses by current language
   });
   
   // Extract courses from React Query response
@@ -58,35 +62,35 @@ const CourseCatalogPage = () => {
   const hasMore = remainingCount > 0;
 
   const categories = [
-    { value: '', label: 'All Categories' },
-    { value: 'ml-basics', label: 'ML Basics' },
-    { value: 'deep-learning', label: 'Deep Learning' },
-    { value: 'nlp', label: 'NLP' },
-    { value: 'computer-vision', label: 'Computer Vision' },
-    { value: 'generative-ai', label: 'Generative AI' },
-    { value: 'ai-ethics', label: 'AI Ethics' },
-    { value: 'ai-in-business', label: 'AI in Business' }
+    { value: '', label: t('courses.allCategories') },
+    { value: 'ml-basics', label: t('categories.ml_basics') },
+    { value: 'deep-learning', label: t('categories.deep_learning') },
+    { value: 'nlp', label: t('categories.nlp') },
+    { value: 'computer-vision', label: t('categories.computer_vision') },
+    { value: 'generative-ai', label: t('categories.generative_ai') },
+    { value: 'ai-ethics', label: t('categories.ai_ethics') },
+    { value: 'ai-in-business', label: t('categories.ai_in_business') }
   ];
 
   const levels = [
-    { value: '', label: 'All Levels' },
-    { value: 'beginner', label: 'Beginner' },
-    { value: 'intermediate', label: 'Intermediate' },
-    { value: 'advanced', label: 'Advanced' }
+    { value: '', label: t('courses.allLevels') },
+    { value: 'beginner', label: t('courses.beginner') },
+    { value: 'intermediate', label: t('courses.intermediate') },
+    { value: 'advanced', label: t('courses.advanced') }
   ];
 
   const priceOptions = [
-    { value: 'all', label: 'All Courses' },
-    { value: 'free', label: 'Free Courses' },
-    { value: 'paid', label: 'Paid Courses' }
+    { value: 'all', label: t('courses.allCourses') },
+    { value: 'free', label: t('courses.freeCourses') },
+    { value: 'paid', label: t('courses.paidCourses') }
   ];
 
   const sortOptions = [
-    { value: 'newest', label: 'Newest First' },
-    { value: 'popular', label: 'Most Popular' },
-    { value: 'rating', label: 'Highest Rated' },
-    { value: 'price-low', label: 'Price: Low to High' },
-    { value: 'price-high', label: 'Price: High to Low' }
+    { value: 'newest', label: t('courses.newestFirst') },
+    { value: 'popular', label: t('courses.mostPopular') },
+    { value: 'rating', label: t('courses.highestRated') },
+    { value: 'price-low', label: t('courses.priceLowToHigh') },
+    { value: 'price-high', label: t('courses.priceHighToLow') }
   ];
 
   // No manual fetchCourses needed - React Query handles this automatically
@@ -107,8 +111,8 @@ const CourseCatalogPage = () => {
     <div className="min-h-screen bg-muted">
       {/* Hero Section */}
       <HeroSection
-        title="Explore Our Courses"
-        subtitle="Learn AI programming from industry experts"
+        title={t('courses.heroTitle')}
+        subtitle={t('courses.heroSubtitle')}
         align="left"
         size="lg"
         backgroundImage="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&h=600&fit=crop"
@@ -120,7 +124,7 @@ const CourseCatalogPage = () => {
           value={searchQuery}
           onChange={setSearchQuery}
           onSubmit={handleSearch}
-          placeholder="Search for courses..."
+          placeholder={t('courses.searchPlaceholder')}
           className="w-full max-w-2xl"
         />
       </HeroSection>
@@ -190,7 +194,7 @@ const CourseCatalogPage = () => {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-muted-foreground">
-            {loading ? 'Loading...' : `Found ${courses.length} courses`}
+            {loading ? t('courses.loading') : t('courses.foundCourses').replace('{count}', String(courses.length))}
           </p>
         </div>
 
@@ -234,10 +238,10 @@ const CourseCatalogPage = () => {
           </div>
         ) : courses.length === 0 ? (
           <EmptyState
-            title="No courses found"
-            description="Try adjusting your filters or search query"
+            title={t('courses.noCoursesFound')}
+            description={t('courses.adjustFilters')}
             action={{
-              label: 'Clear filters',
+              label: t('courses.clearFilters'),
               onClick: () => {
                 setSearchQuery('');
                 setSelectedCategory('');
@@ -271,7 +275,7 @@ const CourseCatalogPage = () => {
                   size="lg"
                   className="min-w-[200px]"
                 >
-                  Show {Math.min(remainingCount, COURSES_PER_PAGE)} more
+                  {t('courses.showMore').replace('{count}', String(Math.min(remainingCount, COURSES_PER_PAGE)))}
                 </Button>
               </div>
             )}
@@ -285,7 +289,7 @@ const CourseCatalogPage = () => {
                   size="lg"
                   className="min-w-[200px]"
                 >
-                  Show fewer
+                  {t('courses.showFewer')}
                 </Button>
               </div>
             )}

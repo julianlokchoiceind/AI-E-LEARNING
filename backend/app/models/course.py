@@ -68,7 +68,7 @@ class Course(Document):
     # Course metadata
     category: CourseCategory
     level: CourseLevel
-    language: str = "vi"
+    language: str = "en"
     
     # Creator information
     creator_id: PydanticObjectId

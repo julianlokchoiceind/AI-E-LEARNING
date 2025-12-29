@@ -116,7 +116,7 @@ export function Header() {
                   onMouseEnter={() => setExplorerOpen(true)}
                   className="px-3 py-2 text-sm font-medium rounded-md border border-transparent text-muted-foreground hover:text-primary hover:bg-primary/10 hover:border-primary/20 transition-all duration-200"
                 >
-                  Explore
+                  {t('nav.explore')}
                 </button>
               </div>
             </div>
@@ -155,8 +155,8 @@ export function Header() {
                 {navItems.faq}
               </button>
 
-              {/* Language Switcher - Hidden for future implementation */}
-              {/* <LanguageSwitcherCompact /> */}
+              {/* Language Switcher */}
+              <LanguageSwitcherCompact />
 
               {/* Auth Section */}
               {loading ? (
@@ -320,7 +320,7 @@ export function Header() {
           className="flex items-center w-full px-4 py-2 text-sm nav-hover"
         >
           <Settings className="h-4 w-4 mr-3" />
-          Settings
+          {navItems.settings}
         </button>
         </div>
 

@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-  Search, 
-  ChevronDown, 
-  ChevronUp, 
-  ThumbsUp, 
+import {
+  Search,
+  ChevronDown,
+  ChevronUp,
+  ThumbsUp,
   ThumbsDown,
   Tag,
   HelpCircle
@@ -22,8 +22,10 @@ import { FAQ, FAQListResponse } from '@/lib/api/faq';
 import { Container } from '@/components/ui/Container';
 import { HeroSection } from '@/components/ui/HeroSection';
 import { SkeletonBox, SkeletonCircle, EmptyState } from '@/components/ui/LoadingStates';
+import { useI18n } from '@/lib/i18n/context';
 
 export default function FAQPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -110,12 +112,12 @@ export default function FAQPage() {
     faqVotingFeedbackMessage.clear();
 
     if (!user) {
-      faqLoginMessage.showError('Please login to vote on this FAQ');
+      faqLoginMessage.showError(t('faq.loginToVote'));
       return;
     }
 
     if (votedFaqs.has(faqId)) {
-      faqVotingMessage.showError('You have already voted on this FAQ');
+      faqVotingMessage.showError(t('faq.alreadyVoted'));
       return;
     }
 
@@ -126,7 +128,7 @@ export default function FAQPage() {
         onSuccess: (response) => {
           // Show success feedback with inline message
           faqVotingFeedbackMessage.showSuccess(
-            isHelpful ? 'Thank you! Your feedback helps us improve.' : 'Thanks for letting us know this wasn\'t helpful.'
+            isHelpful ? t('faq.thankYouHelpful') : t('faq.thankYouNotHelpful')
           );
 
           // Mark as voted in local state only
@@ -139,7 +141,7 @@ export default function FAQPage() {
         },
         onError: (error: any) => {
           console.error('Failed to vote:', error);
-          faqVotingFeedbackMessage.showError(error.message || 'Failed to submit feedback. Please try again.');
+          faqVotingFeedbackMessage.showError(error.message || t('faq.votingError'));
         }
       });
     } catch (error: any) {
@@ -202,8 +204,8 @@ export default function FAQPage() {
     <div className="min-h-screen bg-muted">
       {/* Hero Section */}
       <HeroSection
-        title="Frequently Asked Questions"
-        subtitle="Find answers to common questions about our platform"
+        title={t('faq.heroTitle')}
+        subtitle={t('faq.heroSubtitle')}
         align="center"
         size="md"
         backgroundImage="https://images.unsplash.com/photo-1555421689-491a97ff2040?w=1920&h=600&fit=crop"
@@ -214,7 +216,7 @@ export default function FAQPage() {
         <SearchBar
           value={searchQuery}
           onChange={setSearchQuery}
-          placeholder="Search FAQ..."
+          placeholder={t('faq.searchPlaceholder')}
           className="w-full max-w-2xl mx-auto"
         />
       </HeroSection>
@@ -255,7 +257,7 @@ export default function FAQPage() {
               size="sm"
               onClick={() => setSelectedCategory('')}
             >
-              All Categories
+              {t('faq.allCategories')}
             </Button>
             {categories.map((category: any) => {
               return (
@@ -278,10 +280,10 @@ export default function FAQPage() {
             <CardContent className="text-center py-12">
               <HelpCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
-                No FAQs found
+                {t('faq.noFAQsFound')}
               </h3>
               <p className="text-muted-foreground">
-                Try adjusting your search or filter criteria
+                {t('faq.adjustSearchOrFilter')}
               </p>
             </CardContent>
           </Card>
@@ -312,7 +314,7 @@ export default function FAQPage() {
                             <span className="flex items-center gap-1">
                               {categoryInfo?.name || 'General'}
                             </span>
-                            <span>{faq.view_count} views</span>
+                            <span>{faq.view_count} {t('faq.views')}</span>
                           </div>
                         </div>
                         {isExpanded ? (
@@ -335,7 +337,7 @@ export default function FAQPage() {
                           {/* Vote Section */}
                           <div className="mt-6 flex items-center justify-between">
                             <div className="text-sm text-muted-foreground">
-                              Was this answer helpful?
+                              {t('faq.wasThisHelpful')}
                             </div>
                             <div className="flex items-center gap-4">
                               <button
@@ -383,17 +385,17 @@ export default function FAQPage() {
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
             >
-              Previous
+              {t('faq.previous')}
             </Button>
             <span className="flex items-center px-4">
-              Page {currentPage} of {totalPages}
+              {t('faq.pageOf').replace('{current}', String(currentPage)).replace('{total}', String(totalPages))}
             </span>
             <Button
               variant="outline"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
             >
-              Next
+              {t('faq.next')}
             </Button>
           </div>
         )}
@@ -403,13 +405,13 @@ export default function FAQPage() {
           <Card>
             <CardContent className="py-8">
               <h3 className="text-xl font-semibold text-foreground mb-2">
-                Still have questions?
+                {t('faq.stillHaveQuestions')}
               </h3>
               <p className="text-muted-foreground mb-4">
-                Can't find what you're looking for? Our support team is here to help.
+                {t('faq.cantFindAnswer')}
               </p>
               <Button>
-                Contact Support
+                {t('faq.contactSupport')}
               </Button>
             </CardContent>
           </Card>

@@ -49,6 +49,7 @@ interface CoursesFilters {
   sort?: 'newest' | 'popular' | 'rating' | 'price';
   page?: number;
   limit?: number;
+  language?: string; // Filter by course language (vi, en)
 }
 
 interface CourseEnrollment {
@@ -69,12 +70,12 @@ type CachedCoursesData = StandardResponse<any> | any | null;
  * High-impact: Used by 100% of users browsing courses
  */
 export function useCoursesQuery(filters: CoursesFilters = {}) {
-  const { search = '', category = '', level = '', pricing = 'all', sort = 'newest', page = 1, limit = 50 } = filters;
-  
+  const { search = '', category = '', level = '', pricing = 'all', sort = 'newest', page = 1, limit = 50, language } = filters;
+
   // Build query string from filters
   const buildQueryString = () => {
     const params = new URLSearchParams();
-    
+
     if (search) params.append('search', search);
     if (category) params.append('category', category);
     if (level) params.append('level', level);
@@ -82,12 +83,13 @@ export function useCoursesQuery(filters: CoursesFilters = {}) {
     if (sort) params.append('sort', sort);
     if (page > 1) params.append('page', page.toString());
     params.append('per_page', limit.toString()); // Always send per_page to match backend
-    
+    if (language) params.append('language', language);
+
     return params.toString();
   };
-  
+
   return useApiQuery(
-    ['courses', { search, category, level, pricing, sort, page, limit }],
+    ['courses', { search, category, level, pricing, sort, page, limit, language }],
     () => {
       const queryString = buildQueryString();
       return getCourses(queryString);

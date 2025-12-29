@@ -10,9 +10,11 @@ import { CertificateDisplay } from '@/components/feature/CertificateDisplay';
 import { useVerifyCertificateQuery } from '@/hooks/queries/useCertificates';
 import { CertificateVerification } from '@/lib/types/certificate';
 import { Container } from '@/components/ui/Container';
+import { useI18n } from '@/lib/i18n/context';
 
 const CertificateVerificationPage = () => {
   const params = useParams();
+  const { t } = useI18n();
   const verificationCode = params.code as string;
   const [manualCode, setManualCode] = useState('');
   const [manualSearchCode, setManualSearchCode] = useState('');
@@ -55,9 +57,9 @@ const CertificateVerificationPage = () => {
       <Container variant="public">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Certificate Verification</h1>
+          <h1 className="text-4xl font-bold mb-4">{t('certificateVerify.title')}</h1>
           <p className="text-muted-foreground text-lg">
-            Verify the authenticity of certificates issued by AI E-Learning Platform
+            {t('certificateVerify.subtitle')}
           </p>
         </div>
 
@@ -65,19 +67,19 @@ const CertificateVerificationPage = () => {
         {!verificationCode && (
           <Card className="max-w-md mx-auto mb-12">
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Enter Verification Code</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('certificateVerify.enterCode')}</h3>
               <div className="space-y-4">
                 <div>
                   <input
                     type="text"
                     value={manualCode}
                     onChange={(e) => setManualCode(e.target.value)}
-                    placeholder="Enter 8-character code (e.g., ABC12345)"
+                    placeholder={t('certificateVerify.codePlaceholder')}
                     className="w-full px-3 py-2 border rounded-md uppercase"
                     maxLength={8}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    You can find the verification code on the certificate
+                    {t('certificateVerify.codeHint')}
                   </p>
                 </div>
                 <Button
@@ -86,7 +88,7 @@ const CertificateVerificationPage = () => {
                   loading={manualLoading}
                   className="w-full"
                 >
-                  Verify Certificate
+                  {t('certificateVerify.verifyButton')}
                 </Button>
               </div>
             </CardContent>
@@ -104,17 +106,17 @@ const CertificateVerificationPage = () => {
                     <div className="text-center">
                       <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
                       <h2 className="text-2xl font-bold text-success mb-2">
-                        Certificate Verified
+                        {t('certificateVerify.verified')}
                       </h2>
                       <p className="text-success">
-                        This certificate is authentic and valid
+                        {t('certificateVerify.verifiedMessage')}
                       </p>
                     </div>
                   ) : (
                     <div className="text-center">
                       <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
                       <h2 className="text-2xl font-bold text-destructive mb-2">
-                        Verification Failed
+                        {t('certificateVerify.failed')}
                       </h2>
                       <p className="text-destructive">{verification.message}</p>
                     </div>
@@ -137,52 +139,52 @@ const CertificateVerificationPage = () => {
             {verification.is_valid && verification.certificate && (
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Verification Details</h3>
-                  
+                  <h3 className="text-lg font-semibold mb-4">{t('certificateVerify.verificationDetails')}</h3>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h4 className="font-medium mb-2">Certificate Information</h4>
+                      <h4 className="font-medium mb-2">{t('certificateVerify.certificateInfo')}</h4>
                       <div className="space-y-2 text-sm">
                         <div>
-                          <span className="text-muted-foreground">Certificate Number:</span>
+                          <span className="text-muted-foreground">{t('certificateVerify.certificateNumber')}:</span>
                           <span className="ml-2 font-mono">
                             {verification.certificate.certificate_number}
                           </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Issue Date:</span>
+                          <span className="text-muted-foreground">{t('certificateVerify.issueDate')}:</span>
                           <span className="ml-2">
                             {new Date(verification.certificate.issue_date).toLocaleDateString()}
                           </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Verification Code:</span>
+                          <span className="text-muted-foreground">{t('certificateVerify.verificationCode')}:</span>
                           <span className="ml-2 font-mono">
                             {verification.certificate.verification_code}
                           </span>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div>
-                      <h4 className="font-medium mb-2">Course Information</h4>
+                      <h4 className="font-medium mb-2">{t('certificateVerify.courseInfo')}</h4>
                       <div className="space-y-2 text-sm">
                         <div>
-                          <span className="text-muted-foreground">Course Title:</span>
+                          <span className="text-muted-foreground">{t('certificateVerify.courseTitle')}:</span>
                           <span className="ml-2">{verification.certificate.course_title}</span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Creator:</span>
+                          <span className="text-muted-foreground">{t('certificateVerify.creator')}:</span>
                           <span className="ml-2">{verification.certificate.course_creator}</span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Level:</span>
+                          <span className="text-muted-foreground">{t('certificateVerify.level')}:</span>
                           <span className="ml-2 capitalize">
                             {verification.certificate.course_level}
                           </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Final Score:</span>
+                          <span className="text-muted-foreground">{t('certificateVerify.finalScore')}:</span>
                           <span className="ml-2">{verification.certificate.final_score}%</span>
                         </div>
                       </div>
@@ -196,13 +198,13 @@ const CertificateVerificationPage = () => {
             {verificationCode && (
               <Card className="mt-8">
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Verify Another Certificate</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('certificateVerify.verifyAnother')}</h3>
                   <div className="flex gap-4">
                     <input
                       type="text"
                       value={manualCode}
                       onChange={(e) => setManualCode(e.target.value)}
-                      placeholder="Enter verification code"
+                      placeholder={t('certificateVerify.enterCodePlaceholder')}
                       className="flex-1 px-3 py-2 border rounded-md uppercase"
                       maxLength={8}
                     />
@@ -211,7 +213,7 @@ const CertificateVerificationPage = () => {
                       disabled={!manualCode.trim() || manualLoading}
                       loading={manualLoading}
                     >
-                      Verify
+                      {t('certificateVerify.verify')}
                     </Button>
                   </div>
                 </CardContent>
@@ -224,39 +226,35 @@ const CertificateVerificationPage = () => {
         <div className="mt-12">
           <Card>
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">About Certificate Verification</h3>
-              
+              <h3 className="text-lg font-semibold mb-4">{t('certificateVerify.aboutVerification')}</h3>
+
               <div className="space-y-4 text-sm text-muted-foreground">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="h-5 w-5 text-warning mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-foreground">How to verify</p>
+                    <p className="font-medium text-foreground">{t('certificateVerify.howToVerify')}</p>
                     <p>
-                      Enter the 8-character verification code found on the certificate, 
-                      or use the direct verification link provided with the certificate.
+                      {t('certificateVerify.howToVerifyDesc')}
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-foreground">Security</p>
+                    <p className="font-medium text-foreground">{t('certificateVerify.security')}</p>
                     <p>
-                      All certificates are cryptographically secured and stored in our 
-                      database. Each certificate has a unique verification code that 
-                      cannot be forged.
+                      {t('certificateVerify.securityDesc')}
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <Search className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-foreground">Support</p>
+                    <p className="font-medium text-foreground">{t('certificateVerify.support')}</p>
                     <p>
-                      If you have questions about certificate verification, please contact 
-                      our support team at{' '}
+                      {t('certificateVerify.supportDesc')}{' '}
                       <a href="mailto:support@ai-elearning.com" className="text-primary">
                         support@ai-elearning.com
                       </a>

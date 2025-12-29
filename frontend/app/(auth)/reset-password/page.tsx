@@ -10,10 +10,12 @@ import { resetPassword } from '@/lib/api/auth'
 import { Container } from '@/components/ui/Container'
 import { useInlineMessage } from '@/hooks/useInlineMessage'
 import { InlineMessage } from '@/components/ui/InlineMessage'
+import { useI18n } from '@/lib/i18n/context'
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { t } = useI18n()
   const token = searchParams.get('token')
   
   const [password, setPassword] = useState('')
@@ -37,16 +39,16 @@ export default function ResetPasswordPage() {
       operationName: 'reset-password', // For toast deduplication
       showToast: false, // Disable automatic toast - use inline message instead
       onSuccess: (response) => {
-        resetPasswordMessage.showSuccess(response.message || 'Password reset successful! Redirecting to login...');
+        resetPasswordMessage.showSuccess(response.message || t('resetPasswordPage.successMessage'));
         setSuccess(true);
-        
+
         // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push('/login?reset=true');
         }, 3000);
       },
       onError: (error: any) => {
-        resetPasswordMessage.showError(error.message || 'Failed to reset password. Please try again.');
+        resetPasswordMessage.showError(error.message || t('resetPasswordPage.resetFailed'));
         console.error('Password reset failed:', error);
       }
     }
@@ -64,7 +66,7 @@ export default function ResetPasswordPage() {
     
     // Check if token exists
     if (!token) {
-      resetPasswordMessage.showError('Invalid reset token. Please request a new password reset.')
+      resetPasswordMessage.showError(t('resetPasswordPage.invalidToken'))
       return
     }
     
@@ -78,25 +80,25 @@ export default function ResetPasswordPage() {
     
     // Password validation
     if (!password) {
-      newErrors.password = 'New password is required'
+      newErrors.password = t('resetPasswordPage.passwordRequired')
       hasErrors = true
     } else if (password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters'
+      newErrors.password = t('resetPasswordPage.passwordMinLength')
       hasErrors = true
     } else if (!/^[A-Z]/.test(password)) {
-      newErrors.password = 'Password must start with an uppercase letter'
+      newErrors.password = t('resetPasswordPage.passwordUppercase')
       hasErrors = true
     } else if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
-      newErrors.password = 'Password must contain at least one special character'
+      newErrors.password = t('resetPasswordPage.passwordSpecialChar')
       hasErrors = true
     }
-    
+
     // Confirm password validation
     if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your new password'
+      newErrors.confirmPassword = t('resetPasswordPage.confirmPasswordRequired')
       hasErrors = true
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match'
+      newErrors.confirmPassword = t('resetPasswordPage.passwordsMustMatch')
       hasErrors = true
     }
     
@@ -131,7 +133,7 @@ export default function ResetPasswordPage() {
       >
           <div className="text-center">
             <h2 className="text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg mb-4">
-              Password reset successful
+              {t('resetPasswordPage.successTitle')}
             </h2>
           </div>
 
@@ -144,10 +146,10 @@ export default function ResetPasswordPage() {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-white">
-                  Password reset successfully!
+                  {t('resetPasswordPage.successText')}
                 </p>
                 <p className="mt-2 text-sm text-white/90">
-                  Redirecting to login page...
+                  {t('resetPasswordPage.redirecting')}
                 </p>
               </div>
             </div>
@@ -185,10 +187,10 @@ export default function ResetPasswordPage() {
         </div>
 
         <h2 className="text-center text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
-          Reset your password
+          {t('resetPasswordPage.title')}
         </h2>
         <p className="mt-2 text-center text-xs sm:text-sm text-white/95 mb-4 sm:mb-6">
-          Enter your new password below
+          {t('resetPasswordPage.subtitle')}
         </p>
 
         {/* Page-level messages */}
@@ -206,7 +208,7 @@ export default function ResetPasswordPage() {
           <div className="space-y-4">
             <div>
               <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-white/95">
-                New password
+                {t('resetPasswordPage.newPasswordLabel')}
               </label>
               <div className="mt-1">
                 <input
@@ -226,7 +228,7 @@ export default function ResetPasswordPage() {
                   className={`glass-input appearance-none block w-full px-3 py-2 rounded-md placeholder-white/85 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 text-xs sm:text-sm ${
                     errors.password ? '!border-red-500 !bg-red-500/20' : ''
                   }`}
-                  placeholder="Start with uppercase + 8 chars + special char"
+                  placeholder={t('resetPasswordPage.newPasswordPlaceholder')}
                 />
                 {errors.password && (
                   <p className="mt-1 glass-error">{errors.password}</p>
@@ -236,7 +238,7 @@ export default function ResetPasswordPage() {
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/95">
-                Confirm new password
+                {t('resetPasswordPage.confirmPasswordLabel')}
               </label>
               <div className="mt-1">
                 <input
@@ -256,7 +258,7 @@ export default function ResetPasswordPage() {
                   className={`glass-input appearance-none block w-full px-3 py-2 rounded-md placeholder-white/85 text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 text-xs sm:text-sm ${
                     errors.confirmPassword ? '!border-red-500 !bg-red-500/20' : ''
                   }`}
-                  placeholder="Confirm new password"
+                  placeholder={t('resetPasswordPage.confirmPasswordPlaceholder')}
                 />
                 {errors.confirmPassword && (
                   <p className="mt-1 glass-error">{errors.confirmPassword}</p>
@@ -272,13 +274,13 @@ export default function ResetPasswordPage() {
               className="glass-button w-full !bg-white/20 hover:!bg-white/30 !text-white !border-white/40"
               size="md"
             >
-              Reset password
+              {t('resetPasswordPage.resetButton')}
             </Button>
           </div>
 
           <div className="text-center">
             <Link href="/login" className="glass-text text-xs font-medium hover:text-white/80">
-              Back to login
+              {t('resetPasswordPage.backToLogin')}
             </Link>
           </div>
         </form>

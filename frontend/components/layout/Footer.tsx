@@ -1,8 +1,13 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { Container } from '@/components/ui/Container'
+import { useI18n } from '@/lib/i18n/context'
 
 export function Footer() {
+  const { t } = useI18n()
+
   return (
     <footer className="bg-muted/30 border-t">
       <Container variant="header" className="py-12">
@@ -24,7 +29,7 @@ export function Footer() {
               <h3 className="text-lg font-bold gradient-text">AI E-Learning Platform</h3>
             </div>
             <p className="text-muted-foreground text-sm mb-4">
-              Empowering developers to master AI/ML through high-quality video courses and intelligent AI assistants.
+              {t('footer.companyDescription')}
             </p>
             <div className="flex space-x-4">
               <a href="https://www.youtube.com/@choiceind" target="_blank" rel="noopener noreferrer" className="text-muted-foreground transition-colors hover:text-red-600">
@@ -38,26 +43,28 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Platform</h4>
+            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
+              {t('nav.courses')}
+            </h4>
             <ul className="space-y-2">
               <li>
                 <Link href="/courses" className="link-hover text-sm">
-                  Browse Courses
+                  {t('courses.allCourses')}
                 </Link>
               </li>
               <li>
                 <Link href="/pricing" className="link-hover text-sm">
-                  Pricing
+                  {t('nav.pricing')}
                 </Link>
               </li>
               <li>
                 <Link href="/faq" className="link-hover text-sm">
-                  FAQ
+                  {t('nav.faq')}
                 </Link>
               </li>
               <li>
                 <Link href="/about" className="link-hover text-sm">
-                  About Us
+                  {t('nav.about')}
                 </Link>
               </li>
             </ul>
@@ -65,26 +72,28 @@ export function Footer() {
 
           {/* Support */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Support</h4>
+            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
+              {t('nav.support')}
+            </h4>
             <ul className="space-y-2">
               <li>
                 <Link href="/contact" className="link-hover text-sm">
-                  Contact Us
+                  {t('nav.contact')}
                 </Link>
               </li>
               <li>
                 <Link href="/support" className="link-hover text-sm">
-                  Support
+                  {t('support.helpCenter')}
                 </Link>
               </li>
               <li>
                 <Link href="/terms" className="link-hover text-sm">
-                  Terms of Service
+                  {t('footer.terms')}
                 </Link>
               </li>
               <li>
                 <Link href="/privacy" className="link-hover text-sm">
-                  Privacy Policy
+                  {t('footer.privacy')}
                 </Link>
               </li>
             </ul>
