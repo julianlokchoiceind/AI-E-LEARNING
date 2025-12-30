@@ -5,6 +5,7 @@ import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Container } from '@/components/ui/Container';
+import { getLocalizedHref } from '@/lib/i18n/config';
 
 interface Props {
   children: ReactNode;
@@ -108,7 +109,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </Button>
               
               <Button
-                onClick={() => window.location.href = '/'}
+                onClick={() => window.location.href = getLocalizedHref('/')}
                 variant="outline"
                 className="flex items-center justify-center gap-2"
               >

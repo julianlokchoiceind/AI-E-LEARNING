@@ -3,8 +3,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { Button } from '@/components/ui/Button';
 
 import { useState } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
+import { LocaleLink } from '@/components/ui/LocaleLink'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { useApiMutation } from '@/hooks/useApiMutation'
@@ -13,6 +13,7 @@ import { Container } from '@/components/ui/Container'
 import { useInlineMessage } from '@/hooks/useInlineMessage'
 import { InlineMessage } from '@/components/ui/InlineMessage'
 import { useI18n } from '@/lib/i18n/context'
+import { getLocalizedHref } from '@/lib/i18n/config'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -59,7 +60,7 @@ export default function RegisterPage() {
 
         // Redirect to login after 2 seconds
         setTimeout(() => {
-          router.push('/login?registered=true');
+          router.push(getLocalizedHref('/login?registered=true'));
         }, 2000);
       },
       onError: (error: any) => {
@@ -160,7 +161,7 @@ export default function RegisterPage() {
         className="glass-container rounded-2xl"
       >
         <div className="flex justify-center mb-4">
-          <Link href="/">
+          <LocaleLink href="/">
             <Image
               src="/images/logo/choice-logo-192x192.png"
               alt="CHOICE"
@@ -169,7 +170,7 @@ export default function RegisterPage() {
               className="w-20 h-20"
               priority
             />
-          </Link>
+          </LocaleLink>
         </div>
         
         <h2 className="text-center text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
@@ -177,9 +178,9 @@ export default function RegisterPage() {
         </h2>
         <p className="mt-2 text-center text-xs sm:text-sm text-white/95 mb-4">
           {t('registerPage.or')}{' '}
-          <Link href="/login" className="glass-text font-medium hover:text-white/80">
+          <LocaleLink href="/login" className="glass-text font-medium hover:text-white/80">
             {t('registerPage.signInExisting')}
-          </Link>
+          </LocaleLink>
         </p>
 
         {/* Page-level messages */}
@@ -317,13 +318,13 @@ export default function RegisterPage() {
             />
             <label htmlFor="terms" className="ml-2 block text-[10px] sm:text-xs text-white/95 leading-tight">
               {t('registerPage.termsAgreement')}{' '}
-              <Link href="/terms" className="glass-text hover:text-white/80">
+              <LocaleLink href="/terms" className="glass-text hover:text-white/80">
                 {t('registerPage.termsOfService')}
-              </Link>{' '}
+              </LocaleLink>{' '}
               {t('registerPage.and')}{' '}
-              <Link href="/privacy" className="glass-text hover:text-white/80">
+              <LocaleLink href="/privacy" className="glass-text hover:text-white/80">
                 {t('registerPage.privacyPolicy')}
-              </Link>
+              </LocaleLink>
             </label>
           </div>
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { LocaleLink } from '@/components/ui/LocaleLink';
 import { Plus, BookOpen, TrendingUp, Users, DollarSign, Star, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -369,11 +369,11 @@ const CreatorDashboard = () => {
               </div>
             )}
             <div className="mt-4 pt-4 border-t">
-              <Link href="/creator/courses">
+              <LocaleLink href="/creator/courses">
                 <Button variant="outline" size="sm" className="w-full">
                   View All Courses
                 </Button>
-              </Link>
+              </LocaleLink>
             </div>
           </Card>
 

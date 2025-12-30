@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { LoadingSpinner } from '@/components/ui/LoadingStates'
+import { getLocalizedHref } from '@/lib/i18n/config'
 
 export default function AuthLayout({
   children,
@@ -16,7 +17,7 @@ export default function AuthLayout({
   useEffect(() => {
     // Redirect authenticated users to dashboard
     if (!loading && user) {
-      router.push('/dashboard')
+      router.push(getLocalizedHref('/dashboard'))
     }
   }, [user, loading, router])
 

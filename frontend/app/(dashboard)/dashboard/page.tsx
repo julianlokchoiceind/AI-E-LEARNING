@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { LocaleLink } from '@/components/ui/LocaleLink';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/Card';
@@ -19,6 +19,7 @@ import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { InlineMessage } from '@/components/ui/InlineMessage';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { BookOpen, CheckCircle, Clock, Flame } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 
 interface DashboardData {
   user: {
@@ -59,6 +60,7 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
+  const { t } = useI18n();
   const { user, loading: authLoading } = useAuth();
   const [showExportModal, setShowExportModal] = useState(false);
   const router = useRouter();
@@ -116,7 +118,7 @@ export default function DashboardPage() {
     // Refresh dashboard data to show any new courses from onboarding
     await refetchDashboard();
     
-    dashboardSuccessMessage.showSuccess('Welcome to the platform! Your personalized dashboard is ready.');
+    dashboardSuccessMessage.showSuccess(t('dashboard.welcomeMessage'));
   };
 
   // Handle onboarding close (skip or manual close)
@@ -131,7 +133,7 @@ export default function DashboardPage() {
     try {
       // React Query refetch - automatic error handling and caching
       await refetchDashboard();
-      dashboardSuccessMessage.showSuccess('Dashboard refreshed successfully!');
+      dashboardSuccessMessage.showSuccess(t('dashboard.refreshSuccess'));
     } catch (error) {
       // Error handling is automatic via React Query
       console.error('Dashboard refresh error:', error);
@@ -144,10 +146,10 @@ export default function DashboardPage() {
         {/* Welcome Section - STATIC */}
         <div className="mb-10">
           <h1 className="text-3xl font-bold mb-2">
-            <span className="gradient-text">Welcome back, {user?.name}!</span>
+            <span className="gradient-text">{t('dashboard.welcomeBack')} {user?.name}!</span>
           </h1>
           <p className="text-muted-foreground">
-            Continue your learning journey and track your progress
+            {t('dashboard.subtitle')}
           </p>
         </div>
 
@@ -220,10 +222,10 @@ export default function DashboardPage() {
     return (
       <Container variant="public" className="pt-8">
         <EmptyState
-          title="Unable to load dashboard"
-          description="There was a problem loading your dashboard data. Please try again."
+          title={t('dashboard.unableToLoad')}
+          description={t('dashboard.unableToLoadDesc')}
           action={{
-            label: 'Retry',
+            label: t('dashboard.retry'),
             onClick: refreshDashboard
           }}
         />
@@ -252,10 +254,10 @@ export default function DashboardPage() {
       {/* Welcome Section */}
       <div className="mb-10">
         <h1 className="text-3xl font-bold mb-2">
-          <span className="gradient-text">Welcome back, {dashboardData.user.name}!</span>
+          <span className="gradient-text">{t('dashboard.welcomeBack')} {dashboardData.user.name}!</span>
         </h1>
         <p className="text-muted-foreground">
-          Continue your learning journey and track your progress
+          {t('dashboard.subtitle')}
         </p>
       </div>
 
@@ -264,7 +266,7 @@ export default function DashboardPage() {
         <Card className="p-6 card-glow animate-fade-in-up stagger-1">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Enrolled Courses</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.enrolledCourses')}</p>
               <p className="text-2xl font-bold">{dashboardData.stats.total_courses}</p>
             </div>
             <BookOpen className="w-8 h-8 text-primary" />
@@ -274,7 +276,7 @@ export default function DashboardPage() {
         <Card className="p-6 card-glow animate-fade-in-up stagger-2">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Completed</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.completed')}</p>
               <p className="text-2xl font-bold">{dashboardData.stats.completed_courses}</p>
             </div>
             <CheckCircle className="w-8 h-8 text-green-500" />
@@ -284,7 +286,7 @@ export default function DashboardPage() {
         <Card className="p-6 card-glow animate-fade-in-up stagger-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Hours Learned</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.hoursLearned')}</p>
               <p className="text-2xl font-bold">{dashboardData.stats.total_hours_learned}</p>
             </div>
             <Clock className="w-8 h-8 text-blue-500" />
@@ -294,8 +296,8 @@ export default function DashboardPage() {
         <Card className="p-6 card-glow animate-fade-in-up stagger-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Current Streak</p>
-              <p className="text-2xl font-bold">{dashboardData.stats.current_streak} days</p>
+              <p className="text-sm text-muted-foreground">{t('dashboard.currentStreak')}</p>
+              <p className="text-2xl font-bold">{dashboardData.stats.current_streak} {t('dashboard.days')}</p>
             </div>
             <Flame className="w-8 h-8 text-orange-500" />
           </div>
@@ -306,22 +308,22 @@ export default function DashboardPage() {
         {/* Recent Courses */}
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Continue Learning</h2>
-            <Link 
-              href="/my-courses" 
+            <h2 className="text-xl font-bold">{t('dashboard.continueLearning')}</h2>
+            <LocaleLink
+              href="/my-courses"
               className="text-primary hover:underline text-sm"
             >
-              View all courses →
-            </Link>
+              {t('dashboard.viewAllCourses')}
+            </LocaleLink>
           </div>
 
           {dashboardData.recent_courses.length === 0 ? (
             <Card className="p-8">
               <EmptyState
-                title="No courses yet"
-                description="You haven't enrolled in any courses yet. Start learning today!"
+                title={t('dashboard.noCoursesYet')}
+                description={t('dashboard.noCoursesDescription')}
                 action={{
-                  label: 'Browse Courses',
+                  label: t('dashboard.browseCourses'),
                   onClick: () => router.push('/courses')
                 }}
               />
@@ -349,16 +351,16 @@ export default function DashboardPage() {
                         <ProgressBar value={course.progress} />
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {course.progress}% complete
+                        {course.progress}% {t('dashboard.complete')}
                         {course.last_accessed_display && (
-                          <span> • Last accessed {course.last_accessed_display}</span>
+                          <span> • {t('dashboard.lastAccessed')} {course.last_accessed_display}</span>
                         )}
                       </p>
                     </div>
-                    
-                    <Link
+
+                    <LocaleLink
                       href={
-                        course.continue_lesson_id 
+                        course.continue_lesson_id
                           ? `/learn/${course.id}/${course.continue_lesson_id}`
                           : course.current_lesson_id
                           ? `/learn/${course.id}/${course.current_lesson_id}`
@@ -366,8 +368,8 @@ export default function DashboardPage() {
                       }
                       className="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors"
                     >
-                      {course.progress >= 95 ? 'Review' : course.continue_lesson_id || course.current_lesson_id || course.progress > 0 ? 'Continue' : 'Start'}
-                    </Link>
+                      {course.progress >= 95 ? t('dashboard.review') : course.continue_lesson_id || course.current_lesson_id || course.progress > 0 ? t('dashboard.continue') : t('dashboard.start')}
+                    </LocaleLink>
                   </div>
                 </Card>
               ))}
@@ -379,10 +381,10 @@ export default function DashboardPage() {
         <div className="space-y-6">
           {/* Upcoming Lessons */}
           <div>
-            <h3 className="text-lg font-bold mb-3">Upcoming Lessons</h3>
+            <h3 className="text-lg font-bold mb-3">{t('dashboard.upcomingLessons')}</h3>
             {dashboardData.upcoming_lessons.length === 0 ? (
               <Card className="p-4">
-                <p className="text-sm text-muted-foreground">No upcoming lessons</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.noUpcomingLessons')}</p>
               </Card>
             ) : (
               <div className="space-y-3">
@@ -407,7 +409,7 @@ export default function DashboardPage() {
                             <span> • {lesson.chapter_title}</span>
                           )}
                           {lesson.estimated_time && lesson.estimated_time > 0 && (
-                            <span> • {lesson.estimated_time} min</span>
+                            <span> • {lesson.estimated_time} {t('dashboard.min')}</span>
                           )}
                         </p>
                       </div>
@@ -423,51 +425,51 @@ export default function DashboardPage() {
 
           {/* Achievements */}
           <div>
-            <h3 className="text-lg font-bold mb-3">Achievements</h3>
+            <h3 className="text-lg font-bold mb-3">{t('dashboard.achievements')}</h3>
             <Card className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm">Certificates Earned</span>
+                <span className="text-sm">{t('dashboard.certificatesEarned')}</span>
                 <span className="font-bold">{dashboardData.certificates_earned}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">Longest Streak</span>
-                <span className="font-bold">{dashboardData.stats.longest_streak} days</span>
+                <span className="text-sm">{t('dashboard.longestStreak')}</span>
+                <span className="font-bold">{dashboardData.stats.longest_streak} {t('dashboard.days')}</span>
               </div>
             </Card>
           </div>
 
           {/* Quick Actions */}
           <div>
-            <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
+            <h3 className="text-lg font-bold mb-4">{t('dashboard.quickActions')}</h3>
             <div className="space-y-3">
-              <Link href="/courses" className="block w-full">
+              <LocaleLink href="/courses" className="block w-full">
                 <Button variant="primary" className="w-full">
-                  Browse New Courses
+                  {t('dashboard.browseNewCourses')}
                 </Button>
-              </Link>
-              <Link href="/certificates" className="block w-full">
+              </LocaleLink>
+              <LocaleLink href="/certificates" className="block w-full">
                 <Button variant="outline" className="w-full">
-                  View Certificates
+                  {t('dashboard.viewCertificates')}
                 </Button>
-              </Link>
-              <Link href="/profile" className="block w-full">
+              </LocaleLink>
+              <LocaleLink href="/profile" className="block w-full">
                 <Button variant="outline" className="w-full">
-                  Edit Profile
+                  {t('dashboard.editProfile')}
                 </Button>
-              </Link>
+              </LocaleLink>
               <Button
                 onClick={() => setShowExportModal(true)}
                 variant="outline"
                 className="w-full"
               >
-                📊 Export Progress
+                📊 {t('dashboard.exportProgress')}
               </Button>
               <Button
                 onClick={() => setShowOnboardingModal(true)}
                 variant="outline"
                 className="w-full"
               >
-                🚀 Platform Tour
+                🚀 {t('dashboard.platformTour')}
               </Button>
             </div>
           </div>

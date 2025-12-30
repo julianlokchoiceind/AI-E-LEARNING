@@ -374,7 +374,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
       { id: 'computer_vision', title: 'Computer Vision', description: 'Image Processing, CNNs, OpenCV', icon: '👁️' },
       { id: 'generative_ai', title: 'Generative AI', description: 'Claude, LangChain, Vector DBs', icon: '🛠️' },
       { id: 'ai_ethics', title: 'AI Ethics', description: 'Responsible AI, Bias Detection', icon: '⚖️' },
-      { id: 'ai_in_business', title: 'AI in Business', description: 'MLOps, Deployment, Scaling', icon: '🚀' }
+      { id: 'ai_for_work', title: 'AI for Work', description: 'MLOps, Deployment, Scaling', icon: '🚀' }
     ];
 
     const skillLevels = [

@@ -4,6 +4,7 @@ import { useSession, signIn, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useApiMutation } from '@/hooks/useApiMutation'
 import { logoutUser, verifyEmail } from '@/lib/api/auth'
+import { getLocalizedHref } from '@/lib/i18n/config'
 
 export function useAuth() {
   const { data: session, status } = useSession()
@@ -24,7 +25,7 @@ export function useAuth() {
 
   const login = async (provider?: string) => {
     if (provider) {
-      await signIn(provider, { callbackUrl: '/dashboard' })
+      await signIn(provider, { callbackUrl: getLocalizedHref('/dashboard') })
     } else {
       router.push('/login')
     }
@@ -50,7 +51,7 @@ export function useAuth() {
     }
     
     // Then sign out from NextAuth
-    await signOut({ callbackUrl: '/' })
+    await signOut({ callbackUrl: getLocalizedHref('/') })
   }
 
   return {

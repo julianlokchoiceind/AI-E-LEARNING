@@ -142,7 +142,7 @@ export function LanguageSwitcher({
   );
 }
 
-// Compact version for mobile
+// Compact version for header (dropdown)
 export function LanguageSwitcherCompact({ className = '' }: { className?: string }) {
   return (
     <LanguageSwitcher
@@ -151,6 +151,34 @@ export function LanguageSwitcherCompact({ className = '' }: { className?: string
       showText={false}
       className={className}
     />
+  );
+}
+
+// Mobile version - inline toggle buttons (no dropdown)
+export function LanguageSwitcherMobile({ className = '' }: { className?: string }) {
+  const { locale, setLocale, isLoading } = useI18n();
+
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <Globe className="h-4 w-4 text-muted-foreground" />
+      <div className="flex bg-muted rounded-lg p-1">
+        {SUPPORTED_LOCALES.map((loc) => (
+          <button
+            key={loc}
+            onClick={() => setLocale(loc)}
+            disabled={isLoading}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+              locale === loc
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <span className="text-base">{LOCALE_FLAGS[loc]}</span>
+            <span>{loc.toUpperCase()}</span>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -689,7 +689,7 @@ const CourseBuilderPage = () => {
                         <option value="computer-vision">Computer Vision</option>
                         <option value="generative-ai">Generative AI</option>
                         <option value="ai-ethics">AI Ethics</option>
-                        <option value="ai-in-business">AI in Business</option>
+                        <option value="ai-for-work">AI for Work</option>
                       </select>
                     </div>
 

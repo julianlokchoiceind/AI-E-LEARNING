@@ -1,10 +1,14 @@
-import Link from 'next/link'
+'use client';
+
 import Image from 'next/image'
+import { LocaleLink } from '@/components/ui/LocaleLink'
 import { Button } from '@/components/ui/Button'
 import { Container } from '@/components/ui/Container'
 import { Header } from '@/components/layout/Header'
+import { useI18n } from '@/lib/i18n'
 
 export default function NotFound() {
+  const { t } = useI18n();
   return (
     <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
       <Header />
@@ -48,20 +52,20 @@ export default function NotFound() {
           {/* Text Content */}
           <div className="text-center lg:text-left flex-1 max-w-2xl">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold gradient-text mb-4 sm:mb-6 lg:mb-8 leading-none">
-              Oops,
+              {t('notFound.title')}
             </h1>
             <h2 className="text-lg sm:text-xl md:text-2xl font-medium text-primary mb-8 sm:mb-10 lg:mb-12 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              The page you are trying to access cannot be found.
+              {t('notFound.description')}
             </h2>
 
             {/* Action Buttons */}
             <div className="flex flex-col md:flex-row gap-4 justify-center lg:justify-start">
-              <Link href="/" className="flex-1 md:flex-initial">
-                <Button size="lg" className="w-full">Back To Home</Button>
-              </Link>
-              <Link href="/contact" className="flex-1 md:flex-initial">
-                <Button size="lg" variant="outline" className="w-full">Contact</Button>
-              </Link>
+              <LocaleLink href="/" className="flex-1 md:flex-initial">
+                <Button size="lg" className="w-full">{t('notFound.backToHome')}</Button>
+              </LocaleLink>
+              <LocaleLink href="/contact" className="flex-1 md:flex-initial">
+                <Button size="lg" variant="outline" className="w-full">{t('notFound.contact')}</Button>
+              </LocaleLink>
             </div>
           </div>
         </div>

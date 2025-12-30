@@ -12,6 +12,7 @@ import { useI18n } from '@/lib/i18n/context';
 import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { InlineMessage } from '@/components/ui/InlineMessage';
 import { AvatarUpload } from '@/components/feature/AvatarUpload';
+import { getLocalizedHref } from '@/lib/i18n/config';
 
 interface ProfileData {
   name: string;
@@ -479,7 +480,7 @@ export default function ProfileContent() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => window.location.href = '/billing'}
+                onClick={() => window.location.href = getLocalizedHref('/billing')}
               >
                 Manage Billing
               </Button>

@@ -120,11 +120,17 @@ export function useCourseQuery(courseId: string, enabled: boolean = true) {
 /**
  * COURSE SEARCH - Real-time search
  * High-impact: Search functionality across platform
+ * Filters by language (Option A: full language separation)
  */
 export function useCourseSearchQuery(query: string, filters: Omit<CoursesFilters, 'search'> = {}) {
+  const { language } = filters;
+  const queryParams = new URLSearchParams();
+  queryParams.append('search', query);
+  if (language) queryParams.append('language', language);
+
   return useApiQuery(
-    ['course-search', query, filters],
-    () => getCourses(`search=${encodeURIComponent(query)}`),
+    ['course-search', query, language],
+    () => getCourses(queryParams.toString()),
     {
       enabled: query.length > 2, // Only search after 3 characters
       ...getCacheConfig('COURSE_CATALOG'), // 30s fresh - search results same as catalog
@@ -269,12 +275,14 @@ export function useFeaturedCoursesQuery() {
 /**
  * CATEGORY STATISTICS - Homepage categories display
  * Medium-impact: Shows course count by category for homepage
+ * Filters by language (Option A: full language separation)
  */
-export function useCategoryStatsQuery() {
+export function useCategoryStatsQuery(language?: string) {
+  const queryString = language ? `?language=${language}` : '';
   return useApiQuery(
-    ['category-stats'],
+    ['category-stats', language],
     async () => {
-      const response = await api.get<StandardResponse<Record<string, number>>>('/courses/categories/stats', { requireAuth: false });
+      const response = await api.get<StandardResponse<Record<string, number>>>(`/courses/categories/stats${queryString}`, { requireAuth: false });
       if (!response.success) {
         throw new Error(response.message || 'Something went wrong');
       }

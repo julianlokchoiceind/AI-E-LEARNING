@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
+import { LocaleLink } from '@/components/ui/LocaleLink'
 import { Button } from '@/components/ui/Button'
 import { useApiMutation } from '@/hooks/useApiMutation'
 import { forgotPassword } from '@/lib/api/auth'
@@ -94,9 +94,9 @@ export default function ForgotPasswordPage() {
           )}
 
           <div className="text-center">
-            <Link href="/login" className="glass-text font-medium hover:text-white/80">
+            <LocaleLink href="/login" className="glass-text font-medium hover:text-white/80">
               {t('forgotPasswordPage.backToLogin')}
-            </Link>
+            </LocaleLink>
           </div>
         </Container>
     </div>
@@ -118,7 +118,7 @@ export default function ForgotPasswordPage() {
         className="glass-container rounded-2xl"
       >
         <div className="flex justify-center mb-4 sm:mb-6">
-          <Link href="/">
+          <LocaleLink href="/">
             <Image
               src="/images/logo/choice-logo-192x192.png"
               alt="CHOICE"
@@ -127,7 +127,7 @@ export default function ForgotPasswordPage() {
               className="w-20 h-20"
               priority
             />
-          </Link>
+          </LocaleLink>
         </div>
 
         <h2 className="text-center text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
@@ -190,12 +190,12 @@ export default function ForgotPasswordPage() {
           </div>
           
           <div className="flex items-center justify-between">
-            <Link href="/login" className="glass-text text-xs font-medium hover:text-white/80">
+            <LocaleLink href="/login" className="glass-text text-xs font-medium hover:text-white/80">
               {t('forgotPasswordPage.backToLogin')}
-            </Link>
-            <Link href="/register" className="glass-text text-xs font-medium hover:text-white/80">
+            </LocaleLink>
+            <LocaleLink href="/register" className="glass-text text-xs font-medium hover:text-white/80">
               {t('forgotPasswordPage.createNewAccount')}
-            </Link>
+            </LocaleLink>
           </div>
         </form>
       </Container>

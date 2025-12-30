@@ -1,8 +1,8 @@
 'use client'
 
-import Link from 'next/link'
 import Image from 'next/image'
 import { Container } from '@/components/ui/Container'
+import { LocaleLink } from '@/components/ui/LocaleLink'
 import { useI18n } from '@/lib/i18n/context'
 
 export function Footer() {
@@ -16,7 +16,7 @@ export function Footer() {
           <div className="col-span-1 md:col-span-2">
             <div className="mb-4">
               <div className="flex mb-2">
-                <Link href="/" className="flex-shrink-0">
+                <LocaleLink href="/" className="flex-shrink-0">
                   <Image
                     src="/images/logo/choice-logo-192x192.png"
                     alt="CHOICE"
@@ -24,7 +24,7 @@ export function Footer() {
                     height={48}
                     className="w-10 h-10 md:w-12 md:h-12"
                   />
-                </Link>
+                </LocaleLink>
               </div>
               <h3 className="text-lg font-bold gradient-text">AI E-Learning Platform</h3>
             </div>
@@ -48,24 +48,24 @@ export function Footer() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/courses" className="link-hover text-sm">
+                <LocaleLink href="/courses" className="link-hover text-sm">
                   {t('courses.allCourses')}
-                </Link>
+                </LocaleLink>
               </li>
               <li>
-                <Link href="/pricing" className="link-hover text-sm">
+                <LocaleLink href="/pricing" className="link-hover text-sm">
                   {t('nav.pricing')}
-                </Link>
+                </LocaleLink>
               </li>
               <li>
-                <Link href="/faq" className="link-hover text-sm">
+                <LocaleLink href="/faq" className="link-hover text-sm">
                   {t('nav.faq')}
-                </Link>
+                </LocaleLink>
               </li>
               <li>
-                <Link href="/about" className="link-hover text-sm">
+                <LocaleLink href="/about" className="link-hover text-sm">
                   {t('nav.about')}
-                </Link>
+                </LocaleLink>
               </li>
             </ul>
           </div>
@@ -77,24 +77,24 @@ export function Footer() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/contact" className="link-hover text-sm">
+                <LocaleLink href="/contact" className="link-hover text-sm">
                   {t('nav.contact')}
-                </Link>
+                </LocaleLink>
               </li>
               <li>
-                <Link href="/support" className="link-hover text-sm">
+                <LocaleLink href="/support" className="link-hover text-sm">
                   {t('support.helpCenter')}
-                </Link>
+                </LocaleLink>
               </li>
               <li>
-                <Link href="/terms" className="link-hover text-sm">
+                <LocaleLink href="/terms" className="link-hover text-sm">
                   {t('footer.terms')}
-                </Link>
+                </LocaleLink>
               </li>
               <li>
-                <Link href="/privacy" className="link-hover text-sm">
+                <LocaleLink href="/privacy" className="link-hover text-sm">
                   {t('footer.privacy')}
-                </Link>
+                </LocaleLink>
               </li>
             </ul>
           </div>
@@ -103,9 +103,9 @@ export function Footer() {
         <div className="mt-8 pt-8 border-t border-border">
           <p className="text-center text-sm text-muted-foreground">
             © 2025{' '}
-            <Link href="/" className="link-hover font-medium">
+            <LocaleLink href="/" className="link-hover font-medium">
               CHOICE
-            </Link>{' '}
+            </LocaleLink>{' '}
             AI E-Learning Platform. All rights reserved.
           </p>
         </div>

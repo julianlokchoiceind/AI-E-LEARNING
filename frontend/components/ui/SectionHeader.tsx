@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/Button';
-import Link from 'next/link';
+import { LocaleLink } from '@/components/ui/LocaleLink';
 
 interface SectionHeaderProps {
   title: string | React.ReactNode;
@@ -37,11 +37,11 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
         </div>
 
         {actionLabel && actionHref && (
-          <Link href={actionHref}>
+          <LocaleLink href={actionHref}>
             <Button variant="outline" className="flex-shrink-0">
               {actionLabel}
             </Button>
-          </Link>
+          </LocaleLink>
         )}
       </div>
     </div>

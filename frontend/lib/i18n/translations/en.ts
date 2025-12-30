@@ -687,7 +687,7 @@ export const en = {
     computer_vision: 'Computer Vision',
     generative_ai: 'Generative AI',
     ai_ethics: 'AI Ethics',
-    ai_in_business: 'AI in Business',
+    ai_for_work: 'AI for Work',
     web_development: 'Web Development',
     mobile_development: 'Mobile Development',
     data_science: 'Data Science',
@@ -702,6 +702,28 @@ export const en = {
     coursesCount: 'courses',
   },
 
+  // Course Card
+  courseCard: {
+    // Status badges
+    comingSoon: 'Coming Soon',
+    free: 'Free',
+    // Level badges
+    level: {
+      beginner: 'Beginner',
+      intermediate: 'Intermediate',
+      advanced: 'Advanced',
+    },
+    // Stats
+    lessons: 'lessons',
+    students: 'students',
+    by: 'by',
+    // Buttons
+    viewDetails: 'View Details',
+    startLearning: 'Start Learning',
+    continueLearning: 'Continue Learning',
+    reviewCourse: 'Review Course',
+  },
+
   // Homepage
   homepage: {
     heroTitle: 'Master AI Programming',
@@ -711,9 +733,9 @@ export const en = {
     categoriesTitle: 'Start Your',
     categoriesTitleHighlight: 'AI Journey',
     categoriesSubtitle: 'From machine learning basics to cutting-edge applications',
-    latestCoursesTitle: 'Coming Soon:',
+    latestCoursesTitle: '',
     latestCoursesTitleHighlight: 'First Courses',
-    latestCoursesSubtitle: 'Be among the first to access our premium AI programming courses',
+    latestCoursesSubtitle: 'Start your AI learning journey with our premium courses',
     showAllCourses: 'Show all courses',
     featuresTitle: 'Why Choose Our Platform',
     featuresSubtitle: 'Discover the features that make learning AI programming more effective and enjoyable',
@@ -1101,6 +1123,62 @@ export const en = {
     section13Email: 'Email: info@choiceind.com',
     section13Address: 'Address: Ho Chi Minh City, Vietnam',
     disclaimer: 'This Privacy Policy is governed by Vietnamese law. For users in the European Union, additional rights may apply under the General Data Protection Regulation (GDPR).',
+  },
+
+  // Dashboard
+  dashboard: {
+    welcomeBack: 'Welcome back,',
+    subtitle: 'Continue your learning journey and track your progress',
+    enrolledCourses: 'Enrolled Courses',
+    completed: 'Completed',
+    hoursLearned: 'Hours Learned',
+    currentStreak: 'Current Streak',
+    days: 'days',
+    continueLearning: 'Continue Learning',
+    viewAllCourses: 'View all courses →',
+    noCoursesYet: 'No courses yet',
+    noCoursesDescription: "You haven't enrolled in any courses yet. Start learning today!",
+    browseCourses: 'Browse Courses',
+    complete: 'complete',
+    lastAccessed: 'Last accessed',
+    review: 'Review',
+    continue: 'Continue',
+    start: 'Start',
+    upcomingLessons: 'Upcoming Lessons',
+    noUpcomingLessons: 'No upcoming lessons',
+    achievements: 'Achievements',
+    certificatesEarned: 'Certificates Earned',
+    longestStreak: 'Longest Streak',
+    quickActions: 'Quick Actions',
+    browseNewCourses: 'Browse New Courses',
+    viewCertificates: 'View Certificates',
+    editProfile: 'Edit Profile',
+    exportProgress: 'Export Progress',
+    platformTour: 'Platform Tour',
+    unableToLoad: 'Unable to load dashboard',
+    unableToLoadDesc: 'There was a problem loading your dashboard data. Please try again.',
+    retry: 'Retry',
+    refreshSuccess: 'Dashboard refreshed successfully!',
+    welcomeMessage: 'Welcome to the platform! Your personalized dashboard is ready.',
+    min: 'min',
+  },
+
+  // 404 Not Found Page
+  notFound: {
+    title: 'Oops,',
+    description: 'The page you are trying to access cannot be found.',
+    backToHome: 'Back To Home',
+    contact: 'Contact',
+  },
+
+  // Error Page
+  errorPage: {
+    title: 'Oops! Something went wrong',
+    description: 'We encountered an unexpected error. Please try again.',
+    errorId: 'Error ID:',
+    tryAgain: 'Try again',
+    goToHomepage: 'Go to Homepage',
+    persistsContact: 'If this problem persists, please contact support.',
   },
 
   // Footer

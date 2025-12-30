@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+import { LocaleLink } from '@/components/ui/LocaleLink';
 import { ChevronRight, Home } from 'lucide-react';
 import { useI18n } from '@/lib/i18n/context';
 import { BreadcrumbStructuredData } from './StructuredData';
@@ -57,14 +57,14 @@ export function Breadcrumbs({
           {showHome && (
             <>
               <li>
-                <Link 
+                <LocaleLink
                   href="/"
                   className="link-hover transition-colors flex items-center"
                   aria-label={t('nav.home')}
                 >
                   <Home className="h-4 w-4" />
                   <span className="sr-only">{t('nav.home')}</span>
-                </Link>
+                </LocaleLink>
               </li>
               {items.length > 0 && (
                 <li className="flex items-center">
@@ -85,12 +85,12 @@ export function Breadcrumbs({
                     {item.name}
                   </span>
                 ) : (
-                  <Link 
+                  <LocaleLink
                     href={item.href}
                     className="link-hover transition-colors"
                   >
                     {item.name}
-                  </Link>
+                  </LocaleLink>
                 )}
               </li>
               
@@ -290,13 +290,13 @@ export function MobileBreadcrumbs({
                   {item.name}
                 </span>
               ) : (
-                <Link 
+                <LocaleLink
                   href={item.href}
                   className="link-hover transition-colors truncate max-w-[120px]"
                   title={item.name}
                 >
                   {item.name}
-                </Link>
+                </LocaleLink>
               )}
             </li>
             

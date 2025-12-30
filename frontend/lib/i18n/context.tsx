@@ -1,19 +1,13 @@
 'use client';
 
 /**
- * I18n Context - Client-side Implementation
+ * I18n Context - URL-based Implementation
  *
- * Current approach: Client-side only (localStorage-based)
- * - Locale stored in localStorage
- * - No URL changes when switching language
- * - Works well for authenticated apps
- *
- * To upgrade to URL-based (/vi/, /en/):
- * 1. Create middleware.ts for locale detection
- * 2. Move pages to /app/[locale]/ structure
- * 3. Pass initialLocale from [locale]/layout.tsx
- * 4. Change setLocale to use router.push(`/${newLocale}${pathname}`)
- * 5. Remove localStorage dependency
+ * Supports both URL-based and client-side i18n:
+ * - English: Clean URLs (/courses, /dashboard)
+ * - Vietnamese: Prefixed URLs (/vi/courses, /vi/dashboard)
+ * - Locale persisted in cookie for middleware
+ * - Locale change triggers URL navigation
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -45,12 +39,10 @@ interface I18nProviderProps {
 }
 
 export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
-  // Keep router and pathname for useLocalizedRouter hook
   const router = useRouter();
   const pathname = usePathname();
 
-  // Initialize locale from initialLocale or localStorage or default
-  // Note: Using client-side only i18n (no URL-based routing)
+  // Initialize locale from initialLocale, URL, localStorage, or default
   const [locale, setLocaleState] = useState<Locale>(() => {
     if (initialLocale && isValidLocale(initialLocale)) {
       return initialLocale;
@@ -75,29 +67,40 @@ export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Client-side only locale change (no URL navigation)
+  // URL-based locale change with navigation
   const setLocale = (newLocale: Locale) => {
     if (newLocale === locale) return;
 
     setIsLoading(true);
-    setLocaleState(newLocale);
 
-    // Save to localStorage
+    // Save to localStorage and cookie (cookie needed for middleware/SSR)
     if (typeof window !== 'undefined') {
       localStorage.setItem('locale', newLocale);
+      document.cookie = `locale=${newLocale};path=/;max-age=31536000;SameSite=Lax`;
     }
 
-    // No URL change - just update state and localStorage
-    // The page will re-render with new translations
+    // Get current path without locale prefix
+    const cleanPath = getPathnameWithoutLocale(pathname);
 
+    // Build new localized path
+    const newPath = getLocalizedPath(cleanPath, newLocale);
+
+    // Navigate to the new localized URL
+    router.push(newPath);
+
+    setLocaleState(newLocale);
     setTimeout(() => setIsLoading(false), 100);
   };
 
-  // Load locale from localStorage on mount (hydration fix)
+  // Load locale from localStorage on mount (hydration fix) and sync to cookie
   useEffect(() => {
     const savedLocale = localStorage.getItem('locale');
-    if (savedLocale && isValidLocale(savedLocale) && savedLocale !== locale) {
-      setLocaleState(savedLocale);
+    if (savedLocale && isValidLocale(savedLocale)) {
+      if (savedLocale !== locale) {
+        setLocaleState(savedLocale);
+      }
+      // Always sync cookie with localStorage to ensure middleware consistency
+      document.cookie = `locale=${savedLocale};path=/;max-age=31536000;SameSite=Lax`;
     }
   }, []);
 
@@ -156,17 +159,6 @@ export function useI18n(): I18nContextType {
     throw new Error('useI18n must be used within an I18nProvider');
   }
   return context;
-}
-
-// Helper hooks for specific use cases
-export function useLocale(): [Locale, (locale: Locale) => void] {
-  const { locale, setLocale } = useI18n();
-  return [locale, setLocale];
-}
-
-export function useTranslation() {
-  const { t } = useI18n();
-  return { t };
 }
 
 export function useLocalizedRouter() {

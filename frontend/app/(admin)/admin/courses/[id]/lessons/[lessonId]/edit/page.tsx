@@ -130,6 +130,30 @@ const LessonEditPage = () => {
     }
   }, [lessonData?.resources]);
 
+  // Parse duration string (MM:SS or HH:MM:SS) to seconds
+  const parseDurationToSeconds = (duration: string): number => {
+    if (!duration.trim()) return 0;
+    const parts = duration.split(':').map(p => parseInt(p) || 0);
+    if (parts.length === 3) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else if (parts.length === 2) {
+      return parts[0] * 60 + parts[1];
+    }
+    return 0;
+  };
+
+  // Format seconds to MM:SS or HH:MM:SS
+  const formatSecondsToTime = (totalSeconds: number): string => {
+    if (!totalSeconds || totalSeconds <= 0) return '';
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    if (hours > 0) {
+      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   // 🔧 Manual save handler with course timestamp update (like Course Edit Page)
   const handleManualSave = async () => {
     if (!lessonData) {
@@ -632,36 +656,33 @@ const LessonEditPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Duration (minutes)
+                    Duration
                   </label>
                   <div className="flex gap-2">
                     <Clock className="w-5 h-5 text-muted-foreground mt-2" />
                     <Input
                       type="text"
-                      inputMode="decimal"
-                      pattern="[0-9]+([.][0-9]+)?"
-                      value={lessonData.video?.duration && lessonData.video.duration > 0 ? String(lessonData.video.duration / 60) : ''}
+                      value={formatSecondsToTime(lessonData.video?.duration || 0)}
                       onChange={(e) => {
-                        // Normalize comma to dot for decimal separator
-                        const normalizedValue = e.target.value.replace(',', '.');
-                        const minutes = parseFloat(normalizedValue) || 0;
+                        const totalSeconds = parseDurationToSeconds(e.target.value);
                         setLessonData((prev: Lesson | null) => {
                           if (!prev) return null;
                           return {
                             ...prev,
-                            video: { 
-                              ...prev.video || { }, 
-                              duration: Math.round(minutes * 60) // Convert minutes to seconds for storage
+                            video: {
+                              ...prev.video || { },
+                              duration: totalSeconds
                             }
                           };
                         });
                       }}
-                      placeholder="15.5"
+                      placeholder="6:30"
                       className="w-32"
-                      step="0.1"
-                      min="0"
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Format: MM:SS or HH:MM:SS
+                  </p>
                 </div>
 
                 <div>

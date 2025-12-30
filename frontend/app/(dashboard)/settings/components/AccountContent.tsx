@@ -14,6 +14,7 @@ import { changePassword } from '@/lib/api/auth';
 import { usersApi } from '@/lib/api/users';
 import { Lock, AlertCircle, Trash2 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
+import { getLocalizedHref } from '@/lib/i18n/config';
 
 interface ChangePasswordFormData {
   currentPassword: string;
@@ -212,7 +213,7 @@ export function AccountContent() {
         setShowDeleteModal(false);
 
         // Sign out and redirect to home page
-        signOut({ callbackUrl: '/' });
+        signOut({ callbackUrl: getLocalizedHref('/') });
       },
       onError: (error: any) => {
         console.error('Delete account failed:', error);

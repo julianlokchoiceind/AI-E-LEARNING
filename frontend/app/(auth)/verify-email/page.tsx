@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { LocaleLink } from '@/components/ui/LocaleLink'
 import { verifyEmail } from '@/lib/api/auth'
 import { Container } from '@/components/ui/Container'
 import { useInlineMessage } from '@/hooks/useInlineMessage'
 import { InlineMessage } from '@/components/ui/InlineMessage'
 import { useI18n } from '@/lib/i18n/context'
+import { getLocalizedHref } from '@/lib/i18n/config'
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams()
@@ -32,7 +33,7 @@ export default function VerifyEmailPage() {
         showSuccess(response.message || t('verifyEmailPage.successMessage'))
         // Redirect to login after 3 seconds
         setTimeout(() => {
-          router.push('/login?verified=true')
+          router.push(getLocalizedHref('/login?verified=true'))
         }, 3000)
       })
       .catch((error) => {
@@ -41,7 +42,7 @@ export default function VerifyEmailPage() {
         // If the link was already used, show login button
         if (error.message?.includes('already been used')) {
           setTimeout(() => {
-            router.push('/login?message=already_verified')
+            router.push(getLocalizedHref('/login?message=already_verified'))
           }, 5000)
         }
       })
@@ -88,9 +89,9 @@ export default function VerifyEmailPage() {
         </div>
 
         <div className="text-center">
-          <Link href="/login" className="glass-text font-medium hover:text-white/80">
+          <LocaleLink href="/login" className="glass-text font-medium hover:text-white/80">
             {t('verifyEmailPage.backToLogin')}
-          </Link>
+          </LocaleLink>
         </div>
       </Container>
     </div>

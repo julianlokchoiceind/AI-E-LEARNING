@@ -69,7 +69,7 @@ const CourseCatalogPage = () => {
     { value: 'computer-vision', label: t('categories.computer_vision') },
     { value: 'generative-ai', label: t('categories.generative_ai') },
     { value: 'ai-ethics', label: t('categories.ai_ethics') },
-    { value: 'ai-in-business', label: t('categories.ai_in_business') }
+    { value: 'ai-for-work', label: t('categories.ai_for_work') }
   ];
 
   const levels = [

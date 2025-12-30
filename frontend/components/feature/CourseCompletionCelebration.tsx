@@ -11,6 +11,7 @@ import { CertificateWithDetails } from '@/lib/types/certificate';
 import { ToastService } from '@/lib/toast/ToastService';
 import { useCourseCompletionCheck } from '@/hooks/queries/useAI';
 import { useDownloadCertificate, useLinkedInShareData } from '@/hooks/queries/useCertificates';
+import { getLocalizedHref } from '@/lib/i18n/config';
 
 interface CourseCompletionCelebrationProps {
   isOpen: boolean;
@@ -256,14 +257,14 @@ export function CourseCompletionCelebration({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button
                 variant="outline"
-                onClick={() => window.location.href = '/courses'}
+                onClick={() => window.location.href = getLocalizedHref('/courses')}
                 className="w-full"
               >
                 Explore More Courses
               </Button>
               <Button
                 variant="outline"
-                onClick={() => window.location.href = '/certificates'}
+                onClick={() => window.location.href = getLocalizedHref('/certificates')}
                 className="w-full"
               >
                 View All Certificates

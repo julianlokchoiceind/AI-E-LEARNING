@@ -3,13 +3,14 @@
 import { signIn } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
+import { LocaleLink } from '@/components/ui/LocaleLink'
 import { Button } from '@/components/ui/Button'
 import { Container } from '@/components/ui/Container'
 import { useInlineMessage } from '@/hooks/useInlineMessage'
 import { InlineMessage } from '@/components/ui/InlineMessage'
 import { useI18n } from '@/lib/i18n/context'
+import { getLocalizedHref } from '@/lib/i18n/config'
 
 export default function LoginPage() {
   const searchParams = useSearchParams()
@@ -113,7 +114,7 @@ export default function LoginPage() {
       } else if (result?.ok) {
         // Wait a moment for session to establish, then redirect
         setTimeout(() => {
-          router.push('/dashboard')
+          router.push(getLocalizedHref('/dashboard'))
         }, 100)
       }
     } catch (error: any) {
@@ -126,7 +127,7 @@ export default function LoginPage() {
 
   const handleSocialLogin = (provider: string) => {
     setIsLoading(true)
-    signIn(provider, { callbackUrl: '/dashboard' })
+    signIn(provider, { callbackUrl: getLocalizedHref('/dashboard') })
   }
 
   return (
@@ -144,7 +145,7 @@ export default function LoginPage() {
         className="glass-container rounded-2xl"
       >
         <div className="flex justify-center mb-4 sm:mb-6">
-          <Link href="/">
+          <LocaleLink href="/">
             <Image
               src="/images/logo/choice-logo-192x192.png"
               alt="CHOICE"
@@ -153,7 +154,7 @@ export default function LoginPage() {
               className="w-20 h-20"
               priority
             />
-          </Link>
+          </LocaleLink>
         </div>
         
         <h2 className="text-center text-xl sm:text-2xl font-extrabold text-white drop-shadow-lg">
@@ -161,9 +162,9 @@ export default function LoginPage() {
         </h2>
         <p className="mt-2 text-center text-sm text-white/95 mb-4 sm:mb-6">
           {t('loginPage.or')}{' '}
-          <Link href="/register" className="glass-text font-medium hover:text-white/80">
+          <LocaleLink href="/register" className="glass-text font-medium hover:text-white/80">
             {t('loginPage.createAccount')}
-          </Link>
+          </LocaleLink>
         </p>
 
         <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit}>
@@ -222,9 +223,9 @@ export default function LoginPage() {
 
           {/* Forgot password */}
           <div className="text-left">
-            <Link href="/forgot-password" className="glass-text text-xs font-medium hover:text-white/80">
+            <LocaleLink href="/forgot-password" className="glass-text text-xs font-medium hover:text-white/80">
               {t('loginPage.forgotPassword')}
-            </Link>
+            </LocaleLink>
           </div>
 
           <div>

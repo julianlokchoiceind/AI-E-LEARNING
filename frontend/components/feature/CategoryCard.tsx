@@ -1,6 +1,6 @@
 import React from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
+import { LocaleLink } from '@/components/ui/LocaleLink';
 import { Card } from '@/components/ui/Card';
 
 interface CategoryCardProps {
@@ -17,7 +17,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
   count
 }) => {
   return (
-    <Link href={`/courses?category=${value}`}>
+    <LocaleLink href={`/courses?category=${value}`}>
       <Card className="group cursor-pointer card-hover card-glow">
         <div className="p-2 pb-2">
           <div className="relative h-56 sm:h-64 rounded-lg overflow-hidden bg-muted">
@@ -44,6 +44,6 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
           </div>
         </div>
       </Card>
-    </Link>
+    </LocaleLink>
   );
 };

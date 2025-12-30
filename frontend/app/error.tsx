@@ -3,6 +3,8 @@
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Container } from '@/components/ui/Container'
+import { getLocalizedHref } from '@/lib/i18n/config'
+import { useI18n } from '@/lib/i18n'
 
 export default function Error({
   error,
@@ -11,6 +13,8 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const { t } = useI18n();
+
   useEffect(() => {
     // Log the error to an error reporting service
     console.error('Application error:', error)
@@ -21,14 +25,14 @@ export default function Error({
       <Container variant="auth" className="space-y-8 text-center">
         <div>
           <h2 className="mt-6 text-3xl font-extrabold text-foreground">
-            Oops! Something went wrong
+            {t('errorPage.title')}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            We encountered an unexpected error. Please try again.
+            {t('errorPage.description')}
           </p>
           {error.digest && (
             <p className="mt-1 text-xs text-muted-foreground">
-              Error ID: {error.digest}
+              {t('errorPage.errorId')} {error.digest}
             </p>
           )}
         </div>
@@ -37,18 +41,18 @@ export default function Error({
             onClick={() => reset()}
             className="w-full"
           >
-            Try again
+            {t('errorPage.tryAgain')}
           </Button>
           <Button
             variant="outline"
-            onClick={() => window.location.href = '/'}
+            onClick={() => window.location.href = getLocalizedHref('/')}
             className="w-full"
           >
-            Go to Homepage
+            {t('errorPage.goToHomepage')}
           </Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          If this problem persists, please contact support.
+          {t('errorPage.persistsContact')}
         </p>
       </Container>
     </div>

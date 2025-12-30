@@ -10,6 +10,7 @@ import { getLevelVariant } from '@/lib/utils/badge-helpers';
 import { Card } from '@/components/ui/Card';
 import { CourseRatingMini } from '@/components/feature/CourseRating';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
+import { useI18n } from '@/lib/i18n/context';
 
 interface CourseCardProps {
   course: {
@@ -48,6 +49,7 @@ interface CourseCardProps {
 
 const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', onEnroll, isEnrolling = false }) => {
   const router = useRouter();
+  const { t } = useI18n();
 
   // Text truncation utility
   const truncateText = (text: string, limit: number) => {
@@ -62,7 +64,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', on
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'coming_soon':
-        return <Badge variant="warning" className="text-xs sm:text-sm">Coming Soon</Badge>;
+        return <Badge variant="warning" className="text-xs sm:text-sm">{t('courseCard.comingSoon')}</Badge>;
       case 'published':
       default:
         return null; // No badge for published status (shows pricing instead)
@@ -107,7 +109,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', on
       'computer-vision': 'Computer Vision',
       'generative-ai': 'Generative AI',
       'ai-ethics': 'AI Ethics',
-      'ai-in-business': 'AI in Business'
+      'ai-for-work': 'AI for Work'
     };
     return categoryMap[category] || category;
   };
@@ -136,7 +138,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', on
           {getStatusBadge(course.status) ? (
             getStatusBadge(course.status)
           ) : course.pricing.is_free ? (
-            <Badge variant="success" className="text-xs sm:text-sm">Free</Badge>
+            <Badge variant="success" className="text-xs sm:text-sm">{t('courseCard.free')}</Badge>
           ) : (
             <Badge variant="primary" className="text-xs sm:text-sm">
               {course.pricing.discount_price ? (
@@ -154,7 +156,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', on
           {/* Level Badge */}
           <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
             <Badge variant={getLevelVariant(course.level)} className="text-xs sm:text-sm">
-              {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+              {t(`courseCard.level.${course.level}`)}
             </Badge>
           </div>
         </div>
@@ -175,7 +177,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', on
 
         {/* Creator - Show only for catalog variant */}
         {variant === 'catalog' && (
-          <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">by {course.creator_name}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">{t('courseCard.by')} {course.creator_name}</p>
         )}
 
         {/* Course Stats - Show only for catalog variant */}
@@ -187,11 +189,11 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', on
             </div>
             <div className="flex items-center gap-1">
               <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-              <span>{course.total_lessons} lessons</span>
+              <span>{course.total_lessons} {t('courseCard.lessons')}</span>
             </div>
             <div className="flex items-center gap-1">
               <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-              <span>{course.stats.total_enrollments} students</span>
+              <span>{course.stats.total_enrollments} {t('courseCard.students')}</span>
             </div>
           </div>
         )}
@@ -218,8 +220,8 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, variant = 'catalog', on
             {isEnrolling
               ? <LoadingSpinner size="sm" />
               : course.is_enrolled
-                ? (course.progress_percentage && course.progress_percentage >= 95 ? 'Review Course' : course.continue_lesson_id || course.current_lesson_id || (course.progress_percentage && course.progress_percentage > 0) ? 'Continue Learning' : 'Start Learning')
-                : 'View Details'
+                ? (course.progress_percentage && course.progress_percentage >= 95 ? t('courseCard.reviewCourse') : course.continue_lesson_id || course.current_lesson_id || (course.progress_percentage && course.progress_percentage > 0) ? t('courseCard.continueLearning') : t('courseCard.startLearning'))
+                : t('courseCard.viewDetails')
             }
           </Button>
         )}

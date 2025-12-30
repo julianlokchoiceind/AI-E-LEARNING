@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { SkeletonBox } from '@/components/ui/LoadingStates';
+import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { MobileInput, MobileTextarea, MobileForm, MobileFormActions } from '@/components/ui/MobileForm';
 import { useUpdateLesson } from '@/hooks/queries/useLessons';
 import { ToastService } from '@/lib/toast/ToastService';
@@ -82,6 +82,30 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
     return match ? match[1] : null;
   };
 
+  // Parse duration string (MM:SS or HH:MM:SS) to seconds
+  const parseDurationToSeconds = (duration: string): number => {
+    if (!duration.trim()) return 0;
+    const parts = duration.split(':').map(p => parseInt(p) || 0);
+    if (parts.length === 3) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else if (parts.length === 2) {
+      return parts[0] * 60 + parts[1];
+    }
+    return 0;
+  };
+
+  // Format seconds to MM:SS or HH:MM:SS
+  const formatSecondsToTime = (totalSeconds: number): string => {
+    if (!totalSeconds || totalSeconds <= 0) return '';
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    if (hours > 0) {
+      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   // 🔧 MODAL PATTERN: Manual save only - no autosave, no save status, no unsaved changes
   const handleSave = async () => {
     if (!lesson?.id) {
@@ -95,13 +119,14 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
 
     setLoading(true);
     try {
+      const durationSeconds = parseDurationToSeconds(formData.duration);
       const updateData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         video: formData.video_url ? {
           url: formData.video_url.trim(),
           youtube_id: extractYouTubeId(formData.video_url) || undefined,
-          duration: formData.duration ? parseFloat(formData.duration.replace(',', '.')) * 60 : undefined
+          duration: durationSeconds > 0 ? durationSeconds : undefined
         } : undefined,
         content: formData.content.trim(),
         status: formData.status as 'draft' | 'published'
@@ -124,7 +149,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
           video: formData.video_url ? {
             url: formData.video_url.trim(),
             youtube_id: extractYouTubeId(formData.video_url) || undefined,
-            duration: formData.duration ? parseFloat(formData.duration.replace(',', '.')) * 60 : undefined
+            duration: durationSeconds > 0 ? durationSeconds : undefined
           } : undefined
         };
         
@@ -145,7 +170,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
         title: lesson.title || '',
         description: lesson.description || '',
         video_url: lesson.video?.url || '',
-        duration: lesson.video?.duration && lesson.video.duration > 0 ? String(lesson.video.duration / 60) : '',
+        duration: formatSecondsToTime(lesson.video?.duration || 0),
         content: lesson.content || '',
         status: lesson.status || 'draft'
       });
@@ -154,15 +179,9 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
   }, [lesson, isOpen]);
 
   const handleInputChange = (field: keyof LessonFormData, value: string) => {
-    // Normalize decimal separator for duration field
-    let normalizedValue = value;
-    if (field === 'duration' && typeof value === 'string') {
-      normalizedValue = value.replace(',', '.');
-    }
-
     setFormData(prev => ({
       ...prev,
-      [field]: normalizedValue
+      [field]: value
     }));
 
     // Clear error when user starts typing
@@ -202,15 +221,16 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
       }
     }
 
-    // Validate duration (optional but if provided, check format)
+    // Validate duration format (optional - MM:SS or HH:MM:SS)
     if (formData.duration && formData.duration.trim()) {
-      // Normalize comma to dot before validation
-      const normalizedDuration = formData.duration.replace(',', '.');
-      const duration = parseFloat(normalizedDuration);
-      if (isNaN(duration) || duration <= 0) {
-        newErrors.duration = 'Duration must be a positive number (use dot for decimals, e.g. 15.5)';
-      } else if (duration > 600) {
-        newErrors.duration = 'Duration must be less than 600 minutes';
+      const durationPattern = /^(\d{1,2}:)?\d{1,2}:\d{2}$/;
+      if (!durationPattern.test(formData.duration.trim())) {
+        newErrors.duration = 'Use format MM:SS (e.g., 6:30) or HH:MM:SS (e.g., 1:30:00)';
+      } else {
+        const totalSeconds = parseDurationToSeconds(formData.duration);
+        if (totalSeconds > 36000) { // Max 10 hours
+          newErrors.duration = 'Duration cannot exceed 10 hours';
+        }
       }
     }
 
@@ -236,7 +256,7 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
           title: lesson.title || '',
           description: lesson.description || '',
           video_url: lesson.video?.url || '',
-          duration: lesson.video?.duration && lesson.video.duration > 0 ? String(lesson.video.duration / 60) : '',
+          duration: formatSecondsToTime(lesson.video?.duration || 0),
           content: lesson.content || '',
           status: lesson.status || 'draft'
         });
@@ -342,17 +362,14 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
             <div>
               <MobileInput
                 label="Duration (Optional)"
-                placeholder="15.5"
+                placeholder="6:30"
                 value={formData.duration}
                 onChange={(e) => handleInputChange('duration', e.target.value)}
                 error={errors.duration}
                 disabled={loading}
-                type="text"
-                inputMode="decimal"
-                pattern="[0-9]+([.][0-9]+)?"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Duration in minutes (e.g., 15.5 for 15 minutes 30 seconds). Use dot (.) for decimals.
+                Format: MM:SS (e.g., 6:30) or HH:MM:SS (e.g., 1:30:00)
               </p>
             </div>
 
@@ -442,7 +459,10 @@ export const EditLessonModal: React.FC<EditLessonModalProps> = ({
               className="flex-1"
             >
               {loading ? (
-                <SkeletonBox className="h-9 w-20" />
+                <>
+                  <LoadingSpinner size="sm" />
+
+                </>
               ) : (
                 'Update'
               )}

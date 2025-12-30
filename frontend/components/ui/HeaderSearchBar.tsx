@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCourseSearchQuery } from '@/hooks/queries/useCourses';
 import { useFAQSearchQuery } from '@/hooks/queries/useFAQ';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useI18n } from '@/lib/i18n/context';
 
 interface SearchResult {
   id: string;
@@ -21,13 +22,14 @@ export function HeaderSearchBar() {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { locale } = useI18n();
 
   // Debounce query for API calls
   const debouncedQuery = useDebouncedValue(query, 300);
   const shouldSearch = debouncedQuery.length >= 2;
 
-  // Fetch courses and FAQs
-  const { data: coursesData, loading: isLoadingCourses } = useCourseSearchQuery(debouncedQuery, {});
+  // Fetch courses and FAQs (courses filtered by current language)
+  const { data: coursesData, loading: isLoadingCourses } = useCourseSearchQuery(debouncedQuery, { language: locale });
   const { data: faqsData, loading: isLoadingFAQs } = useFAQSearchQuery(debouncedQuery, {});
 
   const isLoading = shouldSearch && (isLoadingCourses || isLoadingFAQs);

@@ -10,6 +10,7 @@ import { Container } from '@/components/ui/Container';
 import { useAuth } from '@/hooks/useAuth';
 import { CertificateWithDetails } from '@/lib/types/certificate';
 import { useCertificatesQuery, useCertificateStatsQuery } from '@/hooks/queries/useCertificates';
+import { getLocalizedHref } from '@/lib/i18n/config';
 
 const CertificatesPage = () => {
   const { user } = useAuth();
@@ -51,7 +52,7 @@ const CertificatesPage = () => {
       'computer-vision': 'Computer Vision',
       'generative-ai': 'Generative AI',
       'ai-ethics': 'AI Ethics',
-      'ai-in-business': 'AI in Business'
+      'ai-for-work': 'AI for Work'
     };
     return categoryMap[category] || category;
   };
@@ -212,7 +213,7 @@ const CertificatesPage = () => {
             <p className="text-muted-foreground mb-4">
               Complete courses to earn certificates and showcase your achievements
             </p>
-            <Button onClick={() => window.location.href = '/courses'}>
+            <Button onClick={() => window.location.href = getLocalizedHref('/courses')}>
               Browse Courses
             </Button>
           </CardContent>

@@ -1,7 +1,7 @@
 'use client'
 
-import Link from 'next/link'
 import Image from 'next/image'
+import { LocaleLink } from '@/components/ui/LocaleLink'
 import { useAuth } from '@/hooks/useAuth'
 import { Menu, X, LogOut, ChevronDown, LayoutDashboard, BookOpen, Settings, Headphones } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
@@ -99,7 +99,7 @@ export function Header() {
 
             {/* Desktop: Left Side - Logo + Explorer */}
             <div className="hidden md:flex items-center gap-4">
-              <Link href="/" className="flex-shrink-0">
+              <LocaleLink href="/" className="flex-shrink-0">
                 <Image
                   src="/images/logo/choice-logo-192x192.png"
                   alt="CHOICE"
@@ -107,7 +107,7 @@ export function Header() {
                   height={48}
                   className="w-10 h-10 md:w-12 md:h-12"
                 />
-              </Link>
+              </LocaleLink>
 
               {/* Explorer (Desktop Only) */}
               <div className="relative" ref={explorerRef}>
@@ -123,7 +123,7 @@ export function Header() {
 
             {/* Mobile: Logo on Right */}
             <div className="md:hidden">
-              <Link href="/" className="flex-shrink-0">
+              <LocaleLink href="/" className="flex-shrink-0">
                 <Image
                   src="/images/logo/choice-logo-192x192.png"
                   alt="CHOICE"
@@ -131,7 +131,7 @@ export function Header() {
                   height={48}
                   className="w-10 h-10 md:w-12 md:h-12"
                 />
-              </Link>
+              </LocaleLink>
             </div>
 
             {/* Center: Search Bar (Desktop Only - Full Width) */}

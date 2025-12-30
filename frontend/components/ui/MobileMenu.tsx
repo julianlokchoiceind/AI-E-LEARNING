@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, User, LogIn } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { X, ChevronLeft, ChevronRight, User, LogIn, LayoutDashboard, BookOpen, Headphones, Settings, LogOut } from 'lucide-react';
 import { useCoursesQuery } from '@/hooks/queries/useCourses';
+import { useUserProfileQuery } from '@/hooks/queries/useUserProfile';
 import { useAuth } from '@/hooks/useAuth';
-import { LanguageSwitcherCompact } from '@/components/ui/LanguageSwitcher';
+import { LanguageSwitcherMobile } from '@/components/ui/LanguageSwitcher';
+import { useI18n, useLocalizedRouter } from '@/lib/i18n/context';
+import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -14,21 +16,27 @@ interface MobileMenuProps {
 
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const [selectedCategory, setSelectedCategory] = useState<{name: string, slug: string} | null>(null);
-  const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const router = useLocalizedRouter();
+  const { user, isAuthenticated, logout } = useAuth();
+  const { t, locale } = useI18n();
 
-  // 4 main categories only
+  // Fetch user profile for avatar (same pattern as Header)
+  const { data: profileData } = useUserProfileQuery(isAuthenticated);
+  const profile = profileData?.data;
+
+  // 4 main categories with translated names
   const categories = [
-    { name: "Machine Learning Basics", slug: "ml-basics" },
-    { name: "Generative AI", slug: "generative-ai" },
-    { name: "Deep Learning", slug: "deep-learning" },
-    { name: "AI in Business", slug: "ai-in-business" },
+    { name: t('categories.ml_basics'), slug: "ml-basics" },
+    { name: t('categories.generative_ai'), slug: "generative-ai" },
+    { name: t('categories.deep_learning'), slug: "deep-learning" },
+    { name: t('categories.ai_for_work'), slug: "ai-for-work" },
   ];
 
-  // Fetch courses when category selected - tái sử dụng từ CategoryDropdown
+  // Fetch courses when category selected (filtered by current language)
   const { data: coursesData } = useCoursesQuery({
     category: selectedCategory?.slug,
-    limit: 5
+    limit: 5,
+    language: locale
   });
 
   const courses = coursesData?.data?.courses || [];
@@ -136,13 +144,13 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   onClick={() => handleNavLinkClick('/about')}
                   className="w-full text-left px-4 py-3 nav-hover transition-colors"
                 >
-                  <span className="font-medium">About</span>
+                  <span className="font-medium">{t('nav.about')}</span>
                 </button>
                 <button
                   onClick={() => handleNavLinkClick('/faq')}
                   className="w-full text-left px-4 py-3 nav-hover transition-colors"
                 >
-                  <span className="font-medium">FAQ</span>
+                  <span className="font-medium">{t('nav.faq')}</span>
                 </button>
               </div>
 
@@ -150,27 +158,96 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               <div className="border-t border-border/30 mx-4 my-2" />
 
               <div className="py-2">
-                {/* Language Switcher - Hidden for future implementation */}
-                {/* <div className="px-4 py-1">
-                  <LanguageSwitcherCompact />
-                </div> */}
+                {/* Language Switcher - Inline toggle for mobile */}
+                <div className="px-4 py-3">
+                  <LanguageSwitcherMobile />
+                </div>
 
-                {/* Auth Section - Show for non-authenticated users */}
-                {!isAuthenticated && (
+                {/* Auth Section */}
+                {isAuthenticated && user ? (
+                  <>
+                    {/* User Info Header */}
+                    <div className="px-4 py-3 flex items-center gap-3 border-b border-border/30 mb-2">
+                      {profile?.profile?.avatar ? (
+                        <img
+                          src={profile.profile.avatar}
+                          alt={profile?.name || user?.name || 'User'}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="w-5 h-5 text-primary" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground truncate">{profile?.name || user?.name || 'User'}</p>
+                        <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+                      </div>
+                    </div>
+
+                    {/* Dashboard */}
+                    <button
+                      onClick={() => handleNavLinkClick('/dashboard')}
+                      className="w-full text-left px-4 py-3 nav-hover transition-colors flex items-center"
+                    >
+                      <LayoutDashboard className="h-4 w-4 mr-3" />
+                      <span className="font-medium">{t('nav.dashboard')}</span>
+                    </button>
+
+                    {/* My Courses */}
+                    <button
+                      onClick={() => handleNavLinkClick('/my-courses')}
+                      className="w-full text-left px-4 py-3 nav-hover transition-colors flex items-center"
+                    >
+                      <BookOpen className="h-4 w-4 mr-3" />
+                      <span className="font-medium">{t('nav.myCourses')}</span>
+                    </button>
+
+                    {/* Support */}
+                    <button
+                      onClick={() => handleNavLinkClick('/contact')}
+                      className="w-full text-left px-4 py-3 nav-hover transition-colors flex items-center"
+                    >
+                      <Headphones className="h-4 w-4 mr-3" />
+                      <span className="font-medium">{t('nav.support')}</span>
+                    </button>
+
+                    {/* Settings */}
+                    <button
+                      onClick={() => handleNavLinkClick('/settings')}
+                      className="w-full text-left px-4 py-3 nav-hover transition-colors flex items-center"
+                    >
+                      <Settings className="h-4 w-4 mr-3" />
+                      <span className="font-medium">{t('nav.settings')}</span>
+                    </button>
+
+                    {/* Logout */}
+                    <button
+                      onClick={() => {
+                        logout();
+                        onClose();
+                      }}
+                      className="w-full text-left px-4 py-3 nav-hover transition-colors flex items-center text-destructive"
+                    >
+                      <LogOut className="h-4 w-4 mr-3" />
+                      <span className="font-medium">{t('nav.logout')}</span>
+                    </button>
+                  </>
+                ) : (
                   <>
                     <button
                       onClick={() => handleNavLinkClick('/login')}
                       className="w-full text-left px-4 py-3 nav-hover transition-colors flex items-center"
                     >
                       <LogIn className="h-4 w-4 mr-3" />
-                      <span className="font-medium">Sign In</span>
+                      <span className="font-medium">{t('nav.login')}</span>
                     </button>
                     <button
                       onClick={() => handleNavLinkClick('/register')}
                       className="w-full text-left px-4 py-3 nav-hover transition-colors flex items-center"
                     >
                       <User className="h-4 w-4 mr-3" />
-                      <span className="font-medium">Get Started</span>
+                      <span className="font-medium">{t('nav.register')}</span>
                     </button>
                   </>
                 )}

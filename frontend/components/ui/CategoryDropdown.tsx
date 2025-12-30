@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import { useCoursesQuery } from '@/hooks/queries/useCourses';
+import { useI18n, useLocalizedRouter } from '@/lib/i18n/context';
 
 interface CategoryDropdownProps {
   onClose: () => void;
@@ -14,20 +14,22 @@ export function CategoryDropdown({ onClose, buttonRef }: CategoryDropdownProps) 
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [position, setPosition] = useState({ left: 0, top: 64 });
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  const router = useLocalizedRouter();
+  const { t, locale } = useI18n();
 
-  // 4 main categories only
+  // 4 main categories with translated names
   const categories = [
-    { name: "Machine Learning Basics", slug: "ml-basics" },
-    { name: "Generative AI", slug: "generative-ai" },
-    { name: "Deep Learning", slug: "deep-learning" },
-    { name: "AI in Business", slug: "ai-in-business" },
+    { name: t('categories.ml_basics'), slug: "ml-basics" },
+    { name: t('categories.generative_ai'), slug: "generative-ai" },
+    { name: t('categories.deep_learning'), slug: "deep-learning" },
+    { name: t('categories.ai_for_work'), slug: "ai-for-work" },
   ];
 
-  // Fetch courses when hovering a category
+  // Fetch courses when hovering a category (filtered by current language)
   const { data: coursesData } = useCoursesQuery({
     category: hoveredCategory || undefined,
-    limit: 5
+    limit: 5,
+    language: locale
   });
 
   const courses = coursesData?.data?.courses || [];

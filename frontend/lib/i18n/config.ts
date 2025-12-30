@@ -113,3 +113,35 @@ export function getLocalizedPath(pathname: string, locale: Locale): string {
 export function getTextDirection(locale: Locale): 'ltr' | 'rtl' {
   return LOCALE_RTL[locale] ? 'rtl' : 'ltr';
 }
+
+/**
+ * Get current locale from cookie/localStorage (for non-React contexts)
+ */
+export function getCurrentLocale(): Locale {
+  if (typeof window !== 'undefined') {
+    // Try cookie first
+    const cookieLocale = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('locale='))
+      ?.split('=')[1];
+    if (cookieLocale && isValidLocale(cookieLocale)) {
+      return cookieLocale;
+    }
+    // Fallback to localStorage
+    const storedLocale = localStorage.getItem('locale');
+    if (storedLocale && isValidLocale(storedLocale)) {
+      return storedLocale as Locale;
+    }
+    // Fallback to URL
+    return getLocaleFromPath(window.location.pathname);
+  }
+  return DEFAULT_LOCALE;
+}
+
+/**
+ * Get localized href for window.location navigation (non-React contexts)
+ */
+export function getLocalizedHref(pathname: string): string {
+  const locale = getCurrentLocale();
+  return getLocalizedPath(pathname, locale);
+}

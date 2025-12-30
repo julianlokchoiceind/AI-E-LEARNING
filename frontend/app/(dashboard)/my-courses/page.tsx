@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { LocaleLink } from '@/components/ui/LocaleLink';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -234,12 +234,12 @@ export default function MyCoursesPage() {
             }
           </p>
           {filter === 'all' && (
-            <Link 
+            <LocaleLink 
               href="/courses"
               className="inline-block bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors"
             >
               Browse Courses
-            </Link>
+            </LocaleLink>
           )}
         </Card>
       ) : (
@@ -307,8 +307,8 @@ export default function MyCoursesPage() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-2">
-                  <Link
-                    href={enrollment.progress.continue_lesson_id 
+                  <LocaleLink
+                    href={enrollment.progress.continue_lesson_id
                       ? `/learn/${enrollment.course_id}/${enrollment.progress.continue_lesson_id}`
                       : enrollment.progress.current_lesson_id
                       ? `/learn/${enrollment.course_id}/${enrollment.progress.current_lesson_id}`
@@ -316,14 +316,14 @@ export default function MyCoursesPage() {
                     className="flex-1 text-center bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors"
                   >
                     {enrollment.progress.is_completed ? 'Review' : 'Continue Learning'}
-                  </Link>
+                  </LocaleLink>
                   {enrollment.progress.is_completed && (
-                    <Link
+                    <LocaleLink
                       href={`/certificates/${enrollment.id}`}
                       className="px-4 py-2 border border-primary text-primary rounded hover:bg-primary hover:text-white transition-colors"
                     >
                       Certificate
-                    </Link>
+                    </LocaleLink>
                   )}
                 </div>
               </div>

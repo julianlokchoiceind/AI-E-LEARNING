@@ -687,7 +687,7 @@ export const vi = {
     computer_vision: 'Thị Giác Máy Tính',
     generative_ai: 'AI Tạo Sinh',
     ai_ethics: 'Đạo Đức AI',
-    ai_in_business: 'AI Trong Kinh Doanh',
+    ai_for_work: 'AI Cho Công Việc',
     web_development: 'Phát Triển Web',
     mobile_development: 'Phát Triển Di Động',
     data_science: 'Khoa Học Dữ Liệu',
@@ -702,6 +702,28 @@ export const vi = {
     coursesCount: 'khóa học',
   },
 
+  // Course Card
+  courseCard: {
+    // Status badges
+    comingSoon: 'Sắp Ra Mắt',
+    free: 'Miễn Phí',
+    // Level badges
+    level: {
+      beginner: 'Cơ Bản',
+      intermediate: 'Trung Cấp',
+      advanced: 'Nâng Cao',
+    },
+    // Stats
+    lessons: 'bài học',
+    students: 'học viên',
+    by: 'bởi',
+    // Buttons
+    viewDetails: 'Xem Chi Tiết',
+    startLearning: 'Bắt Đầu Học',
+    continueLearning: 'Tiếp Tục Học',
+    reviewCourse: 'Ôn Tập Khóa Học',
+  },
+
   // Homepage
   homepage: {
     heroTitle: 'Làm Chủ Lập Trình AI',
@@ -711,9 +733,9 @@ export const vi = {
     categoriesTitle: 'Bắt Đầu',
     categoriesTitleHighlight: 'Hành Trình AI',
     categoriesSubtitle: 'Từ cơ bản machine learning đến ứng dụng tiên tiến',
-    latestCoursesTitle: 'Sắp Ra Mắt:',
+    latestCoursesTitle: '',
     latestCoursesTitleHighlight: 'Khóa Học Đầu Tiên',
-    latestCoursesSubtitle: 'Hãy là những người đầu tiên trải nghiệm các khóa học AI cao cấp của chúng tôi',
+    latestCoursesSubtitle: 'Bắt đầu hành trình học AI với các khóa học cao cấp của chúng tôi',
     showAllCourses: 'Xem tất cả khóa học',
     featuresTitle: 'Tại Sao Chọn Nền Tảng Của Chúng Tôi',
     featuresSubtitle: 'Khám phá những tính năng giúp việc học lập trình AI hiệu quả và thú vị hơn',
@@ -1101,6 +1123,62 @@ export const vi = {
     section13Email: 'Email: info@choiceind.com',
     section13Address: 'Địa chỉ: Thành phố Hồ Chí Minh, Việt Nam',
     disclaimer: 'Chính sách Bảo mật này được điều chỉnh bởi luật pháp Việt Nam. Đối với người dùng tại Liên minh Châu Âu, các quyền bổ sung có thể được áp dụng theo Quy định Bảo vệ Dữ liệu Chung (GDPR).',
+  },
+
+  // Dashboard
+  dashboard: {
+    welcomeBack: 'Chào mừng trở lại,',
+    subtitle: 'Tiếp tục hành trình học tập và theo dõi tiến độ của bạn',
+    enrolledCourses: 'Khóa Học Đã Đăng Ký',
+    completed: 'Đã Hoàn Thành',
+    hoursLearned: 'Giờ Đã Học',
+    currentStreak: 'Chuỗi Ngày Học',
+    days: 'ngày',
+    continueLearning: 'Tiếp Tục Học',
+    viewAllCourses: 'Xem tất cả khóa học →',
+    noCoursesYet: 'Chưa có khóa học',
+    noCoursesDescription: 'Bạn chưa đăng ký khóa học nào. Hãy bắt đầu học ngay hôm nay!',
+    browseCourses: 'Duyệt Khóa Học',
+    complete: 'hoàn thành',
+    lastAccessed: 'Truy cập lần cuối',
+    review: 'Xem Lại',
+    continue: 'Tiếp Tục',
+    start: 'Bắt Đầu',
+    upcomingLessons: 'Bài Học Sắp Tới',
+    noUpcomingLessons: 'Không có bài học sắp tới',
+    achievements: 'Thành Tích',
+    certificatesEarned: 'Chứng Chỉ Đã Đạt',
+    longestStreak: 'Chuỗi Ngày Dài Nhất',
+    quickActions: 'Thao Tác Nhanh',
+    browseNewCourses: 'Duyệt Khóa Học Mới',
+    viewCertificates: 'Xem Chứng Chỉ',
+    editProfile: 'Chỉnh Sửa Hồ Sơ',
+    exportProgress: 'Xuất Tiến Độ',
+    platformTour: 'Khám Phá Nền Tảng',
+    unableToLoad: 'Không thể tải bảng điều khiển',
+    unableToLoadDesc: 'Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại.',
+    retry: 'Thử Lại',
+    refreshSuccess: 'Đã làm mới bảng điều khiển thành công!',
+    welcomeMessage: 'Chào mừng đến với nền tảng! Bảng điều khiển cá nhân của bạn đã sẵn sàng.',
+    min: 'phút',
+  },
+
+  // 404 Not Found Page
+  notFound: {
+    title: 'Rất tiếc,',
+    description: 'Trang bạn đang tìm kiếm không tồn tại.',
+    backToHome: 'Về Trang Chủ',
+    contact: 'Liên Hệ',
+  },
+
+  // Error Page
+  errorPage: {
+    title: 'Rất tiếc! Đã xảy ra lỗi',
+    description: 'Chúng tôi gặp phải lỗi không mong muốn. Vui lòng thử lại.',
+    errorId: 'Mã lỗi:',
+    tryAgain: 'Thử lại',
+    goToHomepage: 'Về Trang Chủ',
+    persistsContact: 'Nếu vấn đề vẫn tiếp tục, vui lòng liên hệ hỗ trợ.',
   },
 
   // Footer

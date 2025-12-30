@@ -130,7 +130,7 @@ class OnboardingService:
                     elif path == LearningPath.AI_TOOLS:
                         categories.append("generative-ai")  # AI tools
                     elif path == LearningPath.PRODUCTION_AI:
-                        categories.append("ai-in-business")  # Business use
+                        categories.append("ai-for-work")  # Business/Work use
 
                 if categories:
                     course_query["category"] = {"$in": categories}

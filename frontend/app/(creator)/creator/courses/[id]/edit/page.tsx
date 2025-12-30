@@ -655,7 +655,7 @@ const CourseBuilderPage = () => {
                         <option value="computer-vision">Computer Vision</option>
                         <option value="generative-ai">Generative AI</option>
                         <option value="ai-ethics">AI Ethics</option>
-                        <option value="ai-in-business">AI in Business</option>
+                        <option value="ai-for-work">AI for Work</option>
                       </select>
                     </div>
 
@@ -868,6 +868,10 @@ const CourseBuilderPage = () => {
                                 Course thumbnail uploaded
                               </li>
                               <li className="flex items-center gap-2">
+                                <div className={`w-1 h-1 rounded-full ${courseData.language && ['vi', 'en'].includes(courseData.language) ? 'bg-green-600' : 'bg-red-500'}`} />
+                                Course language selected
+                              </li>
+                              <li className="flex items-center gap-2">
                                 <div className={`w-1 h-1 rounded-full ${courseData.total_duration && courseData.total_duration > 0 ? 'bg-green-600' : 'bg-red-500'}`} />
                                 Course duration set
                               </li>
@@ -903,6 +907,27 @@ const CourseBuilderPage = () => {
                         className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="Beginner programmers&#10;Students interested in AI&#10;Professional developers"
                       />
+                    </div>
+
+                    {/* Course Language */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Course Language <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={courseData.language || 'en'}
+                        onChange={(e) => updateCourseData({ language: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="en">English</option>
+                        <option value="vi">Tiếng Việt (Vietnamese)</option>
+                      </select>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        This determines which language the course content is in. Users can filter courses by language.
+                      </p>
+                      <p className="mt-1 text-xs text-red-600 italic text-[11px]">
+                        Note: Required for Review status
+                      </p>
                     </div>
                   </div>
                 </Card>

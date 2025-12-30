@@ -244,11 +244,13 @@ class ApiClient {
           // Clear NextAuth session and redirect to login
           try {
             const { signOut } = await import('next-auth/react');
-            await signOut({ redirect: true, callbackUrl: '/login' });
+            const { getLocalizedHref } = await import('@/lib/i18n/config');
+            await signOut({ redirect: true, callbackUrl: getLocalizedHref('/login') });
           } catch (e) {
-            // Fallback redirect
+            // Fallback redirect - use dynamic import to avoid circular dependency
             if (typeof window !== 'undefined') {
-              window.location.href = '/login';
+              const { getLocalizedHref } = await import('@/lib/i18n/config');
+              window.location.href = getLocalizedHref('/login');
             }
           }
           

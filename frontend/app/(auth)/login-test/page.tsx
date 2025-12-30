@@ -3,11 +3,12 @@
 import { signIn } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 import Image from 'next/image'
+import { LocaleLink } from '@/components/ui/LocaleLink'
 import { LoadingButton } from '@/components/ui/LoadingStates'
 import { useInlineMessage } from '@/hooks/useInlineMessage'
 import { InlineMessage } from '@/components/ui/InlineMessage'
+import { getLocalizedHref } from '@/lib/i18n/config'
 
 export default function LoginTestPage() {
   const searchParams = useSearchParams()
@@ -110,7 +111,7 @@ export default function LoginTestPage() {
       } else if (result?.ok) {
         // Wait a moment for session to establish, then redirect
         setTimeout(() => {
-          router.push('/dashboard')
+          router.push(getLocalizedHref('/dashboard'))
         }, 100)
       }
     } catch (error: any) {
@@ -123,7 +124,7 @@ export default function LoginTestPage() {
 
   const handleSocialLogin = (provider: string) => {
     setIsLoading(true)
-    signIn(provider, { callbackUrl: '/dashboard' })
+    signIn(provider, { callbackUrl: getLocalizedHref('/dashboard') })
   }
 
   return (
@@ -151,7 +152,7 @@ export default function LoginTestPage() {
         {/* Header Section */}
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <Link href="/">
+            <LocaleLink href="/">
               <Image
                 src="/images/logo/choice-logo-192x192.png"
                 alt="CHOICE"
@@ -160,16 +161,16 @@ export default function LoginTestPage() {
                 className="w-20 h-20"
                 priority
               />
-            </Link>
+            </LocaleLink>
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
             Sign in
           </h2>
           <p className="text-sm text-gray-600">
             Or{' '}
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+            <LocaleLink href="/register" className="font-medium text-blue-600 hover:text-blue-500">
               create a new account
-            </Link>
+            </LocaleLink>
           </p>
         </div>
 
@@ -244,9 +245,9 @@ export default function LoginTestPage() {
 
           {/* Forgot password */}
           <div className="text-left">
-            <Link href="/forgot-password" className="text-xs font-medium text-blue-600 hover:text-blue-500">
+            <LocaleLink href="/forgot-password" className="text-xs font-medium text-blue-600 hover:text-blue-500">
               Forgot your password?
-            </Link>
+            </LocaleLink>
           </div>
 
           {/* Submit Button */}

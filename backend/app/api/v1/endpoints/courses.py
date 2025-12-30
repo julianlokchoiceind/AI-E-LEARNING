@@ -84,7 +84,7 @@ async def list_courses(
     Query parameters:
     - page: Page number (default: 1)
     - per_page: Items per page (default: 20, max: 100)
-    - category: Filter by category (ml-basics, deep-learning, nlp, computer-vision, generative-ai, ai-ethics, ai-in-business)
+    - category: Filter by category (ml-basics, deep-learning, nlp, computer-vision, generative-ai, ai-ethics, ai-for-work)
     - level: Filter by level (beginner, intermediate, advanced)
     - search: Search in title and description
     - is_free: Filter free/paid courses
@@ -213,17 +213,25 @@ async def get_my_courses(
 
 
 @router.get("/categories/stats", response_model=StandardResponse[dict])
-async def get_categories_stats() -> StandardResponse[dict]:
+async def get_categories_stats(
+    language: Optional[str] = Query(None, description="Filter by course language (vi, en)")
+) -> StandardResponse[dict]:
     """
     Get course count statistics for each category.
 
     Returns a dictionary with category values as keys and course counts as values.
     Used for displaying category statistics on the homepage.
+    Filters by language when provided (Option A: full language separation).
     """
     try:
+        # Build match filter
+        match_filter: dict = {"status": {"$in": [CourseStatus.PUBLISHED, CourseStatus.COMING_SOON]}}
+        if language:
+            match_filter["language"] = language
+
         # Count courses by category (published and coming_soon courses - visible to users)
         pipeline = [
-            {"$match": {"status": {"$in": [CourseStatus.PUBLISHED, CourseStatus.COMING_SOON]}}},
+            {"$match": match_filter},
             {"$group": {
                 "_id": "$category",
                 "count": {"$sum": 1}

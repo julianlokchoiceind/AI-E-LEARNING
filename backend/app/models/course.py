@@ -16,7 +16,7 @@ class CourseCategory(str, Enum):
     COMPUTER_VISION = "computer-vision"
     GENERATIVE_AI = "generative-ai"
     AI_ETHICS = "ai-ethics"
-    AI_IN_BUSINESS = "ai-in-business"
+    AI_FOR_WORK = "ai-for-work"
 
 
 class CourseLevel(str, Enum):

@@ -12,6 +12,7 @@ import { HeroSection } from '@/components/ui/HeroSection';
 import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { InlineMessage } from '@/components/ui/InlineMessage';
 import { useI18n } from '@/lib/i18n/context';
+import { getLocalizedHref } from '@/lib/i18n/config';
 
 export default function ContactPage() {
   const { t } = useI18n();
@@ -211,7 +212,7 @@ export default function ContactPage() {
                 </p>
                 <Button
                   variant="outline"
-                  onClick={() => window.location.href = '/faq'}
+                  onClick={() => window.location.href = getLocalizedHref('/faq')}
                 >
                   {t('contact.viewFaq')}
                 </Button>

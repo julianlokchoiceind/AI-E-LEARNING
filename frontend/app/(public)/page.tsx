@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/hooks/useAuth'
 import { useCategoryStatsQuery, useCoursesQuery } from '@/hooks/queries/useCourses'
-import Link from 'next/link'
+import { LocaleLink } from '@/components/ui/LocaleLink'
 import { Container } from '@/components/ui/Container'
 import { HeroSection } from '@/components/ui/HeroSection'
 import { Button } from '@/components/ui/Button'
@@ -20,8 +20,8 @@ export default function HomePage() {
   const { isAuthenticated } = useAuth()
   const { t, locale } = useI18n()
 
-  // Fetch category statistics with global cache
-  const { data: categoryStats, loading: statsLoading } = useCategoryStatsQuery()
+  // Fetch category statistics with global cache (filtered by current language)
+  const { data: categoryStats, loading: statsLoading } = useCategoryStatsQuery(locale)
 
   // Fetch latest 3 courses (filtered by current language)
   const { data: latestCoursesData, loading: coursesLoading } = useCoursesQuery({
@@ -31,31 +31,31 @@ export default function HomePage() {
   })
   const latestCourses = latestCoursesData?.data?.courses || []
 
-  // Featured categories (4 main categories)
+  // Featured categories (4 main categories) - static images in codebase
   const allCategories = [
     {
       value: 'ml-basics',
       label: t('categories.ml_basics'),
-      image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_4purvm4purvm4pur.png',
+      image: '/images/categories/ml-basics.png',
       count: (categoryStats?.data as any)?.['ml-basics'] || 0,
     },
     {
       value: 'generative-ai',
       label: t('categories.generative_ai'),
-      image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_e208j5e208j5e208.png',
+      image: '/images/categories/generative-ai.png',
       count: (categoryStats?.data as any)?.['generative-ai'] || 0,
     },
     {
       value: 'deep-learning',
       label: t('categories.deep_learning'),
-      image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_qv0tn8qv0tn8qv0t.png',
+      image: '/images/categories/deep-learning.png',
       count: (categoryStats?.data as any)?.['deep-learning'] || 0,
     },
     {
-      value: 'ai-in-business',
-      label: t('categories.ai_in_business'),
-      image: 'https://storage.googleapis.com/ai-elearning-uploads/course-category-thumbnail/Course_Category_Image_t7yezit7yezit7ye.png',
-      count: (categoryStats?.data as any)?.['ai-in-business'] || 0,
+      value: 'ai-for-work',
+      label: t('categories.ai_for_work'),
+      image: '/images/categories/ai-for-work.jpg',
+      count: (categoryStats?.data as any)?.['ai-for-work'] || 0,
     },
   ]
 
@@ -73,14 +73,14 @@ export default function HomePage() {
         backgroundImage="/images/backgrounds/homepage-hero-section.jpg"
         overlayOpacity={0.38}
       >
-        <Link href={isAuthenticated ? '/dashboard' : '/register'} className="w-full sm:w-auto">
+        <LocaleLink href={isAuthenticated ? '/dashboard' : '/register'} className="w-full sm:w-auto">
           <Button size="lg" className="w-full sm:w-auto btn-interactive animate-fade-in-up stagger-1">{t('homepage.startLearning')}</Button>
-        </Link>
-        <Link href="/courses" className="w-full sm:w-auto">
+        </LocaleLink>
+        <LocaleLink href="/courses" className="w-full sm:w-auto">
           <Button size="lg" variant="outline" className="w-full sm:w-auto btn-interactive animate-fade-in-up stagger-2 !text-white !border-white !bg-white/10 hover:!bg-white/20">
             {t('homepage.browseCourses')}
           </Button>
-        </Link>
+        </LocaleLink>
       </HeroSection>
 
       {/* Course Categories Section - With Background Image */}
@@ -147,11 +147,11 @@ export default function HomePage() {
 
           {/* Show All Courses Button - Left aligned */}
           <div className="mt-8">
-            <Link href="/courses" className="inline-block">
+            <LocaleLink href="/courses" className="inline-block">
               <Button size="md">
                 {t('homepage.showAllCourses')}
               </Button>
-            </Link>
+            </LocaleLink>
           </div>
         </Container>
       </div>

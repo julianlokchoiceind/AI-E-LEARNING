@@ -53,7 +53,7 @@ interface LessonFormData {
   title: string;
   description: string;
   video_url: string;
-  duration: string; // in minutes as string for input
+  duration: string; // Format: "MM:SS" or "HH:MM:SS"
 }
 
 export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
@@ -69,6 +69,20 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
     video_url: '',
     duration: ''
   });
+
+  // Parse duration string (MM:SS or HH:MM:SS) to seconds
+  const parseDurationToSeconds = (duration: string): number => {
+    if (!duration.trim()) return 0;
+    const parts = duration.split(':').map(p => parseInt(p) || 0);
+    if (parts.length === 3) {
+      // HH:MM:SS
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else if (parts.length === 2) {
+      // MM:SS
+      return parts[0] * 60 + parts[1];
+    }
+    return 0;
+  };
 
   const [errors, setErrors] = useState<Partial<LessonFormData>>({ });
   
@@ -115,13 +129,16 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
       }
     }
 
-    // Validate duration (optional but if provided, must be a positive number)
+    // Validate duration format (optional - MM:SS or HH:MM:SS)
     if (formData.duration && formData.duration.trim()) {
-      const durationNum = parseFloat(formData.duration);
-      if (isNaN(durationNum) || durationNum <= 0) {
-        newErrors.duration = 'Duration must be a positive number (in minutes)';
-      } else if (durationNum > 300) {
-        newErrors.duration = 'Duration cannot exceed 300 minutes (5 hours)';
+      const durationPattern = /^(\d{1,2}:)?\d{1,2}:\d{2}$/; // MM:SS or HH:MM:SS
+      if (!durationPattern.test(formData.duration.trim())) {
+        newErrors.duration = 'Use format MM:SS (e.g., 6:30) or HH:MM:SS (e.g., 1:30:00)';
+      } else {
+        const totalSeconds = parseDurationToSeconds(formData.duration);
+        if (totalSeconds > 18000) { // Max 5 hours
+          newErrors.duration = 'Duration cannot exceed 5 hours';
+        }
       }
     }
 
@@ -161,9 +178,11 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
 
     // Add video data if provided
     if (formData.video_url && formData.video_url.trim()) {
+      const totalSeconds = parseDurationToSeconds(formData.duration);
+
       lessonData.video = {
         url: formData.video_url.trim(),
-        duration: formData.duration ? parseFloat(formData.duration) * 60 : undefined // convert minutes to seconds
+        duration: totalSeconds > 0 ? totalSeconds : undefined
       };
 
       // Extract YouTube ID if it's a YouTube URL
@@ -307,18 +326,14 @@ export const CreateLessonModal: React.FC<CreateLessonModalProps> = ({
                 id="lesson-duration"
                 name="duration"
                 label="Duration (Optional)"
-                placeholder="15"
+                placeholder="6:30"
                 value={formData.duration}
                 onChange={(e) => handleInputChange('duration', e.target.value)}
                 error={errors.duration}
                 disabled={loading}
-                type="number"
-                min="0"
-                max="300"
-                step="0.5"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Duration in minutes (e.g., 15.5 for 15 minutes 30 seconds)
+                Format: MM:SS (e.g., 6:30) or HH:MM:SS (e.g., 1:30:00)
               </p>
             </div>
 
