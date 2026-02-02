@@ -86,7 +86,7 @@ export function Header() {
     <>
       <header className="bg-background shadow-sm border-b relative">
         <Container variant="header">
-          <div className="flex h-16 items-center justify-between md:gap-4">
+          <div className="flex h-20 items-center justify-between md:gap-4">
             {/* Mobile: Hamburger Menu */}
             <button
               type="button"
@@ -103,9 +103,9 @@ export function Header() {
                 <Image
                   src="/images/logo/heartht-logo-192x192.png"
                   alt="HEART HT"
-                  width={48}
-                  height={48}
-                  className="w-10 h-10 md:w-12 md:h-12"
+                  width={50}
+                  height={50}
+                  className="w-9 h-9 md:w-[50px] md:h-[50px]"
                 />
               </LocaleLink>
 
@@ -127,9 +127,9 @@ export function Header() {
                 <Image
                   src="/images/logo/heartht-logo-192x192.png"
                   alt="HEART HT"
-                  width={48}
-                  height={48}
-                  className="w-10 h-10 md:w-12 md:h-12"
+                  width={40}
+                  height={40}
+                  className="w-9 h-9"
                 />
               </LocaleLink>
             </div>
