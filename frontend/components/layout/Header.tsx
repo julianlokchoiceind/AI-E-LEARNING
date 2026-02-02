@@ -101,8 +101,8 @@ export function Header() {
             <div className="hidden md:flex items-center gap-4">
               <LocaleLink href="/" className="flex-shrink-0">
                 <Image
-                  src="/images/logo/choice-logo-192x192.png"
-                  alt="CHOICE"
+                  src="/images/logo/heartht-logo-192x192.png"
+                  alt="HEART HT"
                   width={48}
                   height={48}
                   className="w-10 h-10 md:w-12 md:h-12"
@@ -125,8 +125,8 @@ export function Header() {
             <div className="md:hidden">
               <LocaleLink href="/" className="flex-shrink-0">
                 <Image
-                  src="/images/logo/choice-logo-192x192.png"
-                  alt="CHOICE"
+                  src="/images/logo/heartht-logo-192x192.png"
+                  alt="HEART HT"
                   width={48}
                   height={48}
                   className="w-10 h-10 md:w-12 md:h-12"

@@ -47,7 +47,7 @@ export default function RootLayout({
       <head>
         {/* Favicon - Single high-quality logo */}
         <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
-        <link rel="apple-touch-icon" href="/images/logo/android-chrome-512x512.png" />
+        <link rel="apple-touch-icon" href="/images/logo/heartht-logo-512x512.png" />
         <link rel="manifest" href="/manifest.json" />
 
         {/* Google Search Console Verification */}

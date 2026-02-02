@@ -163,8 +163,8 @@ export default function RegisterPage() {
         <div className="flex justify-center mb-4">
           <LocaleLink href="/">
             <Image
-              src="/images/logo/choice-logo-192x192.png"
-              alt="CHOICE"
+              src="/images/logo/heartht-logo-192x192.png"
+              alt="HEART HT"
               width={80}
               height={80}
               className="w-20 h-20"

@@ -18,8 +18,8 @@ export function Footer() {
               <div className="flex mb-2">
                 <LocaleLink href="/" className="flex-shrink-0">
                   <Image
-                    src="/images/logo/choice-logo-192x192.png"
-                    alt="CHOICE"
+                    src="/images/logo/heartht-logo-192x192.png"
+                    alt="HEART HT"
                     width={48}
                     height={48}
                     className="w-10 h-10 md:w-12 md:h-12"
