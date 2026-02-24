@@ -95,7 +95,7 @@ export function LanguageSwitcher({
         variant="ghost"
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
-        className="flex items-center gap-2 px-3 py-2"
+        className={`flex items-center gap-2 px-3 py-2 ${className}`}
         size="sm"
       >
         {showFlag ? (

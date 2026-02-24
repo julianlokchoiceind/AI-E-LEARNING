@@ -110,7 +110,7 @@ export function TestimonialsSection() {
           return (
             <div
               key={config.id}
-              className="bg-white rounded-lg shadow-sm border p-6 text-center hover:shadow-md transition-shadow"
+              className="card-modern p-6 text-center"
             >
               {/* Quote Icon */}
               <div className="flex justify-center mb-4">

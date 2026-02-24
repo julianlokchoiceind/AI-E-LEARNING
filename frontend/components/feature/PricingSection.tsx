@@ -85,7 +85,7 @@ export function PricingSection() {
             <Card
               key={index}
               className={`relative p-6 ${
-                plan.isPopular ? 'border-primary shadow-lg' : 'border-border'
+                plan.isPopular ? 'border-gradient shadow-lg' : 'card-modern'
               }`}
             >
               {/* Popular Badge */}

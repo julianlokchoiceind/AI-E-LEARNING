@@ -25,7 +25,7 @@ async def join_waitlist(request: Request, waitlist_data: WaitlistJoinRequest):
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="This email has already joined the waitlist!"
+                detail="This email is already subscribed!"
             )
 
         # Get request info
@@ -50,7 +50,7 @@ async def join_waitlist(request: Request, waitlist_data: WaitlistJoinRequest):
         return StandardResponse(
             success=True,
             data={},
-            message="🎉 Welcome to the waitlist! We'll notify you when we launch."
+            message="🎉 Successfully subscribed!"
         )
 
     except HTTPException:

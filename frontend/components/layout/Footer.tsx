@@ -26,7 +26,7 @@ export function Footer() {
                   />
                 </LocaleLink>
               </div>
-              <h3 className="text-lg font-bold gradient-text">AI E-Learning Platform</h3>
+              <h3 className="text-lg font-bold gradient-text-bold">AI E-Learning Platform</h3>
             </div>
             <p className="text-muted-foreground text-sm mb-4">
               {t('footer.companyDescription')}

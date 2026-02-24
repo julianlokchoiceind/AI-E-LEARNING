@@ -15,7 +15,11 @@ interface SearchResult {
   thumbnail?: string;
 }
 
-export function HeaderSearchBar() {
+interface HeaderSearchBarProps {
+  transparent?: boolean;
+}
+
+export function HeaderSearchBar({ transparent = false }: HeaderSearchBarProps) {
   const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ left: 0, top: 64, width: 0 });
@@ -128,10 +132,14 @@ export function HeaderSearchBar() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => shouldSearch && setShowDropdown(true)}
             placeholder="Search courses and FAQ..."
-            className="w-full px-4 py-2 pl-10 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            className={`w-full px-4 py-2 pl-10 rounded-lg focus:outline-none focus:ring-2 transition-colors duration-300 ${
+              transparent
+                ? 'bg-white/10 border border-white/30 text-white placeholder-white/70 focus:ring-white/40 focus:border-white/50'
+                : 'border border-border focus:ring-primary'
+            }`}
             aria-label="Search courses and FAQ"
           />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${transparent ? 'text-white/70' : 'text-muted-foreground'}`} />
           {isLoading && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />
           )}

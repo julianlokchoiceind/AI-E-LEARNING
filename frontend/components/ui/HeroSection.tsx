@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Container } from './Container';
 import { cn } from '@/lib/utils';
 
@@ -14,10 +14,18 @@ export interface HeroSectionProps {
 
   // Layout
   align?: 'left' | 'center' | 'right';
-  size?: 'sm' | 'md' | 'lg'; // Fixed heights instead of padding
+  size?: 'sm' | 'md' | 'lg' | 'fullscreen'; // Fixed heights or fullscreen
 
   // Overlay (for text readability)
   overlayOpacity?: number; // 0.3 to 0.7 default 0.4
+
+  // Parallax (only for fullscreen)
+  parallax?: boolean;
+  parallaxSpeed?: number; // 0.1 to 0.5, default 0.3
+
+  // Scroll indicator
+  showScrollIndicator?: boolean;
+  scrollIndicatorText?: string;
 
   className?: string;
 }
@@ -32,13 +40,20 @@ export function HeroSection({
   align = 'center',
   size = 'md',
   overlayOpacity = 0.2,
+  parallax = false,
+  parallaxSpeed = 0.3,
+  showScrollIndicator = false,
+  scrollIndicatorText,
   className
 }: HeroSectionProps) {
+  const bgRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   const sizeClasses = {
     sm: 'h-[250px] md:h-[350px] lg:h-[400px]',
     md: 'h-[250px] md:h-[350px] lg:h-[500px]',
-    lg: 'h-[300px] md:h-[400px] lg:h-[500px]'
+    lg: 'h-[300px] md:h-[400px] lg:h-[500px]',
+    fullscreen: 'min-h-[100svh] -mt-20' // Pull up behind fixed header
   };
 
   const alignClasses = {
@@ -53,21 +68,59 @@ export function HeroSection({
     right: 'justify-end'
   };
 
+  // Parallax effect - only on desktop
+  useEffect(() => {
+    if (!parallax || typeof window === 'undefined') return;
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) return;
+
+    const bgEl = bgRef.current;
+    if (!bgEl) return;
+
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          const offset = scrollY * parallaxSpeed;
+          bgEl.style.transform = `translate3d(0, ${offset}px, 0)`;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [parallax, parallaxSpeed]);
+
+  const isFullscreen = size === 'fullscreen';
+
   return (
-    <div className={cn('relative overflow-hidden', sizeClasses[size], className)}>
+    <div ref={sectionRef} className={cn('relative overflow-hidden', sizeClasses[size], isFullscreen && 'flex flex-col', className)}>
       {/* Background - Image or Gradient Fallback */}
       <div
+        ref={bgRef}
         className={cn(
           'absolute inset-0',
-          // If no backgroundImage, use gradient fallback like courses page
           !backgroundImage && 'bg-gradient-to-r from-primary to-primary/80',
-          backgroundImage && 'animate-kenburns' // Add Ken Burns effect for images
+          backgroundImage && !parallax && 'animate-kenburns',
+          parallax && 'will-change-transform'
         )}
-        style={backgroundImage ? {
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        } : undefined}
+        style={{
+          ...(backgroundImage ? {
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          } : {}),
+          ...(parallax ? {
+            top: '-15%',
+            height: '130%',
+            position: 'absolute',
+            left: 0,
+            right: 0
+          } : {})
+        }}
       />
 
       {/* Tablet Background - Image or inherit from desktop */}
@@ -106,7 +159,8 @@ export function HeroSection({
       <Container
         variant="header"
         className={cn(
-          'hero-content text-white relative z-10 h-full flex flex-col justify-center',
+          'hero-content text-white relative z-10 flex flex-col justify-center',
+          isFullscreen ? 'flex-1 pt-20 pb-16' : 'h-full',
           alignClasses[align]
         )}
       >
@@ -118,6 +172,16 @@ export function HeroSection({
           </div>
         )}
       </Container>
+
+      {/* Scroll Indicator */}
+      {showScrollIndicator && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-white/70 text-sm flex flex-col items-center gap-1 animate-bounce">
+          {scrollIndicatorText && <span>{scrollIndicatorText}</span>}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12l7 7 7-7" />
+          </svg>
+        </div>
+      )}
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { Container } from '@/components/ui/Container'
 import { SkeletonBox, SkeletonCircle } from '@/components/ui/LoadingStates'
 import { useSupportNotifications } from '@/hooks/useSupportNotifications'
 import { useUserProfileQuery } from '@/hooks/queries/useUserProfile'
+import { useHeaderTransparency } from '@/lib/hooks/useHeaderTransparency'
 
 export function Header() {
   const { user, isAuthenticated, logout, loading } = useAuth()
@@ -29,6 +30,10 @@ export function Header() {
   const userButtonRef = useRef<HTMLButtonElement>(null)
   const explorerRef = useRef<HTMLDivElement>(null)
   const exploreButtonRef = useRef<HTMLButtonElement>(null)
+
+  // Header transparency from context (set by homepage hero)
+  // Default is false when outside HeaderTransparencyProvider (dashboard, etc.)
+  const { transparent } = useHeaderTransparency()
 
   // Support notifications polling every 30 seconds
   const { unreadCount } = useSupportNotifications()
@@ -47,6 +52,18 @@ export function Header() {
     return name.substring(0, 2).toUpperCase();
   }
 
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  // Navbar scroll state - transparent → white+shadow
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll() // Check initial state
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   // Close dropdown when clicking outside or scrolling
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -58,16 +75,16 @@ export function Header() {
       }
     }
 
-    const handleScroll = () => {
+    const handleScrollClose = () => {
       setUserMenuOpen(false)
       setExplorerOpen(false)
     }
 
     document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('scroll', handleScroll, true) // Use capture phase for all scroll events
+    document.addEventListener('scroll', handleScrollClose, true) // Use capture phase for all scroll events
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('scroll', handleScroll, true)
+      document.removeEventListener('scroll', handleScrollClose, true)
     }
   }, [])
 
@@ -84,14 +101,17 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-background shadow-sm border-b relative">
+      <header className={transparent
+        ? `glass-navbar fixed top-0 left-0 right-0 w-full z-40${isScrolled ? ' scrolled' : ''}`
+        : 'bg-background shadow-sm border-b fixed top-0 left-0 right-0 w-full z-40'
+      }>
         <Container variant="header">
           <div className="flex h-20 items-center justify-between md:gap-4">
             {/* Mobile: Hamburger Menu */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-md nav-hover"
+              className={`md:hidden p-2 rounded-md ${transparent && !isScrolled ? 'text-white hover:bg-white/10' : 'nav-hover'}`}
             >
               <span className="sr-only">Open main menu</span>
               <Menu className="h-6 w-6" />
@@ -114,7 +134,7 @@ export function Header() {
                 <button
                   ref={exploreButtonRef}
                   onMouseEnter={() => setExplorerOpen(true)}
-                  className="px-3 py-2 text-sm font-medium rounded-md border border-transparent text-muted-foreground hover:text-primary hover:bg-primary/10 hover:border-primary/20 transition-all duration-200"
+                  className={`px-3 py-2 text-sm font-medium rounded-md border border-transparent transition-all duration-200 ${transparent && !isScrolled ? 'text-white/90 hover:text-white hover:bg-white/10' : 'text-muted-foreground hover:text-primary hover:bg-primary/10 hover:border-primary/20'}`}
                 >
                   {t('nav.explore')}
                 </button>
@@ -134,9 +154,9 @@ export function Header() {
               </LocaleLink>
             </div>
 
-            {/* Center: Search Bar (Desktop Only - Full Width) */}
+            {/* Center: Search Bar (Desktop Only) */}
             <div className="hidden md:flex flex-1 max-w-2xl mx-auto">
-              <HeaderSearchBar />
+              <HeaderSearchBar transparent={transparent && !isScrolled} />
             </div>
 
             {/* Right: Navigation + Auth - Hidden on mobile for centered logo */}
@@ -144,19 +164,19 @@ export function Header() {
               {/* Navigation Links (Desktop Only) */}
               <button
                 onClick={() => router.push('/about')}
-                className="px-3 py-2 text-sm font-medium link-hover whitespace-nowrap"
+                className={`px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${transparent && !isScrolled ? 'text-white/90 hover:text-white' : 'link-hover'}`}
               >
                 {navItems.about}
               </button>
               <button
                 onClick={() => router.push('/faq')}
-                className="px-3 py-2 text-sm font-medium link-hover whitespace-nowrap"
+                className={`px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${transparent && !isScrolled ? 'text-white/90 hover:text-white' : 'link-hover'}`}
               >
                 {navItems.faq}
               </button>
 
               {/* Language Switcher */}
-              <LanguageSwitcherCompact />
+              <LanguageSwitcherCompact className={transparent && !isScrolled ? 'text-white/90' : ''} />
 
               {/* Auth Section */}
               {loading ? (
@@ -203,7 +223,7 @@ export function Header() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => router.push('/login')}
-                    className="px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
+                    className={`px-4 py-2 text-sm font-medium border rounded-lg transition-colors ${transparent && !isScrolled ? 'border-white/30 text-white hover:bg-white/10' : 'border-border hover:bg-primary/10 hover:text-primary'}`}
                   >
                     {t('auth.signIn')}
                   </button>

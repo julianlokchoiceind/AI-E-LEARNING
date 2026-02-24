@@ -15,10 +15,19 @@ import { PricingSection } from '@/components/feature/PricingSection'
 import { FeaturesSection } from '@/components/feature/FeaturesSection'
 import { SkeletonBox } from '@/components/ui/LoadingStates'
 import { useI18n } from '@/lib/i18n/context'
+import { useHeaderTransparency } from '@/lib/hooks/useHeaderTransparency'
+import { useEffect } from 'react'
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth()
   const { t, locale } = useI18n()
+  const { setTransparent } = useHeaderTransparency()
+
+  // Enable transparent header for homepage hero
+  useEffect(() => {
+    setTransparent(true)
+    return () => setTransparent(false)
+  }, [setTransparent])
 
   // Fetch category statistics with global cache (filtered by current language)
   const { data: categoryStats, loading: statsLoading } = useCategoryStatsQuery(locale)
@@ -64,14 +73,17 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* Hero Section */}
+      {/* Hero Section - Fullscreen with Parallax */}
       <HeroSection
         title={<span className="bg-gradient-to-r from-yellow-400 to-amber-500 bg-clip-text text-transparent">{t('homepage.heroTitle')}</span>}
         subtitle={t('homepage.heroSubtitle')}
-        size="lg"
+        size="fullscreen"
         align="center"
-        backgroundImage="/images/backgrounds/homepage-hero-section.jpg"
+        backgroundImage="/images/backgrounds/homepage-hero-navy.jpeg"
         overlayOpacity={0.38}
+        parallax
+        showScrollIndicator
+        scrollIndicatorText={t('homepage.scrollToExplore')}
       >
         <LocaleLink href={isAuthenticated ? '/dashboard' : '/register'} className="w-full sm:w-auto">
           <Button size="lg" className="w-full sm:w-auto btn-interactive animate-fade-in-up stagger-1">{t('homepage.startLearning')}</Button>
@@ -85,18 +97,18 @@ export default function HomePage() {
 
       {/* Course Categories Section - With Background Image */}
       <div
-        className="flex-1 relative"
+        className="flex-1 relative noise-overlay"
         style={{
           backgroundImage: 'url(/images/backgrounds/category-section-bg.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
       >
-        {/* White overlay for readability */}
-        <div className="absolute inset-0 bg-white/95"></div>
+        {/* Overlay for readability */}
+        <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]"></div>
         <Container variant="public" className="py-8 md:py-12 lg:py-24 relative z-10">
           <SectionHeader
-            title={<span>{t('homepage.categoriesTitle')} <span className="gradient-text">{t('homepage.categoriesTitleHighlight')}</span></span>}
+            title={<span>{t('homepage.categoriesTitle')} <span className="gradient-text-bold">{t('homepage.categoriesTitleHighlight')}</span></span>}
             subtitle={t('homepage.categoriesSubtitle')}
             align="left"
           />
@@ -116,10 +128,10 @@ export default function HomePage() {
       </div>
 
       {/* Latest/Newest Courses Section - Muted Background */}
-      <div className="flex-1 bg-muted">
+      <div className="flex-1 bg-mesh-muted">
         <Container variant="public" className="py-8 md:py-12 lg:py-24">
           <SectionHeader
-            title={<span>{t('homepage.latestCoursesTitle')} <span className="gradient-text">{t('homepage.latestCoursesTitleHighlight')}</span></span>}
+            title={<span>{t('homepage.latestCoursesTitle')} <span className="gradient-text-bold">{t('homepage.latestCoursesTitleHighlight')}</span></span>}
             subtitle={t('homepage.latestCoursesSubtitle')}
             align="left"
           />
@@ -160,7 +172,7 @@ export default function HomePage() {
       <WaitlistSection />
 
       {/* Features Section - Muted Background */}
-      <div className="flex-1 bg-muted">
+      <div className="flex-1 bg-mesh-muted">
         <Container variant="public" className="py-8 md:py-12 lg:py-24">
           <SectionHeader
             title={t('homepage.featuresTitle')}
@@ -172,7 +184,7 @@ export default function HomePage() {
       </div>
 
       {/* Pricing Section - White Background */}
-      <div className="flex-1 bg-white">
+      <div className="flex-1 bg-background noise-overlay">
         <Container variant="public" className="py-8 md:py-12 lg:py-24">
           <SectionHeader
             title={t('homepage.pricingTitle')}
@@ -184,7 +196,7 @@ export default function HomePage() {
       </div>
 
       {/* Testimonials Section - Muted Background - Last section before footer */}
-      <div className="flex-1 bg-muted">
+      <div className="flex-1 bg-mesh-muted">
         <Container variant="public" className="py-8 md:py-12 lg:py-24">
           <SectionHeader
             title={t('homepage.testimonialsTitle')}
