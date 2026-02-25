@@ -2,7 +2,6 @@
 
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { useI18n } from '@/lib/i18n/context';
 import { TranslationKey } from '@/lib/i18n/utils';
@@ -82,65 +81,101 @@ export function PricingSection() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {planConfigs.map((plan, index) => (
-            <Card
-              key={index}
-              className={`relative p-6 ${
-                plan.isPopular ? 'border-gradient shadow-lg' : 'card-modern'
-              }`}
-            >
-              {/* Popular Badge */}
-              {plan.isPopular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <Badge variant="primary" className="px-4 py-1">
-                    {t('pricingPlans.proPopular')}
-                  </Badge>
-                </div>
-              )}
-
-              {/* Plan Header */}
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-foreground mb-2">
-                  {t(plan.nameKey)}
-                </h3>
-                <p className="text-muted-foreground text-sm mb-4">
-                  {t(plan.descriptionKey)}
-                </p>
-                <div className="flex items-baseline justify-center mb-4">
-                  <span className="text-4xl font-bold text-foreground">
-                    {t(plan.priceKey)}
-                  </span>
-                  <span className="text-muted-foreground ml-1">
-                    {t(plan.periodKey)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Features */}
-              <div className="mb-6">
-                {plan.featureKeys.map((featureKey, featureIndex) => (
-                  <div key={featureIndex} className="flex items-center mb-2">
-                    <Check className="w-4 h-4 text-success mr-3 flex-shrink-0" />
-                    <span className="text-sm text-foreground">{t(featureKey)}</span>
+            plan.isPopular ? (
+              /* Popular plan: glass card with subtle blue border */
+              <div key={index} className="glass-card rounded-xl p-6 relative flex flex-col transition-all duration-300 border-2 border-blue-500/40 shadow-lg shadow-blue-500/10">
+                  {/* Popular Badge */}
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <Badge variant="primary" className="px-4 py-1">
+                      {t('pricingPlans.proPopular')}
+                    </Badge>
                   </div>
-                ))}
 
-                {plan.limitationKeys.map((limitationKey, limitationIndex) => (
-                  <div key={limitationIndex} className="flex items-center mb-2">
-                    <div className="w-4 h-4 rounded-full border-2 border-muted-foreground mr-3 flex-shrink-0" />
-                    <span className="text-sm text-muted-foreground">{t(limitationKey)}</span>
+                  {/* Plan Header */}
+                  <div className="text-center mb-6">
+                    <h3 className="text-xl font-bold text-foreground mb-2">
+                      {t(plan.nameKey)}
+                    </h3>
+                    <p className="text-muted-foreground text-sm mb-4">
+                      {t(plan.descriptionKey)}
+                    </p>
+                    <div className="flex items-baseline justify-center mb-4">
+                      <span className="text-4xl font-bold text-foreground">
+                        {t(plan.priceKey)}
+                      </span>
+                      <span className="text-muted-foreground ml-1">
+                        {t(plan.periodKey)}
+                      </span>
+                    </div>
                   </div>
-                ))}
-              </div>
 
-              {/* CTA Button */}
-              <Button
-                variant={plan.buttonVariant}
-                className="w-full"
-                disabled={index === 0}
-              >
-                {t(plan.buttonKey)}
-              </Button>
-            </Card>
+                  {/* Features */}
+                  <div className="mb-6 flex-1">
+                    {plan.featureKeys.map((featureKey, featureIndex) => (
+                      <div key={featureIndex} className="flex items-center mb-2">
+                        <Check className="w-4 h-4 text-success mr-3 flex-shrink-0" />
+                        <span className="text-sm text-foreground">{t(featureKey)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTA Button */}
+                  <Button
+                    variant={plan.buttonVariant}
+                    className="w-full"
+                    disabled={index === 0}
+                  >
+                    {t(plan.buttonKey)}
+                  </Button>
+              </div>
+            ) : (
+              /* Regular plans: glass card */
+              <div key={index} className="glass-card rounded-xl p-6 relative flex flex-col transition-all duration-300">
+                {/* Plan Header */}
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-bold text-foreground mb-2">
+                    {t(plan.nameKey)}
+                  </h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    {t(plan.descriptionKey)}
+                  </p>
+                  <div className="flex items-baseline justify-center mb-4">
+                    <span className="text-4xl font-bold text-foreground">
+                      {t(plan.priceKey)}
+                    </span>
+                    <span className="text-muted-foreground ml-1">
+                      {t(plan.periodKey)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Features */}
+                <div className="mb-6 flex-1">
+                  {plan.featureKeys.map((featureKey, featureIndex) => (
+                    <div key={featureIndex} className="flex items-center mb-2">
+                      <Check className="w-4 h-4 text-success mr-3 flex-shrink-0" />
+                      <span className="text-sm text-foreground">{t(featureKey)}</span>
+                    </div>
+                  ))}
+
+                  {plan.limitationKeys.map((limitationKey, limitationIndex) => (
+                    <div key={limitationIndex} className="flex items-center mb-2">
+                      <div className="w-4 h-4 rounded-full border-2 border-muted-foreground mr-3 flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground">{t(limitationKey)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA Button */}
+                <Button
+                  variant={plan.buttonVariant}
+                  className="w-full"
+                  disabled={index === 0}
+                >
+                  {t(plan.buttonKey)}
+                </Button>
+              </div>
+            )
           ))}
     </div>
   );

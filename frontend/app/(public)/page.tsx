@@ -18,6 +18,29 @@ import { useI18n } from '@/lib/i18n/context'
 import { useHeaderTransparency } from '@/lib/hooks/useHeaderTransparency'
 import { useEffect } from 'react'
 
+const CATEGORY_CODE_LINES = [
+  'import torch',
+  'from transformers import AutoModel',
+  'model = AutoModel.from_pretrained(',
+  '  "bert-base-uncased")',
+  'optimizer = Adam(lr=1e-4)',
+  'loss = cross_entropy(logits, y)',
+  'accuracy = 0.97',
+  'train(model, epochs=10)',
+  'from sklearn.ensemble import',
+  '  RandomForestClassifier',
+  'clf.fit(X_train, y_train)',
+  'score = clf.score(X_test, y_test)',
+  'import numpy as np',
+  'X = np.array([1, 2, 3, 4])',
+  'from openai import OpenAI',
+  'client = OpenAI()',
+  'response = client.chat.completions',
+  '  .create(model="gpt-4")',
+  'embeddings = model.encode(text)',
+  'similarity = cosine_sim(a, b)',
+]
+
 export default function HomePage() {
   const { isAuthenticated } = useAuth()
   const { t, locale } = useI18n()
@@ -95,18 +118,43 @@ export default function HomePage() {
         </LocaleLink>
       </HeroSection>
 
-      {/* Course Categories Section - With Background Image */}
-      <div
-        className="flex-1 relative noise-overlay"
-        style={{
-          backgroundImage: 'url(/images/backgrounds/category-section-bg.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
-        {/* Overlay for readability */}
-        <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]"></div>
-        <Container variant="public" className="py-8 md:py-12 lg:py-24 relative z-10">
+      {/* Course Categories Section - White bg, code strip on right edge */}
+      <div className="flex-1 relative bg-background overflow-hidden">
+        <style>{`
+          @keyframes cat-scroll-up   { 0% { transform: translateY(0);    } 100% { transform: translateY(-50%); } }
+          @keyframes cat-scroll-down { 0% { transform: translateY(-50%); } 100% { transform: translateY(0);    } }
+        `}</style>
+
+        <Container variant="public" className="py-8 md:py-12 lg:py-24 relative">
+          {/* Multi-column code — hidden on mobile, 2 col on md, 3 col on lg */}
+          <div className="hidden md:flex absolute inset-0 pointer-events-none select-none overflow-hidden z-0">
+            {/* Col 1 — scroll up, fast */}
+            <div className="flex-1 overflow-hidden">
+              <div className="font-mono text-[10px] leading-5 whitespace-pre"
+                style={{ animation: 'cat-scroll-up 20s linear infinite', color: '#3b82f6', opacity: 0.14 }}>
+                {[...CATEGORY_CODE_LINES, ...CATEGORY_CODE_LINES].map((l, i) => <div key={i} className="px-3">{l}</div>)}
+              </div>
+            </div>
+            {/* Col 2 — scroll down, slow */}
+            <div className="flex-1 overflow-hidden">
+              <div className="font-mono text-[10px] leading-5 whitespace-pre"
+                style={{ animation: 'cat-scroll-down 28s linear infinite', color: '#6366f1', opacity: 0.10 }}>
+                {[...CATEGORY_CODE_LINES, ...CATEGORY_CODE_LINES].map((l, i) => <div key={i} className="px-3">{l}</div>)}
+              </div>
+            </div>
+            {/* Col 3 — scroll up, medium (lg+ only) */}
+            <div className="hidden lg:block flex-1 overflow-hidden">
+              <div className="font-mono text-[10px] leading-5 whitespace-pre"
+                style={{ animation: 'cat-scroll-up 24s linear infinite', color: '#3b82f6', opacity: 0.11 }}>
+                {[...CATEGORY_CODE_LINES, ...CATEGORY_CODE_LINES].map((l, i) => <div key={i} className="px-3">{l}</div>)}
+              </div>
+            </div>
+            {/* Left + right edge fades */}
+            <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-background to-transparent" />
+            <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-background to-transparent" />
+          </div>
+
+          <div className="relative z-10">
           <SectionHeader
             title={<span>{t('homepage.categoriesTitle')} <span className="gradient-text-bold">{t('homepage.categoriesTitleHighlight')}</span></span>}
             subtitle={t('homepage.categoriesSubtitle')}
@@ -123,6 +171,7 @@ export default function HomePage() {
                 count={statsLoading ? 0 : category.count}
               />
             ))}
+          </div>
           </div>
         </Container>
       </div>

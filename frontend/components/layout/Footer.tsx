@@ -102,7 +102,7 @@ export function Footer() {
 
         <div className="mt-8 pt-8 border-t border-border">
           <p className="text-center text-sm text-muted-foreground">
-            © 2025{' '}
+            © 2026{' '}
             <LocaleLink href="/" className="link-hover font-medium">
               CHOICE
             </LocaleLink>{' '}

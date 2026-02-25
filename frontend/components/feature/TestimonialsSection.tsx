@@ -82,9 +82,9 @@ export function TestimonialsSection() {
     const colors = [
       'bg-blue-500',
       'bg-green-500',
-      'bg-purple-500',
+      'bg-cyan-500',
       'bg-pink-500',
-      'bg-indigo-500',
+      'bg-sky-500',
       'bg-red-500',
       'bg-yellow-500',
       'bg-teal-500'
@@ -110,7 +110,7 @@ export function TestimonialsSection() {
           return (
             <div
               key={config.id}
-              className="card-modern p-6 text-center"
+              className="glass-card rounded-xl p-6 text-center transition-all duration-300"
             >
               {/* Quote Icon */}
               <div className="flex justify-center mb-4">
@@ -125,7 +125,7 @@ export function TestimonialsSection() {
               </div>
 
               {/* Content */}
-              <p className="text-sm mb-4 leading-relaxed text-gray-900">
+              <p className="text-sm mb-4 leading-relaxed text-foreground">
                 {content}
               </p>
 
@@ -135,8 +135,8 @@ export function TestimonialsSection() {
               </div>
 
               {/* Name & Role */}
-              <div className="text-gray-900">
-                <p className="font-semibold text-sm">{name}</p>
+              <div>
+                <p className="font-semibold text-sm text-foreground">{name}</p>
                 <p className="text-xs text-muted-foreground">{role}</p>
                 {config.company && (
                   <p className="text-xs text-muted-foreground">{config.company}</p>

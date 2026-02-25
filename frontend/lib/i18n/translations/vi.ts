@@ -960,7 +960,15 @@ export const vi = {
     featureVietnam: 'Tập Trung Việt Nam',
     featureVietnamDesc: 'Nội dung tối ưu cho lập trình viên và thị trường Việt Nam',
     contactTitle: 'Liên Hệ',
-    contactDescription: 'Có câu hỏi? Chúng tôi rất muốn nghe từ bạn. Liên hệ với đội ngũ tại',
+    contactDescription: 'Có câu hỏi? Chúng tôi rất muốn nghe từ bạn. Liên hệ với đội ngũ của chúng tôi.',
+    missionHeadline: 'Giáo dục',
+    missionHeadlineHighlight: 'theo kịp AI',
+    differentHeadline: 'Khác biệt từ',
+    differentHeadlineHighlight: 'cốt lõi',
+    statCourses: 'Khóa Học',
+    statLearners: 'Học Viên',
+    statSupport: 'Hỗ Trợ AI',
+    statRating: 'Đánh Giá',
   },
 
   // Contact page

@@ -960,7 +960,15 @@ export const en = {
     featureVietnam: 'Vietnamese Focus',
     featureVietnamDesc: 'Content optimized for Vietnamese developers and market',
     contactTitle: 'Contact Us',
-    contactDescription: "Have questions? We'd love to hear from you. Reach out to our team at",
+    contactDescription: "Have questions? We'd love to hear from you. Reach out to our team.",
+    missionHeadline: 'Education that',
+    missionHeadlineHighlight: 'moves with AI',
+    differentHeadline: 'Built different,',
+    differentHeadlineHighlight: 'by design',
+    statCourses: 'Courses',
+    statLearners: 'Learners',
+    statSupport: 'AI Support',
+    statRating: 'Avg Rating',
   },
 
   // Contact page
