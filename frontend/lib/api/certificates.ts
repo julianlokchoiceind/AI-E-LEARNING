@@ -53,10 +53,9 @@ export const certificateAPI = {
    * Get certificate details by ID
    */
   async getCertificate(certificateId: string): Promise<StandardResponse<CertificateWithDetails>> {
-    // Public endpoint - no auth required
     return apiClient.get<StandardResponse<CertificateWithDetails>>(
       `/certificates/${certificateId}`,
-      { requireAuth: false }
+      { requireAuth: true }
     );
   },
 

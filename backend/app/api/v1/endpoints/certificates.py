@@ -155,15 +155,21 @@ async def get_certificate(
     certificate_id: str,
     current_user: Optional[User] = Depends(get_current_user)
 ):
-    """Get certificate details by ID"""
+    """Get certificate details by ID or enrollment ID"""
     try:
         certificate = await CertificateService.get_certificate_with_details(certificate_id)
         if not certificate:
+            # Fallback: try looking up Certificate by enrollment_id
+            from app.models.certificate import Certificate as CertModel
+            cert = await CertModel.find_one({"enrollment_id": certificate_id})
+            if cert:
+                certificate = await CertificateService.get_certificate_with_details(str(cert.id))
+        if not certificate:
             raise HTTPException(status_code=404, detail="Certificate not found")
         
-        # Check if certificate is public or belongs to user
-        if not certificate.is_public:
-            if not current_user or str(current_user.id) != certificate.user_id:
+        # Check if certificate is public or belongs to user (certificate is a dict)
+        if not certificate.get('is_public', True):
+            if not current_user or str(current_user.id) != certificate.get('user_id'):
                 raise HTTPException(status_code=403, detail="Certificate is private")
         
         return StandardResponse(

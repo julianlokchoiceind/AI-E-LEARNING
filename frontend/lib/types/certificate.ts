@@ -37,6 +37,7 @@ export interface CertificateWithDetails extends Certificate {
   course_category: string;
   course_creator: string;
   course_instructor?: string; // Alias for course_creator
+  course_duration_hours?: number; // Total course duration in hours
   user_name: string;
   user_email: string;
 }

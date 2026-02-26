@@ -69,7 +69,10 @@ export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
 
   // URL-based locale change with navigation
   const setLocale = (newLocale: Locale) => {
-    if (newLocale === locale) return;
+    const cleanPath = getPathnameWithoutLocale(pathname);
+    const newPath = getLocalizedPath(cleanPath, newLocale);
+    // Allow navigation if URL has a different locale prefix than newLocale
+    if (newLocale === locale && pathname === newPath) return;
 
     setIsLoading(true);
 
@@ -78,12 +81,6 @@ export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
       localStorage.setItem('locale', newLocale);
       document.cookie = `locale=${newLocale};path=/;max-age=31536000;SameSite=Lax`;
     }
-
-    // Get current path without locale prefix
-    const cleanPath = getPathnameWithoutLocale(pathname);
-
-    // Build new localized path
-    const newPath = getLocalizedPath(cleanPath, newLocale);
 
     // Navigate to the new localized URL
     router.push(newPath);

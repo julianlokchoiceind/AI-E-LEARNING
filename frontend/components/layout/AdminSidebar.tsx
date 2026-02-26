@@ -3,20 +3,21 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Users, 
-  BookOpen, 
-  CreditCard, 
-  BarChart3, 
-  Settings, 
-  Shield, 
+import {
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  CreditCard,
+  BarChart3,
+  Settings,
+  Shield,
   HelpCircle,
   HandHeart,
   FileText,
   FolderOpen,
   ChevronRight,
-  AlertTriangle
+  AlertTriangle,
+  Award
 } from 'lucide-react';
 import { useExpandable } from '@/hooks/useExpandable';
 import { ExpandableItem } from '@/components/ui/ExpandableItem';
@@ -54,6 +55,11 @@ const navigationItems = [
   //   href: '/admin/moderation',
   //   icon: Shield,
   // },
+  {
+    name: 'Certificates',
+    href: '/admin/certificates',
+    icon: Award,
+  },
   {
     name: 'Support Tickets',
     href: '/admin/support',

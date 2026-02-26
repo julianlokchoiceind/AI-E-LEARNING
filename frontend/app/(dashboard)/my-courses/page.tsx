@@ -10,6 +10,7 @@ import { SkeletonBox, SkeletonCircle } from '@/components/ui/LoadingStates';
 import { useMyCoursesQuery } from '@/hooks/queries/useStudent';
 import { getAttachmentUrl } from '@/lib/utils/attachmentUrl';
 import { Container } from '@/components/ui/Container';
+import { useI18n } from '@/lib/i18n';
 
 interface EnrolledCourse {
   id: string;
@@ -46,6 +47,7 @@ type FilterType = 'all' | 'in-progress' | 'completed';
 type SortType = 'recent' | 'progress' | 'title';
 
 export default function MyCoursesPage() {
+  const { t } = useI18n();
   const { user, loading: authLoading } = useAuth();
   const [filter, setFilter] = useState<FilterType>('all');
   const [sort, setSort] = useState<SortType>('recent');
@@ -83,9 +85,9 @@ export default function MyCoursesPage() {
       <Container variant="public">
         {/* Header - STATIC */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">My Courses</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('courses.myCourses')}</h1>
           <p className="text-muted-foreground">
-            Track your learning progress across all enrolled courses
+            {t('courses.myCoursesSubtitle')}
           </p>
         </div>
 
@@ -93,17 +95,17 @@ export default function MyCoursesPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div className="flex gap-2">
             <button className="px-4 py-2 rounded-lg bg-primary text-white">
-              All (0)
+              {t('common.all')} (0)
             </button>
             <button className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80">
-              In Progress (0)
+              {t('courses.inProgress')} (0)
             </button>
             <button className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80">
-              Completed (0)
+              {t('courses.completed')} (0)
             </button>
           </div>
           <select className="px-4 py-2 border border-border rounded-lg bg-background">
-            <option>Recently Accessed</option>
+            <option>{t('courses.recentlyAccessed')}</option>
           </select>
         </div>
 
@@ -172,9 +174,9 @@ export default function MyCoursesPage() {
     <Container variant="public">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">My Courses</h1>
+        <h1 className="text-3xl font-bold mb-2">{t('courses.myCourses')}</h1>
         <p className="text-muted-foreground">
-          Track your learning progress across all enrolled courses
+          {t('courses.myCoursesSubtitle')}
         </p>
       </div>
 
@@ -184,32 +186,32 @@ export default function MyCoursesPage() {
           <button
             onClick={() => setFilter('all')}
             className={`px-4 py-2 rounded-lg transition-colors ${
-              filter === 'all' 
-                ? 'bg-primary text-white' 
+              filter === 'all'
+                ? 'bg-primary text-white'
                 : 'bg-muted hover:bg-muted/80'
             }`}
           >
-            All ({enrollments.length})
+            {t('common.all')} ({enrollments.length})
           </button>
           <button
             onClick={() => setFilter('in-progress')}
             className={`px-4 py-2 rounded-lg transition-colors ${
-              filter === 'in-progress' 
-                ? 'bg-primary text-white' 
+              filter === 'in-progress'
+                ? 'bg-primary text-white'
                 : 'bg-muted hover:bg-muted/80'
             }`}
           >
-            In Progress ({enrollments.filter((e: any) => !e.progress.is_completed).length})
+            {t('courses.inProgress')} ({enrollments.filter((e: any) => !e.progress.is_completed).length})
           </button>
           <button
             onClick={() => setFilter('completed')}
             className={`px-4 py-2 rounded-lg transition-colors ${
-              filter === 'completed' 
-                ? 'bg-primary text-white' 
+              filter === 'completed'
+                ? 'bg-primary text-white'
                 : 'bg-muted hover:bg-muted/80'
             }`}
           >
-            Completed ({enrollments.filter((e: any) => e.progress.is_completed).length})
+            {t('courses.completed')} ({enrollments.filter((e: any) => e.progress.is_completed).length})
           </button>
         </div>
 
@@ -218,9 +220,9 @@ export default function MyCoursesPage() {
           onChange={(e) => setSort(e.target.value as SortType)}
           className="px-4 py-2 border border-border rounded-lg bg-background"
         >
-          <option value="recent">Recently Accessed</option>
-          <option value="progress">Progress</option>
-          <option value="title">Title</option>
+          <option value="recent">{t('courses.recentlyAccessed')}</option>
+          <option value="progress">{t('learning.progress')}</option>
+          <option value="title">{t('courses.sortByTitle')}</option>
         </select>
       </div>
 
@@ -228,17 +230,17 @@ export default function MyCoursesPage() {
       {sortedCourses.length === 0 ? (
         <Card className="p-12 text-center">
           <p className="text-muted-foreground mb-4">
-            {filter === 'all' 
-              ? "You haven't enrolled in any courses yet"
-              : `No ${filter} courses found`
+            {filter === 'all'
+              ? t('courses.noEnrolledCourses')
+              : `${t('courses.noCoursesFound')}`
             }
           </p>
           {filter === 'all' && (
-            <LocaleLink 
+            <LocaleLink
               href="/courses"
               className="inline-block bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark transition-colors"
             >
-              Browse Courses
+              {t('dashboard.browseCourses')}
             </LocaleLink>
           )}
         </Card>
@@ -263,7 +265,7 @@ export default function MyCoursesPage() {
                 {/* Completion Badge */}
                 {enrollment.progress.is_completed && (
                   <div className="absolute top-2 right-2">
-                    <Badge variant="default">Completed</Badge>
+                    <Badge variant="default">{t('courses.completed')}</Badge>
                   </div>
                 )}
               </div>
@@ -281,28 +283,28 @@ export default function MyCoursesPage() {
                     <span>👤</span> {enrollment.course.creator}
                   </span>
                   <span className="flex items-center gap-1">
-                    <span>📝</span> {enrollment.course.total_lessons} lessons
+                    <span>📝</span> {enrollment.course.total_lessons} {t('courses.lessons')}
                   </span>
                 </div>
 
                 {/* Progress */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span>Progress</span>
+                    <span>{t('learning.progress')}</span>
                     <span className="font-medium">
-                      {enrollment.progress.lessons_completed}/{enrollment.progress.total_lessons} lessons
+                      {enrollment.progress.lessons_completed}/{enrollment.progress.total_lessons} {t('courses.lessons')}
                     </span>
                   </div>
                   <ProgressBar value={enrollment.progress.completion_percentage} />
                   <p className="text-xs text-muted-foreground mt-1">
-                    {enrollment.progress.completion_percentage}% complete
+                    {enrollment.progress.completion_percentage}% {t('dashboard.complete')}
                   </p>
                 </div>
 
                 {/* Watch Time */}
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                  <span>Watch time</span>
-                  <span>{Math.round(enrollment.progress.total_watch_time / 60)} minutes</span>
+                  <span>{t('learning.watchTime')}</span>
+                  <span>{Math.round(enrollment.progress.total_watch_time / 60)} {t('common.minutes')}</span>
                 </div>
 
                 {/* Action Buttons */}
@@ -315,14 +317,14 @@ export default function MyCoursesPage() {
                       : `/courses/${enrollment.course_id}`}
                     className="flex-1 text-center bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition-colors"
                   >
-                    {enrollment.progress.is_completed ? 'Review' : 'Continue Learning'}
+                    {enrollment.progress.is_completed ? t('dashboard.review') : t('courses.continueLearning')}
                   </LocaleLink>
                   {enrollment.progress.is_completed && (
                     <LocaleLink
                       href={`/certificates/${enrollment.id}`}
                       className="px-4 py-2 border border-primary text-primary rounded hover:bg-primary hover:text-white transition-colors"
                     >
-                      Certificate
+                      {t('certificates.certificate')}
                     </LocaleLink>
                   )}
                 </div>
@@ -335,23 +337,23 @@ export default function MyCoursesPage() {
       {/* Summary Stats */}
       {enrollments.length > 0 && (
         <div className="mt-12 p-6 bg-muted/50 rounded-lg">
-          <h3 className="font-bold mb-4">Learning Summary</h3>
+          <h3 className="font-bold mb-4">{t('courses.learningSummary')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold text-primary">{enrollments.length}</p>
-              <p className="text-sm text-muted-foreground">Total Courses</p>
+              <p className="text-sm text-muted-foreground">{t('courses.totalCourses')}</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-success">
                 {enrollments.filter((e: any) => e.progress.is_completed).length}
               </p>
-              <p className="text-sm text-muted-foreground">Completed</p>
+              <p className="text-sm text-muted-foreground">{t('courses.completed')}</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-primary">
                 {enrollments.filter((e: any) => !e.progress.is_completed).length}
               </p>
-              <p className="text-sm text-muted-foreground">In Progress</p>
+              <p className="text-sm text-muted-foreground">{t('courses.inProgress')}</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-secondary">
@@ -359,7 +361,7 @@ export default function MyCoursesPage() {
                   enrollments.reduce((sum: number, e: any) => sum + e.progress.total_watch_time, 0) / 3600
                 )}h
               </p>
-              <p className="text-sm text-muted-foreground">Total Watch Time</p>
+              <p className="text-sm text-muted-foreground">{t('profile.totalWatchTime')}</p>
             </div>
           </div>
         </div>

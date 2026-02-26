@@ -86,7 +86,12 @@ export function CertificateCard({ certificate, onView }: CertificateCardProps) {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Duration</p>
-            <p className="text-lg font-semibold">{certificate.total_hours.toFixed(1)}h</p>
+            <p className="text-lg font-semibold">
+              {(() => {
+                const h = certificate.course_duration_hours ?? certificate.total_hours;
+                return h >= 1 ? `${h.toFixed(1)}h` : h > 0 ? `${Math.round(h * 60)}m` : '—';
+              })()}
+            </p>
           </div>
         </div>
 

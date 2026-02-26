@@ -1,18 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Edit2, Globe, Lock } from 'lucide-react';
+import { Globe, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Modal } from '@/components/ui/Modal';
 import { LoadingSpinner } from '@/components/ui/LoadingStates';
 import { CertificateDisplay } from '@/components/feature/CertificateDisplay';
 import { useAuth } from '@/hooks/useAuth';
 import { useCertificateQuery } from '@/hooks/queries/useCertificates';
-import { useApiMutation } from '@/hooks/useApiMutation';
-import { certificateAPI } from '@/lib/api/certificates';
-import { CertificateWithDetails, CertificateUpdate } from '@/lib/types/certificate';
 import { useInlineMessage } from '@/hooks/useInlineMessage';
 import { InlineMessage } from '@/components/ui/InlineMessage';
 import { Container } from '@/components/ui/Container';
@@ -23,56 +19,17 @@ const CertificateViewPage = () => {
   const { user } = useAuth();
   const certificateId = params.id as string;
 
-  const [showEditModal, setShowEditModal] = useState(false);
-  
   // Inline message for certificate errors
   const certificateErrorMessage = useInlineMessage('certificate-error');
-  const [updateData, setUpdateData] = useState<CertificateUpdate>({
-    is_public: true,
-    template_id: 'default',
-    background_color: 'hsl(var(--primary))',
-    accent_color: 'hsl(var(--primary-light))',
-  });
 
   // React Query hook for fetching certificate
-  const { 
-    data: certificateResponse, 
-    loading, 
+  const {
+    data: certificateResponse,
+    loading,
     error,
-    refetch
   } = useCertificateQuery(certificateId, !!certificateId);
 
   const certificate = certificateResponse?.data || null;
-
-  // React Query mutation for updating certificate
-  const { mutate: updateCertificate, loading: updateLoading } = useApiMutation(
-    ({ certificateId, updateData }: { certificateId: string; updateData: CertificateUpdate }) => 
-      certificateAPI.updateCertificate(certificateId, updateData),
-    {
-      showToast: false, // Disable automatic toast notifications
-      onSuccess: (response) => {
-        setShowEditModal(false);
-        // Manual toast removed - useApiMutation handles API response toast automatically
-        refetch(); // Refresh certificate data
-      },
-      onError: (error: any) => {
-        console.error('Failed to update certificate:', error);
-        // Manual toast removed - useApiMutation handles API error toast automatically
-      }
-    }
-  );
-
-  // Initialize update data when certificate loads
-  React.useEffect(() => {
-    if (certificate) {
-      setUpdateData({
-        is_public: certificate.is_public,
-        template_id: certificate.template_id,
-        background_color: certificate.background_color,
-        accent_color: certificate.accent_color,
-      });
-    }
-  }, [certificate]);
 
   // Handle errors
   React.useEffect(() => {
@@ -81,10 +38,6 @@ const CertificateViewPage = () => {
       certificateErrorMessage.showError(error?.message || 'Something went wrong');
     }
   }, [error, certificateErrorMessage]);
-
-  const handleUpdate = () => {
-    updateCertificate({ certificateId, updateData });
-  };
 
   if (loading) {
     return (
@@ -125,19 +78,9 @@ const CertificateViewPage = () => {
           Back to Certificates
         </Button>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Certificate Details</h1>
-            <p className="text-muted-foreground">
-              {certificate.course_title}
-            </p>
-          </div>
-
-          {isOwner && (
-            <Button onClick={() => setShowEditModal(true)} variant="outline">
-              Edit Settings
-            </Button>
-          )}
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Certificate Details</h1>
+          <p className="text-muted-foreground">{certificate.course_title}</p>
         </div>
       </div>
 
@@ -195,111 +138,6 @@ const CertificateViewPage = () => {
         </CardContent>
       </Card>
 
-      {/* Edit Modal */}
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        title="Edit Certificate Settings"
-      >
-        <div className="space-y-4">
-          {/* Privacy Setting */}
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Privacy Setting
-            </label>
-            <div className="space-y-2">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  checked={updateData.is_public === true}
-                  onChange={() => setUpdateData({ ...updateData, is_public: true })}
-                  className="h-4 w-4 text-primary"
-                />
-                <div>
-                  <p className="font-medium">Public</p>
-                  <p className="text-sm text-muted-foreground">
-                    Anyone can view this certificate with the link
-                  </p>
-                </div>
-              </label>
-              
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  checked={updateData.is_public === false}
-                  onChange={() => setUpdateData({ ...updateData, is_public: false })}
-                  className="h-4 w-4 text-primary"
-                />
-                <div>
-                  <p className="font-medium">Private</p>
-                  <p className="text-sm text-muted-foreground">
-                    Only you can view this certificate
-                  </p>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* Template */}
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Certificate Template
-            </label>
-            <select
-              value={updateData.template_id}
-              onChange={(e) => setUpdateData({ ...updateData, template_id: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md"
-            >
-              <option value="default">Default Template</option>
-              <option value="modern">Modern Template</option>
-              <option value="classic">Classic Template</option>
-              <option value="minimal">Minimal Template</option>
-            </select>
-          </div>
-
-          {/* Colors */}
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Certificate Colors
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1">
-                  Primary Color
-                </label>
-                <input
-                  type="color"
-                  value={updateData.background_color}
-                  onChange={(e) => setUpdateData({ ...updateData, background_color: e.target.value })}
-                  className="w-full h-10 rounded cursor-pointer"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1">
-                  Accent Color
-                </label>
-                <input
-                  type="color"
-                  value={updateData.accent_color}
-                  onChange={(e) => setUpdateData({ ...updateData, accent_color: e.target.value })}
-                  className="w-full h-10 rounded cursor-pointer"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-4">
-            <Button variant="outline" onClick={() => setShowEditModal(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdate} loading={updateLoading}>
-              Save Changes
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </Container>
   );
 };

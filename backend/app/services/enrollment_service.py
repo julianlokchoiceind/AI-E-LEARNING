@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import List, Optional
 from app.models.enrollment import Enrollment, EnrollmentType
@@ -164,7 +165,8 @@ class EnrollmentService:
                     enrollment, user_id, str(course.id)
                 )
                 
-                enrollment_dict = enrollment.dict()
+                # Use model_dump_json to properly serialize PydanticObjectId fields
+                enrollment_dict = json.loads(enrollment.model_dump_json())
                 enrollment_dict['course'] = {
                     "id": str(course.id),
                     "title": course.title,

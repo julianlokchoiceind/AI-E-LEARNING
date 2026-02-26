@@ -211,7 +211,7 @@ class EmailService:
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <title>{title} - CHOICE AI E-Learning</title>
+            <title>{title} - HEART HT</title>
             <style>
                 @media only screen and (max-width: 600px) {{
                     .email-wrapper {{ padding: 0 !important; }}
@@ -237,12 +237,12 @@ class EmailService:
                                     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                                         <tr>
                                             <td style="vertical-align: middle;">
-                                                <img src="{settings.FRONTEND_URL}/images/logo/choice-logo-192x192.png"
-                                                     alt="CHOICE AI"
+                                                <img src="{settings.FRONTEND_URL}/images/logo/heartht-logo-192x192.png"
+                                                     alt="HEART HT"
                                                      style="height: 40px; vertical-align: middle; margin-right: 12px;"
                                                      onerror="this.style.display='none';">
                                                 <span style="color: #ffffff; font-size: 18px; font-weight: 600; letter-spacing: 0.3px; vertical-align: middle;">
-                                                    AI E-Learning Platform
+                                                    HEART HT
                                                 </span>
                                             </td>
                                         </tr>
@@ -271,7 +271,7 @@ class EmailService:
                             <tr>
                                 <td style="background-color: #f8fafc; padding: 16px 35px; text-align: center; border-top: 1px solid #e2e8f0;">
                                     <p class="email-footer" style="color: #64748b; font-size: 14px; margin: 0 0 8px 0;">
-                                        © 2025 CHOICE AI E-Learning Platform
+                                        © 2026 HEART HT AI E-Learning Platform
                                     </p>
                                     <p style="margin: 0;">
                                         <a href="{settings.FRONTEND_URL}/privacy" class="email-footer-links" style="color: hsl(221, 83%, 53%); font-size: 13px; text-decoration: none; margin: 0 6px;">Privacy</a>

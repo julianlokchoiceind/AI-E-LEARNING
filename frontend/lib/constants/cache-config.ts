@@ -141,7 +141,7 @@ export const CACHE_CONTEXTS = {
   
   // Student Dashboard
   STUDENT_DASHBOARD: CACHE_TIERS.REALTIME,     // Student dashboard data - REALTIME for instant streak updates
-  USER_COURSES: CACHE_TIERS.MODERATE,           // User's course list
+  USER_COURSES: CACHE_TIERS.REALTIME,           // User's course list - always fresh
   RECENT_COURSES: CACHE_TIERS.FRESH,            // Recently accessed courses
   ONBOARDING_STATUS: CACHE_TIERS.STABLE,        // Onboarding completion
   COURSE_RECOMMENDATIONS: CACHE_TIERS.STABLE,   // AI course recommendations

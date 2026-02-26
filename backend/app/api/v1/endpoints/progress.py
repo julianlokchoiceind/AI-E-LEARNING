@@ -96,14 +96,39 @@ async def update_video_progress(
             update_data.watch_percentage,
             update_data.current_position
         )
-        
+
         message = "Progress updated"
+        certificate_issued = False
+
         if progress.is_completed:
             message = "Lesson completed! Next lesson unlocked."
-        
+
+            # Auto-issue certificate if course is now fully completed
+            try:
+                enrollment = await Enrollment.find_one({
+                    "user_id": str(current_user.id),
+                    "course_id": progress.course_id,
+                    "is_active": True
+                })
+                if enrollment and enrollment.progress.is_completed:
+                    cert = await CertificateService.check_course_completion_and_issue_certificate(
+                        user_id=str(current_user.id),
+                        course_id=str(progress.course_id),
+                        enrollment_id=str(enrollment.id)
+                    )
+                    if cert:
+                        certificate_issued = True
+                        message = "Course completed! Your certificate is ready."
+                        logger.info(f"Certificate auto-issued for user {current_user.id}, course {progress.course_id}")
+            except Exception as cert_err:
+                logger.error(f"Auto-certificate failed (non-blocking): {cert_err}")
+
+        response_data = serialize_progress(progress)
+        response_data["certificate_issued"] = certificate_issued
+
         return StandardResponse(
             success=True,
-            data=serialize_progress(progress),
+            data=response_data,
             message=message
         )
     except Exception as e:
@@ -128,10 +153,35 @@ async def complete_lesson(
         )
     try:
         progress = await progress_service.complete_lesson(lesson_id, str(current_user.id))
+
+        # Auto-issue certificate if course is now fully completed
+        certificate_issued = False
+        try:
+            course_id = str(progress.course_id)
+            enrollment = await Enrollment.find_one({
+                "user_id": str(current_user.id),
+                "course_id": progress.course_id,
+                "is_active": True
+            })
+            if enrollment and enrollment.progress.is_completed:
+                cert = await CertificateService.check_course_completion_and_issue_certificate(
+                    user_id=str(current_user.id),
+                    course_id=course_id,
+                    enrollment_id=str(enrollment.id)
+                )
+                if cert:
+                    certificate_issued = True
+                    logger.info(f"Certificate auto-issued for user {current_user.id}, course {course_id}")
+        except Exception as cert_err:
+            logger.error(f"Auto-certificate failed (non-blocking): {cert_err}")
+
+        response_data = serialize_progress(progress)
+        response_data["certificate_issued"] = certificate_issued
+
         return StandardResponse(
             success=True,
-            data=serialize_progress(progress),
-            message="Lesson marked as completed"
+            data=response_data,
+            message="🎉 Course completed! Your certificate is ready." if certificate_issued else "Lesson marked as completed"
         )
     except Exception as e:
         raise HTTPException(

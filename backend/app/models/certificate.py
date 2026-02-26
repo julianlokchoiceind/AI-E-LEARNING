@@ -26,7 +26,7 @@ class Certificate(Document):
     total_hours: float = Field(..., description="Total hours spent on course")
     
     # Certificate metadata
-    issuer_name: str = Field(default="AI E-Learning Platform")
+    issuer_name: str = Field(default="Mr Choi - Heart HT")
     issuer_title: str = Field(default="Director of Education")
     issuer_signature_url: Optional[str] = Field(None, description="URL to issuer signature image")
     

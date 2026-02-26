@@ -235,23 +235,23 @@ class ProgressService:
             })
             
             if progress:
-                # Add lesson watch percentage to total
-                watch_percentage = progress.video_progress.watch_percentage
-                total_progress += watch_percentage
-                
+                # Completed lessons count as 100% (not actual watch_percentage) to avoid float rounding issues
+                if progress.is_completed:
+                    total_progress += 100.0
+                    completed_lessons += 1
+                else:
+                    total_progress += progress.video_progress.watch_percentage
+
                 # Accumulate watch time (in seconds)
                 total_watch_time_seconds += progress.video_progress.total_watch_time
-                
-                # Count as completed if watch_percentage >= 95
-                if progress.is_completed:
-                    completed_lessons += 1
             else:
                 # No progress record = 0% for this lesson
                 total_progress += 0.0
-        
+
         # Calculate weighted average completion percentage (rounded to 1 decimal)
         completion_percentage = round(total_progress / total_lessons, 1) if total_lessons > 0 else 0.0
-        is_completed = completion_percentage >= 100
+        # Use lessons_completed as primary check to avoid float rounding issues (e.g. 99.9 != 100)
+        is_completed = completed_lessons >= total_lessons and total_lessons > 0
         
         # Update enrollment progress
         from app.models.enrollment import Enrollment

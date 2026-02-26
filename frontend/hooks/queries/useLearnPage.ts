@@ -150,6 +150,7 @@ export interface ProgressUpdateResponse {
   updated: boolean;
   lesson_completed: boolean;
   course_completed: boolean;
+  certificate_issued?: boolean;
   next_lesson_unlocked?: string;
   updated_progress: LessonProgress;
 }

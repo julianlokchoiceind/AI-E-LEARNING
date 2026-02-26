@@ -295,6 +295,13 @@ export const vi = {
     clearFilters: 'Xóa bộ lọc',
     showMore: 'Xem thêm {count}',
     showFewer: 'Thu gọn',
+    // My Courses page
+    myCoursesSubtitle: 'Theo dõi tiến độ học tập của bạn trên tất cả các khóa học đã đăng ký',
+    recentlyAccessed: 'Truy cập gần đây',
+    sortByTitle: 'Tên khóa học',
+    noEnrolledCourses: 'Bạn chưa đăng ký khóa học nào',
+    learningSummary: 'Tổng kết học tập',
+    totalCourses: 'Tổng số khóa học',
   },
 
   // Learning

@@ -2,6 +2,7 @@
 Certificate service for managing course completion certificates
 """
 import os
+import json
 import hashlib
 import secrets
 import logging
@@ -81,8 +82,9 @@ class CertificateService:
         certificate_number = await CertificateService.generate_certificate_number()
         verification_code = CertificateService.generate_verification_code()
         
-        # Create verification URL
-        verification_url = f"https://ai-elearning.com/verify/{verification_code}"
+        # Create verification URL using env var
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+        verification_url = f"{frontend_url}/verify/{verification_code}"
         
         # Create certificate
         certificate = Certificate(
@@ -146,16 +148,19 @@ class CertificateService:
         if not course or not user:
             return None
 
-        # Convert certificate to dictionary and add details
-        cert_dict = certificate.model_dump()
+        # Convert certificate to JSON-safe dictionary (model_dump_json ensures ObjectId → str)
+        cert_dict = json.loads(certificate.model_dump_json())
         cert_dict.update({
             "course_title": course.title,
             "course_description": course.description,
             "course_level": course.level,
             "course_category": course.category,
             "course_creator": course.creator_name,
+            "course_duration_hours": round(course.total_duration / 60, 1) if course.total_duration else 0,
             "user_name": user.name,
-            "user_email": user.email
+            "user_email": user.email,
+            "issuer_name": "Mr Choi - Heart HT",
+            "issuer_title": "Director of Education",
         })
         return cert_dict
     
@@ -373,17 +378,18 @@ class CertificateService:
             })
             return existing
         
-        # Calculate final score from quiz attempts
-        # For now, using a simple average
-        final_score = 85.0  # This would be calculated from actual quiz scores
-        
+        # Use completion percentage as final score (quiz system not yet implemented)
+        # completion_percentage is guaranteed to be 100.0 at this point
+        final_score = enrollment.progress.completion_percentage
+
         # Create certificate
+        # total_watch_time is stored in minutes → divide by 60 to get hours
         certificate = await CertificateService.create_certificate(
             user_id=user_id,
             course_id=course_id,
             enrollment_id=enrollment_id,
             final_score=final_score,
-            total_hours=enrollment.progress.total_watch_time / 3600  # Convert to hours
+            total_hours=enrollment.progress.total_watch_time / 60  # Convert minutes to hours
         )
         
         return certificate

@@ -368,7 +368,15 @@ export default function OptimizedLessonPlayerPage() {
 
   // 🚀 SINGLE MUTATION for progress updates
   const { mutate: updateProgress } = useUpdateLessonProgress();
-  
+
+  // Certificate banner state
+  const [showCertBanner, setShowCertBanner] = useState(false);
+  const locale = typeof window !== 'undefined' ? (localStorage.getItem('locale') || 'en') : 'en';
+  const certBannerText = locale === 'vi'
+    ? 'Khóa học hoàn thành! Chứng chỉ đã sẵn sàng.'
+    : 'Course completed! Your certificate is ready.';
+  const certBannerLink = locale === 'vi' ? 'Xem chứng chỉ' : 'View certificate';
+
   // Inline messages for lesson feedback
   const lessonNavigationMessage = useInlineMessage('lesson-navigation');
   const lessonCompletionMessage = useInlineMessage('lesson-completion');
@@ -479,7 +487,8 @@ export default function OptimizedLessonPlayerPage() {
 
   // Stable callback references using useRef pattern
   const updateProgressRef = useRef(updateProgress);
-  
+  const setShowCertBannerRef = useRef(setShowCertBanner);
+
   // Keep updateProgress ref current
   useEffect(() => {
     updateProgressRef.current = updateProgress;
@@ -601,14 +610,21 @@ export default function OptimizedLessonPlayerPage() {
       const currentTime = currentVideoTimeRef.current;
       
       if (currentProgress > 0) {
-        updateProgressRef.current({
-          progressData: {
-            lesson_id: lessonId,
-            watch_percentage: currentProgress,
-            current_position: currentTime,
-            total_watch_time: Math.floor(currentTime)
+        updateProgressRef.current(
+          {
+            progressData: {
+              lesson_id: lessonId,
+              watch_percentage: currentProgress,
+              current_position: currentTime,
+              total_watch_time: Math.floor(currentTime)
+            }
+          },
+          {
+            onSuccess: (res: any) => {
+              if (res?.data?.certificate_issued) setShowCertBannerRef.current(true);
+            }
           }
-        });
+        );
       }
     }, 10000); // Save every 10 seconds
     
@@ -624,14 +640,21 @@ export default function OptimizedLessonPlayerPage() {
     
     // Save progress at 95% completion (for unlocking next lesson)
     if (!isPreviewMode && actualVideoProgress >= 95) {
-      updateProgress({
-        progressData: {
-          lesson_id: lessonId,
-          watch_percentage: actualVideoProgress,
-          current_position: currentVideoTime,
-          total_watch_time: Math.floor(currentVideoTime)
+      updateProgress(
+        {
+          progressData: {
+            lesson_id: lessonId,
+            watch_percentage: actualVideoProgress,
+            current_position: currentVideoTime,
+            total_watch_time: Math.floor(currentVideoTime)
+          }
+        },
+        {
+          onSuccess: (res: any) => {
+            if (res?.data?.certificate_issued) setShowCertBanner(true);
+          }
         }
-      });
+      );
     }
   }, [lesson?.has_quiz, isPreviewMode, updateProgress, lessonId, currentVideoTime, actualVideoProgress]);
 
@@ -711,6 +734,26 @@ export default function OptimizedLessonPlayerPage() {
 
   return (
     <div className="min-h-screen bg-muted">
+      {/* Certificate completion banner */}
+      {showCertBanner && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-card border border-success/40 rounded-xl shadow-lg text-sm">
+          <span className="text-foreground font-medium">{certBannerText}</span>
+          <a
+            href="/certificates"
+            className="text-primary font-semibold hover:underline whitespace-nowrap"
+          >
+            {certBannerLink}
+          </a>
+          <button
+            onClick={() => setShowCertBanner(false)}
+            className="ml-1 text-muted-foreground hover:text-foreground"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Header Bar */}
       <header className="h-16 bg-white border-b border-border sticky top-0 z-40">
         <div className="h-full px-4 flex items-center">

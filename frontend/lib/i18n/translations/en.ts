@@ -295,6 +295,13 @@ export const en = {
     clearFilters: 'Clear filters',
     showMore: 'Show {count} more',
     showFewer: 'Show fewer',
+    // My Courses page
+    myCoursesSubtitle: 'Track your learning progress across all enrolled courses',
+    recentlyAccessed: 'Recently Accessed',
+    sortByTitle: 'Title',
+    noEnrolledCourses: "You haven't enrolled in any courses yet",
+    learningSummary: 'Learning Summary',
+    totalCourses: 'Total Courses',
   },
 
   // Learning

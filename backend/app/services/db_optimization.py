@@ -148,13 +148,18 @@ class DatabaseOptimizer:
         """Batch fetch courses to avoid N+1 queries"""
         if not course_ids:
             return []
-            
+
+        from bson import ObjectId
         courses = []
         for i in range(0, len(course_ids), batch_size):
             batch_ids = course_ids[i:i + batch_size]
-            batch_courses = await Course.find({"_id": {"$in": batch_ids}}).to_list(None)
+            # Convert string IDs to ObjectId — raw dict queries don't auto-convert
+            object_ids = [ObjectId(cid) for cid in batch_ids if ObjectId.is_valid(str(cid))]
+            if not object_ids:
+                continue
+            batch_courses = await Course.find({"_id": {"$in": object_ids}}).to_list(None)
             courses.extend(batch_courses)
-            
+
         return courses
     
     @measure_performance("db.get_user_enrollments_optimized")
