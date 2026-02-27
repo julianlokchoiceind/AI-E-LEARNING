@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from app.core.deps import get_current_user
 from app.models.user import User
+from app.models.enrollment import Enrollment, EnrollmentType
 from app.services.ai_service import ai_service
 from app.schemas.base import StandardResponse
 from app.schemas.ai import (
@@ -27,6 +28,34 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+async def _check_ai_access(user: User, course_id: Optional[str] = None) -> bool:
+    """Check if user has access to AI Study Buddy (paid users only)."""
+    # Admin/creator always have access
+    if user.role in ["admin", "creator"]:
+        return True
+    # Admin-granted premium status
+    if getattr(user, 'premium_status', False):
+        return True
+    # Active Pro subscription
+    if (user.subscription and
+            user.subscription.type.value == "pro" and
+            user.subscription.status.value == "active"):
+        return True
+    # Paid enrollment for this specific course
+    if course_id:
+        enrollment = await Enrollment.find_one(
+            Enrollment.user_id == str(user.id),
+            Enrollment.course_id == course_id
+        )
+        if enrollment and enrollment.enrollment_type in [
+            EnrollmentType.PURCHASED,
+            EnrollmentType.SUBSCRIPTION,
+            EnrollmentType.ADMIN_GRANTED
+        ]:
+            return True
+    return False
 
 # Request/Response Models
 class ChatRequest(BaseModel):
@@ -105,6 +134,14 @@ async def ai_chat(
     - **context**: Optional context (course_id, lesson_id, user_level, etc.)
     """
     try:
+        # Check AI access - paid users only
+        course_id = request.context.get("course_id") if request.context else None
+        if not await _check_ai_access(current_user, course_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="AI Study Buddy requires a paid course enrollment or Pro subscription"
+            )
+
         # Call AI service
         result = await ai_service.chat(
             user_id=str(current_user.id),
@@ -477,12 +514,19 @@ async def get_contextual_suggestions(
     - **user_level**: User's learning level (beginner, intermediate, advanced)
     """
     try:
+        # Check AI access - paid users only
+        if not await _check_ai_access(current_user, request.course_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="AI Study Buddy requires a paid course enrollment or Pro subscription"
+            )
+
         suggestions = await ai_service.generate_contextual_suggestions(
             course_id=request.course_id,
             lesson_id=request.lesson_id,
             user_level=request.user_level
         )
-        
+
         # Build context info for response
         context = {}
         if request.course_id:

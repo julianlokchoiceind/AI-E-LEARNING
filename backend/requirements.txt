@@ -20,6 +20,7 @@ nh3==0.2.14  # Fast HTML sanitization for XSS prevention
 
 # AI Integration
 pydantic-ai
+youtube-transcript-api
 
 # Email Service (Microsoft Graph API)
 msal

@@ -1,9 +1,59 @@
 """
 Service layer for lesson-related business logic.
 """
+import asyncio
+import logging
+import re
 from typing import List, Optional
 from beanie import PydanticObjectId
 from fastapi import HTTPException, status
+
+logger = logging.getLogger(__name__)
+
+
+async def _fetch_and_save_transcript(lesson_id: str, youtube_url: str) -> None:
+    """Background task: fetch YouTube transcript and save to lesson."""
+    try:
+        match = re.search(
+            r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([a-zA-Z0-9_-]{11})',
+            youtube_url
+        )
+        if not match:
+            return
+
+        video_id = match.group(1)
+
+        from youtube_transcript_api import YouTubeTranscriptApi
+        from youtube_transcript_api._errors import (
+            NoTranscriptFound, TranscriptsDisabled, VideoUnavailable, CouldNotRetrieveTranscript
+        )
+
+        api = YouTubeTranscriptApi()
+        try:
+            transcript = api.fetch(video_id, languages=['vi', 'en'])
+        except NoTranscriptFound:
+            # Fallback: try any available language
+            try:
+                transcripts = api.list(video_id)
+                first = next(iter(transcripts))
+                transcript = first.fetch()
+            except Exception:
+                logger.info(f"No transcript available for video {video_id}")
+                return
+        except (TranscriptsDisabled, VideoUnavailable, CouldNotRetrieveTranscript) as e:
+            logger.info(f"Transcript not available for video {video_id}: {e}")
+            return
+
+        full_text = ' '.join([entry.text for entry in transcript])
+
+        lesson = await Lesson.get(PydanticObjectId(lesson_id))
+        if lesson and lesson.video:
+            lesson.video.transcript = full_text
+            await lesson.save()
+            logger.info(f"Transcript saved for lesson {lesson_id} ({len(full_text)} chars)")
+
+    except Exception as e:
+        logger.warning(f"Failed to fetch transcript for lesson {lesson_id}: {e}")
 
 from app.models.lesson import Lesson, VideoContent, UnlockConditions
 from app.models.course import Course
@@ -74,7 +124,12 @@ class LessonService:
         )
         
         await lesson.insert()
-        
+
+        # Trigger transcript fetch in background (non-blocking)
+        youtube_url = str(lesson.video.youtube_url) if lesson.video and lesson.video.youtube_url else None
+        if youtube_url:
+            asyncio.create_task(_fetch_and_save_transcript(str(lesson.id), youtube_url))
+
         # Update chapter stats
         await chapter_service.update_chapter_stats(PydanticObjectId(chapter_id))
         
@@ -427,7 +482,11 @@ class LessonService:
         lesson.updated_at = datetime.utcnow()
         
         await lesson.save()
-        
+
+        # Trigger transcript fetch if video URL was updated
+        if "video" in update_data and lesson.video and lesson.video.youtube_url:
+            asyncio.create_task(_fetch_and_save_transcript(str(lesson.id), str(lesson.video.youtube_url)))
+
         # Update chapter stats if needed
         await chapter_service.update_chapter_stats(lesson.chapter_id)
         

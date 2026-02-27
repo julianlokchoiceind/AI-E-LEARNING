@@ -142,7 +142,7 @@ export default function DashboardPage() {
 
   if (authLoading || loading) {
     return (
-      <Container variant="public" className="pt-8">
+      <Container variant="public" className="!pt-24">
         {/* Welcome Section - STATIC */}
         <div className="mb-10">
           <h1 className="text-3xl font-bold mb-2">
@@ -220,7 +220,7 @@ export default function DashboardPage() {
 
   if (!dashboardData) {
     return (
-      <Container variant="public" className="pt-8">
+      <Container variant="public" className="!pt-24">
         <EmptyState
           title={t('dashboard.unableToLoad')}
           description={t('dashboard.unableToLoadDesc')}
@@ -234,7 +234,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <Container variant="public" className="pt-8">
+    <Container variant="public" className="!pt-24">
       {/* Dashboard Messages */}
       {dashboardAccessMessage.message && (
         <InlineMessage 

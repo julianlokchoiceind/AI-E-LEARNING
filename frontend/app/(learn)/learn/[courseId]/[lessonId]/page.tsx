@@ -145,7 +145,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
   const isCompleted = actualVideoProgress >= 95;
 
   return (
-    <section className="rounded-xl overflow-hidden shadow-lg bg-gradient-to-b from-blue-900 to-blue-800">
+    <section className="rounded-xl overflow-hidden shadow-lg bg-gradient-to-b from-blue-500 via-blue-600 to-blue-700">
       {lesson.video ? (
         <>
           {/* Video Player - No borders, seamless top */}
@@ -167,7 +167,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
           />
 
           {/* Seamless Progress Strip - Right below video */}
-          <div className="h-1 bg-blue-900/70 relative">
+          <div className="h-1 bg-blue-700/70 relative">
             <div
               className={`h-full transition-all duration-300 ${
                 isCompleted ? 'bg-emerald-500' : 'bg-blue-500'
@@ -197,20 +197,20 @@ const VideoSection = React.memo<VideoSectionProps>(({
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-blue-100">
               {/* Duration */}
               <div className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-slate-500" />
+                <Clock className="w-4 h-4 text-blue-200" />
                 <span>{formatDuration(currentVideoDuration || lesson.video.duration || 0)}</span>
               </div>
 
               {/* Current Position */}
               <div className="flex items-center gap-1.5">
-                <span className="text-slate-500">•</span>
+                <span className="text-blue-300">•</span>
                 <span>{formatDuration(currentVideoTime)} / {formatDuration(currentVideoDuration || lesson.video.duration || 0)}</span>
               </div>
 
               {/* Progress Percentage */}
               <div className="flex items-center gap-1.5">
-                <span className="text-slate-500">•</span>
-                <span className={isCompleted ? 'text-emerald-400' : 'text-blue-400'}>
+                <span className="text-blue-300">•</span>
+                <span className={isCompleted ? 'text-emerald-300' : 'text-blue-100'}>
                   {Math.round(actualVideoProgress)}% watched
                 </span>
               </div>
@@ -219,7 +219,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
               <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
                 isCompleted
                   ? 'bg-emerald-500/20 text-emerald-400'
-                  : 'bg-blue-500/20 text-blue-400'
+                  : 'bg-white/20 text-white'
               }`}>
                 {isCompleted ? (
                   <>
@@ -355,7 +355,7 @@ export default function OptimizedLessonPlayerPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { } = useAuth(); // User auth check handled by middleware
+  const { user } = useAuth(); // User auth check handled by middleware
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
 
@@ -388,6 +388,12 @@ export default function OptimizedLessonPlayerPage() {
   const initialChapters = pageData?.chapters || [];
   const enrollment = pageData?.enrollment || null;
   const navigation = pageData?.navigation || null;
+  const hasAIAccess = !!(
+    user?.role === 'admin' ||
+    user?.role === 'creator' ||
+    (user as any)?.premiumStatus === true ||
+    (enrollment?.enrollment_type && ['purchased', 'subscription', 'admin_granted'].includes(enrollment.enrollment_type))
+  );
   const userProgress = pageData?.user_progress || { };
   // Check both API response and URL parameter for preview mode
   const isPreviewMode = pageData?.is_preview_mode || searchParams.get('preview') === 'true' || false;
@@ -1197,6 +1203,7 @@ export default function OptimizedLessonPlayerPage() {
         lessonId={lessonId}
         userLevel="beginner"
         position="bottom-right"
+        hasAIAccess={hasAIAccess}
       />
     </div>
   );

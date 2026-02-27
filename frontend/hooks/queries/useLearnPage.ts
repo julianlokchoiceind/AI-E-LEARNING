@@ -96,6 +96,7 @@ export interface EnrollmentData {
   progress: CourseProgress;
   access_type: string;
   expires_at?: string;
+  enrollment_type?: string;  // free, purchased, subscription, admin_granted
 }
 
 export interface CourseData {

@@ -517,7 +517,8 @@ class LearnService:
             enrolled_at=enrollment.enrolled_at,
             progress=course_progress,
             access_type="full",  # Default access type
-            expires_at=getattr(enrollment, 'expires_at', None)
+            expires_at=getattr(enrollment, 'expires_at', None),
+            enrollment_type=enrollment.enrollment_type.value if enrollment.enrollment_type else None
         )
 
     @staticmethod

@@ -114,6 +114,7 @@ class EnrollmentSchema(BaseModel):
     progress: CourseProgressSchema
     access_type: str = Field(default="full")  # full, preview, trial
     expires_at: Optional[datetime] = None
+    enrollment_type: Optional[str] = None  # free, purchased, subscription, admin_granted
 
     class Config:
         allow_population_by_field_name = True

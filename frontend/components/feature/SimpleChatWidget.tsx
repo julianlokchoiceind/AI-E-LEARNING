@@ -31,6 +31,7 @@ interface SimpleChatWidgetProps {
   videoCurrentTime?: number;
   enableEnhancedFeatures?: boolean;
   onShowMessage?: (message: string, type: 'info' | 'error') => void;
+  hasAIAccess?: boolean;
 }
 
 // Message content component with markdown and code highlighting
@@ -178,7 +179,8 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
   videoProgress,
   videoCurrentTime,
   enableEnhancedFeatures = true,
-  onShowMessage
+  onShowMessage,
+  hasAIAccess = true
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -206,6 +208,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
   const [showLearningGoals, setShowLearningGoals] = useState(false);
   const [newGoal, setNewGoal] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -235,9 +238,13 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
     onShowMessage
   });
 
-  // Auto-scroll to bottom
+  // Auto-scroll: top for welcome message, bottom for subsequent messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length === 1 && messages[0].type === 'ai') {
+      messagesContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, isTyping]);
 
   // Focus input when opened
@@ -489,8 +496,43 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
           </div>
         )}
 
+        {/* Upgrade CTA for non-paid users */}
+        {!hasAIAccess && (
+          <div
+            className="flex-1 flex flex-col items-center justify-center p-5 text-center"
+            style={{
+              background: 'linear-gradient(180deg, #dbeafe 0%, #eff6ff 60%, #ffffff 100%)',
+            }}
+          >
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center mb-3"
+              style={{ background: 'linear-gradient(135deg, #4A90E2 0%, #1E3A8A 100%)' }}
+            >
+              <Brain className="w-7 h-7 text-white" />
+            </div>
+            <h3 className="font-semibold text-foreground mb-1">AI Study Buddy</h3>
+            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+              Get instant AI-powered explanations, code help, and personalized learning support.
+            </p>
+            <div className="space-y-2 w-full">
+              <a
+                href="/pricing"
+                className="block w-full py-2 px-4 rounded-lg text-sm font-medium text-white text-center transition-opacity hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg, #4A90E2 0%, #1E3A8A 100%)' }}
+              >
+                Upgrade to Pro
+              </a>
+              <p className="text-xs text-muted-foreground">
+                Or purchase this course to unlock AI access
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Messages with gradient background */}
-        <div 
+        {hasAIAccess && (
+        <div
+          ref={messagesContainerRef}
           className="flex-1 p-3 overflow-y-auto space-y-3"
           style={{
             background: 'linear-gradient(180deg, #dbeafe 0%, #bfdbfe 30%, #eff6ff 60%, #ffffff 100%)',
@@ -569,9 +611,10 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
           
           <div ref={messagesEndRef} />
         </div>
+        )}
 
         {/* Quick Suggestions */}
-        {showQuickSuggestions && quickSuggestions.length > 0 && (
+        {hasAIAccess && showQuickSuggestions && quickSuggestions.length > 0 && (
           <div className="border-t border-border/50 p-2 bg-white">
             <p className="text-xs text-muted-foreground mb-2">Quick questions:</p>
             <div className="space-y-1">
@@ -601,6 +644,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
         )}
 
         {/* Input */}
+        {hasAIAccess && (
         <div className="border-t p-3 bg-white">
           <div className="flex items-center space-x-2">
             <input
@@ -682,6 +726,7 @@ export const SimpleChatWidget: React.FC<SimpleChatWidgetProps> = ({
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* Custom styles */}

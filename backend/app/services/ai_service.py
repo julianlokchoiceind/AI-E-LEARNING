@@ -296,7 +296,8 @@ class AIService:
     async def _get_course_context(self, course_id: str) -> Optional[Dict[str, Any]]:
         """Get course context for AI prompting"""
         try:
-            course = await Course.find_one(Course.id == course_id)
+            from beanie import PydanticObjectId
+            course = await Course.find_one(Course.id == PydanticObjectId(course_id))
             if course:
                 return {
                     "title": course.title,
@@ -311,7 +312,8 @@ class AIService:
     async def _get_lesson_context(self, lesson_id: str) -> Optional[Dict[str, Any]]:
         """Get lesson context for AI prompting"""
         try:
-            lesson = await Lesson.find_one(Lesson.id == lesson_id)
+            from beanie import PydanticObjectId
+            lesson = await Lesson.find_one(Lesson.id == PydanticObjectId(lesson_id))
             if lesson:
                 # Get lesson with video details and content
                 context = {
@@ -323,11 +325,11 @@ class AIService:
                     "has_quiz": lesson.has_quiz if hasattr(lesson, 'has_quiz') else False,
                     "order": lesson.order
                 }
-                
+
                 # Get chapter context
                 if lesson.chapter_id:
                     from app.models.chapter import Chapter
-                    chapter = await Chapter.find_one(Chapter.id == lesson.chapter_id)
+                    chapter = await Chapter.find_one(Chapter.id == PydanticObjectId(str(lesson.chapter_id)))
                     if chapter:
                         context["chapter"] = {
                             "title": chapter.title,
