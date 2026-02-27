@@ -105,7 +105,14 @@ class AIService:
         - Include practical examples and code snippets
         - Ask follow-up questions to ensure understanding
         - Support both English and Vietnamese languages
-        
+
+        Important limitations:
+        - You CANNOT watch or access videos directly
+        - If a Video Transcript is provided in the context, use it to answer questions about video content
+        - If NO transcript is provided, be honest: tell the student you don't have access to the video content,
+          but you can still help based on the lesson title and description
+        - Never pretend to know video content you don't have access to
+
         Always aim to educate and empower the student's learning journey.
         """
     
@@ -152,9 +159,29 @@ class AIService:
                 response = self.gemini_model.generate_content(contextual_prompt)
                 result_data = response.text
             else:
-                # Anthropic response
-                result = await self.agent.run(contextual_prompt)
-                result_data = result.data
+                # Anthropic response - fallback to Gemini on auth error
+                try:
+                    result = await self.agent.run(contextual_prompt)
+                    result_data = result.data
+                except Exception as anthropic_err:
+                    err_str = str(anthropic_err)
+                    if "401" in err_str or "authentication_error" in err_str or "invalid x-api-key" in err_str:
+                        logger.warning("Anthropic key invalid, falling back to Gemini")
+                        # Init Gemini if not yet done
+                        if not self.gemini_model:
+                            gemini_key = self.settings.gemini_api_key
+                            if gemini_key:
+                                import google.generativeai as genai
+                                genai.configure(api_key=gemini_key)
+                                self.gemini_model = genai.GenerativeModel(self.settings.gemini_model)
+                        if self.gemini_model:
+                            self.use_gemini = True
+                            response = self.gemini_model.generate_content(contextual_prompt)
+                            result_data = response.text
+                        else:
+                            raise anthropic_err
+                    else:
+                        raise anthropic_err
             
             # Store conversation in history
             await self._store_conversation(user_id, message, result_data, context)
@@ -236,7 +263,12 @@ class AIService:
                     lesson_info += f"""
                 - Lesson Content: {lesson_context['content'][:500]}...
                 """
-                
+
+                if lesson_context.get('video_transcript'):
+                    lesson_info += f"""
+                - Video Transcript: {lesson_context['video_transcript'][:3000]}
+                """
+
                 context_parts.append(lesson_info)
         
         # User level context
@@ -286,6 +318,7 @@ class AIService:
                     "title": lesson.title,
                     "description": lesson.description,
                     "content": lesson.content,
+                    "video_transcript": lesson.video.transcript if lesson.video else None,
                     "video_duration": lesson.video.duration if lesson.video else None,
                     "has_quiz": lesson.has_quiz if hasattr(lesson, 'has_quiz') else False,
                     "order": lesson.order
@@ -868,12 +901,31 @@ class AIService:
             Keep each question under 60 characters.
             """
             
-            result = await self.agent.run(prompt)
-            
+            # Try Anthropic, fallback to Gemini on auth error
+            if self.use_gemini and self.gemini_model:
+                gem_response = self.gemini_model.generate_content(prompt)
+                raw_text = gem_response.text
+            else:
+                try:
+                    result = await self.agent.run(prompt)
+                    raw_text = result.data
+                except Exception as anthropic_err:
+                    err_str = str(anthropic_err)
+                    if ("401" in err_str or "authentication_error" in err_str or "invalid x-api-key" in err_str) and self.settings.gemini_api_key:
+                        import google.generativeai as genai
+                        if not self.gemini_model:
+                            genai.configure(api_key=self.settings.gemini_api_key)
+                            self.gemini_model = genai.GenerativeModel(self.settings.gemini_model)
+                        self.use_gemini = True
+                        gem_response = self.gemini_model.generate_content(prompt)
+                        raw_text = gem_response.text
+                    else:
+                        raise anthropic_err
+
             # Parse suggestions from AI response
             suggestions = []
-            if result.data:
-                lines = result.data.strip().split('\n')
+            if raw_text:
+                lines = raw_text.strip().split('\n')
                 for line in lines:
                     clean_line = line.strip()
                     # Remove any numbering or bullets

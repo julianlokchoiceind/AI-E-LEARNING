@@ -145,7 +145,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
   const isCompleted = actualVideoProgress >= 95;
 
   return (
-    <section className="rounded-xl overflow-hidden shadow-lg bg-gradient-to-b from-slate-900 to-slate-800">
+    <section className="rounded-xl overflow-hidden shadow-lg bg-gradient-to-b from-blue-900 to-blue-800">
       {lesson.video ? (
         <>
           {/* Video Player - No borders, seamless top */}
@@ -167,7 +167,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
           />
 
           {/* Seamless Progress Strip - Right below video */}
-          <div className="h-1 bg-slate-700/50 relative">
+          <div className="h-1 bg-blue-900/70 relative">
             <div
               className={`h-full transition-all duration-300 ${
                 isCompleted ? 'bg-emerald-500' : 'bg-blue-500'
@@ -185,7 +185,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
                   {lesson.title}
                 </h1>
                 {courseTitle && (
-                  <p className="text-sm text-slate-400 mt-1 truncate">
+                  <p className="text-sm text-blue-200 mt-1 truncate">
                     {courseTitle}
                   </p>
                 )}
@@ -194,7 +194,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
             </div>
 
             {/* Stats Row - Minimal, horizontal */}
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-300">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-blue-100">
               {/* Duration */}
               <div className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-slate-500" />
@@ -237,7 +237,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
 
             {/* Sequential Learning Notice - Subtle bottom message */}
             {!isCompleted && (
-              <div className="mt-4 pt-3 border-t border-slate-700/50">
+              <div className="mt-4 pt-3 border-t border-blue-700/50">
                 <p className="text-xs text-amber-400/90 flex items-center gap-1.5">
                   <Info className="w-3.5 h-3.5" />
                   Watch 95% to unlock the next lesson
@@ -245,7 +245,7 @@ const VideoSection = React.memo<VideoSectionProps>(({
               </div>
             )}
             {isCompleted && !progress?.is_completed && (
-              <div className="mt-4 pt-3 border-t border-slate-700/50">
+              <div className="mt-4 pt-3 border-t border-blue-700/50">
                 <p className="text-xs text-amber-400/90 flex items-center gap-1.5">
                   <Info className="w-3.5 h-3.5" />
                   Complete the quiz below to finish this lesson
@@ -257,11 +257,11 @@ const VideoSection = React.memo<VideoSectionProps>(({
       ) : (
         <div className="aspect-video bg-slate-800 flex items-center justify-center">
           <div className="text-center px-6">
-            <VideoOff className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <VideoOff className="w-16 h-16 text-blue-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-200 mb-2">
               Video content is being prepared
             </h3>
-            <p className="text-slate-400 max-w-sm mx-auto text-sm">
+            <p className="text-blue-300 max-w-sm mx-auto text-sm">
               The video for this lesson will be available soon.
               Please check back later or continue with the lesson materials below.
             </p>
@@ -327,17 +327,17 @@ const QuizSection = React.memo<QuizSectionProps>(({
   }
 
   return (
-    <section className="rounded-lg shadow-sm border border-border overflow-hidden">
-      <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-warning/20">
+    <section className="rounded-xl shadow-sm border border-border overflow-hidden">
+      <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5">
         <h2 className="text-base md:text-lg font-semibold text-foreground flex items-center">
-          <CheckCircle className="w-4 md:w-5 h-4 md:h-5 mr-2 text-warning" />
+          <CheckCircle className="w-4 md:w-5 h-4 md:h-5 mr-2 text-primary" />
           Quiz - Test Your Knowledge
         </h2>
         <p className="text-xs md:text-sm text-muted-foreground mt-1">
           Check your understanding immediately after learning.
         </p>
       </div>
-      <div className="p-4 md:p-6 bg-white">
+      <div className="p-4 md:p-6 bg-card">
         <StudentQuizPlayer
           lessonId={lessonId}
           onComplete={handleQuizComplete}
@@ -706,10 +706,14 @@ export default function OptimizedLessonPlayerPage() {
   // Early return for loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-muted flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading lesson...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="relative w-16 h-16 mx-auto mb-6">
+            <div className="absolute inset-0 rounded-full border-4 border-white/20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-t-white border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Loading Lesson</h2>
+          <p className="text-blue-200 text-sm">Preparing your learning experience...</p>
         </div>
       </div>
     );
@@ -718,7 +722,7 @@ export default function OptimizedLessonPlayerPage() {
   // Early return for error state
   if (learnDataError || !lesson) {
     return (
-      <div className="min-h-screen bg-muted flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <ErrorState
           title="Lesson not found"
           error={learnDataError}
@@ -733,20 +737,20 @@ export default function OptimizedLessonPlayerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted">
+    <div className="min-h-screen bg-background">
       {/* Certificate completion banner */}
       {showCertBanner && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-card border border-success/40 rounded-xl shadow-lg text-sm">
-          <span className="text-foreground font-medium">{certBannerText}</span>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-xl text-sm">
+          <span className="text-white font-medium">{certBannerText}</span>
           <a
             href="/certificates"
-            className="text-primary font-semibold hover:underline whitespace-nowrap"
+            className="text-white font-semibold underline underline-offset-2 whitespace-nowrap hover:text-blue-100 transition-colors"
           >
             {certBannerLink}
           </a>
           <button
             onClick={() => setShowCertBanner(false)}
-            className="ml-1 text-muted-foreground hover:text-foreground"
+            className="ml-1 text-white/70 hover:text-white transition-colors text-lg leading-none"
             aria-label="Dismiss"
           >
             ×
@@ -755,12 +759,12 @@ export default function OptimizedLessonPlayerPage() {
       )}
 
       {/* Header Bar */}
-      <header className="h-16 bg-white border-b border-border sticky top-0 z-40">
+      <header className="h-16 bg-white border-b-2 border-primary/30 sticky top-0 z-40 shadow-sm">
         <div className="h-full px-4 flex items-center">
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileDrawerOpen(true)}
-            className="lg:hidden flex items-center text-muted-foreground hover:text-foreground mr-4"
+            className="lg:hidden flex items-center text-muted-foreground hover:text-foreground mr-4 transition-colors"
           >
             <Menu className="w-5 h-5" />
             <span className="sr-only">Open navigation</span>
@@ -786,11 +790,11 @@ export default function OptimizedLessonPlayerPage() {
 
       {/* Preview Mode Banner */}
       {isPreviewMode && (
-        <div className="bg-warning/20 border-b border-warning/60 px-4 py-2">
-          <div className="flex items-center justify-center text-center">
-            <Info className="w-5 h-5 text-warning mr-2 flex-shrink-0" />
-            <span className="text-warning font-medium text-sm md:text-base">
-              Preview Mode - Progress will not be saved
+        <div className="bg-gradient-to-r from-amber-500/15 to-amber-400/10 border-b border-amber-400/40 px-4 py-2">
+          <div className="flex items-center justify-center text-center gap-2">
+            <Info className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <span className="text-amber-700 font-medium text-sm">
+              Preview Mode — Progress will not be saved
             </span>
           </div>
         </div>
@@ -816,7 +820,7 @@ export default function OptimizedLessonPlayerPage() {
       <div className="flex h-[calc(100vh-64px)]">
         {/* Enhanced Sidebar - Desktop Only */}
         <aside className={`
-          bg-white border-r border-border transition-all duration-300
+          bg-card border-r border-border/60 transition-all duration-300 shadow-sm
           ${sidebarCollapsed ? 'w-16' : 'w-80'}
           hidden lg:block flex-shrink-0 relative
         `}>
@@ -825,50 +829,53 @@ export default function OptimizedLessonPlayerPage() {
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className={`
               absolute -right-3 top-6 z-10
-              w-6 h-6 bg-white border border-border rounded-full
-              hover:bg-muted transition-all duration-200
-              flex items-center justify-center shadow-sm hover:shadow-md
+              w-6 h-6 bg-blue-600 border border-blue-700 rounded-full
+              hover:bg-blue-700 transition-all duration-200
+              flex items-center justify-center shadow-md hover:shadow-lg
               ${sidebarCollapsed ? 'rotate-180' : ''}
             `}
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <ChevronLeft className="w-3 h-3 text-muted-foreground" />
+            <ChevronLeft className="w-3 h-3 text-white" />
           </button>
 
           {!sidebarCollapsed && (
             <>
               {/* Course Info & Progress */}
-              <div className="p-4 border-b border-border">
-                <h3 className="font-semibold text-foreground mb-3">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 border-b border-blue-700/30">
+                <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-blue-200" />
                   Course Progress
                 </h3>
-                
+
                 {/* Progress Bar */}
                 <div className="mb-3">
-                  <div className="flex justify-between text-sm text-muted-foreground mb-1">
+                  <div className="flex justify-between text-xs text-blue-200 mb-2">
                     <span>Overall Progress</span>
-                    <span>{courseProgress.percentage}%</span>
+                    <span className="font-semibold text-white">{courseProgress.percentage}%</span>
                   </div>
-                  <ProgressBar 
-                    value={courseProgress.percentage} 
-                    className="h-2"
-                  />
+                  <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-white rounded-full transition-all duration-500"
+                      style={{ width: `${courseProgress.percentage}%` }}
+                    />
+                  </div>
                 </div>
-                
+
                 {/* Stats */}
-                <div className="text-sm text-muted-foreground space-y-1">
+                <div className="text-xs text-blue-100 space-y-1.5">
                   <div className="flex items-center">
-                    <CheckCircle className="w-4 h-4 mr-2 text-success" />
+                    <CheckCircle className="w-3.5 h-3.5 mr-2 text-emerald-300" />
                     {courseProgress.completedLessons} of {courseProgress.totalLessons} lessons completed
                   </div>
                   <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2" />
+                    <Clock className="w-3.5 h-3.5 mr-2 text-blue-200" />
                     {courseProgress.remainingTime} remaining
                   </div>
-                  <div className="flex items-center text-xs text-muted-foreground">
+                  <div className="flex items-center text-blue-200/80">
                     <BookOpen className="w-3 h-3 mr-2" />
-                    Total duration: {courseProgress.totalTime}
+                    Total: {courseProgress.totalTime}
                   </div>
                 </div>
               </div>
@@ -888,7 +895,7 @@ export default function OptimizedLessonPlayerPage() {
                     {/* Clickable Chapter Header with Accordion */}
                     <button
                       onClick={() => toggleChapter(chapter.id)}
-                      className="w-full px-4 py-3 bg-muted text-left hover:bg-muted transition-colors"
+                      className="w-full px-4 py-3 bg-muted/70 text-left hover:bg-primary/10 border-l-2 border-transparent hover:border-primary transition-all duration-200"
                     >
                       <div className="flex items-center justify-between">
                         <h4 className="font-medium text-foreground flex items-center">
@@ -903,8 +910,11 @@ export default function OptimizedLessonPlayerPage() {
                       </div>
                     </button>
                     
-                    {/* Conditionally render lessons only if chapter is expanded */}
-                    {expandedChapters.has(chapter.id) && (
+                    {/* Animated accordion - CSS grid-rows trick for smooth slide */}
+                    <div className={`grid transition-all duration-200 ease-in-out ${
+                      expandedChapters.has(chapter.id) ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                    }`}>
+                      <div className="overflow-hidden">
                       <div className="py-1">
                         {chapter.lessons.map((chapterLesson: LessonData) => {
                         const isCurrentLesson = chapterLesson.id === lessonId;
@@ -1035,9 +1045,10 @@ export default function OptimizedLessonPlayerPage() {
                             )}
                           </button>
                         );
-                      })}
+                        })}
                       </div>
-                    )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1049,17 +1060,17 @@ export default function OptimizedLessonPlayerPage() {
             <div className="h-full flex flex-col items-center py-4">
               {/* Progress Indicator */}
               <div className="mb-4">
-                <div 
-                  className="w-10 h-10 rounded-full border-4 border-border relative"
+                <div
+                  className="w-10 h-10 rounded-full border-4 border-blue-100 relative bg-gradient-to-br from-blue-50 to-white shadow-sm"
                   title={`${courseProgress.percentage}% Complete`}
                 >
-                  <div 
-                    className="absolute inset-0 rounded-full border-4 border-primary transition-all duration-300"
+                  <div
+                    className="absolute inset-0 rounded-full border-4 border-blue-600 transition-all duration-300"
                     style={{
                       clipPath: `polygon(0 0, 100% 0, 100% ${100 - courseProgress.percentage}%, 0 ${100 - courseProgress.percentage}%)`
                     }}
                   />
-                  <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                  <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-blue-700">
                     {courseProgress.percentage}%
                   </span>
                 </div>
@@ -1067,16 +1078,16 @@ export default function OptimizedLessonPlayerPage() {
               
               {/* Vertical Icons */}
               <div className="flex flex-col gap-3 items-center">
-                <div title={`${courseProgress.completedLessons}/${courseProgress.totalLessons} Lessons`}>
+                <div className="flex flex-col items-center" title={`${courseProgress.completedLessons}/${courseProgress.totalLessons} Lessons`}>
                   <CheckCircle className="w-5 h-5 text-success" />
                   <span className="text-xs text-muted-foreground mt-1">
                     {courseProgress.completedLessons}/{courseProgress.totalLessons}
                   </span>
                 </div>
-                <div title={`${courseProgress.remainingTime} remaining`}>
+                <div className="flex flex-col items-center" title={`Total duration: ${courseProgress.totalTime}`}>
                   <Clock className="w-5 h-5 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground mt-1">
-                    {courseProgress.remainingTime}
+                    {courseProgress.totalTime || '—'}
                   </span>
                 </div>
               </div>
@@ -1109,14 +1120,14 @@ export default function OptimizedLessonPlayerPage() {
             />
 
             {/* Lesson Information */}
-            <section className="rounded-lg shadow-sm border border-border overflow-hidden">
-              <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted">
+            <section className="rounded-xl shadow-sm border border-border overflow-hidden">
+              <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5">
                 <h2 className="text-base md:text-lg font-semibold text-foreground flex items-center">
                   <Info className="w-4 md:w-5 h-4 md:h-5 mr-2 text-primary" />
                   About this lesson
                 </h2>
               </div>
-              <div className="p-4 md:p-6 bg-white">
+              <div className="p-4 md:p-6 bg-card">
                 {lesson.description ? (
                   <div className="prose max-w-none text-foreground leading-relaxed">
                     {lesson.description}
@@ -1134,15 +1145,15 @@ export default function OptimizedLessonPlayerPage() {
 
             {/* Learning Resources */}
             {lesson.resources && lesson.resources.length > 0 && (
-              <section className="rounded-lg shadow-sm border border-border overflow-hidden">
-                <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted">
+              <section className="rounded-xl shadow-sm border border-border overflow-hidden">
+                <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5">
                   <h2 className="text-base md:text-lg font-semibold text-foreground flex items-center">
-                    <BookOpen className="w-4 md:w-5 h-4 md:h-5 mr-2 text-success" />
+                    <BookOpen className="w-4 md:w-5 h-4 md:h-5 mr-2 text-primary" />
                     Learning Resources
                   </h2>
                 </div>
-                <div className="p-4 md:p-6 bg-white">
-                  <ResourceDisplay 
+                <div className="p-4 md:p-6 bg-card">
+                  <ResourceDisplay
                     resources={convertResourcesForDisplay(lesson.resources)}
                     className=""
                   />

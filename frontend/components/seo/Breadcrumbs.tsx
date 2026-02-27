@@ -172,19 +172,26 @@ export function LessonBreadcrumbs({
 }) {
   const { t } = useI18n();
 
+  const ACRONYMS = new Set(['ai', 'ml', 'api', 'ui', 'ux', 'it', 'sql', 'aws', 'gpt']);
+  const formatCategory = (cat: string) =>
+    cat.replace(/[-_]/g, ' ').split(' ').map(word =>
+      ACRONYMS.has(word.toLowerCase()) ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+
+  // Skip course item if lesson title is same as course title to avoid duplicates
   const items: BreadcrumbItem[] = [
     {
       name: t('nav.courses'),
       href: '/courses'
     },
     {
-      name: course.category,
+      name: formatCategory(course.category),
       href: `/courses?category=${course.category}`
     },
-    {
+    ...(course.title !== lesson.title ? [{
       name: course.title,
       href: `/courses/${course.id}`
-    },
+    }] : []),
     {
       name: lesson.title,
       current: true
