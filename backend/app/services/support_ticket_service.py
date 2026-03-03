@@ -510,26 +510,27 @@ class SupportTicketService:
             }}
         ]
         
-        stats_result = await SupportTicket.aggregate(pipeline).to_list(1)
+        collection = SupportTicket.get_motor_collection()
+        stats_result = await collection.aggregate(pipeline).to_list(length=None)
         stats = stats_result[0] if stats_result else {}
-        
+
         # Get counts by category and priority
         category_counts = {}
         priority_counts = {}
-        
+
         category_pipeline = [
             {"$match": filter_dict},
             {"$group": {"_id": "$category", "count": {"$sum": 1}}}
         ]
-        category_results = await SupportTicket.aggregate(category_pipeline).to_list()
+        category_results = await collection.aggregate(category_pipeline).to_list(length=None)
         for result in category_results:
             category_counts[result["_id"]] = result["count"]
-        
+
         priority_pipeline = [
             {"$match": filter_dict},
             {"$group": {"_id": "$priority", "count": {"$sum": 1}}}
         ]
-        priority_results = await SupportTicket.aggregate(priority_pipeline).to_list()
+        priority_results = await collection.aggregate(priority_pipeline).to_list(length=None)
         for result in priority_results:
             priority_counts[result["_id"]] = result["count"]
         
