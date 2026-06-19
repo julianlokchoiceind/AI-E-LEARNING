@@ -1,102 +1,84 @@
 import { NextResponse } from 'next/server';
 
-// This would typically fetch from your database
+const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://aitc.choiceind.com').replace(/\/$/, '');
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'https://aitc-api.choiceind.com/api/v1').replace(/\/$/, '');
+
 const staticPages = [
-  {
-    url: '/',
-    lastmod: new Date().toISOString(),
-    changefreq: 'daily',
-    priority: 1.0
-  },
-  {
-    url: '/courses',
-    lastmod: new Date().toISOString(),
-    changefreq: 'daily',
-    priority: 0.9
-  },
-  {
-    url: '/about',
-    lastmod: new Date().toISOString(),
-    changefreq: 'monthly',
-    priority: 0.6
-  },
-  {
-    url: '/contact',
-    lastmod: new Date().toISOString(),
-    changefreq: 'monthly',
-    priority: 0.5
-  },
-  {
-    url: '/faq',
-    lastmod: new Date().toISOString(),
-    changefreq: 'weekly',
-    priority: 0.7
-  },
-  {
-    url: '/pricing',
-    lastmod: new Date().toISOString(),
-    changefreq: 'weekly',
-    priority: 0.8
-  },
-  {
-    url: '/login',
-    lastmod: new Date().toISOString(),
-    changefreq: 'yearly',
-    priority: 0.3
-  },
-  {
-    url: '/register',
-    lastmod: new Date().toISOString(),
-    changefreq: 'yearly',
-    priority: 0.3
-  }
+  { url: '/', changefreq: 'daily', priority: 1.0 },
+  { url: '/courses', changefreq: 'daily', priority: 0.9 },
+  { url: '/about', changefreq: 'monthly', priority: 0.6 },
+  { url: '/contact', changefreq: 'monthly', priority: 0.5 },
+  { url: '/faq', changefreq: 'weekly', priority: 0.7 },
+  { url: '/pricing', changefreq: 'weekly', priority: 0.8 },
 ];
 
-function generateSitemapXML(pages: Array<{
-  url: string;
-  lastmod: string;
-  changefreq: string;
-  priority: number;
-}>) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ai-elearning.com';
-  
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${pages.map(page => `  <url>
-    <loc>${baseUrl}${page.url}</loc>
-    <lastmod>${page.lastmod}</lastmod>
+interface CourseItem {
+  id: string;
+  slug?: string;
+  updated_at?: string;
+}
+
+async function fetchPublicCourses(): Promise<CourseItem[]> {
+  try {
+    const res = await fetch(`${API_URL}/courses?limit=1000`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data?.data?.courses || data?.data || [];
+  } catch {
+    return [];
+  }
+}
+
+function generateSitemapXML(
+  staticEntries: typeof staticPages,
+  courseEntries: CourseItem[]
+) {
+  const now = new Date().toISOString();
+
+  const staticUrls = staticEntries
+    .map(
+      (page) => `  <url>
+    <loc>${BASE_URL}${page.url}</loc>
+    <lastmod>${now}</lastmod>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
-    <xhtml:link rel="alternate" hreflang="vi" href="${baseUrl}/vi${page.url}"/>
-    <xhtml:link rel="alternate" hreflang="en" href="${baseUrl}/en${page.url}"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="${baseUrl}${page.url}"/>
-  </url>`).join('\n')}
+  </url>`
+    )
+    .join('\n');
+
+  const courseUrls = courseEntries
+    .map((course) => {
+      const path = `/courses/${course.id}`;
+      const lastmod = course.updated_at ? new Date(course.updated_at).toISOString() : now;
+      return `  <url>
+    <loc>${BASE_URL}${path}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+    })
+    .join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${staticUrls}
+${courseUrls}
 </urlset>`;
 }
 
 export async function GET() {
   try {
-    // In a real application, you would fetch dynamic content from your database
-    // const courses = await fetchCourses();
-    // const dynamicPages = courses.map(course => ({
-    //   url: `/courses/${course.id}`,
-    //   lastmod: course.updated_at,
-    //   changefreq: 'weekly',
-    //   priority: 0.8
-    // }));
-
-    // For now, using static pages only
-    const allPages = [...staticPages];
-    
-    const sitemap = generateSitemapXML(allPages);
+    const courses = await fetchPublicCourses();
+    const sitemap = generateSitemapXML(staticPages, courses);
 
     return new NextResponse(sitemap, {
       status: 200,
       headers: {
         'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
-      }
+        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+      },
     });
   } catch (error) {
     console.error('Error generating sitemap:', error);
