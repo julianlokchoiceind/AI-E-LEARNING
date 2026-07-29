@@ -3,9 +3,12 @@ fastapi
 uvicorn[standard]
 
 # Database
-pymongo
-motor
-beanie
+# Pinned to versions verified working locally + on Cloud Run.
+# Unpinned versions pulled a newer incompatible release ("MotorDatabase object is not callable")
+# that broke container startup. Keep these pinned together.
+pymongo==4.13.2
+motor==3.7.1
+beanie==1.30.0
 
 # Authentication & Security
 python-jose[cryptography]
